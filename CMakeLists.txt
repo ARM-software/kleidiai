@@ -181,6 +181,7 @@ set(KLEIDIAI_FILES_NEON_I8MM
 )
 
 set(KLEIDIAI_FILES_SME
+    kai/ukernels/matmul/pack/kai_lhs_igemm_pack_x8p2vlx4_x8_sme.c
     kai/ukernels/matmul/pack/kai_lhs_pack_f32p2vlx1_f32_sme.c
     kai/ukernels/matmul/pack/kai_lhs_pack_x16p2vlx2_x16_sme.c
     kai/ukernels/matmul/pack/kai_lhs_pack_x8p2vlx4_x8_sme.c
