@@ -54,6 +54,9 @@ extern "C" {
 #define KAI_MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define KAI_MAX(a, b) (((a) > (b)) ? (a) : (b))
 
+/// Largest supported SME vector length in bytes
+#define KAI_SME_VEC_LENGTH_MAX_BYTES 256  // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+
 /// Gets the version of the project in the Major.Minor.Patch semantic versioning format.
 ///
 /// @return Project version as a string literal.
