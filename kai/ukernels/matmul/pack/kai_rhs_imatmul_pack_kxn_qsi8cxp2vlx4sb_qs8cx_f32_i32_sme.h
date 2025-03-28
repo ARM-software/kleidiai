@@ -19,28 +19,28 @@ extern "C" {
 /// The starting column index must be divisible by `n_step`.
 ///
 /// @return Step size for column index.
-size_t kai_get_n_step_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(void);
+size_t kai_get_n_step_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(void);
 
 /// Gets the offset in bytes to the data element in the RHS matrix buffer.
 ///
 /// @param[in] n_idx Column index. Must be divisible by `n_step`
 ///
 /// @return The offset in bytes to the data element.
-size_t kai_get_rhs_offset_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(size_t n_idx);
+size_t kai_get_rhs_offset_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(size_t n_idx);
 
 /// Gets the offset in bytes to the data element in the bias buffer.
 ///
 /// @param[in] n_idx Column index.
 ///
 /// @return The offset in bytes to the data element.
-size_t kai_get_bias_offset_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(size_t n_idx);
+size_t kai_get_bias_offset_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(size_t n_idx);
 
 /// Gets the offset in bytes to the data element in the scale buffer.
 ///
 /// @param[in] n_idx Column index.
 ///
 /// @return The offset in bytes to the data element.
-size_t kai_get_scale_offset_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(size_t n_idx);
+size_t kai_get_scale_offset_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(size_t n_idx);
 
 /// Gets the offset in bytes to the data element in the packed RHS buffer.
 ///
@@ -49,7 +49,7 @@ size_t kai_get_scale_offset_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(
 /// @param[in] k_chunk_length Number of rows in each chunk.
 ///
 /// @return The offset in bytes to the data element.
-size_t kai_get_rhs_packed_offset_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(
+size_t kai_get_rhs_packed_offset_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(
     size_t n_idx, size_t k_chunk_count, size_t k_chunk_length);
 
 /// Gets the size in bytes of the packed RHS buffer.
@@ -59,7 +59,7 @@ size_t kai_get_rhs_packed_offset_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32
 /// @param[in] k_chunk_length Number of rows in each chunk.
 ///
 /// @return The size in bytes of the packed RHS buffer.
-size_t kai_get_rhs_packed_size_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(
+size_t kai_get_rhs_packed_size_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(
     size_t n, size_t k_chunk_count, size_t k_chunk_length);
 
 /// Runs the RHS packing function for matrix multiplication.
@@ -67,10 +67,10 @@ size_t kai_get_rhs_packed_size_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_s
 /// The pointer of each buffers (RHS, bias and packed RHS) needs to be added with offset
 /// calculated using the following functions:
 ///
-///   * RHS: @ref kai_get_rhs_offset_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme.
-///   * Bias: @ref kai_get_bias_offset_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme.
-///   * Scale: @ref kai_get_scale_offset_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme.
-///   * Output: @ref kai_get_rhs_packed_offset_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme.
+///   * RHS: @ref kai_get_rhs_offset_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme.
+///   * Bias: @ref kai_get_bias_offset_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme.
+///   * Scale: @ref kai_get_scale_offset_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme.
+///   * Output: @ref kai_get_rhs_packed_offset_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme.
 ///
 /// @param[in] n Number of columns of the output matrix.
 /// @param[in] k_chunk_count Number of chunks.
@@ -81,7 +81,7 @@ size_t kai_get_rhs_packed_size_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_s
 /// @param[in] scale Scale data buffer.
 /// @param[out] rhs_packed Packed RHS matrix.
 /// @param[in] params Extra packing parameters.
-void kai_run_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(
+void kai_run_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(
     size_t n, size_t k_chunk_count, size_t k_chunk_length, size_t rhs_row_stride, const void* rhs, const void* bias,
     const void* scale, void* rhs_packed, const struct kai_rhs_pack_qsi8cx_params* params);
 

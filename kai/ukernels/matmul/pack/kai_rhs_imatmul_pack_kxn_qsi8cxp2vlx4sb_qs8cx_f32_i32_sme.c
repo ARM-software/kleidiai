@@ -10,7 +10,7 @@
 #if !defined(__aarch64__) || !defined(__ARM_FEATURE_SVE2)
 #error This file must be compiled for AArch64, FEAT_SVE2.
 #else  // Architectural features check.
-#include "kai_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme.h"
+#include "kai_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -27,48 +27,48 @@ static const size_t kai_num_bytes_scale = sizeof(float32_t);
 
 #define MAX_N_STEP (KAI_SME_VEC_LENGTH_MAX_BYTES / (kai_kr * kai_nr))
 
-size_t kai_get_n_step_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(void) {
+size_t kai_get_n_step_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(void) {
     return kai_nr * kai_get_sme_vector_length_u8() / kai_kr;
 }
 
-size_t kai_get_rhs_offset_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(size_t n_idx) {
-    KAI_ASSUME(n_idx % kai_get_n_step_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme() == 0);
+size_t kai_get_rhs_offset_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(size_t n_idx) {
+    KAI_ASSUME(n_idx % kai_get_n_step_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme() == 0);
 
     return n_idx * kai_num_bytes_input;
 }
 
-size_t kai_get_bias_offset_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(size_t n_idx) {
+size_t kai_get_bias_offset_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(size_t n_idx) {
     return n_idx * kai_num_bytes_bias;
 }
 
-size_t kai_get_scale_offset_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(size_t n_idx) {
+size_t kai_get_scale_offset_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(size_t n_idx) {
     return n_idx * kai_num_bytes_scale;
 }
 
-static size_t kai_get_rhs_packed_stride_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(
+static size_t kai_get_rhs_packed_stride_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(
     size_t k_chunk_count, size_t k_chunk_length) {
-    return kai_get_n_step_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme() *
+    return kai_get_n_step_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme() *
         (kai_num_bytes_bias + k_chunk_count * kai_roundup(k_chunk_length, kai_kr) * kai_num_bytes_output +
          kai_num_bytes_scale);
 }
 
-size_t kai_get_rhs_packed_offset_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(
+size_t kai_get_rhs_packed_offset_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(
     size_t n_idx, size_t k_chunk_count, size_t k_chunk_length) {
-    KAI_ASSUME(n_idx % kai_get_n_step_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme() == 0);
+    KAI_ASSUME(n_idx % kai_get_n_step_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme() == 0);
 
-    const size_t block_idx = n_idx / kai_get_n_step_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme();
+    const size_t block_idx = n_idx / kai_get_n_step_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme();
     return block_idx *
-        kai_get_rhs_packed_stride_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(k_chunk_count, k_chunk_length);
+        kai_get_rhs_packed_stride_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(k_chunk_count, k_chunk_length);
 }
 
-size_t kai_get_rhs_packed_size_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(
+size_t kai_get_rhs_packed_size_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(
     size_t n, size_t k_chunk_count, size_t k_chunk_length) {
-    const size_t n_rounded_up = kai_roundup(n, kai_get_n_step_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme());
-    return kai_get_rhs_packed_offset_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(
+    const size_t n_rounded_up = kai_roundup(n, kai_get_n_step_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme());
+    return kai_get_rhs_packed_offset_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(
         n_rounded_up, k_chunk_count, k_chunk_length);
 }
 
-void kai_run_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(
+void kai_run_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(
     size_t n, size_t k_chunk_count, size_t k_chunk_length, size_t rhs_row_stride, const void* rhs, const void* bias,
     const void* scale, void* rhs_packed, const struct kai_rhs_pack_qsi8cx_params* params) {
     KAI_ASSUME(rhs != NULL);
@@ -82,14 +82,14 @@ void kai_run_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(
     void* out = rhs_packed;
     const size_t in_stride = rhs_row_stride;
 
-    KAI_ASSERT(kai_get_n_step_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme() <= MAX_N_STEP);
+    KAI_ASSERT(kai_get_n_step_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme() <= MAX_N_STEP);
     uint8_t pad_row[MAX_N_STEP];
     if (height % kai_kr) {
         memset(pad_row, 0, MAX_N_STEP * sizeof(uint8_t));
     }
 
     size_t out_stride =
-        kai_get_rhs_packed_stride_rhs_igemm_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(k_chunk_count, k_chunk_length);
+        kai_get_rhs_packed_stride_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(k_chunk_count, k_chunk_length);
     const int32_t input_zero_point = params->lhs_zero_point;
     const float scale_multiplier = params->scale_multiplier;
     __asm__ __volatile__(
