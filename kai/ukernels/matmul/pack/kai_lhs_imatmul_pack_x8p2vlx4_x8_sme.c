@@ -11,52 +11,49 @@
 #error This file must be compiled for AArch64, FEAT_SVE2.
 #else  // Architectural features check.
 
-#include "kai_lhs_igemm_pack_x8p2vlx4_x8_sme.h"
+#include "kai_lhs_imatmul_pack_x8p2vlx4_x8_sme.h"
 
 #include <stddef.h>
 #include <stdint.h>
 
 #include "kai/kai_common.h"
 
-static const size_t kai_mr = 2;
-static const size_t kai_kr = 4;
+#define MR 2
+#define KR 4
+#define MAX_M_STEP (MR * (KAI_SME_VEC_LENGTH_MAX_BYTES / sizeof(int8_t)) / KR)
 
-// Max size is calculated from maximum vector length
-// of 256 bytes, divided by sizeof(int8_t) * kai_kr
-#define BLOCK_HEIGHT_MAX 64
-
-static size_t kai_get_mr_lhs_igemm_pack_x8p2vlx4_x8_sme(void) {
-    return kai_mr * kai_get_sme_vector_length_u8() / kai_kr;
+static size_t kai_get_mr_lhs_imatmul_pack_x8p2vlx4_x8_sme(void) {
+    return MR * kai_get_sme_vector_length_u8() / KR;
 }
 
-size_t kai_get_m_step_lhs_igemm_pack_x8p2vlx4_x8_sme(void) {
-    return kai_get_mr_lhs_igemm_pack_x8p2vlx4_x8_sme();
+size_t kai_get_m_step_lhs_imatmul_pack_x8p2vlx4_x8_sme(void) {
+    return kai_get_mr_lhs_imatmul_pack_x8p2vlx4_x8_sme();
 }
 
-size_t kai_get_lhs_packed_offset_lhs_igemm_pack_x8p2vlx4_x8_sme(
+size_t kai_get_lhs_packed_offset_lhs_imatmul_pack_x8p2vlx4_x8_sme(
     size_t m_idx, size_t k_chunk_count, size_t k_chunk_length) {
-    KAI_ASSUME(m_idx % kai_get_m_step_lhs_igemm_pack_x8p2vlx4_x8_sme() == 0);
+    KAI_ASSUME(m_idx % kai_get_m_step_lhs_imatmul_pack_x8p2vlx4_x8_sme() == 0);
 
-    return m_idx * k_chunk_count * kai_roundup(k_chunk_length, kai_kr) * sizeof(int8_t);
+    return m_idx * k_chunk_count * kai_roundup(k_chunk_length, KR) * sizeof(int8_t);
 }
 
-size_t kai_get_lhs_packed_size_lhs_igemm_pack_x8p2vlx4_x8_sme(size_t m, size_t k_chunk_count, size_t k_chunk_length) {
-    const size_t m_end = kai_roundup(m, kai_get_mr_lhs_igemm_pack_x8p2vlx4_x8_sme());
-    return kai_get_lhs_packed_offset_lhs_igemm_pack_x8p2vlx4_x8_sme(m_end, k_chunk_count, k_chunk_length);
+size_t kai_get_lhs_packed_size_lhs_imatmul_pack_x8p2vlx4_x8_sme(size_t m, size_t k_chunk_count, size_t k_chunk_length) {
+    const size_t m_end = kai_roundup(m, kai_get_mr_lhs_imatmul_pack_x8p2vlx4_x8_sme());
+    return kai_get_lhs_packed_offset_lhs_imatmul_pack_x8p2vlx4_x8_sme(m_end, k_chunk_count, k_chunk_length);
 }
 
-void kai_run_lhs_igemm_pack_x8p2vlx4_x8_sme(
+void kai_run_lhs_imatmul_pack_x8p2vlx4_x8_sme(
     size_t m, size_t k_chunk_count, size_t k_chunk_length, const void* const* lhs_ptrs, size_t lhs_ptr_offset,
     const void* zero, void* lhs_packed) {
     KAI_ASSUME(lhs_ptrs != NULL);
     KAI_ASSUME(lhs_packed != NULL);
 
-    const size_t m_step = kai_get_mr_lhs_igemm_pack_x8p2vlx4_x8_sme();
+    const size_t m_step = kai_get_mr_lhs_imatmul_pack_x8p2vlx4_x8_sme();
     const size_t row_offset = 0;
     const size_t width = k_chunk_length;
 
-    KAI_ASSERT(m_step <= BLOCK_HEIGHT_MAX);
-    const uint8_t* in[BLOCK_HEIGHT_MAX];
+    KAI_ASSERT(m_step <= MAX_M_STEP);
+    const uint8_t* in[MAX_M_STEP];
 
     uint8_t* out_base = lhs_packed;
     for (size_t i_m = 0; i_m < m; i_m += m_step) {
@@ -65,7 +62,7 @@ void kai_run_lhs_igemm_pack_x8p2vlx4_x8_sme(
             void* out = out_base;
             for (size_t y = 0; y < height; y += 1) {
                 KAI_ASSERT(i_k_chunk + (i_m + y) * k_chunk_count < m * k_chunk_count);
-                in[y] = *(lhs_ptrs + i_k_chunk + (i_m + y) * k_chunk_count);
+                in[y] = *(lhs_ptrs + i_m * k_chunk_count + i_k_chunk * m_step + y);
                 if (in[y] != zero) {
                     in[y] += lhs_ptr_offset;
                 }
@@ -336,7 +333,7 @@ void kai_run_lhs_igemm_pack_x8p2vlx4_x8_sme(
                   "x24", "x25", "x26", "x27", "x28", "x7", "x8", "x9", "z0", "z1", "z10", "z11", "z12", "z13", "z14",
                   "z15", "z16", "z17", "z18", "z19", "z2", "z20", "z21", "z22", "z23", "z24", "z25", "z26", "z27",
                   "z28", "z29", "z3", "z30", "z31", "z4", "z5", "z6", "z7", "z8", "z9");
-            out_base += m_step * kai_roundup(k_chunk_length, kai_kr) * sizeof(int8_t);
+            out_base += m_step * kai_roundup(k_chunk_length, KR) * sizeof(int8_t);
         }
     }
 }

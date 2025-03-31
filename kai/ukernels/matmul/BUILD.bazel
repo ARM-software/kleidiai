@@ -114,7 +114,7 @@ I8MM_KERNELS_ASM = [
 
 # buildifier: keep sorted
 SME_KERNELS = [
-    "pack/kai_lhs_igemm_pack_x8p2vlx4_x8_sme",
+    "pack/kai_lhs_imatmul_pack_x8p2vlx4_x8_sme",
     "pack/kai_lhs_pack_bf16p2vlx2_f32_sme",
     "pack/kai_lhs_pack_f32p2vlx1_f32_sme",
     "pack/kai_lhs_pack_x16p2vlx2_x16_sme",
