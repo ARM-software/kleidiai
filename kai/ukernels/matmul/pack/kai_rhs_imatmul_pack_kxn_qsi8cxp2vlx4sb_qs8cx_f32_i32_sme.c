@@ -18,17 +18,17 @@
 
 #include "kai/kai_common.h"
 
-static const size_t kai_nr = 2;
-static const size_t kai_kr = 4;
 static const size_t kai_num_bytes_input = sizeof(uint8_t);
 static const size_t kai_num_bytes_output = sizeof(uint8_t);
 static const size_t kai_num_bytes_bias = sizeof(int32_t);
 static const size_t kai_num_bytes_scale = sizeof(float32_t);
 
-#define MAX_N_STEP (KAI_SME_VEC_LENGTH_MAX_BYTES / (kai_kr * kai_nr))
+#define NR 2
+#define KR 4
+#define MAX_N_STEP (NR * KAI_SME_VEC_LENGTH_MAX_BYTES / KR)
 
 size_t kai_get_n_step_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(void) {
-    return kai_nr * kai_get_sme_vector_length_u8() / kai_kr;
+    return NR * kai_get_sme_vector_length_u8() / KR;
 }
 
 size_t kai_get_rhs_offset_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(size_t n_idx) {
@@ -48,7 +48,7 @@ size_t kai_get_scale_offset_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sm
 static size_t kai_get_rhs_packed_stride_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(
     size_t k_chunk_count, size_t k_chunk_length) {
     return kai_get_n_step_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme() *
-        (kai_num_bytes_bias + k_chunk_count * kai_roundup(k_chunk_length, kai_kr) * kai_num_bytes_output +
+        (kai_num_bytes_bias + k_chunk_count * kai_roundup(k_chunk_length, KR) * kai_num_bytes_output +
          kai_num_bytes_scale);
 }
 
@@ -84,7 +84,7 @@ void kai_run_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(
 
     KAI_ASSERT(kai_get_n_step_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme() <= MAX_N_STEP);
     uint8_t pad_row[MAX_N_STEP];
-    if (height % kai_kr) {
+    if (height % KR) {
         memset(pad_row, 0, MAX_N_STEP * sizeof(uint8_t));
     }
 
