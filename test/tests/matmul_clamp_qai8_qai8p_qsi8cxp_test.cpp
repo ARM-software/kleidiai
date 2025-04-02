@@ -19,6 +19,8 @@
 #include <vector>
 
 #include "kai/kai_common.h"
+#include "kai/ukernels/matmul/imatmul_clamp_qai8_qai8p_qsi8cxp/kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa.h"
+#include "kai/ukernels/matmul/imatmul_clamp_qai8_qai8p_qsi8cxp/kai_imatmul_clamp_qai8_qai8p_qsi8cxp_interface.h"
 #include "kai/ukernels/matmul/matmul_clamp_qai8_qai8_qsi8cxp/kai_matmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_sme2_dot.h"
 #include "kai/ukernels/matmul/matmul_clamp_qai8_qai8_qsi8cxp/kai_matmul_clamp_qai8_qai8_qsi8cxp_interface.h"
 #include "kai/ukernels/matmul/matmul_clamp_qai8_qai8p_qsi8cxp/kai_matmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa.h"
@@ -117,6 +119,22 @@ struct MatMulKernel {
         matmul;
 };
 
+struct MatMulIndirectKernel {
+    std::function<size_t(void)> get_m_step;
+    std::function<size_t(void)> get_n_step;
+    std::function<size_t(void)> get_mr;
+    std::function<size_t(void)> get_nr;
+    std::function<size_t(void)> get_kr;
+    std::function<size_t(size_t m_idx, size_t k_chunk_count, size_t k_chunk_length)> get_packed_lhs_offset;
+    std::function<size_t(size_t n_idx, size_t k_chunk_count, size_t k_chunk_length)> get_packed_rhs_offset;
+    std::function<size_t(size_t m_idx, size_t n_idx, size_t dst_row_stride)> get_dst_offset;
+    std::function<size_t(size_t m, size_t n)> get_dst_size;
+    std::function<void(
+        size_t m, size_t n, size_t k_chunk_count, size_t k_chunk_lenght, const void* lhs_packed, const void* rhs_packed,
+        void* dst, size_t dst_stride_row, const kai_matmul_requantize32_params* params)>
+        matmul;
+};
+
 const static RhsPackKernel rhs_pack = {
     .get_n_step = kai_get_n_step_rhs_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme,
     .get_rhs_offset = kai_get_rhs_offset_rhs_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme,
@@ -148,7 +166,7 @@ struct IndirectMatMulVariant {
 
     LhsPackIndirectKernel lhs_pack;  ///< LHS packing kernel interface
     RhsPackIndirectKernel rhs_pack;  ///< RHS packing kernel interface
-    MatMulKernel matmul;             ///< Matmul kernel interface
+    MatMulIndirectKernel matmul;     ///< Matmul kernel interface
 };
 
 const std::array gemm_variants = {
@@ -230,20 +248,19 @@ const std::array indirect_gemm_variants = {
                 .pack = kai_run_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme,
             },
         .matmul =
-            MatMulKernel{
-                .get_m_step = kai_get_m_step_matmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
-                .get_n_step = kai_get_n_step_matmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
-                .get_mr = kai_get_mr_matmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
-                .get_nr = kai_get_nr_matmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
-                .get_kr = kai_get_kr_matmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
-                .get_sr = kai_get_sr_matmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
+            MatMulIndirectKernel{
+                .get_m_step = kai_get_m_step_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
+                .get_n_step = kai_get_n_step_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
+                .get_mr = kai_get_mr_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
+                .get_nr = kai_get_nr_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
+                .get_kr = kai_get_kr_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
                 .get_packed_lhs_offset =
-                    kai_get_lhs_packed_offset_matmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
+                    kai_get_lhs_packed_offset_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
                 .get_packed_rhs_offset =
-                    kai_get_rhs_packed_offset_matmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
-                .get_dst_offset = kai_get_dst_offset_matmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
-                .get_dst_size = kai_get_dst_size_matmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
-                .matmul = kai_run_matmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
+                    kai_get_rhs_packed_offset_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
+                .get_dst_offset = kai_get_dst_offset_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
+                .get_dst_size = kai_get_dst_size_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
+                .matmul = kai_run_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
             },
     },
 };
@@ -344,6 +361,23 @@ static const kai_matmul_clamp_qai8_qai8p_qsi8cxp_ukernel matmul_clamp_qai8_qai8_
         .get_dst_offset = kai_get_dst_offset_matmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_sme2_dot,
         .get_dst_size = kai_get_dst_size_matmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_sme2_dot,
         .run_matmul = kai_run_matmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_sme2_dot,
+};
+
+/// Make sure that interface matches
+static const kai_imatmul_clamp_qai8_qai8p_qsi8cxp_ukernel
+    imatmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_sme2_dot_interface [[maybe_unused]] = {
+        .get_m_step = kai_get_m_step_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
+        .get_n_step = kai_get_n_step_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
+        .get_mr = kai_get_mr_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
+        .get_nr = kai_get_nr_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
+        .get_kr = kai_get_kr_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
+        .get_lhs_packed_offset =
+            kai_get_lhs_packed_offset_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
+        .get_rhs_packed_offset =
+            kai_get_rhs_packed_offset_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
+        .get_dst_offset = kai_get_dst_offset_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
+        .get_dst_size = kai_get_dst_size_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
+        .run_matmul = kai_run_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
 };
 
 // M, N, K, k_chunk_length, pack.m, pack.n, pack.k
@@ -776,16 +810,12 @@ static Buffer rhs_pack(
 
 /// Calculate the matmul result from IMATMUL kernels
 static Buffer matmul(
-    const MatMulKernel& variant, const Rect& portion, const TestReference& reference, const Buffer& packed_lhs,
+    const MatMulIndirectKernel& variant, const Rect& portion, const TestReference& reference, const Buffer& packed_lhs,
     const Buffer& packed_rhs, const MatMulShape& shape, const KChunk& k_chunk) {
-    // TODO: This variable is no longer needed when we generate imatmul kernel.
-    // For now, this is equivalent of passing `k_chunk.count` and `k_chunk.length`
-    const size_t indirect_k = k_chunk.count * kai_roundup(k_chunk.length, variant.get_kr());
-
     // Calculate portion offsets.
     size_t dst_offset = variant.get_dst_offset(portion.start_row(), portion.start_col(), shape.n);
-    size_t lhs_offset = variant.get_packed_lhs_offset(portion.start_row(), indirect_k);
-    size_t rhs_offset = variant.get_packed_rhs_offset(portion.start_col(), indirect_k);
+    size_t lhs_offset = variant.get_packed_lhs_offset(portion.start_row(), k_chunk.count, k_chunk.length);
+    size_t rhs_offset = variant.get_packed_rhs_offset(portion.start_col(), k_chunk.count, k_chunk.length);
 
     // Allocate output buffer
     const size_t dst_size = variant.get_dst_size(shape.m, shape.n);
@@ -800,11 +830,11 @@ static Buffer matmul(
 
     // Call matmul kernel
     variant.matmul(
-        portion.height(), portion.width(), indirect_k,  // Dimensions
-        packed_lhs.data() + lhs_offset,                 // LHS
-        packed_rhs.data() + rhs_offset,                 // RHS
-        dst.data() + dst_offset,                        // DST
-        shape.n * sizeof(uint8_t), sizeof(uint8_t), &requantization);
+        portion.height(), portion.width(), k_chunk.count, k_chunk.length,  // Dimensions
+        packed_lhs.data() + lhs_offset,                                    // LHS
+        packed_rhs.data() + rhs_offset,                                    // RHS
+        dst.data() + dst_offset,                                           // DST
+        shape.n * sizeof(uint8_t), &requantization);
 
     // TODO: Ensure `clamp` is tested
 
