@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -45,6 +45,8 @@ std::vector<uint8_t> reorder_block(
 }
 
 template std::vector<uint8_t> reorder_block<int8_t>(
+    const void* src, size_t height, size_t width, size_t block_height, size_t block_width);
+template std::vector<uint8_t> reorder_block<const void*>(
     const void* src, size_t height, size_t width, size_t block_height, size_t block_width);
 
 }  // namespace kai::test
