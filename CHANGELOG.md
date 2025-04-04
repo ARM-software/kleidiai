@@ -10,6 +10,13 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+- New SME micro-kernels:
+  - Indirect matrix multiplication (MxN) of QAI8 input and output.
+    - Packing kernels for LHS and RHS
+- New SME2 micro-kernels:
+  - Indirect matrix multiplication (MxN) of QAI8 input and output.
+    - Matrix multiplication of packed indirect LHS and packed RHS
+
 ## v1.6.0
 
 - Add CMake installation and `find_package()` support.
