@@ -863,24 +863,52 @@ TEST_P(IndirectMatMulQuantizedTest, EndToEnd) {
     compare_matmul_result(shape, portion, impl_result, reference.dst_qsi8_clamped);
 }
 
+static constexpr std::array shapes{
+    // clang-format off
+    MatMulShape{  1,    1,  1},
+    MatMulShape{  1,   16,  4},
+    MatMulShape{  1,   16, 16},
+    MatMulShape{  1,   17,  4},
+    MatMulShape{  1,   19, 24},
+    MatMulShape{  1,   32,  4},
+    MatMulShape{  1,   32, 32},
+    MatMulShape{  1,   33,200},
+    MatMulShape{  1,   49, 21},
+    MatMulShape{  1,   64,  4},
+    MatMulShape{  1,   65,  4},
+    MatMulShape{  1,  300, 10},
+    MatMulShape{  1,  512,  4},
+    MatMulShape{  1, 1523, 10},
+    MatMulShape{  2,  195, 50},
+    MatMulShape{  3,    6,  6},
+    MatMulShape{  3,   28, 25},
+    MatMulShape{  3,  184,177},
+    MatMulShape{  4,   16, 27},
+    MatMulShape{  5,  136, 23},
+    MatMulShape{  6,   18, 31},
+    MatMulShape{  6,   28,  1},
+    MatMulShape{  6,   29, 24},
+    MatMulShape{ 16,   16,  4},
+    MatMulShape{ 20,   30, 40},
+    MatMulShape{ 23,    1, 43},
+    MatMulShape{ 32,   14,  1},
+    MatMulShape{ 32,   16, 27},
+    MatMulShape{ 32,   32,  3},
+    MatMulShape{ 32,   32,  4},
+    MatMulShape{ 33,   29, 24},
+    MatMulShape{ 64,   64,  3},
+    MatMulShape{ 64,   64,  4},
+    MatMulShape{ 96,   96,  3},
+    MatMulShape{123,   85, 45},
+    MatMulShape{128,  128,  3},
+    MatMulShape{130,  130,  6},
+    // clang-format on
+};
+
 INSTANTIATE_TEST_SUITE_P(
     matmul_clamp_qai8_qai8p_qsi8cxp, MatMulQuantizedTest,
     testing::Combine(
-        testing::ValuesIn(gemm_variants),
-        testing::ValuesIn({
-            // clang-format off
-            MatMulShape{  1,   1,  1},
-            MatMulShape{  1,  49, 21},
-            MatMulShape{ 16,  16,  4},
-            MatMulShape{ 20,  30, 40},
-            MatMulShape{ 23,   1, 43},
-            MatMulShape{ 32,  14,  1},
-            MatMulShape{ 32,  32,  4},
-            MatMulShape{ 64,  64,  4},
-            MatMulShape{123,  85, 45},
-            MatMulShape{130, 130,  6},
-            // clang-format on
-        }),
+        testing::ValuesIn(gemm_variants), testing::ValuesIn(shapes),
         testing::ValuesIn({
             // clang-format off
             MatrixPortion(   0,    0,    1,    1), // Full matrix.
@@ -901,18 +929,20 @@ INSTANTIATE_TEST_SUITE_P(
         testing::ValuesIn(gemv_variants),
         testing::ValuesIn({
             // clang-format off
-            MatMulShape{1,    1,    1},
-            MatMulShape{1,   16,    4},
-            MatMulShape{1,   16,   16},
-            MatMulShape{1,   17,    4},
-            MatMulShape{1,   32,    4},
-            MatMulShape{1,   32,   32},
-            MatMulShape{1,   33,  200},
-            MatMulShape{1,   64,    4},
-            MatMulShape{1,   65,    4},
-            MatMulShape{1,  300,   10},
-            MatMulShape{1,  512,    4},
-            MatMulShape{1, 1523,   10},
+            MatMulShape{  1,    1,  1},
+            MatMulShape{  1,   16,  4},
+            MatMulShape{  1,   16, 16},
+            MatMulShape{  1,   17,  4},
+            MatMulShape{  1,   19, 24},
+            MatMulShape{  1,   32,  4},
+            MatMulShape{  1,   32, 32},
+            MatMulShape{  1,   33,200},
+            MatMulShape{  1,   49, 21},
+            MatMulShape{  1,   64,  4},
+            MatMulShape{  1,   65,  4},
+            MatMulShape{  1,  300, 10},
+            MatMulShape{  1,  512,  4},
+            MatMulShape{  1, 1523, 10},
             // clang-format on
         }),
         testing::ValuesIn({
@@ -933,30 +963,7 @@ INSTANTIATE_TEST_SUITE_P(
 INSTANTIATE_TEST_SUITE_P(
     indirect_matmul_clamp_qai8_qai8p_qsi8cxp, IndirectMatMulQuantizedTest,
     testing::Combine(
-        testing::ValuesIn(indirect_gemm_variants),
-        testing::ValuesIn({
-            // clang-format off
-            // M, N, k_chunk_count
-            MatMulShape{  1,   1,  1},
-            MatMulShape{  1,  19, 24},
-            MatMulShape{  1,  49, 21},
-            MatMulShape{  2, 195, 50},
-            MatMulShape{  3,   6,  6},
-            MatMulShape{  3,  28, 25},
-            MatMulShape{  3, 184,177},
-            MatMulShape{  4,  16, 27},
-            MatMulShape{  5, 136, 23},
-            MatMulShape{  6,  18, 31},
-            MatMulShape{  6,  28,  1},
-            MatMulShape{  6,  29, 24},
-            MatMulShape{ 32,  16, 27},
-            MatMulShape{ 32,  32,  3},
-            MatMulShape{ 33,  29, 24},
-            MatMulShape{ 64,  64,  3},
-            MatMulShape{ 96,  96,  3},
-            MatMulShape{128, 128,  3},
-            // clang-format on
-        }),
+        testing::ValuesIn(indirect_gemm_variants), testing::ValuesIn(shapes),
         testing::ValuesIn({
             // clang-format off
             //       (Start row , start col , height , width)
@@ -969,7 +976,7 @@ INSTANTIATE_TEST_SUITE_P(
             // clang-format on
         }),
         // k_chunk_len
-        testing::ValuesIn(std::initializer_list<size_t>{2, 3, 4, 8, 11, 32})),
+        testing::ValuesIn(std::initializer_list<size_t>{1, 2, 3, 4, 8, 11, 32})),
     [](const auto& info) -> std::string {
         return test_description(
             std::get<IndirectMatMulVariant>(info.param),  //
