@@ -189,7 +189,8 @@ template <
     typename RhsZeroPoint, typename BiasData, typename BiasScale, typename BiasZeroPoint, typename DstData>
 std::vector<uint8_t> indirect_matmul_nt_t_quantized(
     size_t m, size_t n, size_t k_chunk_count, size_t k_chunk_length,  //
-    const void* const* lhs_ptrs, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_height,
+    const void* const* lhs_ptrs, uintptr_t lhs_offset, const void* lhs_padding, const void* lhs_scales,
+    const void* lhs_zero_points, size_t lhs_quant_height,
     size_t lhs_quant_width,  //
     const void* rhs_data, const void* rhs_scales, const void* rhs_zero_points, size_t rhs_quant_height,
     size_t rhs_quant_width,  //
@@ -199,27 +200,32 @@ std::vector<uint8_t> indirect_matmul_nt_t_quantized(
 
     std::vector<uint8_t> dst(m * n * sizeof(DstData));
 
-    for (size_t y = 0; y < m; ++y) {
-        for (size_t x = 0; x < n; ++x) {
+    for (size_t i_m = 0; i_m < m; ++i_m) {
+        for (size_t i_n = 0; i_n < n; ++i_n) {
             DstData acc = 0;
 
             for (size_t i_k_chunk = 0; i_k_chunk < k_chunk_count; ++i_k_chunk) {
-                const void* lhs_data = *(lhs_ptrs + (y * k_chunk_count + i_k_chunk));
+                // Calculate the K chunk pointer. Apply offset if this is not padding
+                const size_t k_chunk_idx = i_m * k_chunk_count + i_k_chunk;
+                const void* k_chunk_ptr = lhs_ptrs[k_chunk_idx];
+                if (k_chunk_ptr != lhs_padding) {
+                    k_chunk_ptr = reinterpret_cast<const void*>(reinterpret_cast<uintptr_t>(k_chunk_ptr) + lhs_offset);
+                }
 
                 for (size_t i_k_chunk_len = 0; i_k_chunk_len < k_chunk_length; ++i_k_chunk_len) {
                     const size_t i = i_k_chunk * k_chunk_length + i_k_chunk_len;
 
                     const auto lhs_data_index = i_k_chunk_len;
-                    const auto lhs_quant_index = (y / lhs_quant_height) * lhs_num_quant_per_row + i / lhs_quant_width;
-                    const auto lhs_value = read_array<LhsData>(lhs_data, lhs_data_index);
+                    const auto lhs_quant_index = (i_m / lhs_quant_height) * lhs_num_quant_per_row + i / lhs_quant_width;
+                    const auto lhs_value = read_array<LhsData>(k_chunk_ptr, lhs_data_index);
                     const auto lhs_scale = lhs_scales != nullptr ? read_array<LhsScale>(lhs_scales, lhs_quant_index)
                                                                  : static_cast<LhsScale>(1);
                     const auto lhs_zero_point = lhs_zero_points != nullptr
                         ? read_array<LhsZeroPoint>(lhs_zero_points, lhs_quant_index)
                         : static_cast<LhsZeroPoint>(0);
 
-                    const auto rhs_data_index = x * (k_chunk_count * k_chunk_length) + i;
-                    const auto rhs_quant_index = (x / rhs_quant_height) * rhs_num_quant_per_row + i / rhs_quant_width;
+                    const auto rhs_data_index = i_n * (k_chunk_count * k_chunk_length) + i;
+                    const auto rhs_quant_index = (i_n / rhs_quant_height) * rhs_num_quant_per_row + i / rhs_quant_width;
                     const auto rhs_value = read_array<RhsData>(rhs_data, rhs_data_index);
                     const auto rhs_scale = rhs_scales != nullptr ? read_array<RhsScale>(rhs_scales, rhs_quant_index)
                                                                  : static_cast<RhsScale>(1);
@@ -235,19 +241,19 @@ std::vector<uint8_t> indirect_matmul_nt_t_quantized(
             }
 
             if (bias_data != nullptr) {
-                const auto bias_value = read_array<BiasData>(bias_data, x);
+                const auto bias_value = read_array<BiasData>(bias_data, i_n);
                 const auto bias_scale = bias_scales != nullptr
-                    ? read_array<BiasScale>(bias_scales, x / bias_quant_width)
+                    ? read_array<BiasScale>(bias_scales, i_n / bias_quant_width)
                     : static_cast<BiasScale>(1);
                 const auto bias_zero_point = bias_zero_points != nullptr
-                    ? read_array<BiasZeroPoint>(bias_zero_points, x / bias_quant_width)
+                    ? read_array<BiasZeroPoint>(bias_zero_points, i_n / bias_quant_width)
                     : static_cast<BiasZeroPoint>(0);
 
                 acc += (static_cast<DstData>(bias_value) - static_cast<DstData>(bias_zero_point)) *
                     static_cast<DstData>(bias_scale);
             }
 
-            write_array<DstData>(dst.data(), y * n + x, acc);
+            write_array<DstData>(dst.data(), i_m * n + i_n, acc);
         }
     }
 
@@ -331,7 +337,8 @@ matmul_nt_t_quantized<int8_t, float, int32_t, int8_t, float, int32_t, int32_t, f
 template std::vector<uint8_t>
 indirect_matmul_nt_t_quantized<int8_t, float, int32_t, int8_t, float, int32_t, int32_t, float, int32_t, float>(
     size_t m, size_t n, size_t k_chunk_count, size_t k_chunk_length,  //
-    const void* const* lhs_ptrs, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_height,
+    const void* const* lhs_ptrs, uintptr_t lhs_offset, const void* lhs_padding, const void* lhs_scales,
+    const void* lhs_zero_points, size_t lhs_quant_height,
     size_t lhs_quant_width,  //
     const void* rhs_data, const void* rhs_scales, const void* rhs_zero_points, size_t rhs_quant_height,
     size_t rhs_quant_width,  //

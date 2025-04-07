@@ -16,6 +16,7 @@
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <unordered_map>
 #include <vector>
 
 #include "kai/kai_common.h"
@@ -336,6 +337,8 @@ struct TestReference {
     Buffer lhs_qai8_zero_points;
     IndirectionBuffer lhs_qai8_indirect;
     Buffer lhs_qai8_indirect_packed;
+    Buffer lhs_qai8_indirect_padding;
+    size_t lhs_qai8_indirect_offset;
 
     Buffer rhs_qsi8;
     Buffer rhs_scales;
@@ -380,30 +383,59 @@ static const kai_imatmul_clamp_qai8_qai8p_qsi8cxp_ukernel
         .run_matmul = kai_run_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
 };
 
-// M, N, K, k_chunk_length, pack.m, pack.n, pack.k
-using TestDataId = std::tuple<size_t, size_t, size_t, size_t, size_t, size_t, size_t>;
+static constexpr int8_t padding_value = 0;
+
+// Functionality for hashing generated test data.
+// This is particularly useful for portion testing
+// which reuses the exact same data for all portions
+struct TestDataId {
+    MatMulShape shape;
+    MatMulShape shape_pack;
+    size_t chunk_len;
+    bool pad_testing;
+
+private:
+    friend bool operator==(const TestDataId& lhs, const TestDataId& rhs) {
+        return                                   //
+            lhs.shape == rhs.shape &&            //
+            lhs.shape_pack == rhs.shape_pack &&  //
+            lhs.chunk_len == rhs.chunk_len &&    //
+            lhs.pad_testing == rhs.pad_testing;
+    }
+};
+
+struct HashTestDataId {
+    size_t operator()(const TestDataId& id) const {
+        return                                          //
+            (HashMatMulShape{}(id.shape) << 0) ^        //
+            (HashMatMulShape{}(id.shape_pack) << 1) ^   //
+            (std::hash<size_t>{}(id.chunk_len) << 2) ^  //
+            (std::hash<bool>{}(id.pad_testing) << 3);
+    }
+};
+
 // NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
-static std::map<TestDataId, TestReference> g_data;
+static std::unordered_map<TestDataId, TestReference, HashTestDataId> g_data;
 // NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
 /// Generate test reference data
-static const TestReference& get_test_reference(
-    const MatMulShape& shape, const MatMulShape& pack_shape, size_t k_chunk_len) {
+static const TestReference& get_test_reference(const TestDataId& test_data_id) {
     // ============================================================
     // Generates input and reference output data
     // ============================================================
 
     // Attempt to find test data in cache
-    const TestDataId data_id{shape.m, shape.n, shape.k, k_chunk_len, pack_shape.m, pack_shape.n, pack_shape.k};
-    const auto data_it = g_data.find(data_id);
+    const auto data_it = g_data.find(test_data_id);
     if (data_it != g_data.end()) {
         return data_it->second;
     }
 
+    const auto& [shape, pack_shape, k_chunk_len, pad_testing] = test_data_id;
+
     // Generates the input data in floating-point.
-    const auto lhs_f32 = fill_random<float>(shape.m * shape.k, seed);
-    const auto rhs_f32 = fill_random<float>(shape.k * shape.n, seed);
-    const auto bias_f32 = fill_random<float>(shape.n, seed);
+    Buffer lhs_f32 = fill_random<float>(shape.m * shape.k, seed);
+    const Buffer rhs_f32 = fill_random<float>(shape.k * shape.n, seed);
+    const Buffer bias_f32 = fill_random<float>(shape.n, seed);
 
     // Quantizes the input data.
     //   * LHS: 8-bit asymmetric per-matrix quantization.
@@ -417,18 +449,26 @@ static const TestReference& get_test_reference(
     const auto lhs_scale = read_array<float>(lhs_qai8_scales.data(), 0);
     const auto lhs_zero_point = read_array<int32_t>(lhs_qai8_zero_points.data(), 0);
 
-    IndirectionBuffer lhs_qai8_indirect;
-
     const size_t k_chunk_count = shape.k / k_chunk_len;
     assert(k_chunk_count * k_chunk_len == shape.k);
 
     // Setup an indirection buffer, where each "row" contains `k_chunk_count`
     // pointers to chunks of length `k_chunk_len` in the input_buffer
+    IndirectionBuffer lhs_qai8_indirect(shape.m * k_chunk_count);
+    Buffer lhs_padding(k_chunk_len, padding_value);
     for (size_t m_i = 0; m_i < shape.m; ++m_i) {
         for (size_t k_chunk_idx = 0; k_chunk_idx < k_chunk_count; ++k_chunk_idx) {
-            lhs_qai8_indirect.push_back(&lhs_qai8.at(m_i * shape.k + k_chunk_idx * k_chunk_len));
+            const size_t idx = m_i * k_chunk_count + k_chunk_idx;
+            if (pad_testing and m_i == 0) {
+                // Push padding pointers for first row
+                lhs_qai8_indirect[idx] = lhs_padding.data();
+            } else {
+                uintptr_t offset = m_i * shape.k + k_chunk_idx * k_chunk_len;
+                lhs_qai8_indirect[idx] = reinterpret_cast<uint8_t*>(offset);
+            }
         }
     }
+    const auto indirection_base = reinterpret_cast<uintptr_t>(lhs_qai8.data());
 
     // Reorder indirection pointers to layout the packing kernel expectes
     Buffer lhs_qai8_indirect_packed = reorder_block<const void*>(
@@ -449,11 +489,12 @@ static const TestReference& get_test_reference(
         quantize_symmetric_per_block<float, int32_t, float>(bias_f32.data(), bias_scales.data(), shape.n, 1, 1);
 
     // Runs the reference implementation of matmul to produce floating-point result.
+    const void* const* lhs_iptr = reinterpret_cast<const void* const*>(lhs_qai8_indirect.data());
     const auto ref_dst_f32 =
         indirect_matmul_nt_t_quantized<int8_t, float, int32_t, int8_t, float, int32_t, int32_t, float, int32_t, float>(
-            shape.m, shape.n, k_chunk_count, k_chunk_len,  // matmul shape
-            reinterpret_cast<const void* const*>(lhs_qai8_indirect.data()), &lhs_scale,
-            &lhs_zero_point,                                 // LHS, scaling factor and zero point
+            shape.m, shape.n, k_chunk_count, k_chunk_len,    // matmul shape
+            lhs_iptr, indirection_base, lhs_padding.data(),  // LHS indirection, offset and padding
+            &lhs_scale, &lhs_zero_point,                     // LHS, scaling factor and zero point
             shape.m, shape.k,                                // LHS quantization window shape
             rhs_qsi8_t.data(), rhs_scales.data(), nullptr,   // RHS scaling factors
             1, shape.k,                                      // RHS quantization window shape
@@ -505,7 +546,7 @@ static const TestReference& get_test_reference(
         rhs_qsi8_t.data(), rhs_scales.data(), lhs_scale, dst_scale, bias_qsi32.data(), lhs_zero_point, shape.n, shape.k,
         pack_shape.n, pack_shape.k);
 
-    const TestReference& reference = g_data[data_id] = {
+    const TestReference& reference = g_data[test_data_id] = {
         .clamp = {.min = dst_qai8_clamp_min, .max = dst_qai8_clamp_max},
 
         .qa_lhs = {.scale = lhs_scale, .zero_point = lhs_zero_point},
@@ -516,6 +557,8 @@ static const TestReference& get_test_reference(
         .lhs_qai8_zero_points = std::move(lhs_qai8_zero_points),
         .lhs_qai8_indirect = std::move(lhs_qai8_indirect),
         .lhs_qai8_indirect_packed = std::move(lhs_qai8_indirect_packed),
+        .lhs_qai8_indirect_padding = std::move(lhs_padding),
+        .lhs_qai8_indirect_offset = indirection_base,
 
         .rhs_qsi8 = std::move(rhs_qsi8),
         .rhs_scales = std::move(rhs_scales),
@@ -715,7 +758,8 @@ TEST_P(MatMulQuantizedTest, EndToEnd) {
         GTEST_SKIP() << "CPU features are not supported by current CPU";
     }
 
-    TestReference reference = get_test_reference(shape, variant.acc_pack, 1);
+    TestDataId test_data_id{shape, variant.acc_pack, shape.k, false};
+    const TestReference& reference = get_test_reference(test_data_id);
 
     // Check scheduling parameters
     const auto imp_mr = variant.matmul.get_mr();
@@ -762,13 +806,11 @@ static Buffer lhs_pack(
     const size_t input_offset = portion.start_row() * k_chunk.count;
     const size_t dst_offset = variant.get_packed_lhs_offset(portion.start_row(), k_chunk.count, k_chunk.length);
 
-    // TODO: `lhs_offset` is currently not being excercized!
-    // TODO: Ensure that `zero` pointers are tested
     variant.pack(
         portion.height(), k_chunk.count, k_chunk.length,  // Dimensions
         indirection_pointer + input_offset,               // Indirection input
-        0,                                                // chunk offset
-        nullptr,                                          // padding pointer
+        reference.lhs_qai8_indirect_offset,               // chunk offset
+        reference.lhs_qai8_indirect_padding.data(),       // padding pointer
         packed.data() + dst_offset);
 
     return packed;
@@ -854,7 +896,9 @@ TEST_P(IndirectMatMulQuantizedTest, EndToEnd) {
         GTEST_SKIP() << "CPU features are not supported by current CPU";
     }
 
-    const TestReference& reference = get_test_reference(shape, variant.acc_pack, k_chunk.length);
+    // Toggle padding testst when LHS has more than one row
+    TestDataId test_data_id{shape, variant.acc_pack, k_chunk.length, shape.m > 1};
+    const TestReference& reference = get_test_reference(test_data_id);
     const Rect portion = output_portion.compute_portion(shape.m, shape.n, variant.acc_step.m, variant.acc_step.n);
 
     Buffer packed_lhs = imatmul::lhs_pack(variant.lhs_pack, portion, reference, shape.m, k_chunk);

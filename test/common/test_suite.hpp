@@ -76,6 +76,22 @@ struct MatMulShape {
     size_t m{};  ///< LHS height.
     size_t n{};  ///< RHS width.
     size_t k{};  ///< LHS width and RHS height.
+private:
+    friend bool operator==(const MatMulShape& lhs, const MatMulShape& rhs) {
+        return                 //
+            lhs.m == rhs.m &&  //
+            lhs.n == rhs.n &&  //
+            lhs.k == rhs.k;
+    }
+};
+
+struct HashMatMulShape {
+    size_t operator()(const kai::test::MatMulShape& shape) const {
+        return                                     //
+            (std::hash<size_t>{}(shape.m) << 0) ^  //
+            (std::hash<size_t>{}(shape.n) << 1) ^  //
+            (std::hash<size_t>{}(shape.k) << 2);
+    }
 };
 
 /// Matrix multiplication test information.

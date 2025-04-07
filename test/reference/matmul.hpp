@@ -122,7 +122,12 @@ std::vector<uint8_t> matmul_clamp_nt_t(
 /// @param[in] m The LHS and output height.
 /// @param[in] n The RHS height and output width.
 /// @param[in] k The LHS and RHS width.
+/// @param[in] k_chunk_count Number of K chunk pointers per row in lhs_idata matrix
+/// @param[in] k_chunk_length Lenght of each K chunk pointed to in lhs_idata matrix
 /// @param[in] lhs_data The LHS data matrix.
+/// @param[in] lhs_idata The indirect LHS data matrix.
+/// @param[in] lhs_offset The indirection LHS data matrix offset, applied to non-padding pointers
+/// @parma[in] lhs_padding The indirection LHS padding chunk pointer
 /// @param[in] lhs_scales The LHS quantization scales matrix.
 /// @param[in] lhs_zero_points The LHS quantization zero points matrix.
 /// @param[in] lhs_quant_width The LHS quantization block width.
@@ -161,7 +166,8 @@ template <
     typename RhsZeroPoint, typename BiasData, typename BiasScale, typename BiasZeroPoint, typename DstData>
 std::vector<uint8_t> indirect_matmul_nt_t_quantized(
     size_t m, size_t n, size_t k_chunk_count, size_t k_chunk_length,  //
-    const void* const* lhs_ptrs, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_height,
+    const void* const* lhs_idata, uintptr_t lhs_offset, const void* lhs_padding, const void* lhs_scales,
+    const void* lhs_zero_points, size_t lhs_quant_height,
     size_t lhs_quant_width,  //
     const void* rhs_data, const void* rhs_scales, const void* rhs_zero_points, size_t rhs_quant_height,
     size_t rhs_quant_width,  //
