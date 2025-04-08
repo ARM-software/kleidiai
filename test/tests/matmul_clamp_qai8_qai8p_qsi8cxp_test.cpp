@@ -305,8 +305,7 @@ const std::array gemv_variants = {
     },
 };
 
-constexpr uint32_t seed = 0;               ///< Random seed used for tests
-constexpr float output_clamp_rate = 0.1F;  ///< Clamping range in ration of output
+constexpr uint32_t seed = 0;  ///< Random seed used for tests
 
 /// Value range
 template <typename T>
@@ -393,14 +392,16 @@ struct TestDataId {
     MatMulShape shape_pack;
     size_t chunk_len;
     bool pad_testing;
+    float clamp_ratio;
 
 private:
     friend bool operator==(const TestDataId& lhs, const TestDataId& rhs) {
-        return                                   //
-            lhs.shape == rhs.shape &&            //
-            lhs.shape_pack == rhs.shape_pack &&  //
-            lhs.chunk_len == rhs.chunk_len &&    //
-            lhs.pad_testing == rhs.pad_testing;
+        return                                     //
+            lhs.shape == rhs.shape &&              //
+            lhs.shape_pack == rhs.shape_pack &&    //
+            lhs.chunk_len == rhs.chunk_len &&      //
+            lhs.pad_testing == rhs.pad_testing &&  //
+            lhs.clamp_ratio == rhs.clamp_ratio;
     }
 };
 
@@ -410,7 +411,8 @@ struct HashTestDataId {
             (HashMatMulShape{}(id.shape) << 0) ^        //
             (HashMatMulShape{}(id.shape_pack) << 1) ^   //
             (std::hash<size_t>{}(id.chunk_len) << 2) ^  //
-            (std::hash<bool>{}(id.pad_testing) << 3);
+            (std::hash<bool>{}(id.pad_testing) << 3) ^  //
+            (std::hash<float>{}(id.clamp_ratio) << 4);
     }
 };
 
@@ -430,7 +432,7 @@ static const TestReference& get_test_reference(const TestDataId& test_data_id) {
         return data_it->second;
     }
 
-    const auto& [shape, pack_shape, k_chunk_len, pad_testing] = test_data_id;
+    const auto& [shape, pack_shape, k_chunk_len, pad_testing, clamp_ratio] = test_data_id;
 
     // Generates the input data in floating-point.
     Buffer lhs_f32 = fill_random<float>(shape.m * shape.k, seed);
@@ -520,8 +522,8 @@ static const TestReference& get_test_reference(const TestDataId& test_data_id) {
     const auto ref_dst_f32_max = reduce_max<float>(ref_dst_f32.data(), shape.m * shape.n);
     const auto ref_dst_f32_range = ref_dst_f32_max - ref_dst_f32_min;
 
-    const auto ref_dst_f32_clamp_min = ref_dst_f32_min + ref_dst_f32_range * output_clamp_rate / 2;
-    const auto ref_dst_f32_clamp_max = ref_dst_f32_max - ref_dst_f32_range * output_clamp_rate / 2;
+    const auto ref_dst_f32_clamp_min = ref_dst_f32_min + ref_dst_f32_range * clamp_ratio / 2;
+    const auto ref_dst_f32_clamp_max = ref_dst_f32_max - ref_dst_f32_range * clamp_ratio / 2;
     const auto dst_qai8_clamp_min =
         quantize_asymmetric<float, int8_t, int32_t>(ref_dst_f32_clamp_min, dst_scale, dst_zero_point);
     const auto dst_qai8_clamp_max =
@@ -718,28 +720,29 @@ static void test_matmul(
     compare_matmul_result(shape, output_area, imp_dst, reference.dst_qsi8_clamped);
 }
 
-using MatMulQuantizedTest = testing::TestWithParam<std::tuple<MatMulVariant, MatMulShape, MatrixPortion>>;
+using MatMulQuantizedTest = testing::TestWithParam<std::tuple<MatMulVariant, MatMulShape, MatrixPortion, float>>;
 using IndirectMatMulQuantizedTest =
-    testing::TestWithParam<std::tuple<IndirectMatMulVariant, MatMulShape, MatrixPortion, size_t>>;
+    testing::TestWithParam<std::tuple<IndirectMatMulVariant, MatMulShape, MatrixPortion, size_t, float>>;
 
 static std::string test_description(
     const MatMulVariant& variant,  //
     const MatMulShape& shape,      //
-    const MatrixPortion& portion) {
+    const MatrixPortion& portion, float clamp_ratio) {
     std::stringstream sstream;
     sstream << "Method_" << variant.name << "__M_"                                   //
             << shape.m << "__N_" << shape.n << "__K_" << shape.k                     //
             << "__PortionStartRow_" << static_cast<int>(portion.start_row() * 1000)  //
             << "__PortionStartCol_" << static_cast<int>(portion.start_col() * 1000)  //
             << "__PortionHeight_" << static_cast<int>(portion.height() * 1000)       //
-            << "__PortionWidth_" << static_cast<int>(portion.width() * 1000);
+            << "__PortionWidth_" << static_cast<int>(portion.width() * 1000)         //
+            << "__clamp_ratio_" << static_cast<int>(clamp_ratio * 100);
     return sstream.str();
 };
 
 static std::string test_description(
     const IndirectMatMulVariant& variant,  //
     const MatMulShape& shape,              //
-    const MatrixPortion& portion, size_t k_chunk_len) {
+    const MatrixPortion& portion, size_t k_chunk_len, float clamp_ratio) {
     std::stringstream sstream;
     sstream << "Method_" << variant.name << "__M_"                                   //
             << shape.m << "__N_" << shape.n << "__k_chunk_count_" << shape.k         //
@@ -747,18 +750,19 @@ static std::string test_description(
             << "__PortionStartCol_" << static_cast<int>(portion.start_col() * 1000)  //
             << "__PortionHeight_" << static_cast<int>(portion.height() * 1000)       //
             << "__PortionWidth_" << static_cast<int>(portion.width() * 1000)         //
-            << "__k_chunk_len_" << k_chunk_len;
+            << "__k_chunk_len_" << k_chunk_len                                       //
+            << "__clamp_ratio_" << static_cast<int>(clamp_ratio * 100);
     return sstream.str();
 };
 
 TEST_P(MatMulQuantizedTest, EndToEnd) {
-    const auto& [variant, shape, output_portion] = GetParam();
+    const auto& [variant, shape, output_portion, clamp_ratio] = GetParam();
 
     if (!variant.is_supported()) {
         GTEST_SKIP() << "CPU features are not supported by current CPU";
     }
 
-    TestDataId test_data_id{shape, variant.acc_pack, shape.k, false};
+    TestDataId test_data_id{shape, variant.acc_pack, shape.k, false, clamp_ratio};
     const TestReference& reference = get_test_reference(test_data_id);
 
     // Check scheduling parameters
@@ -878,8 +882,6 @@ static Buffer matmul(
         dst.data() + dst_offset,                                           // DST
         shape.n * sizeof(uint8_t), &requantization);
 
-    // TODO: Ensure `clamp` is tested
-
     return dst;
 }
 }  // namespace imatmul
@@ -888,7 +890,7 @@ TEST_P(IndirectMatMulQuantizedTest, EndToEnd) {
     /* This is a bit special, as shape.k must be k_chunk_len * k_chunk_count
      * so instead of inventing a new special kind of shape, simply multiply
      * with `k_chunk_len` here */
-    const auto& [variant, shape_k_chunk, output_portion, k_chunk_len] = GetParam();
+    const auto& [variant, shape_k_chunk, output_portion, k_chunk_len, clamp_ratio] = GetParam();
     const KChunk k_chunk{shape_k_chunk.k, k_chunk_len};
     MatMulShape shape{shape_k_chunk.m, shape_k_chunk.n, k_chunk.count * k_chunk.length};
 
@@ -897,7 +899,7 @@ TEST_P(IndirectMatMulQuantizedTest, EndToEnd) {
     }
 
     // Toggle padding testst when LHS has more than one row
-    TestDataId test_data_id{shape, variant.acc_pack, k_chunk.length, shape.m > 1};
+    TestDataId test_data_id{shape, variant.acc_pack, k_chunk.length, shape.m > 1, clamp_ratio};
     const TestReference& reference = get_test_reference(test_data_id);
     const Rect portion = output_portion.compute_portion(shape.m, shape.n, variant.acc_step.m, variant.acc_step.n);
 
@@ -959,12 +961,14 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(   0,    0, 0.25, 0.25), // Top-left corner.
             MatrixPortion(0.75, 0.75,    1,    1), // Bottom-right corner.
             // clang-format on
-        })),
+        }),
+        testing::ValuesIn(std::initializer_list<float>{0.0F, 0.1F, 0.5F})),
     [](const auto& info) -> std::string {
         return test_description(
             std::get<MatMulVariant>(info.param),  //
             std::get<MatMulShape>(info.param),    //
-            std::get<MatrixPortion>(info.param));
+            std::get<MatrixPortion>(info.param),  //
+            std::get<float>(info.param));
     });
 
 INSTANTIATE_TEST_SUITE_P(
@@ -996,12 +1000,15 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0,   0, 1, .5), // Left half
             MatrixPortion(0, .25, 1, .5)  // Middle half
             // clang-format on
-        })),
+        }),
+        // Clamp range
+        testing::ValuesIn(std::initializer_list<float>{0.0F, 0.1F, 0.5F})),
     [](const auto& info) -> std::string {
         return test_description(
             std::get<MatMulVariant>(info.param),  //
             std::get<MatMulShape>(info.param),    //
-            std::get<MatrixPortion>(info.param));
+            std::get<MatrixPortion>(info.param),  //
+            std::get<float>(info.param));
     });
 
 INSTANTIATE_TEST_SUITE_P(
@@ -1020,12 +1027,15 @@ INSTANTIATE_TEST_SUITE_P(
             // clang-format on
         }),
         // k_chunk_len
-        testing::ValuesIn(std::initializer_list<size_t>{1, 2, 3, 4, 8, 11, 32})),
+        testing::ValuesIn(std::initializer_list<size_t>{1, 2, 3, 4, 8, 11, 32}),
+        // Clamp range
+        testing::ValuesIn(std::initializer_list<float>{0.0F, 0.1F, 0.5F})),
     [](const auto& info) -> std::string {
         return test_description(
             std::get<IndirectMatMulVariant>(info.param),  //
             std::get<MatMulShape>(info.param),            //
             std::get<MatrixPortion>(info.param),          //
-            std::get<size_t>(info.param));
+            std::get<size_t>(info.param),                 //
+            std::get<float>(info.param));
     });
 }  // namespace kai::test
