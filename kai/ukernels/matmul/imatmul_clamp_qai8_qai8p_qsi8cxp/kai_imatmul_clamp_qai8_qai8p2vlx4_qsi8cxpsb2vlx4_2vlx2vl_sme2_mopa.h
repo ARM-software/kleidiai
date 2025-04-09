@@ -32,27 +32,6 @@ size_t kai_get_m_step_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_
 /// @return The n step value.
 size_t kai_get_n_step_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa(void);
 
-/// Gets mr value.
-///
-/// This is the packing parameter which must be used to pack the LHS matrix.
-///
-/// @return The mr value.
-size_t kai_get_mr_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa(void);
-
-/// Gets nr value.
-///
-/// This is the packing parameter which must be used to pack the RHS matrix.
-///
-/// @return The nr value.
-size_t kai_get_nr_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa(void);
-
-/// Gets kr value.
-///
-/// This is the packing parameter which must be used to pack the LHS and RHS matrix.
-///
-/// @return The kr value.
-size_t kai_get_kr_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa(void);
-
 /// Gets the offset in bytes to the data element in the packed LHS matrix buffer.
 ///
 /// @param[in] m_idx Row index in the unpacked LHS matrix. Must be a multiple of `m_step`.

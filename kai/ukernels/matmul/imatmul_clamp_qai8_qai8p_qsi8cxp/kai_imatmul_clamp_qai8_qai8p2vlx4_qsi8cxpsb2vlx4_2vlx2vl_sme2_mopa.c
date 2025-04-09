@@ -30,18 +30,6 @@ size_t kai_get_n_step_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_
     return kai_nr * kai_get_sme_vector_length_u32();
 }
 
-size_t kai_get_mr_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa(void) {
-    return kai_mr * kai_get_sme_vector_length_u32();
-}
-
-size_t kai_get_nr_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa(void) {
-    return kai_nr * kai_get_sme_vector_length_u32();
-}
-
-size_t kai_get_kr_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa(void) {
-    return kai_kr;
-}
-
 size_t kai_get_lhs_packed_offset_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa(
     size_t m_idx, size_t k_chunk_count, size_t k_chunk_length) {
     KAI_ASSUME(m_idx % kai_get_m_step_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa() == 0);

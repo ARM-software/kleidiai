@@ -123,9 +123,6 @@ struct MatMulKernel {
 struct MatMulIndirectKernel {
     std::function<size_t(void)> get_m_step;
     std::function<size_t(void)> get_n_step;
-    std::function<size_t(void)> get_mr;
-    std::function<size_t(void)> get_nr;
-    std::function<size_t(void)> get_kr;
     std::function<size_t(size_t m_idx, size_t k_chunk_count, size_t k_chunk_length)> get_packed_lhs_offset;
     std::function<size_t(size_t n_idx, size_t k_chunk_count, size_t k_chunk_length)> get_packed_rhs_offset;
     std::function<size_t(size_t m_idx, size_t n_idx, size_t dst_row_stride)> get_dst_offset;
@@ -252,9 +249,6 @@ const std::array indirect_gemm_variants = {
             MatMulIndirectKernel{
                 .get_m_step = kai_get_m_step_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
                 .get_n_step = kai_get_n_step_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
-                .get_mr = kai_get_mr_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
-                .get_nr = kai_get_nr_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
-                .get_kr = kai_get_kr_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
                 .get_packed_lhs_offset =
                     kai_get_lhs_packed_offset_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
                 .get_packed_rhs_offset =
@@ -370,9 +364,6 @@ static const kai_imatmul_clamp_qai8_qai8p_qsi8cxp_ukernel
     imatmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_sme2_dot_interface [[maybe_unused]] = {
         .get_m_step = kai_get_m_step_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
         .get_n_step = kai_get_n_step_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
-        .get_mr = kai_get_mr_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
-        .get_nr = kai_get_nr_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
-        .get_kr = kai_get_kr_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
         .get_lhs_packed_offset =
             kai_get_lhs_packed_offset_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
         .get_rhs_packed_offset =
@@ -654,7 +645,7 @@ static void compare_matmul_result(
     const MatMulShape& shape, const Rect& output_area, const Buffer& actual, const Buffer& reference) {
     size_t mismatches = 0;
     bool printed_row = false;
-    bool printed_mismatch = false;
+    std::ostringstream sstream;
     for (size_t m_i = 0; m_i < shape.m; ++m_i) {
         for (size_t n_i = 0; n_i < shape.n; ++n_i) {
             const auto i = m_i * shape.n + n_i;
@@ -667,25 +658,20 @@ static void compare_matmul_result(
             const auto threshold = in_area ? 1 : 0;
             const bool mismatch = error > threshold;
             if (mismatch) {
-                if (not printed_mismatch) {
-                    std::cout << "Mismatch(es) found:\n";
-                    printed_mismatch = true;
-                }
                 if (not printed_row) {
-                    std::cout << " row=" << m_i;
-                    std::cout << "  ";
+                    sstream << " row=" << m_i << ", columns: ";
                     printed_row = true;
                 }
-                std::cout << n_i << ", ";
+                sstream << n_i << ", ";
             }
             mismatches += static_cast<size_t>(mismatch);
         }
         if (printed_row) {
-            std::cout << "\n";
+            sstream << "\n";
         }
         printed_row = false;
     }
-    ASSERT_EQ(mismatches, 0) << "There are mismatches between reference result actual result";
+    ASSERT_EQ(mismatches, 0) << "Mismatches between reference result and actual result:\n" << sstream.str();
 }
 
 /// Test MatMul of GEMM/GEMV like kernel

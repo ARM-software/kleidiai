@@ -17,9 +17,6 @@ extern "C" {
 /// Micro-kernel helper functions ("get" methods)
 typedef size_t (*kai_imatmul_clamp_qai8_qai8p_qsi8cxp_get_m_step_func_t)(void);
 typedef size_t (*kai_imatmul_clamp_qai8_qai8p_qsi8cxp_get_n_step_func_t)(void);
-typedef size_t (*kai_imatmul_clamp_qai8_qai8p_qsi8cxp_get_mr_func_t)(void);
-typedef size_t (*kai_imatmul_clamp_qai8_qai8p_qsi8cxp_get_nr_func_t)(void);
-typedef size_t (*kai_imatmul_clamp_qai8_qai8p_qsi8cxp_get_kr_func_t)(void);
 typedef size_t (*kai_imatmul_clamp_qai8_qai8p_qsi8cxp_get_lhs_packed_offset_func_t)(
     size_t m_idx, size_t k_chunk_count, size_t k_chunk_length);
 typedef size_t (*kai_imatmul_clamp_qai8_qai8p_qsi8cxp_get_rhs_packed_offset_func_t)(
@@ -37,9 +34,6 @@ typedef void (*kai_imatmul_clamp_qai8_qai8p_qsi8cxp_run_imatmul_func_t)(
 struct kai_imatmul_clamp_qai8_qai8p_qsi8cxp_ukernel {
     kai_imatmul_clamp_qai8_qai8p_qsi8cxp_get_m_step_func_t get_m_step;
     kai_imatmul_clamp_qai8_qai8p_qsi8cxp_get_n_step_func_t get_n_step;
-    kai_imatmul_clamp_qai8_qai8p_qsi8cxp_get_mr_func_t get_mr;
-    kai_imatmul_clamp_qai8_qai8p_qsi8cxp_get_nr_func_t get_nr;
-    kai_imatmul_clamp_qai8_qai8p_qsi8cxp_get_kr_func_t get_kr;
     kai_imatmul_clamp_qai8_qai8p_qsi8cxp_get_lhs_packed_offset_func_t get_lhs_packed_offset;
     kai_imatmul_clamp_qai8_qai8p_qsi8cxp_get_rhs_packed_offset_func_t get_rhs_packed_offset;
     kai_imatmul_clamp_qai8_qai8p_qsi8cxp_get_dst_offset_func_t get_dst_offset;
