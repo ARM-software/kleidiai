@@ -8,6 +8,7 @@ load(
     "//:kai_defs.bzl",
     "kai_cpu_bf16",
     "kai_cpu_fp16",
+    "kai_cpu_neon",
     "kai_cpu_sme",
     "kai_cxx_library",
     "kai_cxxopts",
@@ -50,7 +51,7 @@ kai_cxx_library(
     name = "reference",
     srcs = glob(["reference/*.cpp"]),
     hdrs = glob(["reference/*.hpp"]),
-    cpu_uarch = kai_cpu_bf16() + kai_cpu_fp16(),
+    cpu_uarch = kai_cpu_neon(),
     deps = [
         ":common",
     ],
@@ -59,7 +60,7 @@ kai_cxx_library(
 cc_test(
     name = "kleidiai_test",
     srcs = glob(["tests/*.cpp"]),
-    copts = kai_cxxopts(kai_cpu_bf16() + kai_cpu_fp16()),
+    copts = kai_cxxopts(kai_cpu_neon()),
     includes = [],
     linkstatic = True,
     visibility = ["//visibility:public"],

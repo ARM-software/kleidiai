@@ -355,7 +355,10 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsi4cx) {
     size_t scale_offset = rhs_start_row * sizeof(float);
 
     std::vector<uint8_t> imp_packed_rhs(imp_packed_rhs_size);
-    const kai_rhs_pack_nxk_qsi4cxp_qs4cxs1s0_params params{.lhs_zero_point = 1, .rhs_zero_point = 0};
+    kai_rhs_pack_nxk_qsi4cxp_qs4cxs1s0_params params{};
+    params.lhs_zero_point = 1;
+    params.rhs_zero_point = 0;
+
     ukernel_variant.run_rhs_pack(
         1, rect.width() /* n */, K, nr, kr, sr, ref_rhs_qsi4_padded.data() + rhs_offset,
         reinterpret_cast<const float*>(ref_biases.data() + bias_offset),
@@ -480,7 +483,9 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsu4cx) {
     size_t scale_offset = rhs_start_row * sizeof(float);
 
     std::vector<uint8_t> imp_packed_rhs(imp_packed_rhs_size);
-    const kai_rhs_pack_nxk_qsi4cxp_qs4cxs1s0_params params{.lhs_zero_point = 1, .rhs_zero_point = 8};
+    kai_rhs_pack_nxk_qsi4cxp_qs4cxs1s0_params params{};
+    params.lhs_zero_point = 1;
+    params.rhs_zero_point = 8;
     ukernel_variant.run_rhs_pack(
         1, rect.width() /* n */, K, nr, kr, sr, ref_rhs_qsu4_padded.data() + rhs_offset,
         reinterpret_cast<const float*>(ref_biases.data() + bias_offset),
@@ -612,7 +617,9 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsi4cx) {
     ASSERT_EQ(rhs_packed_offset, rhs_matmul_offset);
 
     std::vector<uint8_t> imp_packed_rhs(imp_packed_rhs_size);
-    const kai_rhs_pack_kxn_qsi4cxp_qs4cxs1s0_params params{.lhs_zero_point = 1, .rhs_zero_point = 0};
+    kai_rhs_pack_kxn_qsi4cxp_qs4cxs1s0_params params{};
+    params.lhs_zero_point = 1;
+    params.rhs_zero_point = 0;
     ukernel_variant.run_rhs_pack(
         1, N, K, nr, kr, sr, ref_rhs_qsi4_padded.data(), reinterpret_cast<const float*>(ref_biases.data()),
         reinterpret_cast<const float*>(ref_rhs_scales.data()), imp_packed_rhs.data(), 0, &params);
@@ -743,7 +750,9 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsu4cx) {
     ASSERT_EQ(rhs_packed_offset, rhs_matmul_offset);
 
     std::vector<uint8_t> imp_packed_rhs(imp_packed_rhs_size);
-    const kai_rhs_pack_kxn_qsi4cxp_qs4cxs1s0_params params{.lhs_zero_point = 1, .rhs_zero_point = 8};
+    kai_rhs_pack_kxn_qsi4cxp_qs4cxs1s0_params params{};
+    params.lhs_zero_point = 1;
+    params.rhs_zero_point = 8;
     ukernel_variant.run_rhs_pack(
         1, N, K, nr, kr, sr, ref_rhs_qsu4_padded.data(), reinterpret_cast<const float*>(ref_biases.data()),
         reinterpret_cast<const float*>(ref_rhs_scales.data()), imp_packed_rhs.data(), 0, &params);

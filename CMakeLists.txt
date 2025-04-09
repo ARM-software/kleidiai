@@ -304,16 +304,18 @@ if(KLEIDIAI_BUILD_TESTS)
 
     target_compile_options(kleidiai_test_framework
         PUBLIC ${KLEIDIAI_WARNING_FLAGS}
-        PUBLIC $<$<NOT:$<BOOL:${MSVC}>>:-march=armv8.2-a+fp16+bf16${KLEIDIAI_INTERNAL_EXTRA_ARCH}>
+        PUBLIC $<$<NOT:$<BOOL:${MSVC}>>:-march=armv8-a${KLEIDIAI_INTERNAL_EXTRA_ARCH}>
     )
 
     if(MSVC)
         set_source_files_properties(test/common/bfloat16_asm.S PROPERTIES LANGUAGE ASM_MARMASM)
         set_source_files_properties(test/common/float16_asm.S PROPERTIES LANGUAGE ASM_MARMASM)
         set_source_files_properties(test/common/round_asm.S PROPERTIES LANGUAGE ASM_MARMASM)
+    else()
+        set_source_files_properties(test/common/float16_asm.S PROPERTIES COMPILE_OPTIONS "-march=armv8.2-a+fp16${KLEIDIAI_INTERNAL_EXTRA_ARCH}")
+        set_source_files_properties(test/common/bfloat16_asm.S PROPERTIES COMPILE_OPTIONS "-march=armv8.2-a+fp16+bf16${KLEIDIAI_INTERNAL_EXTRA_ARCH}")
+        set_source_files_properties(test/common/sme.cpp PROPERTIES COMPILE_OPTIONS "-fno-tree-vectorize;-march=armv8.2-a+sve${KLEIDIAI_INTERNAL_EXTRA_ARCH}")
     endif()
-
-    set_source_files_properties(test/common/sme.cpp PROPERTIES COMPILE_OPTIONS "-fno-tree-vectorize;-march=armv8.2-a+sve${KLEIDIAI_INTERNAL_EXTRA_ARCH}")
 
     target_link_libraries(kleidiai_test_framework
         PUBLIC  kleidiai
@@ -343,6 +345,7 @@ if(KLEIDIAI_BUILD_TESTS)
         set_source_files_properties(
             test/tests/matmul_clamp_f32_bf16p_bf16p_test.cpp
             test/tests/matmul_clamp_f16_bf16p_bf16p_test.cpp
+            test/tests/matmul_clamp_f32_qai8dxp_qsi4cxp_test.cpp
             test/tests/matmul_test.cpp
             PROPERTIES COMPILE_FLAGS "-Wpedantic")
     endif()
