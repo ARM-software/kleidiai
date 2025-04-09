@@ -45,7 +45,7 @@ size_t kai_get_lhs_packed_size_lhs_imatmul_pack_x8p2vlx4_x8p_sme(
 
 void kai_run_lhs_imatmul_pack_x8p2vlx4_x8p_sme(
     size_t m, size_t k_chunk_count, size_t k_chunk_length, const void* const* lhs_ptrs, size_t lhs_ptr_offset,
-    const void* zero, void* lhs_packed) {
+    const void* pad_ptr, void* lhs_packed) {
     KAI_ASSUME(lhs_ptrs != NULL);
     KAI_ASSUME(lhs_packed != NULL);
 
@@ -64,7 +64,7 @@ void kai_run_lhs_imatmul_pack_x8p2vlx4_x8p_sme(
             for (size_t y = 0; y < height; y += 1) {
                 KAI_ASSERT(i_k_chunk + (i_m + y) * k_chunk_count < m * k_chunk_count);
                 in[y] = *(lhs_ptrs + i_m * k_chunk_count + i_k_chunk * m_step + y);
-                if (in[y] != zero) {
+                if (in[y] != pad_ptr) {
                     in[y] += lhs_ptr_offset;
                 }
             }
