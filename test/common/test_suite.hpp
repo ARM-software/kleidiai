@@ -6,14 +6,9 @@
 
 #pragma once
 
-#include <gtest/gtest.h>
-
 #include <cstddef>
 #include <functional>
 #include <string_view>
-#include <tuple>
-
-#include "matrix_portion.hpp"
 
 // clang-format off
 #define UKERNEL_MATMUL_VARIANT(name)          \
@@ -71,35 +66,5 @@ struct UkernelPackVariant {
     UkernelVariant<T> ukernel;
     P pack_interface;
 };
-/// Matrix multiplication shape.
-struct MatMulShape {
-    size_t m{};  ///< LHS height.
-    size_t n{};  ///< RHS width.
-    size_t k{};  ///< LHS width and RHS height.
-
-    struct Hash {
-        size_t operator()(const kai::test::MatMulShape& shape) const {
-            return                                     //
-                (std::hash<size_t>{}(shape.m) << 0) ^  //
-                (std::hash<size_t>{}(shape.n) << 1) ^  //
-                (std::hash<size_t>{}(shape.k) << 2);
-        }
-    };
-
-private:
-    friend bool operator==(const MatMulShape& lhs, const MatMulShape& rhs) {
-        return                 //
-            lhs.m == rhs.m &&  //
-            lhs.n == rhs.n &&  //
-            lhs.k == rhs.k;
-    }
-};
-
-/// Matrix multiplication test information.
-using MatMulTestParams = std::tuple<size_t, MatMulShape>;
-using MatMulTestPortionedParams = std::tuple<size_t, MatMulShape, MatrixPortion>;
-using MatMulTestPortionedParamsWithBias = std::tuple<size_t, MatMulShape, MatrixPortion, bool>;
-
-class UkernelVariantTest : public ::testing::TestWithParam<MatMulTestParams> {};
 
 }  // namespace kai::test

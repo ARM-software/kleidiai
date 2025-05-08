@@ -6,8 +6,7 @@
 
 #include "matmul_test_common.hpp"
 
-#include <iostream>
-#include <ostream>
+#include <sstream>
 
 namespace kai::test {
 
@@ -34,4 +33,20 @@ void PrintTo(const MatrixPortion& portion, std::ostream* os) {
         << "__PortionHeight_" << static_cast<int>(portion.height() * 1000)       //
         << "__PortionWidth_" << static_cast<int>(portion.width() * 1000);
 }
+
+std::string test_description(
+    const std::string_view& name, const MatMulShape& shape, const MatrixPortion& portion, bool bias) {
+    std::ostringstream os;
+
+    os << "Method_" << name << "__";
+    PrintTo(shape, &os);
+    os << "__";
+    PrintTo(portion, &os);
+    if (bias) {
+        os << "__Bias";
+    }
+
+    return os.str();
+}
+
 }  // namespace kai::test

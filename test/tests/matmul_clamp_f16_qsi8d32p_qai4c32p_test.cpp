@@ -10,7 +10,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
-#include <limits>
 #include <sstream>
 #include <string>
 #include <tuple>
@@ -26,7 +25,7 @@
 #include "test/common/data_format.hpp"
 #include "test/common/float16.hpp"
 #include "test/common/int4.hpp"
-#include "test/common/matrix_portion.hpp"
+#include "test/common/matmul_test_common.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/round.hpp"
 #include "test/common/test_suite.hpp"
@@ -38,9 +37,6 @@
 #include "test/reference/quantize.hpp"
 
 namespace kai::test {
-
-static auto cpu_has_dotprod_and_fp16 = []() { return cpu_has_dotprod() && cpu_has_fp16(); };
-static auto cpu_has_i8mm_and_fp16 = []() { return cpu_has_i8mm() && cpu_has_fp16(); };
 
 static const std::array<UkernelVariant<kai_matmul_clamp_f16_qsi8d32p_qai4c32p_ukernel>, 2>
     variants_kai_matmul_clamp_f16_qsi8d32p_qai4c32p = {
@@ -231,14 +227,7 @@ INSTANTIATE_TEST_SUITE_P(
         const auto portion = std::get<2>(info.param);
         const auto has_bias = std::get<3>(info.param);
 
-        std::stringstream sstream;
-        sstream << name << "__M_" << shape.m << "__N_" << shape.n << "__K_" << shape.k   //
-                << "__PortionStartRow_" << static_cast<int>(portion.start_row() * 1000)  //
-                << "__PortionStartCol_" << static_cast<int>(portion.start_col() * 1000)  //
-                << "__PortionHeight_" << static_cast<int>(portion.height() * 1000)       //
-                << "__PortionWidth_" << static_cast<int>(portion.width() * 1000)         //
-                << (has_bias ? "__Bias" : "");
-        return sstream.str();
+        return test_description(name, shape, portion, has_bias);
     });
 
 }  // namespace kai::test

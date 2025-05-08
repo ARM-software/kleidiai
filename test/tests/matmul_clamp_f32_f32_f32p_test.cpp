@@ -26,6 +26,8 @@
 #include "test/common/buffer.hpp"
 #include "test/common/cpu_info.hpp"
 #include "test/common/data_type.hpp"
+#include "test/common/matmul_test_common.hpp"
+#include "test/common/matrix_portion.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/test_suite.hpp"
 #include "test/reference/clamp.hpp"
@@ -98,11 +100,12 @@ Buffer fill_random(size_t length, uint32_t seed) {
 }
 }  // namespace
 
-class MatMulTest_f32_f32_f32p : public ::testing::TestWithParam<MatMulTestParams> {};
+class MatMulTest_f32_f32_f32p : public ::testing::TestWithParam<MatMulTestPortionedParams> {};
 
 TEST_P(MatMulTest_f32_f32_f32p, EndToEnd)  // NOLINT(google-readability-avoid-underscore-in-googletest-name)
 {
-    const auto& [variant_idx, matmul_shape] = GetParam();
+    // No portion testing done at the moment, so skip the parameter
+    const auto& [variant_idx, matmul_shape, _] = GetParam();
     const auto& ukernel_variant = ukernel_variants.at(variant_idx);
 
     if (ukernel_variant.fn_is_supported && !ukernel_variant.fn_is_supported()) {
@@ -195,15 +198,17 @@ INSTANTIATE_TEST_SUITE_P(
             MatMulShape{1, 7, 74},    //
             MatMulShape{1, 800, 64},  //
             MatMulShape{1, 512, 130}  //
+            ),
+        testing::Values(                       //
+            MatrixPortion(0.0, 0.0, 1.0, 1.0)  //
             )),
     [](const auto& info) {
         const auto variant_idx = std::get<0>(info.param);
         const std::string name{ukernel_variants.at(variant_idx).name};
         const auto shape = std::get<MatMulShape>(info.param);
+        const auto portion = std::get<2>(info.param);
 
-        std::stringstream sstream;
-        sstream << name << "__M_" << shape.m << "__N_" << shape.n << "__K_" << shape.k;
-        return sstream.str();
+        return test_description(name, shape, portion, true);
     });
 
 }  // namespace kai::test

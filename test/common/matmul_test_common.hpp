@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <functional>
 #include <iosfwd>
+#include <string>
 #include <string_view>
 #include <tuple>
 
@@ -486,9 +487,16 @@ struct MatMulMethod {
 
 /// Matrix multiplication test information.
 using MatMulTestParams = std::tuple<MatMulMethod, MatMulShape, MatrixPortion>;
+using MatMulTestPortionedParams = std::tuple<size_t, MatMulShape, MatrixPortion>;
+using MatMulTestPortionedParamsWithBias = std::tuple<size_t, MatMulShape, MatrixPortion, bool>;
 
 /// Prints the test information.
 void PrintTo(const MatMulTestParams& param, std::ostream* os);
 void PrintTo(const MatMulShape& shape, std::ostream* os);
 void PrintTo(const MatrixPortion& portion, std::ostream* os);
+
+/// Generate test information.
+std::string test_description(
+    const std::string_view& name, const MatMulShape& shape, const MatrixPortion& portion, bool bias);
+
 }  // namespace kai::test

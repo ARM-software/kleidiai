@@ -10,7 +10,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
-#include <limits>
 #include <sstream>
 #include <string>
 #include <tuple>
@@ -23,6 +22,7 @@
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qai4c32p_qau4c32s0s1_f32_f32_f32_neon.h"
 #include "test/common/cpu_info.hpp"
 #include "test/common/int4.hpp"
+#include "test/common/matmul_test_common.hpp"
 #include "test/common/matrix_portion.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/round.hpp"
@@ -226,14 +226,7 @@ INSTANTIATE_TEST_SUITE_P(
         const auto portion = std::get<2>(info.param);
         const auto has_bias = std::get<3>(info.param);
 
-        std::stringstream sstream;
-        sstream << name << "__M_" << shape.m << "__N_" << shape.n << "__K_" << shape.k   //
-                << "__PortionStartRow_" << static_cast<int>(portion.start_row() * 1000)  //
-                << "__PortionStartCol_" << static_cast<int>(portion.start_col() * 1000)  //
-                << "__PortionHeight_" << static_cast<int>(portion.height() * 1000)       //
-                << "__PortionWidth_" << static_cast<int>(portion.width() * 1000)         //
-                << (has_bias ? "__Bias" : "");
-        return sstream.str();
+        return test_description(name, shape, portion, has_bias);
     });
 
 }  // namespace kai::test

@@ -31,6 +31,7 @@
 #include "test/common/cpu_info.hpp"
 #include "test/common/float16.hpp"
 #include "test/common/int4.hpp"
+#include "test/common/matmul_test_common.hpp"
 #include "test/common/matrix_portion.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/round.hpp"
@@ -92,10 +93,7 @@ static const std::array<
              clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot, cpu_has_sme2, lhs_quant_pack_qsi8d32p_f32_neon,
              rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon)}};
 
-using MatMulTestParams_withPortion = std::tuple<size_t, MatMulShape, MatrixPortion>;
-
-class UkernelVariantTest_withPortion : public ::testing::TestWithParam<MatMulTestParams_withPortion> {};
-class MatMulTest_f32_qsi8d32p_qsi4c32p : public UkernelVariantTest_withPortion {};
+class MatMulTest_f32_qsi8d32p_qsi4c32p : public ::testing::TestWithParam<MatMulTestPortionedParams> {};
 
 TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, Offset_RHS) {
     const auto& [variant_index, matmul_shape, portion] = GetParam();
@@ -295,13 +293,7 @@ INSTANTIATE_TEST_SUITE_P(
         const auto shape = std::get<MatMulShape>(info.param);
         const auto portion = std::get<2>(info.param);
 
-        std::stringstream sstream;
-        sstream << name << "__M_" << shape.m << "__N_" << shape.n << "__K_" << shape.k   //
-                << "__PortionStartRow_" << static_cast<int>(portion.start_row() * 1000)  //
-                << "__PortionStartCol_" << static_cast<int>(portion.start_col() * 1000)  //
-                << "__PortionHeight_" << static_cast<int>(portion.height() * 1000)       //
-                << "__PortionWidth_" << static_cast<int>(portion.width() * 1000);
-        return sstream.str();
+        return test_description(name, shape, portion, true);
     });
 
 }  // namespace kai::test

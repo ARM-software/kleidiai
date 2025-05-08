@@ -12,7 +12,6 @@
 
 #include "kai/kai_common.h"
 #include "test/common/memory.hpp"
-#include "test/common/round.hpp"
 
 namespace kai::test {
 

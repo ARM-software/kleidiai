@@ -35,6 +35,7 @@
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon.h"
 #include "test/common/cpu_info.hpp"
 #include "test/common/int4.hpp"
+#include "test/common/matmul_test_common.hpp"
 #include "test/common/matrix_portion.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/round.hpp"
@@ -48,9 +49,7 @@
 
 namespace kai::test {
 /// Matrix multiplication test information.
-using MatMulTestParams_with_portion = std::tuple<size_t, MatMulShape, MatrixPortion>;
 
-class UkernelVariantTest_with_portions : public ::testing::TestWithParam<MatMulTestParams_with_portion> {};
 enum class RhsPackType { NxK, KxN };
 
 using ukernel_rhs_pack_function = std::function<decltype(kai_run_rhs_pack_nxk_qsi4cxp_qs4cxs1s0)>;
@@ -203,7 +202,7 @@ static const std::array<UkernelVariantCustom<kai_matmul_clamp_f32_qai8dxp_qsi4cx
 
 };
 
-class MatMulTest_f32_qai8dxp_qsi4cxp : public UkernelVariantTest_with_portions {};
+class MatMulTest_f32_qai8dxp_qsi4cxp : public ::testing::TestWithParam<MatMulTestPortionedParams> {};
 
 TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, Offset_RHS) {
     const auto& [variant_index, matmul_shape, portion] = GetParam();
@@ -814,13 +813,7 @@ INSTANTIATE_TEST_SUITE_P(
         const auto shape = std::get<MatMulShape>(info.param);
         const auto portion = std::get<2>(info.param);
 
-        std::stringstream sstream;
-        sstream << name << "__M_" << shape.m << "__N_" << shape.n << "__K_" << shape.k << "__PortionStartRow_"
-                << static_cast<int>(portion.start_row() * 1000)                          //
-                << "__PortionStartCol_" << static_cast<int>(portion.start_col() * 1000)  //
-                << "__PortionHeight_" << static_cast<int>(portion.height() * 1000)       //
-                << "__PortionWidth_" << static_cast<int>(portion.width() * 1000);
-        return sstream.str();
+        return test_description(name, shape, portion, true);
     });
 
 }  // namespace kai::test

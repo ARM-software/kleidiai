@@ -25,6 +25,7 @@
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_qsi8cxp_qsi8cx_neon.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon.h"
 #include "test/common/cpu_info.hpp"
+#include "test/common/matmul_test_common.hpp"
 #include "test/common/matrix_portion.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/test_suite.hpp"
@@ -354,13 +355,7 @@ INSTANTIATE_TEST_SUITE_P(
         const auto shape = std::get<MatMulShape>(info.param);
         const auto portion = std::get<MatrixPortion>(info.param);
 
-        std::stringstream sstream;
-        sstream << name << "__M_" << shape.m << "__N_" << shape.n << "__K_" << shape.k   //
-                << "__PortionStartRow_" << static_cast<int>(portion.start_row() * 1000)  //
-                << "__PortionStartCol_" << static_cast<int>(portion.start_col() * 1000)  //
-                << "__PortionHeight_" << static_cast<int>(portion.height() * 1000)       //
-                << "__PortionWidth_" << static_cast<int>(portion.width() * 1000);
-        return sstream.str();
+        return test_description(name, shape, portion, true);
     });
 
 }  // namespace kai::test

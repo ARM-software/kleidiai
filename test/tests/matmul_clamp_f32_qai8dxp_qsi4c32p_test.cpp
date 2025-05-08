@@ -38,6 +38,7 @@
 #include "test/common/bfloat16.hpp"
 #include "test/common/cpu_info.hpp"
 #include "test/common/int4.hpp"
+#include "test/common/matmul_test_common.hpp"
 #include "test/common/matrix_portion.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/round.hpp"
@@ -77,9 +78,7 @@ static const std::array<UkernelVariant<kai_matmul_clamp_f32_qai8dxp_qsi4c32p_uke
 
 using MatMulTestParams_withBL = std::tuple<size_t, MatMulShape, size_t, MatrixPortion>;
 
-class UkernelVariantTest_withBL : public ::testing::TestWithParam<MatMulTestParams_withBL> {};
-
-class MatMulTest_f32_qmatmul_clamp_f32_qai8dxp_qsi4c32p : public UkernelVariantTest_withBL {};
+class MatMulTest_f32_qmatmul_clamp_f32_qai8dxp_qsi4c32p : public ::testing::TestWithParam<MatMulTestParams_withBL> {};
 
 TEST_P(MatMulTest_f32_qmatmul_clamp_f32_qai8dxp_qsi4c32p, Offset_RHS) {
     const auto& [variant_index, matmul_shape, bl, portion] = GetParam();
@@ -449,12 +448,12 @@ INSTANTIATE_TEST_SUITE_P(
         const auto bl = std::get<2>(info.param);
         const auto portion = std::get<3>(info.param);
 
-        std::stringstream sstream;
-        sstream << name << "__M_" << shape.m << "__N_" << shape.n << "__K_" << shape.k << "__BL_" << bl
-                << "__PortionStartRow_" << static_cast<int>(portion.start_row() * 1000)  //
-                << "__PortionStartCol_" << static_cast<int>(portion.start_col() * 1000)  //
-                << "__PortionHeight_" << static_cast<int>(portion.height() * 1000)       //
-                << "__PortionWidth_" << static_cast<int>(portion.width() * 1000);
+        std::ostringstream sstream;
+        sstream << name << "__";
+        PrintTo(shape, &sstream);
+        sstream << "__BL_" << bl << "__";
+        PrintTo(portion, &sstream);
+
         return sstream.str();
     });
 

@@ -31,11 +31,11 @@
 #include "kai/ukernels/matmul/pack/kai_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme.h"
 #include "test/common/cpu_info.hpp"
+#include "test/common/matmul_test_common.hpp"
 #include "test/common/matrix_portion.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/rect.hpp"
 #include "test/common/sme.hpp"
-#include "test/common/test_suite.hpp"
 #include "test/reference/binary_elementwise.hpp"
 #include "test/reference/clamp.hpp"
 #include "test/reference/fill.hpp"
@@ -344,17 +344,6 @@ const std::array<MatMulVariant, 1>& get_gemv_variants() {
 }
 
 constexpr uint32_t seed = 0;  ///< Random seed used for tests
-
-/// Value range
-template <typename T>
-struct Range {
-    T min;
-    T max;
-
-    [[nodiscard]] T range() const {
-        return max - min;
-    }
-};
 
 /// Quantization parameters
 struct Quant {
@@ -726,14 +715,11 @@ static std::string test_description(
     const MatMulVariant& variant,  //
     const MatMulShape& shape,      //
     const MatrixPortion& portion, float clamp_ratio) {
-    std::stringstream sstream;
-    sstream << "Method_" << variant.name << "__M_"                                   //
-            << shape.m << "__N_" << shape.n << "__K_" << shape.k                     //
-            << "__PortionStartRow_" << static_cast<int>(portion.start_row() * 1000)  //
-            << "__PortionStartCol_" << static_cast<int>(portion.start_col() * 1000)  //
-            << "__PortionHeight_" << static_cast<int>(portion.height() * 1000)       //
-            << "__PortionWidth_" << static_cast<int>(portion.width() * 1000)         //
+    std::ostringstream sstream;
+
+    sstream << test_description(variant.name, shape, portion, true)  //
             << "__clamp_ratio_" << static_cast<int>(clamp_ratio * 100);
+
     return sstream.str();
 };
 
@@ -741,15 +727,13 @@ static std::string test_description(
     const IndirectMatMulVariant& variant,  //
     const MatMulShape& shape,              //
     const MatrixPortion& portion, size_t k_chunk_len, float clamp_ratio) {
-    std::stringstream sstream;
-    sstream << "Method_" << variant.name << "__M_"                                   //
-            << shape.m << "__N_" << shape.n << "__k_chunk_count_" << shape.k         //
-            << "__PortionStartRow_" << static_cast<int>(portion.start_row() * 1000)  //
-            << "__PortionStartCol_" << static_cast<int>(portion.start_col() * 1000)  //
-            << "__PortionHeight_" << static_cast<int>(portion.height() * 1000)       //
-            << "__PortionWidth_" << static_cast<int>(portion.width() * 1000)         //
-            << "__k_chunk_len_" << k_chunk_len                                       //
-            << "__clamp_ratio_" << static_cast<int>(clamp_ratio * 100);
+    std::ostringstream sstream;
+
+    sstream << "Method_" << variant.name << "__M_" << shape.m << "__N_" << shape.n << "__k_chunk_count_" << shape.k
+            << "__";
+    PrintTo(portion, &sstream);
+    sstream << "__k_chunk_len_" << k_chunk_len << "__clamp_ratio_" << static_cast<int>(clamp_ratio * 100);
+
     return sstream.str();
 };
 

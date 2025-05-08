@@ -243,8 +243,16 @@ bool cpu_has_dotprod() {
     return CpuInfo::current().has_dotprod;
 }
 
+bool cpu_has_dotprod_and_fp16() {
+    return cpu_has_dotprod() && cpu_has_fp16();
+}
+
 bool cpu_has_i8mm() {
     return CpuInfo::current().has_i8mm;
+}
+
+bool cpu_has_i8mm_and_fp16() {
+    return cpu_has_i8mm() && cpu_has_fp16();
 }
 
 bool cpu_has_fp16() {

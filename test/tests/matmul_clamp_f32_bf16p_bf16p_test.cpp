@@ -4,7 +4,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-#include <arm_neon.h>
 #include <gtest/gtest.h>
 
 #include <array>
