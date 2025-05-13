@@ -1,5 +1,5 @@
 <!--
-    SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+    SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
 
     SPDX-License-Identifier: Apache-2.0
 -->
@@ -13,3 +13,6 @@ Welcome to the KleidiAI documentation hub. Here, you will find a variety of step
 ### Guides
 
 - [How to run the int4 matmul micro-kernels](matmul_qsi4cx/README.md)
+- [How to run the indirect matmul micro-kernels](imatmul/README.md)
+- [KleidiAI kernel overview](../kai/ukernels/matmul/README.md)
+- [Packing kernels description](../kai/ukernels/matmul/pack/README.md)
