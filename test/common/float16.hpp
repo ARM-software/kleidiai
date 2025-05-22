@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -102,6 +102,17 @@ public:
     ///
     /// @param[in] value The single-precision floating-point value.
     explicit Float16(float value) : m_data(kai_test_float16_from_float(value)) {
+    }
+
+    /// Creates a new half-precision floating-point value from the raw data.
+    ///
+    /// @param[in] data The binary representation of the floating-point value.
+    ///
+    /// @return The half-precision floating-point value.
+    static constexpr Float16 from_binary(uint16_t data) {
+        Float16 value{};
+        value.m_data = data;
+        return value;
     }
 
     /// Assigns to the specified numeric value.

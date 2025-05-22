@@ -8,7 +8,7 @@
 
 #include <gtest/gtest.h>
 
-#include "test/common/cpu_info.hpp"
+#include "test/common/numeric_limits.hpp"
 
 namespace kai::test {
 
@@ -26,6 +26,11 @@ TEST(BFloat16, SimpleTest) {
     ASSERT_TRUE(BFloat16(1.25F) != BFloat16(2.0F));
     ASSERT_FALSE(BFloat16(1.25F) != BFloat16(1.25F));
     ASSERT_TRUE(BFloat16(2.0F) != BFloat16(1.25F));
+}
+
+TEST(BFloat16, NumericLimitTest) {
+    ASSERT_EQ(static_cast<float>(numeric_lowest<BFloat16>), -338953138925153547590470800371487866880.0F);
+    ASSERT_EQ(static_cast<float>(numeric_highest<BFloat16>), 338953138925153547590470800371487866880.0F);
 }
 
 }  // namespace kai::test

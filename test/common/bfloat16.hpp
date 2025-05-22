@@ -25,6 +25,17 @@ public:
     explicit BFloat16(float value) : m_data(float_to_bfloat16_round_towards_zero(value)) {
     }
 
+    /// Creates a new half-precision brain floating-point value from the raw data.
+    ///
+    /// @param[in] data The binary representation of the floating-point value.
+    ///
+    /// @return The half-precision brain floating-point value.
+    static constexpr BFloat16 from_binary(uint16_t data) {
+        BFloat16 value{};
+        value.m_data = data;
+        return value;
+    }
+
     /// Assigns to the specified numeric value which will be converted to `bfloat16_t`.
     template <typename T, std::enable_if_t<is_arithmetic<T>, bool> = true>
     BFloat16& operator=(T value) {

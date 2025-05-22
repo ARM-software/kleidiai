@@ -9,6 +9,7 @@
 #include <gtest/gtest.h>
 
 #include "test/common/cpu_info.hpp"
+#include "test/common/numeric_limits.hpp"
 
 namespace kai::test {
 
@@ -60,6 +61,11 @@ TEST(Float16, SimpleTest) {
     ASSERT_EQ(a, Float16(1.25F * 2.0F));
     a /= b;
     ASSERT_EQ(a, Float16(1.25F));
+}
+
+TEST(Float16, NumericLimitTest) {
+    ASSERT_EQ(static_cast<float>(numeric_lowest<Float16>), -65504.0F);
+    ASSERT_EQ(static_cast<float>(numeric_highest<Float16>), 65504.0F);
 }
 
 }  // namespace kai::test

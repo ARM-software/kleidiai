@@ -10,7 +10,6 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <limits>
 #include <tuple>
 #include <vector>
 
@@ -204,8 +203,8 @@ std::tuple<std::vector<uint8_t>, std::vector<uint8_t>> compute_asymmetric_per_bl
     for (size_t y = 0; y < height; ++y) {
         for (size_t x_quant = 0; x_quant < width; x_quant += quant_width) {
             // Computes the quantization scale and zero point.
-            auto min_value = std::numeric_limits<SrcType>::max();
-            auto max_value = std::numeric_limits<SrcType>::lowest();
+            auto min_value = numeric_highest<SrcType>;
+            auto max_value = numeric_lowest<SrcType>;
 
             for (size_t x_element = 0; x_element < quant_width; ++x_element) {
                 const auto x = x_quant + x_element;
