@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -37,11 +37,11 @@
 
 KAI_ASM_LABEL_GLOBAL(kai_test_float16_from_float)
     fcvt h0, s0
-    fmov w0, h0
+    fmov w0, s0  // Use s0 instead of h0 to avoid unnecessary need for FEAT_FP16.
     ret
 
 KAI_ASM_LABEL_GLOBAL(kai_test_float_from_float16)
-    fmov h0, w0
+    fmov s0, w0  // Use s0 instead of h0 to avoid unnecessary need for FEAT_FP16.
     fcvt s0, h0
     ret
 
