@@ -59,6 +59,10 @@ Buffer::Buffer(const size_t size) : m_user_buffer_size(size) {
     }
 }
 
+Buffer::Buffer(const size_t size, uint8_t init_value) : Buffer(size) {
+    memset(data(), init_value, size);
+}
+
 void Buffer::allocate() {
     m_buffer = handle(std::malloc(m_user_buffer_size), &std::free);
     KAI_ASSUME_MSG(m_buffer.get() != nullptr, "Failure allocating memory");

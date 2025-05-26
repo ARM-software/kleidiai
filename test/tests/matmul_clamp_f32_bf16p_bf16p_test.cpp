@@ -16,9 +16,9 @@
 #include <string_view>
 #include <tuple>
 #include <utility>
-#include <vector>
 
 #include "kai/kai_common.h"
+#include "test/common/buffer.hpp"
 #include "test/common/compare.hpp"
 #include "test/common/cpu_info.hpp"
 #include "test/common/data_format.hpp"
@@ -322,13 +322,13 @@ private:
 protected:
     /// Cached test data that is shared between multiple test case.
     struct TestData {
-        std::vector<uint8_t> lhs{};             ///< LHS operand.
-        std::vector<uint8_t> ref_packed_lhs{};  ///< Reference packed LHS.
-        std::vector<uint8_t> rhs{};             ///< RHS operand.
-        std::vector<uint8_t> rhs_scales{};      ///< RHS per-row quantization scales.
-        std::vector<uint8_t> bias{};            ///< Bias.
-        std::vector<uint8_t> ref_packed_rhs{};  ///< Reference packed RHS.
-        std::vector<uint8_t> ref_dst{};         ///< Reference output.
+        Buffer lhs{};             ///< LHS operand.
+        Buffer ref_packed_lhs{};  ///< Reference packed LHS.
+        Buffer rhs{};             ///< RHS operand.
+        Buffer rhs_scales{};      ///< RHS per-row quantization scales.
+        Buffer bias{};            ///< Bias.
+        Buffer ref_packed_rhs{};  ///< Reference packed RHS.
+        Buffer ref_dst{};         ///< Reference output.
     };
 
     /// Gets the test data for the current test case.
@@ -351,7 +351,7 @@ protected:
         const auto lhs_h = info.m;
         const auto lhs_w = info.k;
         auto lhs = fill_matrix_random(lhs_h, lhs_w, method.lhs_format, 0);
-        std::vector<uint8_t> ref_packed_lhs;
+        Buffer ref_packed_lhs;
 
         if (has_lhs_pack) {
             ref_packed_lhs =
@@ -362,7 +362,7 @@ protected:
         const auto rhs_w = info.n;
         auto rhs = fill_matrix_random(rhs_h, rhs_w, method.rhs_format, 1);
 
-        std::vector<uint8_t> rhs_scales;
+        Buffer rhs_scales;
         if (data_type_is_quantized(method.rhs_format.data_type()) &&
             method.rhs_format.pack_format() == DataFormat::PackFormat::NONE) {
             rhs_scales = fill_matrix_random(rhs_h, 1, DataFormat(DataType::FP32), 2);
@@ -370,7 +370,7 @@ protected:
 
         const auto bias_h = 1;
         const auto bias_w = info.n;
-        std::vector<uint8_t> bias;
+        Buffer bias;
 
         if (has_bias) {
             bias = fill_matrix_random(bias_h, bias_w, method.bias_format, 3);
@@ -379,14 +379,17 @@ protected:
         constexpr size_t nr = 12;
         constexpr size_t kr = 4;
 
-        std::vector<uint8_t> packed_rhs;
+        size_t packed_rhs_size = 0;
+
         if (method.fn_get_packed_rhs_size) {
-            packed_rhs.resize(method.fn_get_packed_rhs_size(rhs_w, rhs_h));
+            packed_rhs_size = method.fn_get_packed_rhs_size(rhs_w, rhs_h);
         } else if (method.fn_get_packed_rhs_size_generic_block_size) {
-            packed_rhs.resize(method.fn_get_packed_rhs_size_generic_block_size(rhs_w, rhs_h, nr, kr));
+            packed_rhs_size = method.fn_get_packed_rhs_size_generic_block_size(rhs_w, rhs_h, nr, kr);
         } else {
             KAI_ERROR("No function to calculate Packed Rhs Matrix Size");
         }
+
+        Buffer packed_rhs(packed_rhs_size);
 
         if (has_rhs_pack) {
             const auto ref_rhs_row_stride = method.rhs_format.default_row_stride(rhs_w);
@@ -462,9 +465,8 @@ TEST_P(MatMulTestBf16, Output) {
     const auto lhs_start_row = rect.start_row();
     const auto lhs_stride = method.lhs_format.default_row_stride(lhs_w);
 
-    std::vector<uint8_t> lhs_data;
     const size_t lhs_packed_size = method.fn_get_packed_lhs_size(info.m, info.k, method.m0, method.k0, 1 /* sr */);
-    lhs_data.resize(lhs_packed_size);
+    Buffer lhs_data(lhs_packed_size);
 
     uintptr_t lhs_offset = method.fn_get_lhs_offset(lhs_start_row, lhs_stride);
     uintptr_t lhs_packed_offset = method.fn_get_packed_lhs_offset(lhs_start_row, info.k);
@@ -476,16 +478,15 @@ TEST_P(MatMulTestBf16, Output) {
 
     const auto rhs_stride = method.rhs_format.default_row_stride(info.n);
 
-    std::vector<uint8_t> rhs_data;
+    size_t rhs_packed_size = 0;
 
     if (method.fn_get_packed_rhs_size_generic_block_size) {
-        const size_t rhs_packed_size =
-            method.fn_get_packed_rhs_size_generic_block_size(info.n, info.k, method.n0, method.k0);
-        rhs_data.resize(rhs_packed_size);
+        rhs_packed_size = method.fn_get_packed_rhs_size_generic_block_size(info.n, info.k, method.n0, method.k0);
     } else if (method.fn_get_packed_rhs_size) {
-        const size_t rhs_packed_size = method.fn_get_packed_rhs_size(info.n, info.k);
-        rhs_data.resize(rhs_packed_size);
+        rhs_packed_size = method.fn_get_packed_rhs_size(info.n, info.k);
     }
+
+    Buffer rhs_data(rhs_packed_size);
 
     const auto packed_rhs_start_row = rect.start_col();
     const auto packed_rhs_start_col = 0;
@@ -521,8 +522,7 @@ TEST_P(MatMulTestBf16, Output) {
     const auto ref_dst_size = method.dst_format.default_size_in_bytes(info.m, info.n);
     ASSERT_EQ(dst_size, ref_dst_size);
 
-    std::vector<uint8_t> dst;
-    dst.resize(dst_size);
+    Buffer dst(dst_size);
     method.main_kernel(
         rect.height(), rect.width(), info.k, lhs_data.data() + lhs_packed_offset, rhs_data.data() + rhs_packed_offset,
         NULL, dst.data() + dst_offset, lhs_stride, rhs_stride, dst_stride, -std::numeric_limits<float>::infinity(),

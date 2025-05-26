@@ -43,7 +43,7 @@ TEST(Buffer, NonePolicy) {
 
         const auto buffer = Buffer(buffer_size);
 
-        const auto* data = static_cast<uint8_t*>(buffer.data());
+        const auto* data = reinterpret_cast<uint8_t*>(buffer.data());
         ASSERT_NE(data, nullptr);
     }
 
@@ -99,7 +99,7 @@ TEST(Buffer, ProtectUnderflowPolicy) {
 
         const auto buffer = Buffer(buffer_size);
 
-        const auto* data = static_cast<uint8_t*>(buffer.data());
+        const auto* data = reinterpret_cast<uint8_t*>(buffer.data());
         ASSERT_NE(data, nullptr);
         ASSERT_NE(data, MAP_FAILED);
 
@@ -141,7 +141,7 @@ TEST(Buffer, ProtectOverflowPolicy) {
 
         const auto buffer = Buffer(buffer_size);
 
-        const auto* data = static_cast<uint8_t*>(buffer.data());
+        const auto* data = reinterpret_cast<uint8_t*>(buffer.data());
         ASSERT_NE(data, nullptr);
         ASSERT_NE(data, MAP_FAILED);
 

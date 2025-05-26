@@ -17,7 +17,6 @@
 #include <string_view>
 #include <tuple>
 #include <unordered_map>
-#include <vector>
 
 #include "kai/kai_common.h"
 #include "kai/ukernels/matmul/imatmul_clamp_qai8_qai8p_qsi8cxp/kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa.h"
@@ -30,6 +29,7 @@
 #include "kai/ukernels/matmul/pack/kai_lhs_pack_x8p2vlx4_x8_sme.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme.h"
+#include "test/common/buffer.hpp"
 #include "test/common/cpu_info.hpp"
 #include "test/common/matmul_test_common.hpp"
 #include "test/common/matrix_portion.hpp"
@@ -50,9 +50,6 @@ namespace kai::test {
 
 // Ensure static linkage for all functionality local to this test file
 namespace {
-
-using Buffer = std::vector<uint8_t>;
-using IndirectionBuffer = std::vector<uint8_t*>;
 
 struct KChunk {
     size_t count;
@@ -361,7 +358,7 @@ struct TestReference {
     Buffer lhs_qai8;
     Buffer lhs_qai8_scales;
     Buffer lhs_qai8_zero_points;
-    IndirectionBuffer lhs_qai8_indirect;
+    Buffer lhs_qai8_indirect;
     Buffer lhs_qai8_indirect_packed;
     Buffer lhs_qai8_indirect_padding;
     size_t lhs_qai8_indirect_offset;
@@ -451,17 +448,18 @@ const TestReference& get_test_reference(const TestDataId& test_data_id) {
 
     // Setup an indirection buffer, where each "row" contains `k_chunk_count`
     // pointers to chunks of length `k_chunk_len` in the input_buffer
-    IndirectionBuffer lhs_qai8_indirect(shape.m * k_chunk_count);
+    Buffer lhs_qai8_indirect(shape.m * k_chunk_count * sizeof(void*));
     Buffer lhs_padding(k_chunk_len, padding_value);
+    auto* lhs_qai8_indirect_ptr = reinterpret_cast<uint8_t**>(lhs_qai8_indirect.data());
     for (size_t m_i = 0; m_i < shape.m; ++m_i) {
         for (size_t k_chunk_idx = 0; k_chunk_idx < k_chunk_count; ++k_chunk_idx) {
             const size_t idx = m_i * k_chunk_count + k_chunk_idx;
             if (pad_testing and m_i == 0) {
                 // Push padding pointers for first row
-                lhs_qai8_indirect[idx] = lhs_padding.data();
+                lhs_qai8_indirect_ptr[idx] = reinterpret_cast<uint8_t*>(lhs_padding.data());
             } else {
                 uintptr_t offset = m_i * shape.k + k_chunk_idx * k_chunk_len;
-                lhs_qai8_indirect[idx] = reinterpret_cast<uint8_t*>(offset);
+                lhs_qai8_indirect_ptr[idx] = reinterpret_cast<uint8_t*>(offset);
             }
         }
     }
@@ -576,7 +574,7 @@ void test_lhs_pack(
         variant.lhs_pack->get_packed_lhs_size(shape.m, shape.k, variant.acc_pack.m, variant.acc_pack.k, 1);
     ASSERT_EQ(imp_packed_lhs_size, reference.packed_lhs.size());
 
-    Buffer imp_packed_lhs(imp_packed_lhs_size);
+    Buffer imp_packed_lhs(imp_packed_lhs_size, 0);
     const auto imp_lhs_offset = variant.lhs_pack->get_lhs_offset(output_area.start_row(), shape.k * sizeof(int8_t));
     const auto imp_packed_lhs_offset = variant.lhs_pack->get_packed_lhs_offset(
         output_area.start_row(), shape.k, variant.acc_pack.m, variant.acc_pack.k, 1);
@@ -591,11 +589,14 @@ void test_lhs_pack(
               output_area.end_row(), shape.k, variant.acc_pack.m, variant.acc_pack.k, 1)
         : imp_packed_lhs_size;
 
+    const auto* imp_packed_lhs_ptr = reinterpret_cast<const uint8_t*>(imp_packed_lhs.data());
+    const auto* ref_packed_lhs_ptr = reinterpret_cast<const uint8_t*>(reference.packed_lhs.data());
+
     for (size_t i = 0; i < reference.packed_lhs.size(); ++i) {
         if (i >= imp_packed_lhs_offset && i < imp_packed_lhs_end_offset) {
-            ASSERT_EQ(imp_packed_lhs[i], reference.packed_lhs[i]);
+            ASSERT_EQ(imp_packed_lhs_ptr[i], ref_packed_lhs_ptr[i]);
         } else {
-            ASSERT_EQ(imp_packed_lhs[i], 0);
+            ASSERT_EQ(imp_packed_lhs_ptr[i], 0);
         }
     }
 }
@@ -605,7 +606,7 @@ void test_rhs_pack(
     const MatMulShape& shape, const MatMulVariant& variant, const Rect& output_area, const TestReference& reference) {
     const auto imp_packed_rhs_size = variant.rhs_pack.get_packed_rhs_size(shape.n, shape.k);
     ASSERT_EQ(imp_packed_rhs_size, reference.packed_rhs.size());
-    Buffer imp_packed_rhs(imp_packed_rhs_size);
+    Buffer imp_packed_rhs(imp_packed_rhs_size, 0);
 
     const auto imp_rhs_offset = variant.rhs_pack.get_rhs_offset(output_area.start_col());
     const auto imp_bias_offset = variant.rhs_pack.get_bias_offset(output_area.start_col());
@@ -627,13 +628,16 @@ void test_rhs_pack(
         : imp_packed_rhs_size;
 
     size_t mismatches = 0;
+    const auto* imp_packed_rhs_ptr = reinterpret_cast<const uint8_t*>(imp_packed_rhs.data());
+    const auto* ref_packed_rhs_ptr = reinterpret_cast<const uint8_t*>(reference.packed_rhs.data());
+
     for (size_t i = 0; i < reference.packed_rhs.size(); ++i) {
         if (i >= imp_packed_rhs_offset && i < imp_packed_rhs_end_offset) {
-            if (imp_packed_rhs[i] != reference.packed_rhs[i]) {
+            if (imp_packed_rhs_ptr[i] != ref_packed_rhs_ptr[i]) {
                 mismatches += 1;
             }
         } else {
-            if (imp_packed_rhs[i] != 0) {
+            if (imp_packed_rhs_ptr[i] != 0) {
                 mismatches += 1;
             }
         }
@@ -680,7 +684,7 @@ void test_matmul(
     const auto imp_dst_size = variant.matmul.get_dst_size(shape.m, shape.n);
     ASSERT_EQ(imp_dst_size, reference.dst_qsi8_clamped.size());
 
-    Buffer imp_dst(imp_dst_size);
+    Buffer imp_dst(imp_dst_size, 0);
     const auto [imp_lhs_offset, lhs_data] = [&]() -> std::tuple<size_t, const Buffer&> {
         if (variant.lhs_pack.has_value()) {
             return {variant.matmul.get_packed_lhs_offset(output_area.start_row(), shape.k), reference.packed_lhs};
@@ -808,7 +812,6 @@ static Buffer rhs_pack(
     const KChunk& k_chunk) {
     // Allocate output buffer
     const size_t dst_size = variant.get_packed_rhs_size(n, k_chunk.count, k_chunk.length);
-    Buffer packed_all(dst_size);
     Buffer packed(dst_size);
 
     // Caluclate effective quantization parameters
@@ -847,7 +850,7 @@ static Buffer matmul(
 
     // Allocate output buffer
     const size_t dst_size = variant.get_dst_size(shape.m, shape.n);
-    Buffer dst(dst_size);
+    Buffer dst(dst_size, 0);
 
     // Calculate geffective uantization parameters
     kai_matmul_requantize32_params requantization{};

@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "kai/kai_common.h"
+#include "test/common/buffer.hpp"
 #include "test/common/memory.hpp"
 
 namespace kai::test {
@@ -115,9 +116,9 @@ std::tuple<Int4, Int4> Int4::unpack_u8(uint8_t value) {
 
 // =====================================================================================================================
 
-std::vector<uint8_t> convert_s0s1_s1s0(const std::vector<uint8_t>& src) {
+Buffer convert_s0s1_s1s0(const Buffer& src) {
     const auto length = src.size();
-    std::vector<uint8_t> dst(length);
+    Buffer dst(length);
 
     for (size_t i = 0; i < length; ++i) {
         uint8_t val = read_array<uint8_t>(src.data(), i);

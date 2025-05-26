@@ -8,10 +8,9 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <cstdint>
-#include <vector>
 
 #include "kai/kai_common.h"
+#include "test/common/buffer.hpp"
 #include "test/common/float16.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/numeric_limits.hpp"
@@ -64,8 +63,8 @@ std::tuple<float, float> find_clamp_range(DataType type, const void* src, size_t
 }
 
 template <typename T>
-std::vector<uint8_t> clamp(const void* src, size_t len, T min_value, T max_value) {
-    std::vector<uint8_t> dst(round_up_division(len * size_in_bits<T>, 8));
+Buffer clamp(const void* src, size_t len, T min_value, T max_value) {
+    Buffer dst(round_up_division(len * size_in_bits<T>, 8));
 
     for (size_t i = 0; i < len; ++i) {
         write_array<T>(dst.data(), i, std::clamp(read_array<T>(src, i), min_value, max_value));
@@ -74,11 +73,11 @@ std::vector<uint8_t> clamp(const void* src, size_t len, T min_value, T max_value
     return dst;
 }
 
-template std::vector<uint8_t> clamp(const void* src, size_t len, float min_value, float max_value);
-template std::vector<uint8_t> clamp(const void* src, size_t len, Float16 min_value, Float16 max_value);
+template Buffer clamp(const void* src, size_t len, float min_value, float max_value);
+template Buffer clamp(const void* src, size_t len, Float16 min_value, Float16 max_value);
 
-std::vector<uint8_t> clamp(DataType type, const void* src, size_t len, float min_value, float max_value) {
-    std::vector<uint8_t> dst(round_up_division(len * data_type_size_in_bits(type), 8));
+Buffer clamp(DataType type, const void* src, size_t len, float min_value, float max_value) {
+    Buffer dst(round_up_division(len * data_type_size_in_bits(type), 8));
 
     for (size_t i = 0; i < len; ++i) {
         write_array(type, dst.data(), i, std::clamp<float>(read_array(type, src, i), min_value, max_value));

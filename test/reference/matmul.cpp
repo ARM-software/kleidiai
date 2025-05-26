@@ -9,9 +9,9 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <vector>
 
 #include "kai/kai_common.h"
+#include "test/common/buffer.hpp"
 #include "test/common/data_format.hpp"
 #include "test/common/data_type.hpp"
 #include "test/common/float16.hpp"
@@ -42,7 +42,7 @@ namespace {
 ///
 /// @return The result data buffer.
 template <typename T>
-std::vector<uint8_t> matmul_any_type(
+Buffer matmul_any_type(
     const void* lhs, const void* rhs,  //
     size_t m, size_t n, size_t k,      //
     bool lhs_transposed, bool rhs_transposed) {
@@ -52,8 +52,7 @@ std::vector<uint8_t> matmul_any_type(
     const auto rhs_n_stride = rhs_transposed ? k : 1;
     const auto rhs_k_stride = rhs_transposed ? 1 : n;
 
-    std::vector<uint8_t> dst;
-    dst.resize(m * n * size_in_bits<T> / 8);
+    Buffer dst(m * n * size_in_bits<T> / 8);
     KAI_ASSUME(n * size_in_bits<T> % 8 == 0);
 
     for (size_t im = 0; im < m; ++im) {
@@ -75,7 +74,7 @@ std::vector<uint8_t> matmul_any_type(
 
 }  // namespace
 
-std::vector<uint8_t> matmul_pack_rhs(
+Buffer matmul_pack_rhs(
     const void* data, const void* scales, const void* zero_points, const DataFormat& src_format,
     const DataFormat& dst_format, size_t n, size_t k, bool transposing) {
     const auto src_dt = src_format.data_type();
@@ -84,9 +83,9 @@ std::vector<uint8_t> matmul_pack_rhs(
     const auto dst_dt = dst_format.data_type();
     const auto dst_pf = dst_format.pack_format();
 
-    std::vector<uint8_t> tmp_data;
-    std::vector<uint8_t> tmp_scales;
-    std::vector<uint8_t> tmp_zero_points;
+    Buffer tmp_data;
+    Buffer tmp_scales;
+    Buffer tmp_zero_points;
 
     if (transposing) {
         tmp_data = transpose(data, src_dt, k, n);
@@ -125,7 +124,7 @@ std::vector<uint8_t> matmul_pack_rhs(
     return pack(dst_format, data, scales, zero_points, src_format, n, k);
 }
 
-std::vector<uint8_t> matmul(
+Buffer matmul(
     const void* lhs, [[maybe_unused]] const void* lhs_scales, [[maybe_unused]] const void* lhs_zero_points,
     DataType lhs_dt,  //
     const void* rhs, [[maybe_unused]] const void* rhs_scales, [[maybe_unused]] const void* rhs_zero_points,
@@ -140,10 +139,10 @@ std::vector<uint8_t> matmul(
     const auto rhs_h = rhs_transposed ? n : k;
     const auto rhs_w = rhs_transposed ? k : n;
 
-    std::vector<uint8_t> tmp_lhs;
-    std::vector<uint8_t> tmp_rhs;
-    std::vector<uint8_t> tmp_dst;
-    std::vector<uint8_t> tmp_bias;
+    Buffer tmp_lhs;
+    Buffer tmp_rhs;
+    Buffer tmp_dst;
+    Buffer tmp_bias;
 
     if (lhs_dt != dst_dt) {
         tmp_lhs = cast(lhs, lhs_dt, dst_dt, lhs_h, lhs_w);
@@ -184,7 +183,7 @@ std::vector<uint8_t> matmul(
     return tmp_dst;
 }
 
-std::vector<uint8_t> indirect_matmul(
+Buffer indirect_matmul(
     const void* const* lhs_idata, uintptr_t lhs_offset, const void* lhs_padding_ptr, const void* lhs_scales,
     const void* lhs_zero_points,
     DataType lhs_dt,  //
@@ -196,7 +195,7 @@ std::vector<uint8_t> indirect_matmul(
     // This is inefficient, but allows code-reuse
     const size_t chunk_bytes = k_chunk_length * round_up_division(data_type_size_in_bits(lhs_dt), 8);
     const size_t n_chunks = m * k_chunk_count;
-    std::vector<uint8_t> lhs(n_chunks * chunk_bytes);
+    Buffer lhs(n_chunks * chunk_bytes);
 
     // Copy all chunks to the created matrix
     for (size_t i = 0; i < n_chunks; i += 1) {
@@ -217,7 +216,7 @@ std::vector<uint8_t> indirect_matmul(
 template <
     typename LhsData, typename LhsScale, typename LhsZeroPoint, typename RhsData, typename RhsScale,
     typename RhsZeroPoint, typename BiasData, typename BiasScale, typename BiasZeroPoint, typename DstData>
-std::vector<uint8_t> indirect_matmul_nt_t_quantized(
+Buffer indirect_matmul_nt_t_quantized(
     size_t m, size_t n, size_t k_chunk_count, size_t k_chunk_length,  //
     const void* const* lhs_ptrs, uintptr_t lhs_offset, const void* lhs_padding_ptr, const void* lhs_scales,
     const void* lhs_zero_points, size_t lhs_quant_height,
@@ -228,7 +227,7 @@ std::vector<uint8_t> indirect_matmul_nt_t_quantized(
     const auto lhs_num_quant_per_row = round_up_division(k_chunk_count * k_chunk_length, lhs_quant_width);
     const auto rhs_num_quant_per_row = round_up_division(k_chunk_count * k_chunk_length, rhs_quant_width);
 
-    std::vector<uint8_t> dst(m * n * sizeof(DstData));
+    Buffer dst(m * n * sizeof(DstData));
 
     for (size_t i_m = 0; i_m < m; ++i_m) {
         for (size_t i_n = 0; i_n < n; ++i_n) {
@@ -293,7 +292,7 @@ std::vector<uint8_t> indirect_matmul_nt_t_quantized(
 template <
     typename LhsData, typename LhsScale, typename LhsZeroPoint, typename RhsData, typename RhsScale,
     typename RhsZeroPoint, typename BiasData, typename BiasScale, typename BiasZeroPoint, typename DstData>
-std::vector<uint8_t> matmul_nt_t_quantized(
+Buffer matmul_nt_t_quantized(
     size_t m, size_t n, size_t k,                                                  //
     const void* lhs_data, const void* lhs_scales, const void* lhs_zero_points,     //
     size_t lhs_quant_height, size_t lhs_quant_width,                               //
@@ -304,7 +303,7 @@ std::vector<uint8_t> matmul_nt_t_quantized(
     const auto lhs_num_quant_per_row = round_up_division(k, lhs_quant_width);
     const auto rhs_num_quant_per_row = round_up_division(k, rhs_quant_width);
 
-    std::vector<uint8_t> dst(m * n * sizeof(DstData));
+    Buffer dst(m * n * sizeof(DstData));
 
     for (size_t row = 0; row < m; ++row) {
         for (size_t col = 0; col < n; ++col) {
@@ -355,8 +354,7 @@ std::vector<uint8_t> matmul_nt_t_quantized(
     return dst;
 }
 
-template std::vector<uint8_t>
-matmul_nt_t_quantized<int8_t, float, int32_t, int8_t, float, int32_t, int32_t, float, int32_t, float>(
+template Buffer matmul_nt_t_quantized<int8_t, float, int32_t, int8_t, float, int32_t, int32_t, float, int32_t, float>(
     size_t m, size_t n, size_t k,  //
     const void* lhs_data, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_height,
     size_t lhs_quant_width,  //
@@ -364,8 +362,7 @@ matmul_nt_t_quantized<int8_t, float, int32_t, int8_t, float, int32_t, int32_t, f
     size_t rhs_quant_width,  //
     const void* bias_data, const void* bias_scales, const void* bias_zero_points, size_t bias_quant_width);
 
-template std::vector<uint8_t>
-matmul_nt_t_quantized<int8_t, float, int32_t, Int4, float, int32_t, float, float, int32_t, float>(
+template Buffer matmul_nt_t_quantized<int8_t, float, int32_t, Int4, float, int32_t, float, float, int32_t, float>(
     size_t m, size_t n, size_t k,  //
     const void* lhs_data, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_height,
     size_t lhs_quant_width,  //
@@ -373,8 +370,7 @@ matmul_nt_t_quantized<int8_t, float, int32_t, Int4, float, int32_t, float, float
     size_t rhs_quant_width,  //
     const void* bias_data, const void* bias_scales, const void* bias_zero_points, size_t bias_quant_width);
 
-template std::vector<uint8_t>
-matmul_nt_t_quantized<int8_t, float, int32_t, int8_t, float, int32_t, float, float, int32_t, float>(
+template Buffer matmul_nt_t_quantized<int8_t, float, int32_t, int8_t, float, int32_t, float, float, int32_t, float>(
     size_t m, size_t n, size_t k,  //
     const void* lhs_data, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_height,
     size_t lhs_quant_width,  //
@@ -382,7 +378,7 @@ matmul_nt_t_quantized<int8_t, float, int32_t, int8_t, float, int32_t, float, flo
     size_t rhs_quant_width,  //
     const void* bias_data, const void* bias_scales, const void* bias_zero_points, size_t bias_quant_width);
 
-template std::vector<uint8_t>
+template Buffer
 indirect_matmul_nt_t_quantized<int8_t, float, int32_t, int8_t, float, int32_t, int32_t, float, int32_t, float>(
     size_t m, size_t n, size_t k_chunk_count, size_t k_chunk_length,  //
     const void* const* lhs_ptrs, uintptr_t lhs_offset, const void* lhs_padding, const void* lhs_scales,
@@ -395,7 +391,7 @@ indirect_matmul_nt_t_quantized<int8_t, float, int32_t, int8_t, float, int32_t, i
 template <
     typename LhsData, typename LhsScale, typename LhsZeroPoint, typename RhsData, typename RhsScale,
     typename RhsZeroPoint, typename Bias, typename IntAcc, typename DstData>
-std::vector<uint8_t> matmul_clamp_nt_t(
+Buffer matmul_clamp_nt_t(
     size_t m, size_t n, size_t k,                                                                       //
     const void* lhs_data, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_width,  //
     const void* rhs_data, const void* rhs_scales, const void* rhs_zero_points, size_t rhs_quant_width,  //
@@ -404,7 +400,7 @@ std::vector<uint8_t> matmul_clamp_nt_t(
     const auto lhs_num_quant_per_row = round_up_division(k, lhs_quant_width);
     const auto rhs_num_quant_per_row = round_up_division(k, rhs_quant_width);
 
-    std::vector<uint8_t> dst(m * n * sizeof(DstData));
+    Buffer dst(m * n * sizeof(DstData));
 
     const auto* lhs_scales_ptr = reinterpret_cast<const LhsScale*>(lhs_scales);
     const auto* rhs_scales_ptr = reinterpret_cast<const RhsScale*>(rhs_scales);
@@ -448,29 +444,28 @@ std::vector<uint8_t> matmul_clamp_nt_t(
     return dst;
 }
 
-template std::vector<uint8_t> matmul_clamp_nt_t<int8_t, float, int32_t, Int4, float, int32_t, float, int32_t, float>(
+template Buffer matmul_clamp_nt_t<int8_t, float, int32_t, Int4, float, int32_t, float, int32_t, float>(
     size_t m, size_t n, size_t k,                                                                       //
     const void* lhs_data, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_width,  //
     const void* rhs_data, const void* rhs_scales, const void* rhs_zero_points, size_t rhs_quant_width,  //
     const void* biases,                                                                                 //
     float min_value, float max_value);
 
-template std::vector<uint8_t>
-matmul_clamp_nt_t<int8_t, Float16, int32_t, Int4, Float16, int32_t, float, int32_t, float>(
+template Buffer matmul_clamp_nt_t<int8_t, Float16, int32_t, Int4, Float16, int32_t, float, int32_t, float>(
     size_t m, size_t n, size_t k,                                                                       //
     const void* lhs_data, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_width,  //
     const void* rhs_data, const void* rhs_scales, const void* rhs_zero_points, size_t rhs_quant_width,  //
     const void* biases,                                                                                 //
     float min_value, float max_value);
 
-template std::vector<uint8_t> matmul_clamp_nt_t<int8_t, float, int32_t, Int4, BFloat16, int32_t, float, int32_t, float>(
+template Buffer matmul_clamp_nt_t<int8_t, float, int32_t, Int4, BFloat16, int32_t, float, int32_t, float>(
     size_t m, size_t n, size_t k,                                                                       //
     const void* lhs_data, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_width,  //
     const void* rhs_data, const void* rhs_scales, const void* rhs_zero_points, size_t rhs_quant_width,  //
     const void* biases,                                                                                 //
     float min_value, float max_value);
 
-template std::vector<uint8_t> matmul_clamp_nt_t<int8_t, float, int32_t, int8_t, float, int32_t, float, int32_t, float>(
+template Buffer matmul_clamp_nt_t<int8_t, float, int32_t, int8_t, float, int32_t, float, int32_t, float>(
     size_t m, size_t n, size_t k,                                                                       //
     const void* lhs_data, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_width,  //
     const void* rhs_data, const void* rhs_scales, const void* rhs_zero_points, size_t rhs_quant_width,  //
@@ -480,7 +475,7 @@ template std::vector<uint8_t> matmul_clamp_nt_t<int8_t, float, int32_t, int8_t, 
 template <
     typename LhsData, typename LhsScale, typename LhsZeroPoint, typename RhsData, typename RhsScale,
     typename RhsZeroPoint, typename Bias, typename IntAcc, typename DstData>
-std::vector<uint8_t> matmul_clamp_nt_nt(
+Buffer matmul_clamp_nt_nt(
     size_t m, size_t n, size_t k,                                                                       //
     const void* lhs_data, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_width,  //
     const void* rhs_data, const void* rhs_scales, const void* rhs_zero_points, size_t rhs_quant_width,  //
@@ -489,7 +484,7 @@ std::vector<uint8_t> matmul_clamp_nt_nt(
     const auto lhs_num_quant_per_row = round_up_division(k, lhs_quant_width);
     const auto rhs_num_quant_per_row = round_up_division(k, rhs_quant_width);
 
-    std::vector<uint8_t> dst(m * n * sizeof(DstData));
+    Buffer dst(m * n * sizeof(DstData));
 
     const auto* lhs_scales_ptr = reinterpret_cast<const LhsScale*>(lhs_scales);
     const auto* rhs_scales_ptr = reinterpret_cast<const RhsScale*>(rhs_scales);
@@ -533,29 +528,27 @@ std::vector<uint8_t> matmul_clamp_nt_nt(
     return dst;
 }
 
-template std::vector<uint8_t> matmul_clamp_nt_nt<int8_t, float, int32_t, int8_t, float, int32_t, float, int32_t, float>(
+template Buffer matmul_clamp_nt_nt<int8_t, float, int32_t, int8_t, float, int32_t, float, int32_t, float>(
     size_t m, size_t n, size_t k,                                                                       //
     const void* lhs_data, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_width,  //
     const void* rhs_data, const void* rhs_scales, const void* rhs_zero_points, size_t rhs_quant_width,  //
     const void* biases,                                                                                 //
     float min_value, float max_value);
-template std::vector<uint8_t> matmul_clamp_nt_nt<int8_t, float, int32_t, Int4, float, int32_t, float, int32_t, float>(
-    size_t m, size_t n, size_t k,                                                                       //
-    const void* lhs_data, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_width,  //
-    const void* rhs_data, const void* rhs_scales, const void* rhs_zero_points, size_t rhs_quant_width,  //
-    const void* biases,                                                                                 //
-    float min_value, float max_value);
-
-template std::vector<uint8_t>
-matmul_clamp_nt_nt<int8_t, Float16, int32_t, Int4, Float16, int32_t, float, int32_t, float>(
+template Buffer matmul_clamp_nt_nt<int8_t, float, int32_t, Int4, float, int32_t, float, int32_t, float>(
     size_t m, size_t n, size_t k,                                                                       //
     const void* lhs_data, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_width,  //
     const void* rhs_data, const void* rhs_scales, const void* rhs_zero_points, size_t rhs_quant_width,  //
     const void* biases,                                                                                 //
     float min_value, float max_value);
 
-template std::vector<uint8_t>
-matmul_clamp_nt_nt<int8_t, float, int32_t, Int4, BFloat16, int32_t, float, int32_t, float>(
+template Buffer matmul_clamp_nt_nt<int8_t, Float16, int32_t, Int4, Float16, int32_t, float, int32_t, float>(
+    size_t m, size_t n, size_t k,                                                                       //
+    const void* lhs_data, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_width,  //
+    const void* rhs_data, const void* rhs_scales, const void* rhs_zero_points, size_t rhs_quant_width,  //
+    const void* biases,                                                                                 //
+    float min_value, float max_value);
+
+template Buffer matmul_clamp_nt_nt<int8_t, float, int32_t, Int4, BFloat16, int32_t, float, int32_t, float>(
     size_t m, size_t n, size_t k,                                                                       //
     const void* lhs_data, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_width,  //
     const void* rhs_data, const void* rhs_scales, const void* rhs_zero_points, size_t rhs_quant_width,  //

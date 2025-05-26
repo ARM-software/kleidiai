@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -9,7 +9,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <tuple>
-#include <vector>
+
+#include "test/common/buffer.hpp"
 
 namespace kai::test {
 
@@ -90,8 +91,7 @@ IntType quantize_asymmetric(FloatType value, FloatType scale, ZeroPointType zero
 ///
 /// @return The quantization scale matrix.
 template <typename SrcType, typename DstType, typename ScaleType>
-std::vector<uint8_t> compute_symmetric_per_block_quantization_info(
-    const void* src, size_t height, size_t width, size_t quant_width);
+Buffer compute_symmetric_per_block_quantization_info(const void* src, size_t height, size_t width, size_t quant_width);
 
 /// Quantizes each block of the matrix using symmetric quantization method.
 ///
@@ -158,7 +158,7 @@ std::vector<uint8_t> compute_symmetric_per_block_quantization_info(
 ///
 /// @return The quantized data matrix.
 template <typename SrcType, typename DstType, typename ScaleType>
-std::vector<uint8_t> quantize_symmetric_per_block(
+Buffer quantize_symmetric_per_block(
     const void* src, const void* scales, size_t height, size_t width, size_t quant_width);
 
 /// Dynamically quantizes each block of the matrix using symmetric quantization method.
@@ -184,7 +184,7 @@ std::vector<uint8_t> quantize_symmetric_per_block(
 ///
 /// @return The quantized data matrix and the quantization scale matrix.
 template <typename SrcType, typename DstType, typename ScaleType>
-std::tuple<std::vector<uint8_t>, std::vector<uint8_t>> quantize_symmetric_per_block_dynamic(
+std::tuple<Buffer, Buffer> quantize_symmetric_per_block_dynamic(
     const void* src, size_t height, size_t width, size_t quant_width);
 
 /// Computes the quantization information using asymmetric per-block quantization method.
@@ -258,7 +258,7 @@ std::tuple<std::vector<uint8_t>, std::vector<uint8_t>> quantize_symmetric_per_bl
 ///
 /// @return The quantization scale matrix and the quantization zero point matrix.
 template <typename SrcType, typename DstType, typename ScaleType, typename ZeroPointType>
-std::tuple<std::vector<uint8_t>, std::vector<uint8_t>> compute_asymmetric_per_block_quantization_info(
+std::tuple<Buffer, Buffer> compute_asymmetric_per_block_quantization_info(
     const void* src, size_t height, size_t width, size_t quant_width);
 
 /// Quantizes each block of the matrix using asymmetric quantization method.
@@ -328,7 +328,7 @@ std::tuple<std::vector<uint8_t>, std::vector<uint8_t>> compute_asymmetric_per_bl
 ///
 /// @return The quantized data matrix.
 template <typename SrcType, typename DstType, typename ScaleType, typename ZeroPointType>
-std::vector<uint8_t> quantize_asymmetric_per_block(
+Buffer quantize_asymmetric_per_block(
     const void* src, const void* scales, const void* zero_points, size_t height, size_t width, size_t quant_width);
 
 /// Dynamically quantizes each block of the matrix using asymmetric quantization method.
@@ -355,7 +355,7 @@ std::vector<uint8_t> quantize_asymmetric_per_block(
 ///
 /// @return The quantized data matrix, the quantization scale matrix and the quantization zero point matrix.
 template <typename SrcType, typename DstType, typename ScaleType, typename ZeroPointType>
-std::tuple<std::vector<uint8_t>, std::vector<uint8_t>, std::vector<uint8_t>> quantize_asymmetric_per_block_dynamic(
+std::tuple<Buffer, Buffer, Buffer> quantize_asymmetric_per_block_dynamic(
     const void* src, size_t height, size_t width, size_t quant_width);
 
 }  // namespace kai::test

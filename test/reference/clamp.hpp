@@ -7,10 +7,9 @@
 #pragma once
 
 #include <cstddef>
-#include <cstdint>
 #include <tuple>
-#include <vector>
 
+#include "test/common/buffer.hpp"
 #include "test/common/data_type.hpp"
 
 namespace kai::test {
@@ -42,7 +41,7 @@ std::tuple<float, float> find_clamp_range(DataType type, const void* src, size_t
 /// @param[in] min_value Lower bound of clamp.
 /// @param[in] width Upper bound of clamp.
 template <typename T>
-std::vector<uint8_t> clamp(const void* src, size_t len, T min_value, T max_value);
+Buffer clamp(const void* src, size_t len, T min_value, T max_value);
 
 /// Clamps the matrix.
 ///
@@ -51,5 +50,5 @@ std::vector<uint8_t> clamp(const void* src, size_t len, T min_value, T max_value
 /// @param[in] len Number of values in the source matrix.
 /// @param[in] min_value Lower bound of clamp.
 /// @param[in] max_value Upper bound of clamp.
-std::vector<uint8_t> clamp(DataType type, const void* src, size_t len, float min_value, float max_value);
+Buffer clamp(DataType type, const void* src, size_t len, float min_value, float max_value);
 }  // namespace kai::test

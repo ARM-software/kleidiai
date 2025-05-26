@@ -12,10 +12,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <vector>
 
 #include "kai/kai_common.h"
 #include "test/common/bfloat16.hpp"
+#include "test/common/buffer.hpp"
 #include "test/common/data_format.hpp"
 #include "test/common/data_type.hpp"
 #include "test/common/float16.hpp"
@@ -39,13 +39,13 @@ BFloat16 convert(const uint8_t* src_ptr_elm, DataType src_dtype, DataType dst_dt
     }
 }
 
-std::vector<uint8_t> pack_block(
+Buffer pack_block(
     const void* src, DataType src_dtype, DataType dst_dtype, size_t src_esize, size_t dst_esize, size_t full_height,
     size_t full_width, size_t block_height, size_t block_width, size_t subblock_height, size_t subblock_width) {
     const auto dst_bytes =
         round_up_multiple(full_height, block_height) * round_up_multiple(full_width, block_width) * dst_esize;
 
-    std::vector<uint8_t> dst(dst_bytes, 0);
+    Buffer dst(dst_bytes, 0);
 
     const auto* src_ptr = reinterpret_cast<const uint8_t*>(src);
     auto* dst_ptr = dst.data();
@@ -97,7 +97,7 @@ std::vector<uint8_t> pack_block(
 }
 
 /// Packs the matrix from raw to per-row bias format.
-std::vector<uint8_t> pack_bias_per_row(
+Buffer pack_bias_per_row(
     DataType src_dtype, DataType bias_dtype, DataType dst_dtype, size_t src_esize, size_t bias_esize, size_t dst_esize,
     const void* src, const void* bias, size_t height, size_t width, size_t block_height, size_t block_width,
     size_t subblock_height, size_t subblock_width) {
@@ -110,7 +110,7 @@ std::vector<uint8_t> pack_bias_per_row(
     const auto group_bytes = group_bias_bytes + group_num_blocks * block_data_bytes;
     const auto dst_bytes = num_groups * group_bytes;
 
-    std::vector<uint8_t> dst(dst_bytes, 0);
+    Buffer dst(dst_bytes, 0);
 
     const auto* src_ptr = reinterpret_cast<const uint8_t*>(src);
     const auto* bias_ptr = reinterpret_cast<const uint8_t*>(bias);
@@ -170,7 +170,7 @@ std::vector<uint8_t> pack_bias_per_row(
 
 }  // namespace
 
-std::vector<uint8_t> pack(
+Buffer pack(
     const DataFormat& dst_format, const void* src, [[maybe_unused]] const void* scales, const void* bias,
     const DataFormat& src_format, size_t height, size_t width) {
     const auto dst_dt = dst_format.data_type();
@@ -219,8 +219,7 @@ std::vector<uint8_t> pack(
 }
 
 template <typename Data, typename Scale>
-std::vector<uint8_t> pack_data_scales(
-    const void* data, const void* scales, size_t height, size_t width, size_t quant_width) {
+Buffer pack_data_scales(const void* data, const void* scales, size_t height, size_t width, size_t quant_width) {
     KAI_ASSUME_IF(size_in_bits<Data> < 8, quant_width % (8 / size_in_bits<Data>) == 0);
     KAI_ASSUME_IF(size_in_bits<Data> < 8, width % (8 / size_in_bits<Data>) == 0);
 
@@ -229,7 +228,7 @@ std::vector<uint8_t> pack_data_scales(
     const auto data_bytes = height * width * size_in_bits<Data> / 8;
     const auto scales_bytes = height * num_quant_packets_x * sizeof(Scale);
 
-    std::vector<uint8_t> dst(data_bytes + scales_bytes);
+    Buffer dst(data_bytes + scales_bytes);
 
     const auto* scales_ptr = reinterpret_cast<const Scale*>(scales);
     auto* dst_ptr = dst.data();
@@ -251,13 +250,13 @@ std::vector<uint8_t> pack_data_scales(
         }
     }
 
-    KAI_ASSERT(dst_ptr == &*dst.end());
+    KAI_ASSERT(dst_ptr == dst.data() + dst.size());
 
     return dst;
 }
 
 template <typename ZeroPoint, typename Data, typename Scale>
-std::vector<uint8_t> pack_zero_points_data_scales_per_block(
+Buffer pack_zero_points_data_scales_per_block(
     const void* zero_points, const void* data, const void* scales, size_t num_blocks, size_t block_num_zero_points,
     size_t block_num_data, size_t block_num_scales) {
     // Only data is allowed to be sub-byte.
@@ -272,7 +271,7 @@ std::vector<uint8_t> pack_zero_points_data_scales_per_block(
     KAI_ASSUME(
         (block_num_data * size_in_bits<Data> + block_num_scales * size_in_bits<Scale>) % size_in_bits<ZeroPoint> == 0);
 
-    std::vector<uint8_t> dst(round_up_division(
+    Buffer dst(round_up_division(
         num_blocks *
             (block_num_zero_points * size_in_bits<ZeroPoint> + block_num_data * size_in_bits<Data> +
              block_num_scales * size_in_bits<Scale>),
@@ -297,17 +296,17 @@ std::vector<uint8_t> pack_zero_points_data_scales_per_block(
         dst_ptr += block_num_scales * sizeof(Scale);
     }
 
-    KAI_ASSERT(dst_ptr == &*dst.end());
+    KAI_ASSERT(dst_ptr == dst.data() + dst.size());
 
     return dst;
 }
 
-template std::vector<uint8_t> pack_zero_points_data_scales_per_block<int32_t, int8_t, float>(
+template Buffer pack_zero_points_data_scales_per_block<int32_t, int8_t, float>(
     const void* zero_points, const void* data, const void* scales, size_t num_blocks, size_t block_num_zero_points,
     size_t block_num_data, size_t block_num_scales);
 
 template <typename Data, typename Scale>
-std::vector<uint8_t> pack_data_scales_interleave_block(
+Buffer pack_data_scales_interleave_block(
     const void* data, const void* scales, size_t height, size_t width, size_t quant_width) {
     KAI_ASSUME_IF(size_in_bits<Data> < 8, quant_width % (8 / size_in_bits<Data>) == 0);
     KAI_ASSUME_IF(size_in_bits<Data> < 8, width % (8 / size_in_bits<Data>) == 0);
@@ -319,7 +318,7 @@ std::vector<uint8_t> pack_data_scales_interleave_block(
     const auto data_bytes = height * width * size_in_bits<Data> / 8;
     const auto scales_bytes = scales != nullptr ? height * num_quant_packets_x * sizeof(Scale) : 0;
 
-    std::vector<uint8_t> dst(data_bytes + scales_bytes);
+    Buffer dst(data_bytes + scales_bytes);
 
     const auto* scales_ptr = reinterpret_cast<const Scale*>(scales);
     auto* dst_ptr = dst.data();
@@ -341,18 +340,18 @@ std::vector<uint8_t> pack_data_scales_interleave_block(
         }
     }
 
-    KAI_ASSERT(dst_ptr == &*dst.end());
+    KAI_ASSERT(dst_ptr == dst.data() + dst.size());
 
     return dst;
 }
 
-template std::vector<uint8_t> pack_data_scales_interleave_block<UInt4, Float16>(
+template Buffer pack_data_scales_interleave_block<UInt4, Float16>(
     const void* data, const void* scales, size_t height, size_t width, size_t quant_width);
-template std::vector<uint8_t> pack_data_scales_interleave_block<UInt4, std::nullptr_t>(
+template Buffer pack_data_scales_interleave_block<UInt4, std::nullptr_t>(
     const void* data, const void* scales, size_t height, size_t width, size_t quant_width);
 
 template <typename Data, typename ZeroPoint, typename Scale, typename Bias>
-std::vector<uint8_t> pack_block_data_zero_points_scale_bias(
+Buffer pack_block_data_zero_points_scale_bias(
     const void* data, const void* zero_points, const void* scales, const void* biases, size_t height, size_t width,
     size_t quant_height, size_t quant_width, size_t block_height, size_t block_width, size_t interleave_x_blocks) {
     if (quant_width == width) {
@@ -382,7 +381,7 @@ std::vector<uint8_t> pack_block_data_zero_points_scale_bias(
     const auto biases_bytes = has_biases ? height * sizeof(Bias) : 0;
 
     const auto dst_bytes = num_quant_packets_y * num_quant_packets_x * quant_packet_bytes + biases_bytes;
-    std::vector<uint8_t> dst(dst_bytes);
+    Buffer dst(dst_bytes);
 
     const auto* zero_points_ptr = reinterpret_cast<const ZeroPoint*>(zero_points);
     const auto* scales_ptr = reinterpret_cast<const Scale*>(scales);
@@ -445,7 +444,7 @@ std::vector<uint8_t> pack_block_data_zero_points_scale_bias(
         }
     }
 
-    KAI_ASSERT(dst_ptr == &*dst.end());
+    KAI_ASSERT(dst_ptr == dst.data() + dst.size());
 
     return dst;
 }

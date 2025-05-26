@@ -9,9 +9,9 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <vector>
 
 #include "kai/kai_common.h"
+#include "test/common/buffer.hpp"
 #include "test/common/data_type.hpp"
 #include "test/common/float16.hpp"
 #include "test/common/int4.hpp"
@@ -67,13 +67,13 @@ T scalar_binary_elementwise(T lhs, T rhs) {
 ///
 /// @return The result data buffer.
 template <const BinaryElementwiseOperator op, typename T>
-std::vector<uint8_t> binary_elementwise_any_op_type(
+Buffer binary_elementwise_any_op_type(
     const void* lhs, const void* rhs, size_t lhs_height, size_t lhs_width, size_t rhs_height, size_t rhs_width) {
     const auto height = std::max(lhs_height, rhs_height);
     const auto width = std::max(lhs_width, rhs_width);
 
     KAI_ASSUME(width * size_in_bits<T> % 8 == 0);
-    std::vector<uint8_t> dst(height * width * size_in_bits<T> / 8);
+    Buffer dst(height * width * size_in_bits<T> / 8);
 
     for (size_t y = 0; y < height; ++y) {
         for (size_t x = 0; x < width; ++x) {
@@ -94,7 +94,7 @@ std::vector<uint8_t> binary_elementwise_any_op_type(
 }
 
 template <const BinaryElementwiseOperator op>
-std::vector<uint8_t> binary_elementwise_any_type(
+Buffer binary_elementwise_any_type(
     const void* lhs, DataType lhs_dt, size_t lhs_height, size_t lhs_width,  //
     const void* rhs, DataType rhs_dt, size_t rhs_height, size_t rhs_width) {
     KAI_ASSUME(lhs_dt == rhs_dt);
@@ -121,14 +121,14 @@ std::vector<uint8_t> binary_elementwise_any_type(
 
 }  // namespace
 
-std::vector<uint8_t> add(
+Buffer add(
     const void* lhs, DataType lhs_dt, size_t lhs_height, size_t lhs_width,  //
     const void* rhs, DataType rhs_dt, size_t rhs_height, size_t rhs_width) {
     return binary_elementwise_any_type<BinaryElementwiseOperator::ADD>(
         lhs, lhs_dt, lhs_height, lhs_width, rhs, rhs_dt, rhs_height, rhs_width);
 }
 
-std::vector<uint8_t> sub(
+Buffer sub(
     const void* lhs, DataType lhs_dt, size_t lhs_height, size_t lhs_width,  //
     const void* rhs, DataType rhs_dt, size_t rhs_height, size_t rhs_width) {
     return binary_elementwise_any_type<BinaryElementwiseOperator::SUB>(
@@ -136,18 +136,18 @@ std::vector<uint8_t> sub(
 }
 
 template <typename T>
-std::vector<uint8_t> sub(
+Buffer sub(
     const void* lhs, size_t lhs_height, size_t lhs_width,  //
     const void* rhs, size_t rhs_height, size_t rhs_width) {
     return binary_elementwise_any_op_type<BinaryElementwiseOperator::SUB, T>(
         lhs, rhs, lhs_height, lhs_width, rhs_height, rhs_width);
 }
 
-template std::vector<uint8_t> sub<int32_t>(
+template Buffer sub<int32_t>(
     const void* lhs, size_t lhs_height, size_t lhs_width,  //
     const void* rhs, size_t rhs_height, size_t rhs_width);
 
-std::vector<uint8_t> mul(
+Buffer mul(
     const void* lhs, DataType lhs_dt, size_t lhs_height, size_t lhs_width,  //
     const void* rhs, DataType rhs_dt, size_t rhs_height, size_t rhs_width) {
     return binary_elementwise_any_type<BinaryElementwiseOperator::MUL>(
@@ -155,22 +155,22 @@ std::vector<uint8_t> mul(
 }
 
 template <typename T>
-std::vector<uint8_t> mul(
+Buffer mul(
     const void* lhs, size_t lhs_height, size_t lhs_width,  //
     const void* rhs, size_t rhs_height, size_t rhs_width) {
     return binary_elementwise_any_op_type<BinaryElementwiseOperator::MUL, T>(
         lhs, rhs, lhs_height, lhs_width, rhs_height, rhs_width);
 }
 
-template std::vector<uint8_t> mul<float>(
+template Buffer mul<float>(
     const void* lhs, size_t lhs_height, size_t lhs_width,  //
     const void* rhs, size_t rhs_height, size_t rhs_width);
 
-template std::vector<uint8_t> mul<int32_t>(
+template Buffer mul<int32_t>(
     const void* lhs, size_t lhs_height, size_t lhs_width,  //
     const void* rhs, size_t rhs_height, size_t rhs_width);
 
-std::vector<uint8_t> div(
+Buffer div(
     const void* lhs, DataType lhs_dt, size_t lhs_height, size_t lhs_width,  //
     const void* rhs, DataType rhs_dt, size_t rhs_height, size_t rhs_width) {
     return binary_elementwise_any_type<BinaryElementwiseOperator::DIV>(

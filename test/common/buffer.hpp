@@ -29,7 +29,9 @@ class Buffer {
     using handle = std::unique_ptr<void, std::function<void(void*)>>;
 
 public:
+    Buffer() = default;
     explicit Buffer(size_t size);
+    Buffer(size_t size, uint8_t init_value);
 
     Buffer(const Buffer& other) = delete;
     Buffer(Buffer&& other) noexcept = default;
@@ -41,7 +43,7 @@ public:
     /// Gets the base memory address of the user buffer.
     ///
     /// @return Base memory address of the user buffer.
-    [[nodiscard]] void* data() const {
+    [[nodiscard]] std::byte* data() const {
         return static_cast<std::byte*>(m_buffer.get()) + m_user_buffer_offset;
     }
 
@@ -81,7 +83,7 @@ private:
 
     handle m_buffer = nullptr;
 
-    size_t m_user_buffer_size;
+    size_t m_user_buffer_size = 0;
     size_t m_user_buffer_offset = 0;
 
     BufferProtectionPolicy m_protection_policy = BufferProtectionPolicy::None;

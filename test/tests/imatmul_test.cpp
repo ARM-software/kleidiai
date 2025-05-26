@@ -20,6 +20,7 @@
 #include "kai/ukernels/matmul/pack/kai_lhs_imatmul_pack_x32p2vlx1_x32p_sme.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_imatmul_pack_kxn_x16p2vlx2b_x16_x16_sme.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_imatmul_pack_kxn_x32p2vlx1b_x32_x32_sme.h"
+#include "test/common/buffer.hpp"
 #include "test/common/compare.hpp"
 #include "test/common/cpu_info.hpp"
 #include "test/common/matmul_test_common.hpp"
@@ -120,9 +121,6 @@ struct IndirectMatMul {
     RhsPackIndirectKernel rhs;
     MatMulIndirectKernel imatmul;
 };
-
-/// Simple byte buffer
-using Buffer = std::vector<uint8_t>;
 
 /// Convenience type for test list
 using IndirectMatMulArray = std::array<IndirectMatMul, 2>;

@@ -8,7 +8,8 @@
 
 #include <cstdint>
 #include <tuple>
-#include <vector>
+
+#include "test/common/buffer.hpp"
 
 namespace kai::test {
 
@@ -121,6 +122,6 @@ private:
 /// @param[in] src The data buffer.
 ///
 /// @return The buffer with packed byte, where the high and low nibbles reversed.
-std::vector<uint8_t> convert_s0s1_s1s0(const std::vector<uint8_t>& src);
+Buffer convert_s0s1_s1s0(const Buffer& src);
 
 }  // namespace kai::test

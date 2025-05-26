@@ -8,7 +8,8 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <vector>
+
+#include "test/common/buffer.hpp"
 
 namespace kai::test {
 
@@ -29,7 +30,7 @@ enum class ReductionOperator : uint32_t {
 /// @param[in] dimension Reduction dimension.
 ///
 /// @return The reduced matrix.
-std::vector<uint8_t> reduce_add(
+Buffer reduce_add(
     const void* src, const DataFormat& src_format, size_t height, size_t width, const DataFormat& dst_format,
     size_t dimension);
 
@@ -44,7 +45,7 @@ std::vector<uint8_t> reduce_add(
 ///
 /// @return The vector containing the sum of each input matrix row.
 template <typename Value, typename Accumulator>
-std::vector<uint8_t> reduce_add_x(const void* src, size_t height, size_t width);
+Buffer reduce_add_x(const void* src, size_t height, size_t width);
 
 /// Retrieve the minimum value in a provided matrix.
 ///

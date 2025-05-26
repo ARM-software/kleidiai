@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -8,7 +8,8 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <vector>
+
+#include "test/common/buffer.hpp"
 
 namespace kai::test {
 
@@ -22,7 +23,7 @@ class DataFormat;
 /// @param[in] seed Random seed.
 ///
 /// @return The data buffer for the matrix.
-std::vector<uint8_t> fill_matrix_random(size_t height, size_t width, const DataFormat& format, uint32_t seed);
+Buffer fill_matrix_random(size_t height, size_t width, const DataFormat& format, uint32_t seed);
 
 /// Creates a new data buffer filled with random data.
 ///
@@ -33,6 +34,6 @@ std::vector<uint8_t> fill_matrix_random(size_t height, size_t width, const DataF
 ///
 /// @return The data buffer.
 template <typename Value>
-std::vector<uint8_t> fill_random(size_t length, uint32_t seed);
+Buffer fill_random(size_t length, uint32_t seed);
 
 }  // namespace kai::test

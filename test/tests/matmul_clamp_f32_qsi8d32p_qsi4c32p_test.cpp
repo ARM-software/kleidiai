@@ -14,7 +14,6 @@
 #include <sstream>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot.h"
@@ -28,6 +27,7 @@
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qsi8d32p_f32_neon.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0.h"
+#include "test/common/buffer.hpp"
 #include "test/common/cpu_info.hpp"
 #include "test/common/float16.hpp"
 #include "test/common/int4.hpp"
@@ -208,7 +208,7 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, EndToEnd) {
     // Runs the LHS packing micro-kernel.
     const auto lhs_start_row = rect.start_row();
     const auto imp_packed_lhs_size = ukernel_variant.pack_interface.lhs_packed_size(M, K, bl, mr, kr, sr);
-    std::vector<uint8_t> imp_packed_lhs(imp_packed_lhs_size);
+    Buffer imp_packed_lhs(imp_packed_lhs_size);
 
     auto lhs_stride = K * sizeof(float);
     auto lhs_offset = ukernel_variant.pack_interface.get_lhs_offset(lhs_start_row, lhs_stride);
@@ -227,7 +227,7 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, EndToEnd) {
         pack_data_scales_interleave_block<UInt4, Float16>(ref_rhs_qsu4.data(), ref_rhs_scales.data(), N, K, bl);
 
     const auto imp_packed_rhs_size = ukernel_variant.pack_interface.rhs_packed_size(N, K, nr, kr, bl);
-    std::vector<uint8_t> imp_packed_rhs(imp_packed_rhs_size);
+    Buffer imp_packed_rhs(imp_packed_rhs_size);
     const auto rhs_start_row = rect.start_col();
     auto rhs_packed_offset = ukernel_variant.pack_interface.get_rhs_packed_offset(rhs_start_row, K, nr, kr, bl);
     auto rhs_matmul_offset = ukernel_variant.ukernel.interface.get_rhs_packed_offset(rhs_start_row, K, bl);
@@ -235,7 +235,8 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, EndToEnd) {
 
     const kai_rhs_pack_qs4cxs1s0_param params{.lhs_zero_point = 1, .rhs_zero_point = 8};
     ukernel_variant.pack_interface.rhs_pack(
-        1, N, K, nr, kr, sr, bl, ref_rhs_qsu4_scale_f16.data(), nullptr, imp_packed_rhs.data(), 0, &params);
+        1, N, K, nr, kr, sr, bl, reinterpret_cast<const uint8_t*>(ref_rhs_qsu4_scale_f16.data()), nullptr,
+        imp_packed_rhs.data(), 0, &params);
 
     const auto dst_stride_row = N * sizeof(float);
     const auto dst_stride_col = sizeof(float);
@@ -247,7 +248,7 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, EndToEnd) {
     // Runs the GEMM micro-kernel.
     const auto imp_dst_size = ukernel_variant.ukernel.interface.get_dst_size(M, N);
     ASSERT_EQ(imp_dst_size, ref_dst.size());
-    std::vector<uint8_t> imp_dst(imp_dst_size);
+    Buffer imp_dst(imp_dst_size);
     ukernel_variant.ukernel.interface.run_matmul(
         rect.height(), rect.width(), K, bl, imp_packed_lhs.data() + lhs_matmul_offset,
         imp_packed_rhs.data() + rhs_matmul_offset, reinterpret_cast<float*>(imp_dst.data() + dst_offset),

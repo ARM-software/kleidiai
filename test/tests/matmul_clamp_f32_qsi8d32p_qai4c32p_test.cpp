@@ -13,13 +13,13 @@
 #include <sstream>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qai4c32p/kai_matmul_clamp_f32_qsi8d32p1x8_qai4c32p4x8_1x4_neon_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qai4c32p/kai_matmul_clamp_f32_qsi8d32p4x8_qai4c32p4x8_8x4_neon_i8mm.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qai4c32p/kai_matmul_clamp_f32_qsi8d32p_qai4c32p_interface.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qsi8d32pscalef32_f32_neon.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qai4c32p_qau4c32s0s1_f32_f32_f32_neon.h"
+#include "test/common/buffer.hpp"
 #include "test/common/cpu_info.hpp"
 #include "test/common/int4.hpp"
 #include "test/common/matmul_test_common.hpp"
@@ -83,7 +83,7 @@ TEST_P(MatMulTest_f32_qsi8d32p_qai4c32p, EndToEnd) {
     // Generates input data.
     const auto ref_lhs = fill_random<float>(M * K, seed + 0);
     const auto ref_rhs = fill_random<float>(N * K, seed + 1);
-    std::vector<uint8_t> ref_biases;
+    Buffer ref_biases;
 
     if (has_bias) {
         ref_biases = fill_random<float>(N, seed + 2);
@@ -112,7 +112,7 @@ TEST_P(MatMulTest_f32_qsi8d32p_qai4c32p, EndToEnd) {
     const auto lhs_start_row = rect.start_row();
     const auto imp_packed_lhs_size =
         kai_get_lhs_packed_size_lhs_quant_pack_qsi8d32pscalef32_f32_neon(M, K, bl, mr, kr, sr);
-    std::vector<uint8_t> imp_packed_lhs(imp_packed_lhs_size);
+    Buffer imp_packed_lhs(imp_packed_lhs_size);
 
     auto lhs_stride = K * sizeof(float);
     auto lhs_offset = kai_get_lhs_offset_lhs_quant_pack_qsi8d32pscalef32_f32_neon(lhs_start_row, lhs_stride);
@@ -130,7 +130,7 @@ TEST_P(MatMulTest_f32_qsi8d32p_qai4c32p, EndToEnd) {
     const size_t num_blocks_per_row = round_up_division(K, bl);
     const size_t ref_zp_size = N * num_blocks_per_row;
     const size_t ref_zp_size_in_bytes = ref_zp_size * sizeof(float);
-    std::vector<uint8_t> ref_rhs_zp_f32(ref_zp_size_in_bytes);
+    Buffer ref_rhs_zp_f32(ref_zp_size_in_bytes);
     for (size_t i = 0; i < ref_zp_size; ++i) {
         reinterpret_cast<float*>(ref_rhs_zp_f32.data())[i] =
             -reinterpret_cast<const int32_t*>(ref_rhs_zero_points.data())[i] *
@@ -145,7 +145,7 @@ TEST_P(MatMulTest_f32_qsi8d32p_qai4c32p, EndToEnd) {
 
     const auto imp_packed_rhs_size =
         kai_get_rhs_packed_size_rhs_pack_nxk_qai4c32p_qau4c32s0s1_f32_f32_f32_neon(N, K, nr, kr, bl);
-    std::vector<uint8_t> imp_packed_rhs(imp_packed_rhs_size);
+    Buffer imp_packed_rhs(imp_packed_rhs_size);
     const auto rhs_start_row = rect.start_col();
     auto rhs_packed_offset =
         kai_get_rhs_packed_offset_rhs_pack_nxk_qai4c32p_qau4c32s0s1_f32_f32_f32_neon(rhs_start_row, K, nr, kr, bl);
@@ -158,8 +158,8 @@ TEST_P(MatMulTest_f32_qsi8d32p_qai4c32p, EndToEnd) {
     params.rhs_zero_point = 8;
 
     kai_run_rhs_pack_nxk_qai4c32p_qau4c32s0s1_f32_f32_f32_neon(
-        1, N, K, nr, kr, sr, bl, ref_rhs_qau4s0s1.data(), ref_rhs_zp_f32.data(), has_bias ? ref_biases.data() : nullptr,
-        ref_rhs_scales.data(), imp_packed_rhs.data(), 0, &params);
+        1, N, K, nr, kr, sr, bl, reinterpret_cast<const uint8_t*>(ref_rhs_qau4s0s1.data()), ref_rhs_zp_f32.data(),
+        has_bias ? ref_biases.data() : nullptr, ref_rhs_scales.data(), imp_packed_rhs.data(), 0, &params);
 
     const auto dst_stride_row = N * sizeof(float);
     const auto dst_stride_col = sizeof(float);
@@ -171,7 +171,7 @@ TEST_P(MatMulTest_f32_qsi8d32p_qai4c32p, EndToEnd) {
     // Runs the GEMM micro-kernel.
     const auto imp_dst_size = ukernel_variant.interface.get_dst_size(M, N);
     ASSERT_EQ(imp_dst_size, ref_dst.size());
-    std::vector<uint8_t> imp_dst(imp_dst_size);
+    Buffer imp_dst(imp_dst_size);
     ukernel_variant.interface.run_matmul(
         rect.height(), rect.width(), K, bl, imp_packed_lhs.data() + lhs_matmul_offset,
         imp_packed_rhs.data() + rhs_matmul_offset, reinterpret_cast<float*>(imp_dst.data() + dst_offset),

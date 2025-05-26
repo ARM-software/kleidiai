@@ -13,7 +13,6 @@
 #include <sstream>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi4cxp/kai_matmul_clamp_f16_qai8dxp1x4_qsi4cxp4x4_1x4_neon_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi4cxp/kai_matmul_clamp_f16_qai8dxp1x8_qsi4cxp4x8_1x4_neon_dotprod.h"
@@ -22,6 +21,7 @@
 #include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi4cxp/kai_matmul_clamp_f16_qai8dxp_qsi4cxp_interface.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp_f16_neon.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4cxp_qs4cxs1s0.h"
+#include "test/common/buffer.hpp"
 #include "test/common/compare.hpp"
 #include "test/common/cpu_info.hpp"
 #include "test/common/data_format.hpp"
@@ -93,7 +93,7 @@ TEST_P(MatMulTest_f16_qai8dxp_qsi4cxp, EndToEnd) {
     // Generates input data.
     const auto ref_lhs_f16 = fill_random<Float16>(M * K, seed + 0);
     const auto ref_rhs = fill_random<float>(N * K, seed + 1);
-    std::vector<uint8_t> ref_biases;
+    Buffer ref_biases;
 
     if (has_bias) {
         ref_biases = fill_random<float>(N, seed + 2);
@@ -128,7 +128,7 @@ TEST_P(MatMulTest_f16_qai8dxp_qsi4cxp, EndToEnd) {
     // Runs the LHS packing micro-kernel.
     const auto lhs_start_row = rect.start_row();
     const auto imp_packed_lhs_size = kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp_f16_neon(M, K, mr, kr, sr);
-    std::vector<uint8_t> imp_packed_lhs(imp_packed_lhs_size);
+    Buffer imp_packed_lhs(imp_packed_lhs_size);
 
     auto lhs_stride = K * sizeof(uint16_t);
     auto lhs_offset = kai_get_lhs_offset_lhs_quant_pack_qai8dxp_f16_neon(lhs_start_row, lhs_stride);
@@ -145,7 +145,7 @@ TEST_P(MatMulTest_f16_qai8dxp_qsi4cxp, EndToEnd) {
         ref_rhs_qsi4.data(), N, K, K, round_up_multiple(K, 2), round_up_division(N * round_up_multiple(K, 2), 2));
 
     const auto imp_packed_rhs_size = kai_get_rhs_packed_size_rhs_pack_nxk_qsi4cxp_qs4cxs1s0(N, K, nr, kr, sr);
-    std::vector<uint8_t> imp_packed_rhs(imp_packed_rhs_size);
+    Buffer imp_packed_rhs(imp_packed_rhs_size);
     const auto rhs_start_row = rect.start_col();
     auto rhs_packed_offset = kai_get_rhs_packed_offset_rhs_pack_nxk_qsi4cxp_qs4cxs1s0(rhs_start_row, K, nr, kr, sr);
     auto rhs_matmul_offset = ukernel_variant.interface.get_rhs_packed_offset(rhs_start_row, K);
@@ -157,7 +157,7 @@ TEST_P(MatMulTest_f16_qai8dxp_qsi4cxp, EndToEnd) {
     params.rhs_zero_point = 0;
 
     kai_run_rhs_pack_nxk_qsi4cxp_qs4cxs1s0(
-        1, N, K, nr, kr, sr, ref_rhs_qsi4_padded.data(),
+        1, N, K, nr, kr, sr, reinterpret_cast<const uint8_t*>(ref_rhs_qsi4_padded.data()),
         has_bias ? reinterpret_cast<const float*>(ref_biases.data()) : nullptr,
         reinterpret_cast<const float*>(ref_rhs_scales.data()), imp_packed_rhs.data(), 0, &params);
 
@@ -171,7 +171,7 @@ TEST_P(MatMulTest_f16_qai8dxp_qsi4cxp, EndToEnd) {
     // Runs the GEMM micro-kernel.
     const auto imp_dst_size = ukernel_variant.interface.get_dst_size(M, N);
     ASSERT_EQ(imp_dst_size, ref_dst.size());
-    std::vector<uint8_t> imp_dst(imp_dst_size);
+    Buffer imp_dst(imp_dst_size);
     ukernel_variant.interface.run_matmul(
         rect.height(), rect.width(), K, imp_packed_lhs.data() + lhs_matmul_offset,
         imp_packed_rhs.data() + rhs_matmul_offset, imp_dst.data() + dst_offset, dst_stride_row, dst_stride_col,

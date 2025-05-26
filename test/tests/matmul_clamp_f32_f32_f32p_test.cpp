@@ -15,7 +15,6 @@
 #include <random>
 #include <sstream>
 #include <type_traits>
-#include <vector>
 
 #include "kai/kai_common.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p16vlx1b_1x16vl_sme2_mla.h"
@@ -31,6 +30,7 @@
 #include "test/common/memory.hpp"
 #include "test/common/test_suite.hpp"
 #include "test/reference/clamp.hpp"
+#include "test/reference/fill.hpp"
 #include "test/reference/matmul.hpp"
 
 namespace kai::test {
@@ -64,40 +64,6 @@ const std::array<UkernelVariant<kai_matmul_clamp_f32_f32_f32p_ukernel>, 2> ukern
       "matmul_clamp_f32_f32_f32p2vlx1b_1x16vl_sme2_mla",
       cpu_has_sme2}}};
 
-// TODO: Reimplement these helpers in fill.cpp. These methods are currently duplicated here so they can be specialized
-// on the Buffer return type.
-template <typename T>
-Buffer fill_matrix_raw(size_t height, size_t width, std::function<T(size_t, size_t)> gen) {
-    const auto size = height * width * size_in_bits<T> / 8;
-    KAI_ASSUME(width * size_in_bits<T> % 8 == 0);
-
-    Buffer data(size);
-    auto ptr = static_cast<T*>(data.data());
-
-    for (size_t y = 0; y < height; ++y) {
-        for (size_t x = 0; x < width; ++x) {
-            write_array<T>(ptr, y * width + x, gen(y, x));
-        }
-    }
-
-    return data;
-}
-
-template <typename T>
-Buffer fill_matrix_random_raw(size_t height, size_t width, uint32_t seed) {
-    using TDist = std::conditional_t<
-        std::is_floating_point_v<T>, std::uniform_real_distribution<float>, std::uniform_int_distribution<T>>;
-
-    std::mt19937 rnd(seed);
-    TDist dist;
-
-    return fill_matrix_raw<T>(height, width, [&](size_t, size_t) { return dist(rnd); });
-}
-
-template <typename Value>
-Buffer fill_random(size_t length, uint32_t seed) {
-    return fill_matrix_random_raw<Value>(1, length, seed);
-}
 }  // namespace
 
 class MatMulTest_f32_f32_f32p : public ::testing::TestWithParam<MatMulTestPortionedParams> {};
@@ -170,7 +136,7 @@ TEST_P(MatMulTest_f32_f32_f32p, EndToEnd)  // NOLINT(google-readability-avoid-un
 
     Buffer imp_dst(imp_dst_size);
     ukernel_variant.interface.run_matmul(
-        m, n, k, ref_lhs.data(), 1, imp_packed_rhs->data(), static_cast<float*>(imp_dst.data()), 1, 1, clamp_min,
+        m, n, k, ref_lhs.data(), 1, imp_packed_rhs->data(), reinterpret_cast<float*>(imp_dst.data()), 1, 1, clamp_min,
         clamp_max);
 
     // Compare the output of the micro-kernels against the output of the reference implementation.

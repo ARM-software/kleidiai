@@ -11,9 +11,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <tuple>
-#include <vector>
 
 #include "test/common/bfloat16.hpp"
+#include "test/common/buffer.hpp"
 #include "test/common/int4.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/numeric_limits.hpp"
@@ -77,8 +77,7 @@ IntType quantize_asymmetric(FloatType value, FloatType scale, ZeroPointType zero
 template int8_t quantize_asymmetric(float value, float scale, int32_t zero_point);
 
 template <typename SrcType, typename DstType, typename ScaleType>
-std::vector<uint8_t> compute_symmetric_per_block_quantization_info(
-    const void* src, size_t height, size_t width, size_t quant_width) {
+Buffer compute_symmetric_per_block_quantization_info(const void* src, size_t height, size_t width, size_t quant_width) {
     static_assert(is_floating_point<SrcType>);
     static_assert(is_integral<DstType>);
     static_assert(is_floating_point<ScaleType>);
@@ -88,7 +87,7 @@ std::vector<uint8_t> compute_symmetric_per_block_quantization_info(
     const auto num_quant_packets_x = round_up_division(width, quant_width);
 
     const auto scales_bytes = height * num_quant_packets_x * sizeof(ScaleType);
-    std::vector<uint8_t> scales(scales_bytes);
+    Buffer scales(scales_bytes);
 
     const auto* src_ptr = reinterpret_cast<const SrcType*>(src);
 
@@ -117,7 +116,7 @@ std::vector<uint8_t> compute_symmetric_per_block_quantization_info(
 }
 
 template <typename SrcType, typename DstType, typename ScaleType>
-std::vector<uint8_t> quantize_symmetric_per_block(
+Buffer quantize_symmetric_per_block(
     const void* src, const void* scales, size_t height, size_t width, size_t quant_width) {
     static_assert(is_floating_point<SrcType>);
     static_assert(is_integral<DstType>);
@@ -126,7 +125,7 @@ std::vector<uint8_t> quantize_symmetric_per_block(
     const auto num_quant_packets_x = round_up_division(width, quant_width);
 
     const auto data_bytes = round_up_division(height * width * size_in_bits<DstType>, 8);
-    std::vector<uint8_t> data(data_bytes);
+    Buffer data(data_bytes);
 
     const auto* src_ptr = reinterpret_cast<const SrcType*>(src);
 
@@ -148,11 +147,11 @@ std::vector<uint8_t> quantize_symmetric_per_block(
     return data;
 }
 
-template std::vector<uint8_t> quantize_symmetric_per_block<float, int32_t, float>(
+template Buffer quantize_symmetric_per_block<float, int32_t, float>(
     const void* src, const void* scales, size_t height, size_t width, size_t quant_width);
 
 template <typename SrcType, typename DstType, typename ScaleType>
-std::tuple<std::vector<uint8_t>, std::vector<uint8_t>> quantize_symmetric_per_block_dynamic(
+std::tuple<Buffer, Buffer> quantize_symmetric_per_block_dynamic(
     const void* src, size_t height, size_t width, size_t quant_width) {
     auto scales_src_type =
         compute_symmetric_per_block_quantization_info<SrcType, DstType, SrcType>(src, height, width, quant_width);
@@ -160,30 +159,30 @@ std::tuple<std::vector<uint8_t>, std::vector<uint8_t>> quantize_symmetric_per_bl
         src, scales_src_type.data(), height, width, quant_width);
 
     if constexpr (std::is_same_v<ScaleType, SrcType>) {
-        return {data, scales_src_type};
+        return {std::move(data), std::move(scales_src_type)};
     } else {
         auto scales =
             cast<ScaleType, SrcType>(scales_src_type.data(), scales_src_type.size() * 8 / size_in_bits<SrcType>);
 
-        return {data, scales};
+        return {std::move(data), std::move(scales)};
     }
 }
 
-template std::tuple<std::vector<uint8_t>, std::vector<uint8_t>> quantize_symmetric_per_block_dynamic<
-    float, Int4, Float16>(const void* src, size_t height, size_t width, size_t quant_width);
-template std::tuple<std::vector<uint8_t>, std::vector<uint8_t>> quantize_symmetric_per_block_dynamic<
-    float, Int4, float>(const void* src, size_t height, size_t width, size_t quant_width);
-template std::tuple<std::vector<uint8_t>, std::vector<uint8_t>> quantize_symmetric_per_block_dynamic<
-    float, Int4, BFloat16>(const void* src, size_t height, size_t width, size_t quant_width);
-template std::tuple<std::vector<uint8_t>, std::vector<uint8_t>> quantize_symmetric_per_block_dynamic<
-    float, int8_t, Float16>(const void* src, size_t height, size_t width, size_t quant_width);
-template std::tuple<std::vector<uint8_t>, std::vector<uint8_t>> quantize_symmetric_per_block_dynamic<
-    float, int8_t, float>(const void* src, size_t height, size_t width, size_t quant_width);
-template std::tuple<std::vector<uint8_t>, std::vector<uint8_t>> quantize_symmetric_per_block_dynamic<
-    float, int32_t, float>(const void* src, size_t height, size_t width, size_t quant_width);
+template std::tuple<Buffer, Buffer> quantize_symmetric_per_block_dynamic<float, Int4, Float16>(
+    const void* src, size_t height, size_t width, size_t quant_width);
+template std::tuple<Buffer, Buffer> quantize_symmetric_per_block_dynamic<float, Int4, float>(
+    const void* src, size_t height, size_t width, size_t quant_width);
+template std::tuple<Buffer, Buffer> quantize_symmetric_per_block_dynamic<float, Int4, BFloat16>(
+    const void* src, size_t height, size_t width, size_t quant_width);
+template std::tuple<Buffer, Buffer> quantize_symmetric_per_block_dynamic<float, int8_t, Float16>(
+    const void* src, size_t height, size_t width, size_t quant_width);
+template std::tuple<Buffer, Buffer> quantize_symmetric_per_block_dynamic<float, int8_t, float>(
+    const void* src, size_t height, size_t width, size_t quant_width);
+template std::tuple<Buffer, Buffer> quantize_symmetric_per_block_dynamic<float, int32_t, float>(
+    const void* src, size_t height, size_t width, size_t quant_width);
 
 template <typename SrcType, typename DstType, typename ScaleType, typename ZeroPointType>
-std::tuple<std::vector<uint8_t>, std::vector<uint8_t>> compute_asymmetric_per_block_quantization_info(
+std::tuple<Buffer, Buffer> compute_asymmetric_per_block_quantization_info(
     const void* src, size_t height, size_t width, size_t quant_width) {
     static_assert(is_floating_point<SrcType>);
     static_assert(is_integral<DstType>);
@@ -195,10 +194,10 @@ std::tuple<std::vector<uint8_t>, std::vector<uint8_t>> compute_asymmetric_per_bl
     const auto num_quant_packets_x = round_up_division(width, quant_width);
 
     const auto scales_bytes = height * num_quant_packets_x * sizeof(ScaleType);
-    std::vector<uint8_t> scales(scales_bytes);
+    Buffer scales(scales_bytes);
 
     const auto zero_points_bytes = height * num_quant_packets_x * sizeof(ZeroPointType);
-    std::vector<uint8_t> zero_points(zero_points_bytes);
+    Buffer zero_points(zero_points_bytes);
 
     for (size_t y = 0; y < height; ++y) {
         for (size_t x_quant = 0; x_quant < width; x_quant += quant_width) {
@@ -226,11 +225,11 @@ std::tuple<std::vector<uint8_t>, std::vector<uint8_t>> compute_asymmetric_per_bl
         }
     }
 
-    return {scales, zero_points};
+    return {std::move(scales), std::move(zero_points)};
 }
 
 template <typename SrcType, typename DstType, typename ScaleType, typename ZeroPointType>
-std::vector<uint8_t> quantize_asymmetric_per_block(
+Buffer quantize_asymmetric_per_block(
     const void* src, const void* scales, const void* zero_points, size_t height, size_t width, size_t quant_width) {
     static_assert(is_floating_point<SrcType>);
     static_assert(is_integral<DstType>);
@@ -240,7 +239,7 @@ std::vector<uint8_t> quantize_asymmetric_per_block(
     const auto num_quant_packets_x = round_up_division(width, quant_width);
 
     const auto data_bytes = round_up_division(height * width * size_in_bits<DstType>, 8);
-    std::vector<uint8_t> data(data_bytes);
+    Buffer data(data_bytes);
 
     for (size_t y = 0; y < height; ++y) {
         for (size_t x_quant = 0; x_quant < width; x_quant += quant_width) {
@@ -267,7 +266,7 @@ std::vector<uint8_t> quantize_asymmetric_per_block(
 }
 
 template <typename SrcType, typename DstType, typename ScaleType, typename ZeroPointType>
-std::tuple<std::vector<uint8_t>, std::vector<uint8_t>, std::vector<uint8_t>> quantize_asymmetric_per_block_dynamic(
+std::tuple<Buffer, Buffer, Buffer> quantize_asymmetric_per_block_dynamic(
     const void* src, size_t height, size_t width, size_t quant_width) {
     /* Calculate the asymmetric quantization information, one scaling per row  */
     auto [scales_src_type, zero_points] =
@@ -279,22 +278,19 @@ std::tuple<std::vector<uint8_t>, std::vector<uint8_t>, std::vector<uint8_t>> qua
         src, scales_src_type.data(), zero_points.data(), height, width, quant_width);
 
     if constexpr (std::is_same_v<ScaleType, SrcType>) {
-        return {data, scales_src_type, zero_points};
+        return {std::move(data), std::move(scales_src_type), std::move(zero_points)};
     } else {
         auto scales =
             cast<ScaleType, SrcType>(scales_src_type.data(), scales_src_type.size() * 8 / size_in_bits<SrcType>);
 
-        return {data, scales, zero_points};
+        return {std::move(data), std::move(scales), std::move(zero_points)};
     }
 }
 
-template std::tuple<std::vector<uint8_t>, std::vector<uint8_t>, std::vector<uint8_t>>
-quantize_asymmetric_per_block_dynamic<float, int8_t, float, int32_t>(
+template std::tuple<Buffer, Buffer, Buffer> quantize_asymmetric_per_block_dynamic<float, int8_t, float, int32_t>(
     const void* src, size_t height, size_t width, size_t quant_width);
-template std::tuple<std::vector<uint8_t>, std::vector<uint8_t>, std::vector<uint8_t>>
-quantize_asymmetric_per_block_dynamic<float, int8_t, BFloat16, int32_t>(
+template std::tuple<Buffer, Buffer, Buffer> quantize_asymmetric_per_block_dynamic<float, int8_t, BFloat16, int32_t>(
     const void* src, size_t height, size_t width, size_t quant_width);
-template std::tuple<std::vector<uint8_t>, std::vector<uint8_t>, std::vector<uint8_t>>
-quantize_asymmetric_per_block_dynamic<float, Int4, float, int32_t>(
+template std::tuple<Buffer, Buffer, Buffer> quantize_asymmetric_per_block_dynamic<float, Int4, float, int32_t>(
     const void* src, size_t height, size_t width, size_t quant_width);
 }  // namespace kai::test
