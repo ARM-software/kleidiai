@@ -17,11 +17,11 @@ ARG TARGETOS
 ARG TARGETPLATFORM
 
 # Component versions
-ARG FVP_UBUNTU_VERSION=24.04.1
-ARG BAZEL_BUILD_TOOLS_VER=v7.1.2
-ARG BAZELISK_VERSION=v1.20.0
+ARG FVP_UBUNTU_VERSION=24.04.2
+ARG BAZEL_BUILD_TOOLS_VER=v8.2.0
+ARG BAZELISK_VERSION=v1.26.0
 ARG NDK_VERSION=r27c
-ARG FVP_VERSION=11.27_19
+ARG FVP_VERSION=11.29_27
 
 ENV XDG_CACHE_HOME=/cache ANDROID_NDK=/opt/devtools/android-ndk BUILD_CACHE=/build_cache
 
@@ -101,8 +101,7 @@ WORKDIR /
 RUN wget "https://github.com/bazelbuild/bazelisk/releases/download/${BAZELISK_VERSION}/bazelisk-${TARGETOS}-${TARGETARCH}" -O /usr/bin/bazelisk && \
     chmod a+x /usr/bin/bazelisk && \
     USE_BAZEL_VERSION=7.x bazelisk && \
-    chmod -R a+rw ${XDG_CACHE_HOME} && ln -s ${XDG_CACHE_HOME} /.cache && \
-    USE_BAZEL_VERSION=6.5.0 bazelisk
+    chmod -R a+rw ${XDG_CACHE_HOME} && ln -s ${XDG_CACHE_HOME} /.cache
 
 RUN wget "https://github.com/bazelbuild/buildtools/releases/download/${BAZEL_BUILD_TOOLS_VER}/buildifier-${TARGETOS}-${TARGETARCH}" -O /usr/bin/buildifier && \
     wget "https://github.com/bazelbuild/buildtools/releases/download/${BAZEL_BUILD_TOOLS_VER}/buildozer-${TARGETOS}-${TARGETARCH}" -O /usr/bin/buildozer && \

@@ -1,7 +1,7 @@
 #!/bin/bash -eux
 
 #
-# SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -29,11 +29,11 @@ else
     echo "Unknown $TARGETARCH" && exit 1
 fi
 
-TOOLCHAIN_VER=13.3.rel1
+TOOLCHAIN_VER=14.2.rel1
 TOOLCHAIN_TYPE=aarch64-none-elf
 TOOLCHAIN_DIR=$(pwd)/toolchain-${TOOLCHAIN_TYPE}/
 CROSS_COMPILE=${TOOLCHAIN_DIR}/bin/${TOOLCHAIN_TYPE}-
-KERNEL_VERSION=6.9.12
+KERNEL_VERSION=6.12.30
 
 mkdir -p ${BUILD_CACHE}
 
