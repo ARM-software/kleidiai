@@ -15,6 +15,7 @@
 #include <arm_neon.h>
 #include <float.h>
 #include <math.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #include "kai/kai_common.h"

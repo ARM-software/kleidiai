@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -11,6 +11,7 @@
 #include "kai_lhs_quant_pack_qsi8d32p_f32_neon.h"
 
 #include <math.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #include "kai/kai_common.h"
