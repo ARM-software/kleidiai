@@ -8,6 +8,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 
 #include "test/common/buffer.hpp"
 
@@ -35,5 +36,15 @@ Buffer fill_matrix_random(size_t height, size_t width, const DataFormat& format,
 /// @return The data buffer.
 template <typename Value>
 Buffer fill_random(size_t length, uint32_t seed);
+
+/// Creates a new matrix filled with data produced by a generator function.
+///
+/// @param[in] height Number of rows.
+/// @param[in] width Number of columns.
+/// @param[in] gen Generator function.
+///
+/// @return The data buffer for the matrix.
+template <typename T>
+Buffer fill_matrix_raw(size_t height, size_t width, std::function<T(size_t, size_t)> gen);
 
 }  // namespace kai::test

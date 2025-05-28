@@ -26,23 +26,6 @@ namespace kai::test {
 namespace {
 
 template <typename T>
-Buffer fill_matrix_raw(size_t height, size_t width, std::function<T(size_t, size_t)> gen) {
-    const auto size = height * width * size_in_bits<T> / 8;
-    KAI_ASSUME(width * size_in_bits<T> % 8 == 0);
-
-    Buffer data(size);
-    auto ptr = reinterpret_cast<T*>(data.data());
-
-    for (size_t y = 0; y < height; ++y) {
-        for (size_t x = 0; x < width; ++x) {
-            write_array<T>(ptr, y * width + x, gen(y, x));
-        }
-    }
-
-    return data;
-}
-
-template <typename T>
 Buffer fill_matrix_random_raw(size_t height, size_t width, uint32_t seed) {
     using TDist = std::conditional_t<
         std::is_floating_point_v<T>, std::uniform_real_distribution<float>, std::uniform_int_distribution<T>>;
@@ -87,6 +70,23 @@ Buffer fill_matrix_random_raw<UInt4>(size_t height, size_t width, uint32_t seed)
 
 }  // namespace
 
+template <typename T>
+Buffer fill_matrix_raw(size_t height, size_t width, std::function<T(size_t, size_t)> gen) {
+    const auto size = height * width * size_in_bits<T> / 8;
+    KAI_ASSUME(width * size_in_bits<T> % 8 == 0);
+
+    Buffer data(size);
+    auto ptr = reinterpret_cast<T*>(data.data());
+
+    for (size_t y = 0; y < height; ++y) {
+        for (size_t x = 0; x < width; ++x) {
+            write_array<T>(ptr, y * width + x, gen(y, x));
+        }
+    }
+
+    return data;
+}
+
 Buffer fill_matrix_random(size_t height, size_t width, const DataFormat& format, uint32_t seed) {
     switch (format.pack_format()) {
         case DataFormat::PackFormat::NONE:
@@ -124,5 +124,6 @@ Buffer fill_random(size_t length, uint32_t seed) {
 
 template Buffer fill_random<float>(size_t length, uint32_t seed);
 template Buffer fill_random<Float16>(size_t length, uint32_t seed);
+template Buffer fill_matrix_raw<float>(size_t height, size_t width, std::function<float(size_t, size_t)> gen);
 
 }  // namespace kai::test

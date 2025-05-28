@@ -128,33 +128,69 @@ void kai_run_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon(
             int32_t sum = 0;
 
             // Iterate over k src columns in blocks of kr columns
-            for (size_t col_idx = 0; col_idx < k_internal; col_idx += kr) {
-                // Iterate over columns in the kr block
-                // Kr checked to be multiple of 2 (because 2 values per byte)
-                for (size_t kr_block_idx = 0; kr_block_idx < kr; kr_block_idx += 2) {
-                    // We pad dst with 0s if the rounded k or n values have been exceeded
-                    if (row_idx + nr_block_idx >= n || col_idx + kr_block_idx >= k) {
-                        dst_kr_block[kr_block_idx / 2] = 0;
-                        continue;
+            if (rhs_zero_point == 8) {
+                for (size_t col_idx = 0; col_idx < k_internal; col_idx += kr) {
+                    // Iterate over columns in the kr block
+                    // Kr checked to be multiple of 2 (because 2 values per byte)
+                    for (size_t kr_block_idx = 0; kr_block_idx < kr; kr_block_idx += 2) {
+                        // We pad dst with 0s if the rounded k or n values have been exceeded
+                        if (row_idx + nr_block_idx >= n || col_idx + kr_block_idx >= k) {
+                            dst_kr_block[kr_block_idx / 2] = 0;
+                            continue;
+                        }
+
+                        // Load the 2 u4 values from source
+                        const uint8_t dst_byte = src_row[(col_idx + kr_block_idx) / 2];
+
+                        // extract i8 values from the 2 u4 values
+                        const uint8_t first_value = (dst_byte & 0xF) - rhs_zero_point;
+                        const uint8_t second_value =
+                            col_idx + kr_block_idx + 1 >= k ? 0 : (dst_byte >> 4) - rhs_zero_point;
+
+                        // Add the i4 value to the row sum
+                        sum += (int32_t)first_value + (int32_t)second_value;
+
+                        // Truncate i8 to i4 and write to dst
+                        // NOLINTNEXTLINE(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
+                        dst_kr_block[kr_block_idx / 2] = (second_value << 4) | (first_value & 0xF);
                     }
 
-                    // Load the 2 u4 values from source
-                    const uint8_t dst_byte = src_row[(col_idx + kr_block_idx) / 2];
-
-                    // extract i8 values from the 2 u4 values
-                    const int32_t first_value = (dst_byte & 0xF) - rhs_zero_point;
-                    const int32_t second_value = col_idx + kr_block_idx + 1 >= k ? 0 : (dst_byte >> 4) - rhs_zero_point;
-
-                    // Add the i4 value to the row sum
-                    sum += first_value + second_value;
-
-                    // Truncate i8 to i4 and write to dst
-                    // NOLINTNEXTLINE(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
-                    dst_kr_block[kr_block_idx / 2] = (second_value << 4) | (first_value & 0xF);
+                    // Go to the next kr block for this row in the nr rows
+                    dst_kr_block += dst_nr_block_size;
                 }
+            } else {
+                for (size_t col_idx = 0; col_idx < k_internal; col_idx += kr) {
+                    // Iterate over columns in the kr block
+                    // Kr checked to be multiple of 2 (because 2 values per byte)
+                    for (size_t kr_block_idx = 0; kr_block_idx < kr; kr_block_idx += 2) {
+                        // We pad dst with 0s if the rounded k or n values have been
+                        // exceeded
+                        if (row_idx + nr_block_idx >= n || col_idx + kr_block_idx >= k) {
+                            dst_kr_block[kr_block_idx / 2] = 0;
+                            continue;
+                        }
 
-                // Go to the next kr block for this row in the nr rows
-                dst_kr_block += dst_nr_block_size;
+                        // NOLINTBEGIN(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
+                        // Load the 2 u4 values from source
+                        const int8_t dst_byte = src_row[(col_idx + kr_block_idx) / 2];
+
+                        // extract i8 values from the 2 u4 values, shift first value
+                        // back and forth to get the sign right.
+                        const int8_t first_value = kai_ext_sign_i8_i4(dst_byte & 0xF);
+                        const int8_t second_value =
+                            col_idx + kr_block_idx + 1 >= k ? 0 : kai_ext_sign_i8_i4((dst_byte >> 4) & 0xF);
+
+                        // Add the i4 value to the row sum
+                        sum += (int32_t)first_value + (int32_t)second_value;
+
+                        // Truncate i8 to i4 and write to dst
+                        dst_kr_block[kr_block_idx / 2] = (second_value << 4) | (first_value & 0xF);
+                        // NOLINTEND(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
+                    }
+
+                    // Go to the next kr block for this row in the nr rows
+                    dst_kr_block += dst_nr_block_size;
+                }
             }
 
             // save sum
