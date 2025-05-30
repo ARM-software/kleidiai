@@ -158,6 +158,12 @@ SME_KERNELS = [
 ]
 
 # buildifier: keep sorted
+SME2_KERNELS_ASM = [
+    "matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa",
+    "matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot",
+]
+
+# buildifier: keep sorted
 SME2_KERNELS = [
     "imatmul_clamp_f16_f16p_f16p/kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa",
     "imatmul_clamp_f32_f32p_f32p/kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme2_mopa",
@@ -280,6 +286,13 @@ kai_c_library(
 )
 
 kai_c_library(
+    name = "sme2_impl_asm",
+    srcs = [ukernel + "_asm.S" for ukernel in SME2_KERNELS_ASM] + [ukernel + ".c" for ukernel in SME2_KERNELS_ASM],
+    cpu_uarch = kai_cpu_sme2(),
+    textual_hdrs = [ukernel + ".h" for ukernel in SME2_KERNELS_ASM],
+)
+
+kai_c_library(
     name = "matmul",
     visibility = ["//visibility:public"],
     deps = [
@@ -297,6 +310,7 @@ kai_c_library(
         ":neon_impl_asm",
         ":scalar_impl",
         ":sme2_impl",
+        ":sme2_impl_asm",
         ":sme_impl",
     ],
 )
