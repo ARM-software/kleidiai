@@ -10,9 +10,17 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+## v1.9.0
+
+- Extend support for signed 4-bit integer inputs in `kai_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon`.
+- Add imatmul documentation
+- Better out-of-bounds access detection support in testing framework.
 - New SME2 micro-kernels:
   - Matrix multiplication (1xN) of QAI8DX LHS and QSI8CX RHS to produce F32 output.
   - Matrix multiplication (MxN) of QAI8DX LHS and QSI8CX RHS to produce F32 output.
+- Fixes:
+  - Address segmentation faults in benchmarking tool.
+  - Fix clamping issues for FP16 and BF16 in testing framework.
 
 ## v1.8.0
 
