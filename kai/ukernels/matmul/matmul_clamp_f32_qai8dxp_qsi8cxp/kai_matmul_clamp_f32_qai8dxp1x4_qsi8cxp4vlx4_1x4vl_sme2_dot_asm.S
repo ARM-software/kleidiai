@@ -42,13 +42,16 @@
 
 KAI_ASM_FUNCTION_TYPE(kai_kernel_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot)
 KAI_ASM_FUNCTION_LABEL(kai_kernel_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot)
-    stp     x19, x20, [sp, -112]!
+    stp     x19, x20, [sp, -144]!
     stp     x21, x22, [sp, 16]
     stp     x23, x24, [sp, 32]
     stp     x25, x26, [sp, 48]
     stp     x27, x28, [sp, 64]
-    stp     d12, d13, [sp, 80]
-    stp     d14, d15, [sp, 96]
+    stp     d8,  d9,  [sp, 80]
+    stp     d10, d11, [sp, 96]
+    stp     d12, d13, [sp, 112]
+    stp     d14, d15, [sp, 128]
+
     KAI_ASM_INST(0xd503477f)	//     	smstart
     ldr	x16, [x0]               //      dst
     mov	x11, #0x0               //      =0
@@ -137,13 +140,15 @@ KAI_ASM_LABEL(label_3)          //      Block Loop
     cmp	x21, x20
     b.lt	label_1
     KAI_ASM_INST(0xd503467f)	//     	smstop
-    ldp     d14, d15, [sp, 96]
-    ldp     d12, d13, [sp, 80]
+    ldp     d14, d15, [sp, 128]
+    ldp     d12, d13, [sp, 112]
+    ldp     d10, d11, [sp, 96]
+    ldp     d8,  d9,  [sp, 80]
     ldp     x27, x28, [sp, 64]
     ldp     x25, x26, [sp, 48]
     ldp     x23, x24, [sp, 32]
     ldp     x21, x22, [sp, 16]
-    ldp     x19, x20, [sp], 112
+    ldp     x19, x20, [sp], 144
     ret
     KAI_ASM_FUNCTION_END(kai_kernel_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot)
 
