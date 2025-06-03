@@ -151,6 +151,7 @@ test-examples:
           echo "-----------------------------------------------------------"
           echo "Run ${EXAMPLE}"
           echo "-----------------------------------------------------------"
+          [[ $EXAMPLE == *sme* ]] && continue
           build/${EXAMPLE} | tee -a example_${EXAMPLE}.log
       done
   artifacts:

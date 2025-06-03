@@ -10,6 +10,8 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+- Added Convolution example using SME Indirect Matmul Kernels
+
 ## v1.9.0
 
 - Extend support for signed 4-bit integer inputs in `kai_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon`.
