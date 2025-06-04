@@ -10,6 +10,8 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+- New Advanced SIMD micro-kernels:
+  - Matrix multiplication (MxN) Micro-kernels of QSI8D32 LHS and QAI4C32 RHS with F16 output, optimized for FEAT_DotProd.
 - Added Convolution example using SME Indirect Matmul Kernels
 
 ## v1.9.0

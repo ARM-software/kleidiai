@@ -15,6 +15,7 @@
 #include <tuple>
 
 #include "kai/ukernels/matmul/matmul_clamp_f16_qsi8d32p_qai4c32p/kai_matmul_clamp_f16_qsi8d32p1x8_qai4c32p4x8_1x4_neon_dotprod.h"
+#include "kai/ukernels/matmul/matmul_clamp_f16_qsi8d32p_qai4c32p/kai_matmul_clamp_f16_qsi8d32p4x4_qai4c32p4x4_8x4_neon_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_f16_qsi8d32p_qai4c32p/kai_matmul_clamp_f16_qsi8d32p4x8_qai4c32p4x8_8x4_neon_i8mm.h"
 #include "kai/ukernels/matmul/matmul_clamp_f16_qsi8d32p_qai4c32p/kai_matmul_clamp_f16_qsi8d32p_qai4c32p_interface.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qsi8d32pscalef32_f16_neon.h"
@@ -38,12 +39,14 @@
 
 namespace kai::test {
 
-static const std::array<UkernelVariant<kai_matmul_clamp_f16_qsi8d32p_qai4c32p_ukernel>, 2>
+static const std::array<UkernelVariant<kai_matmul_clamp_f16_qsi8d32p_qai4c32p_ukernel>, 3>
     variants_kai_matmul_clamp_f16_qsi8d32p_qai4c32p = {
         {{UKERNEL_MATMUL_VARIANT(clamp_f16_qsi8d32p1x8_qai4c32p4x8_1x4_neon_dotprod),
           "kai_matmul_clamp_f16_qsi8d32p1x8_qai4c32p4x8_1x4_neon_dotprod", cpu_has_dotprod_and_fp16},
          {UKERNEL_MATMUL_VARIANT(clamp_f16_qsi8d32p4x8_qai4c32p4x8_8x4_neon_i8mm),
-          "kai_matmul_clamp_f16_qsi8d32p4x8_qai4c32p4x8_8x4_neon_i8mm", cpu_has_i8mm_and_fp16}}};
+          "kai_matmul_clamp_f16_qsi8d32p4x8_qai4c32p4x8_8x4_neon_i8mm", cpu_has_i8mm_and_fp16},
+         {UKERNEL_MATMUL_VARIANT(clamp_f16_qsi8d32p4x4_qai4c32p4x4_8x4_neon_dotprod),
+          "kai_matmul_clamp_f16_qsi8d32p4x4_qai4c32p4x4_8x4_neon_dotprod", cpu_has_dotprod_and_fp16}}};
 
 class MatMulTest_f16_qsi8d32p_qai4c32p : public ::testing::TestWithParam<MatMulTestPortionedParamsWithBias> {};
 
@@ -121,7 +124,7 @@ TEST_P(MatMulTest_f16_qsi8d32p_qai4c32p, EndToEnd) {
     const auto lhs_start_row = rect.start_row();
     const auto imp_packed_lhs_size =
         kai_get_lhs_packed_size_lhs_quant_pack_qsi8d32pscalef32_f16_neon(M, K, bl, mr, kr, sr);
-    Buffer imp_packed_lhs(imp_packed_lhs_size);
+    Buffer imp_packed_lhs(imp_packed_lhs_size, 0);
 
     auto lhs_stride = K * sizeof(uint16_t);
     auto lhs_offset = kai_get_lhs_offset_lhs_quant_pack_qsi8d32pscalef32_f16_neon(lhs_start_row, lhs_stride);
@@ -134,6 +137,31 @@ TEST_P(MatMulTest_f16_qsi8d32p_qai4c32p, EndToEnd) {
     kai_run_lhs_quant_pack_qsi8d32pscalef32_f16_neon(
         rect.height() /* m */, K, bl, mr, kr, sr, 0, ref_lhs_f16.data() + lhs_offset, lhs_stride,
         imp_packed_lhs.data() + lhs_packed_offset);
+
+    // Verify LHS quant and pack int8 kernel behaves same for int4 and int8, when the block-depth is same for different
+    // values of kr, sr.
+    if (sr == 2) {
+        const size_t kr_qsi8 = kr / sr;
+        const size_t sr_qsi8 = 1;
+        const auto imp_packed_lhs_qsi8_size =
+            kai_get_lhs_packed_size_lhs_quant_pack_qsi8d32pscalef32_f16_neon(M, K, bl, mr, kr_qsi8, sr_qsi8);
+        Buffer imp_packed_lhs_qsi8(imp_packed_lhs_qsi8_size, 0);
+
+        auto lhs_qsi8_packed_offset = kai_get_lhs_packed_offset_lhs_quant_pack_qsi8d32pscalef32_f16_neon(
+            lhs_start_row, K, bl, mr, kr_qsi8, sr_qsi8);
+
+        ASSERT_EQ(lhs_qsi8_packed_offset, lhs_matmul_offset);
+
+        kai_run_lhs_quant_pack_qsi8d32pscalef32_f16_neon(
+            rect.height() /* m */, K, bl, mr, kr_qsi8, sr_qsi8, 0, ref_lhs_f16.data() + lhs_offset, lhs_stride,
+            imp_packed_lhs_qsi8.data() + lhs_qsi8_packed_offset);
+
+        const auto* imp_packed_lhs_ptr = reinterpret_cast<const uint8_t*>(imp_packed_lhs.data());
+        const auto* imp_packed_lhs_qsi8_ptr = reinterpret_cast<const uint8_t*>(imp_packed_lhs_qsi8.data());
+        for (size_t i = 0; i < imp_packed_lhs_qsi8_size; i++) {
+            ASSERT_EQ(imp_packed_lhs_ptr[i], imp_packed_lhs_qsi8_ptr[i]);
+        }
+    }
 
     // Prepare the offsets as the RHS packing kernel expects the scaled zero-points in float.
     const size_t num_blocks_per_row = round_up_division(K, bl);
