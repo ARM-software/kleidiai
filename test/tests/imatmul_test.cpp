@@ -77,7 +77,7 @@ struct MatMulIndirectKernel {
     std::function<size_t(void)> get_kr;
     std::function<size_t(size_t m_idx, size_t k_chunk_count, size_t k_chunk_length)> get_lhs_packed_offset;
     std::function<size_t(size_t n_idx, size_t k_chunk_count, size_t k_chunk_length)> get_rhs_packed_offset;
-    std::function<size_t(size_t m_idx, size_t n_idx, size_t dst_row_stride)> get_dst_offset;
+    std::function<size_t(size_t m_idx, size_t n_idx, size_t dst_stride_row)> get_dst_offset;
     std::function<size_t(size_t m, size_t n)> get_dst_size;
     std::function<void(
         size_t m, size_t n, size_t k_chunk_count, size_t k_chunk_length, const void* lhs_packed, const void* rhs_packed,

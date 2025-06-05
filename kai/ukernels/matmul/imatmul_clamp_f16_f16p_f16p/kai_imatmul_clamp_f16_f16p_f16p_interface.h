@@ -27,7 +27,7 @@ typedef size_t (*kai_imatmul_clamp_f16_f16p_f16p_get_dst_size_func_t)(size_t m, 
 /// Micro-kernel core function ("run" method)
 typedef void (*kai_imatmul_clamp_f16_f16p_f16p_run_imatmul_func_t)(
     size_t m, size_t n, size_t k_chunk_count, size_t k_chunk_length, const void* lhs_packed, const void* rhs_packed,
-    void* dst, size_t dst_row_stride, float clamp_min, float clamp_max);
+    void* dst, size_t dst_stride_row, float clamp_min, float clamp_max);
 
 /// Micro-kernel interface
 struct kai_imatmul_clamp_f16_f16p_f16p_ukernel {

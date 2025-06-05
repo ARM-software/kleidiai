@@ -124,9 +124,9 @@ struct MatMulKernel {
 struct MatMulIndirectKernel {
     std::function<size_t(void)> get_m_step;
     std::function<size_t(void)> get_n_step;
-    std::function<size_t(size_t m_idx, size_t k_chunk_count, size_t k_chunk_length)> get_packed_lhs_offset;
-    std::function<size_t(size_t n_idx, size_t k_chunk_count, size_t k_chunk_length)> get_packed_rhs_offset;
-    std::function<size_t(size_t m_idx, size_t n_idx, size_t dst_row_stride)> get_dst_offset;
+    std::function<size_t(size_t m_idx, size_t k_chunk_count, size_t k_chunk_length)> get_lhs_packed_offset;
+    std::function<size_t(size_t n_idx, size_t k_chunk_count, size_t k_chunk_length)> get_rhs_packed_offset;
+    std::function<size_t(size_t m_idx, size_t n_idx, size_t dst_stride_row)> get_dst_offset;
     std::function<size_t(size_t m, size_t n)> get_dst_size;
     std::function<void(
         size_t m, size_t n, size_t k_chunk_count, size_t k_chunk_lenght, const void* lhs_packed, const void* rhs_packed,
@@ -301,8 +301,8 @@ const std::array<IndirectMatMulVariant, 1>& get_indirect_gemm_variants() {
     variants[0].rhs_pack.pack = kai_run_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme;
     variants[0].matmul.get_m_step = ukernel.get_m_step;
     variants[0].matmul.get_n_step = ukernel.get_n_step;
-    variants[0].matmul.get_packed_lhs_offset = ukernel.get_lhs_packed_offset;
-    variants[0].matmul.get_packed_rhs_offset = ukernel.get_rhs_packed_offset;
+    variants[0].matmul.get_lhs_packed_offset = ukernel.get_lhs_packed_offset;
+    variants[0].matmul.get_rhs_packed_offset = ukernel.get_rhs_packed_offset;
     variants[0].matmul.get_dst_offset = ukernel.get_dst_offset;
     variants[0].matmul.get_dst_size = ukernel.get_dst_size;
     variants[0].matmul.imatmul = ukernel.run_imatmul;
@@ -845,8 +845,8 @@ static Buffer matmul(
     const Buffer& packed_rhs, const MatMulShape& shape, const KChunk& k_chunk) {
     // Calculate portion offsets.
     size_t dst_offset = variant.get_dst_offset(portion.start_row(), portion.start_col(), shape.n);
-    size_t lhs_offset = variant.get_packed_lhs_offset(portion.start_row(), k_chunk.count, k_chunk.length);
-    size_t rhs_offset = variant.get_packed_rhs_offset(portion.start_col(), k_chunk.count, k_chunk.length);
+    size_t lhs_offset = variant.get_lhs_packed_offset(portion.start_row(), k_chunk.count, k_chunk.length);
+    size_t rhs_offset = variant.get_rhs_packed_offset(portion.start_col(), k_chunk.count, k_chunk.length);
 
     // Allocate output buffer
     const size_t dst_size = variant.get_dst_size(shape.m, shape.n);

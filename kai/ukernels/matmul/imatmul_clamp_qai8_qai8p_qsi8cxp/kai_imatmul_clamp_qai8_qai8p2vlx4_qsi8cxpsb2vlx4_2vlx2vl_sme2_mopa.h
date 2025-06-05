@@ -37,7 +37,6 @@ size_t kai_get_n_step_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_
 /// @param[in] m_idx Row index in the unpacked LHS matrix. Must be a multiple of `m_step`.
 /// @param[in] k_chunk_count Number of LHS column splits.
 /// @param[in] k_chunk_length Length of a LHS column split.
-/// @param[in] k Number of columns in the unpacked LHS matrix.
 ///
 /// @return The offset in bytes to the data element.
 size_t kai_get_lhs_packed_offset_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa(
@@ -57,11 +56,11 @@ size_t kai_get_rhs_packed_offset_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2v
 ///
 /// @param[in] m_idx Row index. Must be a multiple of `m_step`.
 /// @param[in] n_idx Column index. Must be a multiple of `n_step`.
-/// @param[in] dst_row_stride. Distance between start of two rows in the output buffer.
+/// @param[in] dst_stride_row Row stride in bytes.
 ///
 /// @return The offset in bytes to the data element.
 size_t kai_get_dst_offset_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa(
-    size_t m_idx, size_t n_idx, size_t dst_row_stride);
+    size_t m_idx, size_t n_idx, size_t dst_stride_row);
 
 /// Gets the size in bytes of the destination matrix buffer.
 ///
@@ -83,17 +82,15 @@ size_t kai_get_dst_size_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme
 /// @param[in] m Number of output rows to be computed.
 /// @param[in] n Number of output columns to be computed.
 /// @param[in] k_chunk_count Number of LHS column splits.
-/// @param[in] k_chunk_length Length of a LHS column split
+/// @param[in] k_chunk_length Length of a LHS column split.
 /// @param[in] lhs_packed Packed LHS matrix buffer.
 /// @param[in] rhs_packed Packed RHS matrix buffer.
 /// @param[out] dst Output matrix buffer.
-/// @param[in] dst_row_stride Row stride in bytes of the output matrix.
-
+/// @param[in] dst_stride_row Row stride in bytes of the output matrix.
 /// @param[in] params Requantization and clamp parameters.
-
 void kai_run_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa(
     size_t m, size_t n, size_t k_chunk_count, size_t k_chunk_length, const void* lhs_packed, const void* rhs_packed,
-    void* dst, size_t dst_row_stride, const struct kai_matmul_requantize32_params* params);
+    void* dst, size_t dst_stride_row, const struct kai_matmul_requantize32_params* params);
 
 #ifdef __cplusplus
 }  // extern "C"

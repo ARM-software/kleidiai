@@ -55,11 +55,11 @@ size_t kai_get_rhs_packed_offset_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_s
 ///
 /// @param[in] m_idx Row index. Must be a multiple of `m_step`.
 /// @param[in] n_idx Column index. Must be a multiple of `n_step`.
-/// @param[in] dst_row_stride. Distance between start of two rows in the output buffer.
+/// @param[in] dst_stride_row Row stride in bytes.
 ///
 /// @return The offset in bytes to the data element.
 size_t kai_get_dst_offset_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa(
-    size_t m_idx, size_t n_idx, size_t dst_row_stride);
+    size_t m_idx, size_t n_idx, size_t dst_stride_row);
 
 /// Gets the size in bytes of the destination matrix buffer.
 ///
@@ -81,16 +81,16 @@ size_t kai_get_dst_size_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa(
 /// @param[in] m Number of output rows to be computed.
 /// @param[in] n Number of output columns to be computed.
 /// @param[in] k_chunk_count Number of LHS column splits.
-/// @param[in] k_chunk_length Length of a LHS column split
+/// @param[in] k_chunk_length Length of a LHS column split.
 /// @param[in] lhs_packed Packed LHS matrix buffer.
 /// @param[in] rhs_packed Packed RHS matrix buffer.
 /// @param[out] dst Output matrix buffer.
-/// @param[in] dst_row_stride Row stride in bytes of the output matrix.
+/// @param[in] dst_stride_row Row stride in bytes of the output matrix.
 /// @param[in] clamp_min Minimum value to clamp the final result.
 /// @param[in] clamp_max Maximum value to clamp the final result.
 void kai_run_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa(
     size_t m, size_t n, size_t k_chunk_count, size_t k_chunk_length, const void* lhs_packed, const void* rhs_packed,
-    void* dst, size_t dst_row_stride, float clamp_min, float clamp_max);
+    void* dst, size_t dst_stride_row, float clamp_min, float clamp_max);
 
 #ifdef __cplusplus
 }  // extern "C"

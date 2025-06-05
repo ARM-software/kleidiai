@@ -16,7 +16,7 @@ extern "C" {
 ///
 /// The starting row index must be divisible by `m_step`.
 ///
-/// @return Step size for row index
+/// @return The m step value.
 size_t kai_get_m_step_lhs_imatmul_pack_x32p2vlx1_x32p_sme(void);
 
 /// Gets the offset in bytes to the data element in the packed LHS buffer.

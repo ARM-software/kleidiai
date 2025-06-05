@@ -22,13 +22,13 @@ typedef size_t (*kai_imatmul_clamp_qai8_qai8p_qsi8cxp_get_lhs_packed_offset_func
 typedef size_t (*kai_imatmul_clamp_qai8_qai8p_qsi8cxp_get_rhs_packed_offset_func_t)(
     size_t n_idx, size_t k_chunk_count, size_t k_chunk_length);
 typedef size_t (*kai_imatmul_clamp_qai8_qai8p_qsi8cxp_get_dst_offset_func_t)(
-    size_t m_idx, size_t n_idx, size_t dst_stride);
+    size_t m_idx, size_t n_idx, size_t dst_stride_row);
 typedef size_t (*kai_imatmul_clamp_qai8_qai8p_qsi8cxp_get_dst_size_func_t)(size_t m, size_t n);
 
 /// Micro-kernel core function ("run" method)
 typedef void (*kai_imatmul_clamp_qai8_qai8p_qsi8cxp_run_imatmul_func_t)(
     size_t m, size_t n, size_t k_chunk_count, size_t k_chunk_length, const void* lhs_packed, const void* rhs_packed,
-    void* dst, size_t dst_row_stride, const struct kai_matmul_requantize32_params* params);
+    void* dst, size_t dst_stride_row, const struct kai_matmul_requantize32_params* params);
 
 /// Micro-kernel interface
 struct kai_imatmul_clamp_qai8_qai8p_qsi8cxp_ukernel {

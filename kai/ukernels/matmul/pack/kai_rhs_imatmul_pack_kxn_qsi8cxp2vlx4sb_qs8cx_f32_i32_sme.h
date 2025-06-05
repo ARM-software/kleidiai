@@ -18,7 +18,7 @@ extern "C" {
 ///
 /// The starting column index must be divisible by `n_step`.
 ///
-/// @return Step size for column index.
+/// @return The n step value.
 size_t kai_get_n_step_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(void);
 
 /// Gets the offset in bytes to the data element in the RHS matrix buffer.
@@ -75,14 +75,14 @@ size_t kai_get_rhs_packed_size_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32
 /// @param[in] n Number of columns of the output matrix.
 /// @param[in] k_chunk_count Number of chunks.
 /// @param[in] k_chunk_length Number of rows in each chunk.
-/// @param[in] rhs_row_stride Row stride in bytes of the RHS matrix.
+/// @param[in] rhs_stride_row Row stride in bytes of the RHS matrix.
 /// @param[in] rhs RHS matrix data buffer.
 /// @param[in] bias Bias matrix data buffer.
 /// @param[in] scale Scale data buffer.
 /// @param[out] rhs_packed Packed RHS matrix.
-/// @param[in] params Extra packing parameters.
+/// @param[in] params Extra quantization packing parameters.
 void kai_run_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme(
-    size_t n, size_t k_chunk_count, size_t k_chunk_length, size_t rhs_row_stride, const void* rhs, const void* bias,
+    size_t n, size_t k_chunk_count, size_t k_chunk_length, size_t rhs_stride_row, const void* rhs, const void* bias,
     const void* scale, void* rhs_packed, const struct kai_rhs_pack_qsi8cx_params* params);
 
 #ifdef __cplusplus

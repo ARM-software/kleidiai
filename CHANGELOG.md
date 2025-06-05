@@ -10,6 +10,16 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+- Convert SME and SME2 imatmul micro-kernels to use pure assembly, and add MSVC support. Affects:
+  - kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa
+  - kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme2_mopa
+  - kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa
+  - kai_lhs_imatmul_pack_x16p2vlx2_x16p_sme
+  - kai_lhs_imatmul_pack_x32p2vlx1_x32p_sme
+  - kai_lhs_imatmul_pack_x8p2vlx4_x8p_sme
+  - kai_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme
+  - kai_rhs_imatmul_pack_kxn_x16p2vlx2b_x16_x16_sme
+  - kai_rhs_imatmul_pack_kxn_x32p2vlx1b_x32_x32_sme
 - New Advanced SIMD micro-kernels:
   - Matrix multiplication (MxN) Micro-kernels of QSI8D32 LHS and QAI4C32 RHS with F16 output, optimized for FEAT_DotProd.
 - Added Convolution example using SME Indirect Matmul Kernels
