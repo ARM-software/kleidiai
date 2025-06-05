@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -166,7 +166,7 @@ int main() {
     const size_t rhs_packed_cols = nr + K * nr;
     const size_t rhs_packed_rows = rhs_packed_size / (rhs_packed_cols * sizeof(float16_t));
 
-    float16_t* rhs_packed = new float16_t[rhs_packed_size];
+    uint8_t* rhs_packed = new uint8_t[rhs_packed_size];
 
     const size_t lhs_stride = K * sizeof(float16_t);
     const size_t rhs_stride = N * sizeof(float16_t);
