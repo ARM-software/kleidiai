@@ -153,6 +153,8 @@ set(KLEIDIAI_FILES_NEON_FP16_BF16
 )
 
 set(KLEIDIAI_FILES_NEON_ASM
+    kai/ukernels/matmul/pack/kai_lhs_quant_pack_qsi8d32pscalef32_f32_neon.c
+    kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qai4c32p_qau4c32s0s1_f32_f32_f32_neon.c
     kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4c32pnrx8_qsu4c32s1s0_neon.c
 )
 
@@ -166,8 +168,6 @@ set(KLEIDIAI_FILES_NEON
     kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon.c
     kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon.c
     kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon.c
-    kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qai4c32p_qau4c32s0s1_f32_f32_f32_neon.c
-    kai/ukernels/matmul/pack/kai_lhs_quant_pack_qsi8d32pscalef32_f32_neon.c
 )
 
 set(KLEIDIAI_FILES_NEON_DOTPROD_ASM
@@ -420,6 +420,7 @@ if(KLEIDIAI_BUILD_TESTS)
             test/tests/bfloat16_test.cpp
             test/tests/float16_test.cpp
             test/tests/matmul_clamp_f32_qai8dxp_qsi4c32p_test.cpp
+            test/tests/matmul_clamp_f32_qsi8d32p_qai4c32p_test.cpp
         )
     else()
         add_executable(kleidiai_test

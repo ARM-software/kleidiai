@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-#if !defined(__aarch64__)
+#if !defined(__aarch64__) && !defined(_M_ARM64)
 #error This file must be compiled for AArch64.
 #else  // Architectural features check.
 #include "kai_rhs_pack_nxk_qai4c32p_qau4c32s0s1_f32_f32_f32_neon.h"
