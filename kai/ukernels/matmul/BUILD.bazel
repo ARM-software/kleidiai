@@ -22,7 +22,9 @@ package(default_visibility = ["//visibility:private"])
 SCALAR_KERNELS = [
     "pack/kai_lhs_quant_pack_qai8dxp_f32",
     "pack/kai_lhs_quant_pack_qsi8d32p_f32",
+    "pack/kai_rhs_pack_kxn_qsi4c32p_qsu4c32s1s0",
     "pack/kai_rhs_pack_kxn_qsi4cxp_qs4cxs1s0",
+    "pack/kai_rhs_pack_nxk_qsi4c32p_qsu4c32s1s0",
     "pack/kai_rhs_pack_nxk_qsi4cxp_qs4cxs1s0",
 ]
 
@@ -31,10 +33,9 @@ NEON_KERNELS = [
     "pack/kai_lhs_quant_pack_qsi8d32p_f32_neon",
     "pack/kai_lhs_quant_pack_qsi8d32pscalef32_f32_neon",
     "pack/kai_rhs_pack_kxn_f32p8x1biasf32_f32_f32_neon",
-    "pack/kai_rhs_pack_kxn_qsi4c32p_qsu4c32s1s0",
     "pack/kai_rhs_pack_kxn_qsi8cxp_qsi8cx_neon",
     "pack/kai_rhs_pack_nxk_qai4c32p_qau4c32s0s1_f32_f32_f32_neon",
-    "pack/kai_rhs_pack_nxk_qsi4c32p_qsu4c32s1s0",
+    "pack/kai_rhs_pack_nxk_qsi4c32pnrx8_qsu4c32s1s0_neon",
     "pack/kai_rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon",
     "pack/kai_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0",
     "pack/kai_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon",

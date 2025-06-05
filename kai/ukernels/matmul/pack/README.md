@@ -1,5 +1,5 @@
 <!--
-    SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+    SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
 
     SPDX-License-Identifier: Apache-2.0
 -->
@@ -110,3 +110,11 @@ RHS packed matrix (N x K) contains quantized (q) symmetric (s) 4-bit signed int 
 #### kai_run_rhs_pack_kxn_qsi4cxp_qs4cxs1s0()
 
 Same as kai_run_rhs_pack_nxk_qsi4cxp_qs4cxs1s0() with the input RHS matrix dimensions as K x N.
+
+### Vectorized packing routines with predefined block depth
+
+Alternative versions of certain packing functions are provided using Advanced SIMD, specialized for a predefined block depth (equal to kr / sr).
+
+#### kai_run_rhs_pack_nxk_qsi4c32pnrx8_qsu4c32s1s0_neon()
+
+This takes the same input and provides the same output as kai_run_rhs_pack_nxk_qsi4c32p_qsu4c32s1s0(), with faster execution time where Advanced SIMD instructions are supported. The nrx8 included within the name indicates that this routine works only where kr / sr = 8, and for any value of nr that fits within the wider constraints.

@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -20,7 +20,7 @@ extern "C" {
 /// @param[in] nr The number of columns written by the matmul micro-kernel
 ///
 /// @return the n step value
-size_t kai_get_n_step_rhs_pack_nxk_qsi4c32p_qsu4c32s1s0(size_t nr);
+size_t kai_get_n_step_rhs_pack_nxk_qsi4c32pnrx8_qsu4c32s1s0_neon(size_t nr);
 
 /// Gets the offset in bytes for the RHS matrix (not packed), which holds
 /// the int4 values in a N x K matrix, where N is number of rows and K is the number of columns.
@@ -33,7 +33,7 @@ size_t kai_get_n_step_rhs_pack_nxk_qsi4c32p_qsu4c32s1s0(size_t nr);
 /// @param[in] rhs_stride The number of bytes in in each row of the RHS matrix (not packed)
 ///
 /// @return the offset in bytes to the RHS matrix (not packed)
-size_t kai_get_rhs_offset_rhs_pack_nxk_qsi4c32p_qsu4c32s1s0(
+size_t kai_get_rhs_offset_rhs_pack_nxk_qsi4c32pnrx8_qsu4c32s1s0_neon(
     size_t n_idx,        //
     size_t rhs_stride);  //
 
@@ -48,7 +48,7 @@ size_t kai_get_rhs_offset_rhs_pack_nxk_qsi4c32p_qsu4c32s1s0(
 /// @param[in] scale_dt Block scale data type
 ///
 /// @return the stride in bytes to the packed RHS matrix
-size_t kai_get_rhs_packed_stride_rhs_pack_nxk_qsi4c32p_qsu4c32s1s0(
+size_t kai_get_rhs_packed_stride_rhs_pack_nxk_qsi4c32pnrx8_qsu4c32s1s0_neon(
     size_t k,                     //
     size_t nr,                    //
     size_t kr,                    //
@@ -68,7 +68,7 @@ size_t kai_get_rhs_packed_stride_rhs_pack_nxk_qsi4c32p_qsu4c32s1s0(
 /// @param[in] scale_dt Block scale data type
 ///
 /// @return the offset in bytes to the packed RHS matrix
-size_t kai_get_rhs_packed_offset_rhs_pack_nxk_qsi4c32p_qsu4c32s1s0(
+size_t kai_get_rhs_packed_offset_rhs_pack_nxk_qsi4c32pnrx8_qsu4c32s1s0_neon(
     size_t n_idx,                 //
     size_t k,                     //
     size_t nr,                    //
@@ -89,7 +89,7 @@ size_t kai_get_rhs_packed_offset_rhs_pack_nxk_qsi4c32p_qsu4c32s1s0(
 /// @param[in] scale_dt Block scale data type
 ///
 /// @return the packed RHS matrix size in bytes
-size_t kai_get_rhs_packed_size_rhs_pack_nxk_qsi4c32p_qsu4c32s1s0(
+size_t kai_get_rhs_packed_size_rhs_pack_nxk_qsi4c32pnrx8_qsu4c32s1s0_neon(
     size_t n,                     //
     size_t k,                     //
     size_t nr,                    //
@@ -124,7 +124,7 @@ size_t kai_get_rhs_packed_size_rhs_pack_nxk_qsi4c32p_qsu4c32s1s0(
 /// @param[out] rhs_packed   The packed RHS matrix.
 /// @param[in]  extra_bytes  Extra bytes to append to the end of each row of the packed RHS matrix.
 /// @param[in]  params       Parameters for the micro-kernel.
-void kai_run_rhs_pack_nxk_qsi4c32p_qsu4c32s1s0(
+void kai_run_rhs_pack_nxk_qsi4c32pnrx8_qsu4c32s1s0_neon(
     size_t num_groups,                                                   //
     size_t n,                                                            //
     size_t k,                                                            //
