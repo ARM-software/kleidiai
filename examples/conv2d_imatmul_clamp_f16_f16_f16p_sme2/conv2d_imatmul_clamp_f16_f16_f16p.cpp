@@ -285,13 +285,13 @@ int main() {
     // -------------------------------------------------
     // 2. Pack LHS and RHS.
     // -------------------------------------------------
-    auto lhs_packed_size =
+    auto lhs_packed_size_bytes =
         kai_get_lhs_packed_size_lhs_imatmul_pack_x16p2vlx2_x16p_sme(out_nhw_size, k_chunk_count, k_chunk_length);
-    auto rhs_packed_size = kai_get_rhs_packed_size_rhs_imatmul_pack_kxn_x16p2vlx2b_x16_x16_sme(
+    auto rhs_packed_size_bytes = kai_get_rhs_packed_size_rhs_imatmul_pack_kxn_x16p2vlx2b_x16_x16_sme(
         out_channels, k_chunk_count, k_chunk_length);
 
-    VEC_F16 packed_lhs(lhs_packed_size);
-    VEC_F16 packed_rhs(rhs_packed_size);
+    VEC_F16 packed_lhs(lhs_packed_size_bytes / sizeof(float16_t));
+    VEC_F16 packed_rhs(rhs_packed_size_bytes / sizeof(float16_t));
 
     // Padding is not used in the indirection buffer, therefore pad_ptr is nullptr
     // Ptr offset is provided as 0 as it is not needed to apply an offset to each valid pointer provided in the table in
