@@ -18,13 +18,14 @@
 
 #include "kai/kai_common.h"
 
+static const size_t kai_m_step = 1;
 static const size_t kai_mr = 1;
 static const size_t kai_nr = 16;
 static const size_t kai_kr = 1;
 static const size_t kai_sr = 1;
 
 size_t kai_get_m_step_matmul_clamp_f32_f32_f32p16vlx1b_1x16vl_sme2_mla(void) {
-    return kai_mr * kai_get_sme_vector_length_u32();
+    return kai_m_step;
 }
 
 size_t kai_get_n_step_matmul_clamp_f32_f32_f32p16vlx1b_1x16vl_sme2_mla(void) {
