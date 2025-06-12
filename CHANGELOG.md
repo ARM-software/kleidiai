@@ -21,12 +21,18 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
   - kai_rhs_imatmul_pack_kxn_x16p2vlx2b_x16_x16_sme
   - kai_rhs_imatmul_pack_kxn_x32p2vlx1b_x32_x32_sme
 - Convert SME and SME2 matmul micro-kernels to pure assembly, and add MSVC support. Affects:
+  - kai_lhs_pack_f32p2vlx1_f32_sme
   - kai_lhs_pack_x16p2vlx2_x16_sme
   - kai_lhs_pack_x8p2vlx4_x8_sme
   - kai_matmul_clamp_f16_f16_f16p2vlx2b_1x16vl_sme2_dot
   - kai_matmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa
+  - kai_matmul_clamp_f32_f32_f32p16vlx1b_1x16vl_sme2_mla
+  - kai_matmul_clamp_f32_f32_f32p2vlx1b_1x16vl_sme2_mla
+  - kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa
   - kai_matmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_sme2_dot
   - kai_matmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa
+  - kai_rhs_pack_kxn_f32p16vlx1b_f32_f32_sme
+  - kai_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme
   - kai_rhs_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme
   - kai_rhs_pack_kxn_x16p2vlx2b_x16_x16_sme
 - New Advanced SIMD micro-kernels:

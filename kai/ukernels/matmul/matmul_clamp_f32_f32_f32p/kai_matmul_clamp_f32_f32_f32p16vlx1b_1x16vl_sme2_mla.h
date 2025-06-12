@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -7,6 +7,8 @@
 #pragma once
 
 #include <stddef.h>
+
+#include "kai/kai_common.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,15 +57,15 @@ size_t kai_get_sr_matmul_clamp_f32_f32_f32p16vlx1b_1x16vl_sme2_mla(void);
 
 /// Gets the offset in bytes to the data element in the LHS matrix buffer.
 ///
-/// @param[in] m_idx Row index.
-/// @param[in] lhs_stride Row stride in bytes.
+/// @param[in] m_idx Row index. This must be 0.
+/// @param[in] k     Columns of unpacked LHS.
 ///
 /// @return The offset in bytes to the data element.
-size_t kai_get_lhs_offset_matmul_clamp_f32_f32_f32p16vlx1b_1x16vl_sme2_mla(size_t m_idx, size_t lhs_stride);
+size_t kai_get_lhs_offset_matmul_clamp_f32_f32_f32p16vlx1b_1x16vl_sme2_mla(size_t m_idx, size_t k);
 
 /// Gets the offset in bytes to the data element in the packed RHS matrix buffer.
 ///
-/// @param[in] n_idx Column index in the unpacked RHS matrix.
+/// @param[in] n_idx Column index in the unpacked RHS matrix. Must be a multiple of n_step
 /// @param[in] k Number of rows in the unpacked RHS matrix.
 ///
 /// @return The offset in bytes to the data element.
@@ -71,8 +73,8 @@ size_t kai_get_rhs_packed_offset_matmul_clamp_f32_f32_f32p16vlx1b_1x16vl_sme2_ml
 
 /// Gets the offset in bytes to the data element in the destination matrix buffer.
 ///
-/// @param[in] m_idx Row index.
-/// @param[in] n_idx Column index.
+/// @param[in] m_idx Row index. Must be 0
+/// @param[in] n_idx Column index. Must be multiple of n_step
 /// @param[in] dst_stride Row stride in bytes.
 ///
 /// @return The offset in bytes to the data element.
