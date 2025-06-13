@@ -75,7 +75,7 @@ void kai_run_lhs_quant_pack_qsi8d32pscalef32_f32_neon(
     KAI_ASSUME((bl % kr) == 0);
     KAI_ASSUME((k % bl) == 0);
     KAI_ASSUME((bl % kai_bl_multiple_of) == 0);
-    KAI_ASSERT((kr / sr) % 8 == 0);
+    KAI_ASSERT(((kr / sr) == 8) || ((kr / sr) == 4));
 
     if (m == 0) {
         return;
@@ -119,12 +119,10 @@ void kai_run_lhs_quant_pack_qsi8d32pscalef32_f32_neon(
 
             int32_t qsum = 0;
             // Quantize the blocks
-            for (k_idx = 0; k_idx < (int32_t)bl; k_idx += k_block_len) {
-                size_t k_block_idx = 0;
-                for (; k_block_idx <= (size_t)k_block_len - 8; k_block_idx += 8) {
-                    // Clamp at the last valid k-index
-                    const size_t k_idx_start = KAI_MIN((size_t)k_idx + k_block_idx, k - 1);
-
+            for (k_idx = 0; k_idx <= (int32_t)bl - k_block_len; k_idx += k_block_len) {
+                // Clamp at the last valid k-index
+                const size_t k_idx_start = KAI_MIN((size_t)k_idx, k - 1);
+                if (k_block_len == 8) {
                     const float32x4_t vsrc_0 = vld1q_f32(src_ptr + k_idx_start);
                     const float32x4_t vsrc_1 = vld1q_f32(src_ptr + k_idx_start + 4);
 
@@ -145,6 +143,29 @@ void kai_run_lhs_quant_pack_qsi8d32pscalef32_f32_neon(
                     int8x8_t v0_s8 = vqmovn_s16(v_s16);
                     vst1_s8(dst_ptr, v0_s8);
                     dst_ptr += 8 * sizeof(int8_t);
+                } else if (k_block_len == 4) {
+                    const float32x2_t vsrc_0 = vld1_f32(src_ptr + k_idx_start);
+                    const float32x2_t vsrc_1 = vld1_f32(src_ptr + k_idx_start + 2);
+
+                    // Scale the values
+                    float32x2_t v0_f32 = vmul_n_f32(vsrc_0, scale0);
+                    float32x2_t v1_f32 = vmul_n_f32(vsrc_1, scale0);
+
+                    int32x2_t v0_s32 = vcvtn_s32_f32(v0_f32);
+                    int32x2_t v1_s32 = vcvtn_s32_f32(v1_f32);
+                    int16x4_t v_s16 = vqmovn_s32(vcombine_s32(v0_s32, v1_s32));
+
+                    v_s16 = vmax_s16(v_s16, vdup_n_s16(INT8_MIN));
+                    v_s16 = vmin_s16(v_s16, vdup_n_s16(INT8_MAX));
+
+                    // Update the sum
+                    qsum += vaddv_s16(v_s16);
+
+                    dst_ptr[0] = vqmovnh_s16(vget_lane_s16(v_s16, 0));
+                    dst_ptr[1] = vqmovnh_s16(vget_lane_s16(v_s16, 1));
+                    dst_ptr[2] = vqmovnh_s16(vget_lane_s16(v_s16, 2));
+                    dst_ptr[3] = vqmovnh_s16(vget_lane_s16(v_s16, 3));
+                    dst_ptr += 4 * sizeof(int8_t);
                 }
                 dst_ptr += (mr - 1) * k_block_len * sizeof(int8_t);
             }

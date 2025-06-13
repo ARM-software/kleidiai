@@ -15,6 +15,7 @@
 #include <tuple>
 
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qai4c32p/kai_matmul_clamp_f32_qsi8d32p1x8_qai4c32p4x8_1x4_neon_dotprod.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qai4c32p/kai_matmul_clamp_f32_qsi8d32p4x4_qai4c32p4x4_8x4_neon_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qai4c32p/kai_matmul_clamp_f32_qsi8d32p4x8_qai4c32p4x8_8x4_neon_i8mm.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qai4c32p/kai_matmul_clamp_f32_qsi8d32p_qai4c32p_interface.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qsi8d32pscalef32_f32_neon.h"
@@ -36,14 +37,89 @@
 
 namespace kai::test {
 
-static const std::array<UkernelVariant<kai_matmul_clamp_f32_qsi8d32p_qai4c32p_ukernel>, 2>
+static const std::array<UkernelVariant<kai_matmul_clamp_f32_qsi8d32p_qai4c32p_ukernel>, 3>
     variants_kai_matmul_clamp_f32_qsi8d32p_qai4c32p = {
         {{UKERNEL_MATMUL_VARIANT(clamp_f32_qsi8d32p1x8_qai4c32p4x8_1x4_neon_dotprod),
           "kai_matmul_clamp_f32_qsi8d32p1x8_qai4c32p4x8_1x4_neon_dotprod", cpu_has_dotprod},
          {UKERNEL_MATMUL_VARIANT(clamp_f32_qsi8d32p4x8_qai4c32p4x8_8x4_neon_i8mm),
-          "kai_matmul_clamp_f32_qsi8d32p4x8_qai4c32p4x8_8x4_neon_i8mm", cpu_has_i8mm}}};
+          "kai_matmul_clamp_f32_qsi8d32p4x8_qai4c32p4x8_8x4_neon_i8mm", cpu_has_i8mm},
+         {UKERNEL_MATMUL_VARIANT(clamp_f32_qsi8d32p4x4_qai4c32p4x4_8x4_neon_dotprod),
+          "kai_matmul_clamp_f32_qsi8d32p4x4_qai4c32p4x4_8x4_neon_dotprod", cpu_has_dotprod}}};
 
 class MatMulTest_f32_qsi8d32p_qai4c32p : public ::testing::TestWithParam<MatMulTestPortionedParamsWithBias> {};
+
+TEST_P(MatMulTest_f32_qsi8d32p_qai4c32p, LhsPackedWithSameBlockdepth) {
+    // Verify LHS quant and pack int8 kernel behaves same for int4 and int8 matmul kernels,
+    // when the block-depth is same for different values of kr, sr.
+
+    const auto& [variant_index, matmul_shape, portion, has_bias] = GetParam();
+    const auto& ukernel_variant = variants_kai_matmul_clamp_f32_qsi8d32p_qai4c32p.at(variant_index);
+
+    const std::uint32_t seed = 0;
+
+    const size_t M = matmul_shape.m;
+    const size_t N = matmul_shape.n;
+    const size_t K = matmul_shape.k;
+    const size_t bl = 32;
+
+    const auto mr = ukernel_variant.interface.get_mr();
+    const auto nr = ukernel_variant.interface.get_nr();
+    const auto kr = ukernel_variant.interface.get_kr();
+    const auto sr = ukernel_variant.interface.get_sr();
+
+    auto m_step = ukernel_variant.interface.get_m_step();
+    ASSERT_TRUE(m_step % mr == 0);
+
+    auto n_step = ukernel_variant.interface.get_n_step();
+    ASSERT_TRUE(n_step % nr == 0);
+
+    const auto rect = portion.compute_portion(M, N, m_step, n_step);
+
+    // Generates input data.
+    const auto ref_lhs = fill_random<float>(M * K, seed + 0);
+
+    // Runs the reference implementation.
+    //   * Quantizes the LHS matrix using 8-bit symmetric quantization.
+    const auto [ref_lhs_qvalues, ref_lhs_scales] =
+        quantize_symmetric_per_block_dynamic<float, int8_t, float>(ref_lhs.data(), M, K, bl);
+
+    // Runs the LHS packing micro-kernel.
+    const auto lhs_start_row = rect.start_row();
+    const auto imp_packed_lhs_size =
+        kai_get_lhs_packed_size_lhs_quant_pack_qsi8d32pscalef32_f32_neon(M, K, bl, mr, kr, sr);
+    Buffer imp_packed_lhs(imp_packed_lhs_size, 0);
+
+    auto lhs_stride = K * sizeof(float);
+    auto lhs_offset = kai_get_lhs_offset_lhs_quant_pack_qsi8d32pscalef32_f32_neon(lhs_start_row, lhs_stride);
+    auto lhs_packed_offset =
+        kai_get_lhs_packed_offset_lhs_quant_pack_qsi8d32pscalef32_f32_neon(lhs_start_row, K, bl, mr, kr, sr);
+
+    kai_run_lhs_quant_pack_qsi8d32pscalef32_f32_neon(
+        rect.height() /* m */, K, bl, mr, kr, sr, 0, reinterpret_cast<const float*>(ref_lhs.data() + lhs_offset),
+        lhs_stride, imp_packed_lhs.data() + lhs_packed_offset);
+
+    const size_t kr_qsi8 = kr / sr;
+    const size_t sr_qsi8 = 1;
+    const auto imp_packed_lhs_qsi8_size =
+        kai_get_lhs_packed_size_lhs_quant_pack_qsi8d32pscalef32_f32_neon(M, K, bl, mr, kr_qsi8, sr_qsi8);
+    Buffer imp_packed_lhs_qsi8(imp_packed_lhs_qsi8_size, 0);
+
+    auto lhs_qsi8_packed_offset =
+        kai_get_lhs_packed_offset_lhs_quant_pack_qsi8d32pscalef32_f32_neon(lhs_start_row, K, bl, mr, kr_qsi8, sr_qsi8);
+
+    ASSERT_EQ(lhs_qsi8_packed_offset, lhs_packed_offset);
+
+    kai_run_lhs_quant_pack_qsi8d32pscalef32_f32_neon(
+        rect.height() /* m */, K, bl, mr, kr_qsi8, sr_qsi8, 0,
+        reinterpret_cast<const float*>(ref_lhs.data() + lhs_offset), lhs_stride,
+        imp_packed_lhs_qsi8.data() + lhs_qsi8_packed_offset);
+
+    auto* imp_packed_lhs_ptr = reinterpret_cast<const uint8_t*>(imp_packed_lhs.data());
+    auto* imp_packed_lhs_qsi8_ptr = reinterpret_cast<const uint8_t*>(imp_packed_lhs_qsi8.data());
+    for (size_t i = 0; i < imp_packed_lhs_qsi8_size; i++) {
+        ASSERT_EQ(imp_packed_lhs_ptr[i], imp_packed_lhs_qsi8_ptr[i]);
+    }
+}
 
 TEST_P(MatMulTest_f32_qsi8d32p_qai4c32p, EndToEnd) {
     const auto& [variant_index, matmul_shape, portion, has_bias] = GetParam();
@@ -112,7 +188,7 @@ TEST_P(MatMulTest_f32_qsi8d32p_qai4c32p, EndToEnd) {
     const auto lhs_start_row = rect.start_row();
     const auto imp_packed_lhs_size =
         kai_get_lhs_packed_size_lhs_quant_pack_qsi8d32pscalef32_f32_neon(M, K, bl, mr, kr, sr);
-    Buffer imp_packed_lhs(imp_packed_lhs_size);
+    Buffer imp_packed_lhs(imp_packed_lhs_size, 0);
 
     auto lhs_stride = K * sizeof(float);
     auto lhs_offset = kai_get_lhs_offset_lhs_quant_pack_qsi8d32pscalef32_f32_neon(lhs_start_row, lhs_stride);

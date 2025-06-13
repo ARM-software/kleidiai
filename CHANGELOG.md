@@ -36,6 +36,7 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
   - kai_rhs_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme
   - kai_rhs_pack_kxn_x16p2vlx2b_x16_x16_sme
 - New Advanced SIMD micro-kernels:
+  - Matrix multiplication (MxN) Micro-kernels of QSI8D32 LHS and QAI4C32 RHS with F32 output, optimized for FEAT_DotProd.
   - Matrix multiplication (MxN) Micro-kernels of QSI8D32 LHS and QAI4C32 RHS with F16 output, optimized for FEAT_DotProd.
   - Optimized version of kai_rhs_pack_nxk_qsi4c32p_qsu4c32s1s0 kernel for block depth of 8 bytes (`kai_rhs_pack_nxk_qsi4c32pnrx8_qsu4c32s1s0_neon`)
 - Added Convolution example using SME Indirect Matmul Kernels
