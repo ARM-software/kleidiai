@@ -263,6 +263,7 @@ set(KLEIDIAI_FILES_SME
     ${KLEIDIAI_FILES_SME_ASM}
     kai/ukernels/matmul/pack/kai_rhs_pack_nxk_f32p2vlx1biasf32_f32_f32_sme.c
     kai/ukernels/matmul/pack/kai_rhs_pack_nxk_x16p2vlx2b_x16_x16_sme.c
+    kai/ukernels/matmul/matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa.c
 )
 
 set(KLEIDIAI_FILES_SME2_ASM

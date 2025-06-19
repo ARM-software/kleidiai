@@ -464,6 +464,37 @@ test-linux-aarch64-v8only-fvp:
     reports:
       junit: kleidiai-${CI_JOB_NAME_SLUG}.xml
 
+test-linux-aarch64-sme1only-fvp:
+  extends:
+    - .standard-rules
+  stage: test
+  needs:
+    - build-clang
+  script:
+    - >
+      FVP_MODEL_EXTRA="
+        -C cluster0.sve.has_sme2=0
+        -C cluster0.sve.sme2_version=0"
+    - |
+      echo -e "#\!/bin/bash -ex" > run_tests.sh
+      echo -e "echo \"Perform a positive test where advanced instructions feature detected\"" >> run_tests.sh
+      echo "./build-clang/kleidiai_test --gtest_output=xml:kleidiai-${CI_JOB_NAME_SLUG}.xml --gtest_brief=1 --gtest_filter=*sme_* || exit 1" >> run_tests.sh
+      echo -e "echo \"Perform a negative test with illegal instructions\"" >> run_tests.sh
+      for EXAMPLE in `ls -1 build`; do
+          echo -e "echo \"Run ${EXAMPLE}\"\n./build/${EXAMPLE} || true" >> run_tests.sh
+      done
+      chmod a+x run_tests.sh
+    - FVP_TEST_EXECUTABLE="./run_tests.sh"
+    - *test-linux-fvp
+    # Verify that SME2 is not available.
+    - "grep -qv 'sme2' output.txt"
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - kleidiai-${CI_JOB_NAME_SLUG}.xml
+    reports:
+      junit: kleidiai-${CI_JOB_NAME_SLUG}.xml
+
 coverage:
   extends:
     - .standard-rules
