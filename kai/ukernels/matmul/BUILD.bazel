@@ -150,6 +150,7 @@ SME_KERNELS = [
 
 # buildifier: keep sorted
 SME_KERNELS_ASM = [
+    "matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa",
     "pack/kai_lhs_imatmul_pack_x16p2vlx2_x16p_sme",
     "pack/kai_lhs_imatmul_pack_x32p2vlx1_x32p_sme",
     "pack/kai_lhs_imatmul_pack_x8p2vlx4_x8p_sme",
