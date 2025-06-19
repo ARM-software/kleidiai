@@ -311,7 +311,9 @@ test-linux-aarch64:
       -C bp.terminal_2.start_telnet=0 \
       -C bp.terminal_3.mode=raw \
       -C bp.terminal_3.start_telnet=0 \
-      -C cluster0.NUM_CORES=1 \
+      -C pctl.startup=*.*.*.* \
+      -C cluster1.NUM_CORES=0 \
+      -C cluster0.NUM_CORES=2 \
       -C cluster0.has_arm_v8-1=1 \
       -C cluster0.has_arm_v8-2=1 \
       -C cluster0.has_arm_v8-3=1 \

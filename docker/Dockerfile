@@ -73,6 +73,7 @@ WORKDIR /opt/devtools
 # =============================================================================
 
 # Downloads the latest Fixed Virtual Platform.
+# The links could be found at https://developer.arm.com/Tools%20and%20Software/Fixed%20Virtual%20Platforms/Arm%20Architecture%20FVPs
 RUN --mount=type=cache,target=${BUILD_CACHE} \
     export FVP_NAME=FVP_Base_RevC-2xAEMvA_${FVP_VERSION}_Linux64$(test "${TARGETARCH}" = "arm64" && echo -n "_armv8l") && \
     export FVP_BASE_VERSION=$(echo -n ${FVP_VERSION} | cut -d '_' -f 1) && \
