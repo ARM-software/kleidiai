@@ -78,6 +78,10 @@ bool compare_raw(
                             const auto [abs_err, rel_err] = calculate_error(imp_value, ref_value);
 
                             if (abs_err != 0 || rel_err != 0) {
+                                if (!in_roi) {
+                                    handler.mark_as_failed();
+                                }
+
                                 const auto notifying = !in_roi || handler.handle_data(abs_err, rel_err);
 
                                 if (notifying) {
@@ -175,6 +179,10 @@ bool compare_per_row(
                             const auto [abs_err, rel_err] = calculate_error(imp_value, ref_value);
 
                             if (abs_err != 0 || rel_err != 0) {
+                                if (!in_roi) {
+                                    handler.mark_as_failed();
+                                }
+
                                 const auto notifying = !in_roi || handler.handle_data(abs_err, rel_err);
 
                                 if (notifying) {

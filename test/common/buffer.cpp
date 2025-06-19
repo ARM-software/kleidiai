@@ -21,7 +21,10 @@
 
 namespace kai::test {
 
-Buffer::Buffer(const size_t size) : m_user_buffer_size(size) {
+Buffer::Buffer(const size_t size) : Buffer(size, 0) {
+}
+
+Buffer::Buffer(const size_t size, const uint8_t init_value = 0) : m_user_buffer_size(size) {
     KAI_ASSUME_MSG(size > 0, "Buffers must be of non-zero size");
 
     const char* val = getenv("KAI_TEST_BUFFER_POLICY");
@@ -57,9 +60,7 @@ Buffer::Buffer(const size_t size) : m_user_buffer_size(size) {
         default:
             allocate();
     }
-}
 
-Buffer::Buffer(const size_t size, uint8_t init_value) : Buffer(size) {
     memset(data(), init_value, size);
 }
 

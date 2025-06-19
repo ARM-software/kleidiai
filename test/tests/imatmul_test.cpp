@@ -472,6 +472,10 @@ TEST_P(IndirectMatMulTest, Output) {
         ReferenceGenerator::get_test_reference({shape, method.pack_shape, method.format, k_chunk_length, clamp_rate});
     const Rect portion = output_portion.compute_portion(shape.m, shape.n, method.pack_shape.m, method.pack_shape.n);
 
+    if (portion.height() == 0 || portion.width() == 0) {
+        GTEST_SKIP() << "Empty dimension of matrix(" << portion.width() << "," << portion.height() << ")";
+    }
+
     // Call packing kernels, and then imatmul kernel
     Buffer lhs_packed = pack_lhs(method.lhs, portion, test_data, shape.m, k_chunk);
     Buffer rhs_packed = pack_rhs(method.rhs, portion, test_data, shape.n, k_chunk, method.format.rhs.data_type());
