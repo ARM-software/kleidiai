@@ -15,7 +15,8 @@ extern "C" {
 /// Micro-kernel dependencies
 ///
 /// -# kai_lhs_pack_f32p2vlx1_f32_sme to pack the LHS matrix.
-/// -# kai_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme to pack the RHS matrix.
+/// -# kai_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme or kai_rhs_pack_nxk_f32p2vlx1biasf32_f32_f32_sme to pack the RHS
+/// matrix.
 
 /// Gets m step value.
 ///
@@ -109,7 +110,7 @@ size_t kai_get_dst_size_matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa(s
 /// @param[in] rhs_packed Packed RHS matrix buffer.
 /// @param[out] dst Output matrix buffer.
 /// @param[in] dst_stride_row Row stride in bytes of the output matrix.
-/// @param[in] dst_stride_col Column stride in bytes of the output matrix. Must be 4
+/// @param[in] dst_stride_col Column stride in bytes of the output matrix. Currently, an unused parameter.
 /// @param[in] clamp_min Minimum value to clamp the final result.
 /// @param[in] clamp_max Maximum value to clamp the final result.
 void kai_run_matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa(

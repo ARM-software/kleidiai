@@ -42,11 +42,15 @@
 
 KAI_ASM_FUNCTION_TYPE(kai_kernel_matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa)
 KAI_ASM_FUNCTION_LABEL(kai_kernel_matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa)
-    stp x20, x21, [sp, -80]!
+    stp x20, x21, [sp, -144]!
     stp x22, x23, [sp, 16]
     stp x24, x25, [sp, 32]
     stp x26, x27, [sp, 48]
     str x28, [sp, 64]
+    stp d8, d9, [sp, 72]
+    stp d10, d11, [sp, 88]
+    stp d12, d13, [sp, 104]
+    stp d14, d15, [sp, 120]
     KAI_ASM_INST(0xd503477f)  // SMSTART ZA
     mov x15, #0x0
     ptrue p2.b
@@ -348,7 +352,11 @@ KAI_ASM_LABEL(label_16)  // Store to output array: End
     ldp x24, x25, [sp, 32]
     ldp x26, x27, [sp, 48]
     ldr x28, [sp, 64]
-    ldp x20, x21, [sp], 80
+    ldp d8, d9, [sp, 72]
+    ldp d10, d11, [sp, 88]
+    ldp d12, d13, [sp, 104]
+    ldp d14, d15, [sp, 120]
+    ldp x20, x21, [sp], 144
     ret
     KAI_ASM_FUNCTION_END(kai_kernel_matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa)
 
