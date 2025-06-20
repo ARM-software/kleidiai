@@ -15,31 +15,29 @@
 #include "kai/kai_common.h"
 
 typedef struct {
-    size_t M;
-    size_t N;
-    size_t K;
-    size_t flags;
-    void* accumulator_buffer;
+    const void* A;
+    const void* B;
+    void* C;
+    uint64_t ldcb;
+    uint64_t M;
+    uint64_t N;
+    uint64_t K;
     float min;
     float max;
-    void* C;
-    size_t ldcb;
-    const void* B;
-    size_t kstride_bytes;
-    const void* A;
-} matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa_args_t;
+    void* accumulator_buffer;
+    uint64_t flags;
+} KernelArgs;
 
 static const size_t kai_mr = 2;
 static const size_t kai_nr = 2;
 static const size_t kai_kr = 1;
 static const size_t kai_sr = 1;
 
-void kai_kernel_matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa(
-    const matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa_args_t* args);
+void kai_kernel_matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa(KernelArgs* args);
 
 // Returns a constant value specific to this kernel that's relative to vector length
 static size_t kai_get_kernel_vec_length_constant(void) {
-    const size_t kernel_vec_length_constant = kai_get_sme_vector_length_u32();
+    const size_t kernel_vec_length_constant = kai_get_sme_vector_length_u32() / kai_kr;
     return kernel_vec_length_constant;
 }
 
@@ -100,23 +98,18 @@ void kai_run_matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa(
     size_t dst_stride_col, float clamp_min, float clamp_max) {
     KAI_UNUSED(dst_stride_col);
 
-    matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa_args_t args;
-
-    args.M = m;
-    args.N = n;
-    args.K = k;
+    KernelArgs args;
 
     args.A = lhs_packed;
     args.B = rhs_packed;
     args.C = dst;
-    args.accumulator_buffer = NULL;
-
-    args.kstride_bytes = sizeof(float) + kai_roundup(k, kai_kr) * sizeof(float);
     args.ldcb = dst_stride_row;
-
+    args.M = m;
+    args.N = n;
+    args.K = k;
     args.min = clamp_min;
     args.max = clamp_max;
-
+    args.accumulator_buffer = NULL;
     args.flags = 0;
 
     kai_kernel_matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa(&args);
