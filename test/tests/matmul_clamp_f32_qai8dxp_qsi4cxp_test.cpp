@@ -290,10 +290,9 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsi4cx) {
     // Generates input data.
     const auto ref_lhs = fill_random<float>(M * K, seed + 0);
     const auto ref_biases = fill_random<float>(N, seed + 2);
+
     std::uniform_real_distribution<float> dist(-10.0, 1.0);
-
     std::mt19937 rnd(seed + 1);
-
     const auto ref_rhs = fill_matrix_raw<float>(1, N * K, [&dist, &rnd](size_t, size_t) { return dist(rnd); });
 
     // Runs the reference implementation.
@@ -421,7 +420,11 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsu4cx) {
 
     // Generates input data.
     const auto ref_lhs = fill_random<float>(M * K, seed + 0);
-    const auto ref_rhs = fill_random<float>(N * K, seed + 1);
+
+    std::uniform_real_distribution<float> dist(-10.0, 1.0);
+    std::mt19937 rnd(seed + 1);
+    const auto ref_rhs = fill_matrix_raw<float>(1, N * K, [&dist, &rnd](size_t, size_t) { return dist(rnd); });
+
     const auto ref_biases = fill_random<float>(N, seed + 2);
 
     // Runs the reference implementation.
@@ -548,7 +551,11 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsi4cx) {
 
     // Generates input data.
     const auto ref_lhs = fill_random<float>(M * K, seed + 0);
-    const auto ref_rhs = fill_random<float>(N * K, seed + 1);
+
+    std::uniform_real_distribution<float> dist(-10.0, 1.0);
+    std::mt19937 rnd(seed + 1);
+    const auto ref_rhs = fill_matrix_raw<float>(1, N * K, [&dist, &rnd](size_t, size_t) { return dist(rnd); });
+
     const auto ref_biases = fill_random<float>(N, seed + 2);
 
     // Transposed(nxk) RHS dimensions
@@ -679,7 +686,11 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsu4cx) {
 
     // Generates input data.
     const auto ref_lhs = fill_random<float>(M * K, seed + 0);
-    const auto ref_rhs = fill_random<float>(N * K, seed + 1);
+
+    std::uniform_real_distribution<float> dist(-10.0, 1.0);
+    std::mt19937 rnd(seed + 1);
+    const auto ref_rhs = fill_matrix_raw<float>(1, N * K, [&dist, &rnd](size_t, size_t) { return dist(rnd); });
+
     const auto ref_biases = fill_random<float>(N, seed + 2);
 
     // Transposed(nxk) RHS dimensions

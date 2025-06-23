@@ -142,17 +142,18 @@ void kai_run_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon(
                         // Load the 2 u4 values from source
                         const uint8_t dst_byte = src_row[(col_idx + kr_block_idx) / 2];
 
+                        // NOLINTBEGIN(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
                         // extract i8 values from the 2 u4 values
-                        const uint8_t first_value = (dst_byte & 0xF) - rhs_zero_point;
-                        const uint8_t second_value =
+                        const int8_t first_value = (dst_byte & 0xF) - rhs_zero_point;
+                        const int8_t second_value =
                             col_idx + kr_block_idx + 1 >= k ? 0 : (dst_byte >> 4) - rhs_zero_point;
 
                         // Add the i4 value to the row sum
                         sum += (int32_t)first_value + (int32_t)second_value;
 
                         // Truncate i8 to i4 and write to dst
-                        // NOLINTNEXTLINE(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
                         dst_kr_block[kr_block_idx / 2] = (second_value << 4) | (first_value & 0xF);
+                        // NOLINTEND(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
                     }
 
                     // Go to the next kr block for this row in the nr rows
