@@ -10,10 +10,6 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
-- New Advanced SIMD micro-kernels:
-  - Matrix multiplication (1xN) Micro-kernels of QSI8D32 LHS and QAI4C32 RHS with F32 output, optimized for FEAT_DotProd.
-  - Matrix multiplication (1xN) Micro-kernels of QSI8D32 LHS and QAI4C32 RHS with F16 output, optimized for FEAT_DotProd.
-
 ## v1.10.0
 
 - Convert SME and SME2 imatmul micro-kernels to use pure assembly, and add MSVC support. Affects:
@@ -44,14 +40,17 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 - New Advanced SIMD micro-kernels:
   - Matrix multiplication (MxN) Micro-kernels of QSI8D32 LHS and QAI4C32 RHS with F32 output, optimized for FEAT_DotProd.
   - Matrix multiplication (MxN) Micro-kernels of QSI8D32 LHS and QAI4C32 RHS with F16 output, optimized for FEAT_DotProd.
+  - Matrix multiplication (1xN) Micro-kernels of QSI8D32 LHS and QAI4C32 RHS with F32 output, optimized for FEAT_DotProd.
+  - Matrix multiplication (1xN) Micro-kernels of QSI8D32 LHS and QAI4C32 RHS with F16 output, optimized for FEAT_DotProd.
   - Optimized version of kai_rhs_pack_nxk_qsi4c32p_qsu4c32s1s0 kernel for block depth of 8 bytes (`kai_rhs_pack_nxk_qsi4c32pnrx8_qsu4c32s1s0_neon`)
 - New SME micro-kernels:
   - Added GEMM F16 and F32 kernels using SME1 MOPA instruction, block size 2VLx2VL.
-- Added Convolution example using SME Indirect Matmul Kernels
+- Added Convolution example using SME2 Indirect Matmul Kernels
 - Fixes:
   - Fix issue where kai_get_m_step() returns the incorrect value for kernels
     - matmul_clamp_f32_f32_f32p16vlx1b_1x16vl_sme2_mla
     - matmul_clamp_f32_f32_f32p2vlx1b_1x16vl_sme2_mla
+  - Fix issue with negative values handling in kai_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon
 
 ## v1.9.0
 
