@@ -35,6 +35,7 @@ NEON_KERNELS = [
     "pack/kai_rhs_pack_kxn_f32p8x1biasf32_f32_f32_neon",
     "pack/kai_rhs_pack_kxn_qsi8cxp_qsi8cx_neon",
     "pack/kai_rhs_pack_nxk_qai4c32p_qau4c32s0s1_f32_f32_f32_neon",
+    "pack/kai_rhs_pack_nxk_qsi4c32pnrx4_qsu4c32s1s0_neon",
     "pack/kai_rhs_pack_nxk_qsi4c32pnrx8_qsu4c32s1s0_neon",
     "pack/kai_rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon",
     "pack/kai_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0",

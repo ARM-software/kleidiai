@@ -34,6 +34,7 @@
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp_f32.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_qsi4c32p_qsu4c32s1s0.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4c32p_qsu4c32s1s0.h"
+#include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4c32pnrx4_qsu4c32s1s0_neon.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4c32pnrx8_qsu4c32s1s0_neon.h"
 #include "test/common/bfloat16.hpp"
 #include "test/common/buffer.hpp"
@@ -264,7 +265,7 @@ TEST_P(MatMulTest_f32_qmatmul_clamp_f32_qai8dxp_qsi4c32p, EndToEnd_RHS_nxk) {
     // Runs the GEMM micro-kernel.
     Buffer imp_dst(imp_dst_size);
     if (kr / sr == 8) {
-        // Test that vectorized packing kernel gives same output as scalar
+        // Test that vectorized packing kernel for nrx8 gives same output as scalar
         const auto imp_packed_rhs_size_neon =
             kai_get_rhs_packed_size_rhs_pack_nxk_qsi4c32pnrx8_qsu4c32s1s0_neon(N, K, nr, kr, sr, bl, scale_dt);
         ASSERT_EQ(imp_packed_rhs_size_neon, imp_packed_rhs_size);
@@ -279,6 +280,37 @@ TEST_P(MatMulTest_f32_qmatmul_clamp_f32_qai8dxp_qsi4c32p, EndToEnd_RHS_nxk) {
             kai_get_rhs_offset_rhs_pack_nxk_qsi4c32pnrx8_qsu4c32s1s0_neon(rhs_start_row, ref_rhs_qsu4_stride);
 
         kai_run_rhs_pack_nxk_qsi4c32pnrx8_qsu4c32s1s0_neon(
+            1, rect.width() /* n */, K, nr, kr, sr, bl,
+            reinterpret_cast<const uint8_t*>(ref_rhs_qsu4_padded.data() + rhs_offset_neon), ref_rhs_qsu4_stride,
+            reinterpret_cast<const float*>(ref_biases.data() + bias_offset),
+            reinterpret_cast<const float*>(ref_rhs_scales.data() + scale_offset), ref_rhs_scales_stride,
+            imp_packed_rhs_neon.data() + rhs_packed_offset_neon, 0, &params);
+
+        ukernel_variant.interface.run_matmul(
+            rect.height(), rect.width(), K, bl, imp_packed_lhs.data() + lhs_matmul_offset,
+            imp_packed_rhs_neon.data() + rhs_matmul_offset, reinterpret_cast<float*>(imp_dst.data() + dst_offset),
+            N * sizeof(float), sizeof(float), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max());
+
+        DefaultMismatchHandler handler(0, 0.1, 0, 0.05);
+        DataFormat dst_format = DataFormat(DataType::FP32);
+        const auto success = compare(imp_dst.data(), ref_dst.data(), dst_format, M, N, rect, handler);
+        ASSERT_TRUE(success);
+    } else if (kr / sr == 4) {
+        // Test that vectorized packing kernel for nrx4 gives same output as scalar
+        const auto imp_packed_rhs_size_neon =
+            kai_get_rhs_packed_size_rhs_pack_nxk_qsi4c32pnrx4_qsu4c32s1s0_neon(N, K, nr, kr, sr, bl, scale_dt);
+        ASSERT_EQ(imp_packed_rhs_size_neon, imp_packed_rhs_size);
+
+        Buffer imp_packed_rhs_neon(imp_packed_rhs_size_neon);
+
+        auto rhs_packed_offset_neon = kai_get_rhs_packed_offset_rhs_pack_nxk_qsi4c32pnrx4_qsu4c32s1s0_neon(
+            rhs_start_row, K, nr, kr, sr, bl, scale_dt);
+        ASSERT_EQ(rhs_packed_offset_neon, rhs_packed_offset);
+
+        auto rhs_offset_neon =
+            kai_get_rhs_offset_rhs_pack_nxk_qsi4c32pnrx4_qsu4c32s1s0_neon(rhs_start_row, ref_rhs_qsu4_stride);
+
+        kai_run_rhs_pack_nxk_qsi4c32pnrx4_qsu4c32s1s0_neon(
             1, rect.width() /* n */, K, nr, kr, sr, bl,
             reinterpret_cast<const uint8_t*>(ref_rhs_qsu4_padded.data() + rhs_offset_neon), ref_rhs_qsu4_stride,
             reinterpret_cast<const float*>(ref_biases.data() + bias_offset),
