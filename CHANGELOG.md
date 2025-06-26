@@ -12,6 +12,7 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 - New Advanced SIMD micro-kernels:
   - Optimized version of kai_rhs_pack_nxk_qsi4c32p_qsu4c32s1s0 kernel for block depth of 4 bytes (`kai_rhs_pack_nxk_qsi4c32pnrx4_qsu4c32s1s0_neon`)
+- Improve performance of `kai_rhs_pack_nxk_qsi4c32pnrx8_qsu4c32s1s0_neon`
 
 ## v1.10.0
 
