@@ -148,10 +148,10 @@ test-examples:
   script:
     - >
       for EXAMPLE in `ls build -1`; do
+          [[ $EXAMPLE == *sme* ]] && continue
           echo "-----------------------------------------------------------"
           echo "Run ${EXAMPLE}"
           echo "-----------------------------------------------------------"
-          [[ $EXAMPLE == *sme* ]] && continue
           build/${EXAMPLE} | tee -a example_${EXAMPLE}.log
       done
   artifacts:
@@ -494,6 +494,31 @@ test-linux-aarch64-sme1only-fvp:
       - kleidiai-${CI_JOB_NAME_SLUG}.xml
     reports:
       junit: kleidiai-${CI_JOB_NAME_SLUG}.xml
+
+test-examples-sme-fvp:
+  extends:
+    - .standard-rules
+  stage: test
+  needs:
+    - build-examples
+  script:
+    - |
+      echo -e "#\!/bin/bash -ex" | tee run_tests.sh
+      for EXAMPLE in `ls -1 build`; do
+        [[ $EXAMPLE == *sme* ]] || continue
+        echo "-----------------------------------------------------------" | tee run_tests.sh
+        echo "Run ${EXAMPLE}" | tee run_tests.sh
+        echo "-----------------------------------------------------------" | tee run_tests.sh
+        echo -e "echo \"Run ${EXAMPLE}\"\n./build/${EXAMPLE} | tee -a example_${EXAMPLE}.log" | tee run_tests.sh
+      done
+      chmod a+x run_tests.sh
+    - FVP_TEST_EXECUTABLE="./run_tests.sh"
+    - *test-linux-fvp
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - "example_*.log"
+
 
 coverage:
   extends:
