@@ -41,4 +41,10 @@ bool cpu_has_sme();
 /// Returns a value indicating whether the current CPU supports FEAT_SME2.
 bool cpu_has_sme2();
 
+/// Returns a value indicating whether the current CPU supports FEAT_BF16 and FEAT_DotProd
+bool cpu_has_dotprod_and_bf16();
+
+/// Returns a value indicating whether the current CPU supports FEAT_BF16 and FEAT_I8MM
+bool cpu_has_i8mm_and_bf16();
+
 }  // namespace kai::test

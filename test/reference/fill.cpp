@@ -125,5 +125,6 @@ Buffer fill_random(size_t length, uint32_t seed) {
 template Buffer fill_random<float>(size_t length, uint32_t seed);
 template Buffer fill_random<Float16>(size_t length, uint32_t seed);
 template Buffer fill_matrix_raw<float>(size_t height, size_t width, std::function<float(size_t, size_t)> gen);
+template Buffer fill_random<BFloat16>(size_t length, uint32_t seed);
 
 }  // namespace kai::test

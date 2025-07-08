@@ -33,6 +33,7 @@ Buffer cast(const void* src, size_t length) {
 template Buffer cast<Float16, float>(const void* src, size_t length);
 template Buffer cast<BFloat16, float>(const void* src, size_t length);
 template Buffer cast<float, Float16>(const void* src, size_t length);
+template Buffer cast<float, BFloat16>(const void* src, size_t length);
 
 Buffer cast(const void* src, kai::test::DataType src_dt, DataType dst_dt, size_t height, size_t width) {
     const auto length = height * width;

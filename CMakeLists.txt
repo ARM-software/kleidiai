@@ -159,6 +159,7 @@ set(KLEIDIAI_FILES_NEON_ASM
     kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qai4c32p_qau4c32s0s1_f32_f32_f32_neon.c
     kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4c32pnrx8_qsu4c32s1s0_neon.c
     kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4c32pnrx4_qsu4c32s1s0_neon.c
+    kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp_bf16_neon.c
 )
 
 set(KLEIDIAI_FILES_NEON
@@ -194,6 +195,8 @@ set(KLEIDIAI_FILES_NEON_DOTPROD_ASM
     kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qai4c32p/kai_matmul_clamp_f32_qsi8d32p1x8_qai4c32p4x8_1x4_neon_dotprod_asm.S
     kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qai4c32p/kai_matmul_clamp_f32_qsi8d32p4x4_qai4c32p4x4_8x4_neon_dotprod.c
     kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qai4c32p/kai_matmul_clamp_f32_qsi8d32p4x4_qai4c32p4x4_8x4_neon_dotprod_asm.S
+    kai/ukernels/matmul/matmul_clamp_bf16_qai8dxp_qsi4cxp/kai_matmul_clamp_bf16_qai8dxp1x8_qsi4cxp8x8_1x8_neon_dotprod.c
+    kai/ukernels/matmul/matmul_clamp_bf16_qai8dxp_qsi4cxp/kai_matmul_clamp_bf16_qai8dxp1x8_qsi4cxp8x8_1x8_neon_dotprod_asm.S
 )
 
 set(KLEIDIAI_FILES_NEON_DOTPROD
@@ -222,6 +225,8 @@ set(KLEIDIAI_FILES_NEON_I8MM_ASM
     kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4c32p/kai_matmul_clamp_f32_qai8dxp4x8_qsi4c32p8x8_4x8x32_neon_i8mm_asm.S
     kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qai4c32p/kai_matmul_clamp_f32_qsi8d32p4x8_qai4c32p4x8_8x4_neon_i8mm_asm.S
     kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qai4c32p/kai_matmul_clamp_f32_qsi8d32p4x8_qai4c32p4x8_8x4_neon_i8mm.c
+    kai/ukernels/matmul/matmul_clamp_bf16_qai8dxp_qsi4cxp/kai_matmul_clamp_bf16_qai8dxp4x8_qsi4cxp8x8_8x8_neon_i8mm.c
+    kai/ukernels/matmul/matmul_clamp_bf16_qai8dxp_qsi4cxp/kai_matmul_clamp_bf16_qai8dxp4x8_qsi4cxp8x8_8x8_neon_i8mm_asm.S
 )
 
 set(KLEIDIAI_FILES_NEON_I8MM
@@ -350,12 +355,12 @@ else()
     target_sources(kleidiai PRIVATE ${KLEIDIAI_FILES_SME_ASM})
     target_sources(kleidiai PRIVATE ${KLEIDIAI_FILES_SME2_ASM})
 
-    set_source_files_properties(${KLEIDIAI_FILES_SCALAR}           PROPERTIES COMPILE_OPTIONS /arch:armv8.0${KLEIDIAI_INTERNAL_EXTRA_ARCH})
-    set_source_files_properties(${KLEIDIAI_FILES_NEON_I8MM_ASM}    PROPERTIES COMPILE_OPTIONS /arch:armv8.2${KLEIDIAI_INTERNAL_EXTRA_ARCH})
-    set_source_files_properties(${KLEIDIAI_FILES_NEON_DOTPROD_ASM} PROPERTIES COMPILE_OPTIONS /arch:armv8.2${KLEIDIAI_INTERNAL_EXTRA_ARCH})
-    set_source_files_properties(${KLEIDIAI_FILES_NEON_ASM}         PROPERTIES COMPILE_OPTIONS /arch:armv8.2${KLEIDIAI_INTERNAL_EXTRA_ARCH})
-    set_source_files_properties(${KLEIDIAI_FILES_SME_ASM}          PROPERTIES COMPILE_OPTIONS /arch:armv8.2${KLEIDIAI_INTERNAL_EXTRA_ARCH})
-    set_source_files_properties(${KLEIDIAI_FILES_SME2_ASM}         PROPERTIES COMPILE_OPTIONS /arch:armv8.2${KLEIDIAI_INTERNAL_EXTRA_ARCH})
+    set_source_files_properties(${KLEIDIAI_FILES_SCALAR}            PROPERTIES COMPILE_OPTIONS /arch:armv8.0${KLEIDIAI_INTERNAL_EXTRA_ARCH})
+    set_source_files_properties(${KLEIDIAI_FILES_NEON_I8MM_ASM}     PROPERTIES COMPILE_OPTIONS /arch:armv8.2${KLEIDIAI_INTERNAL_EXTRA_ARCH})
+    set_source_files_properties(${KLEIDIAI_FILES_NEON_DOTPROD_ASM}  PROPERTIES COMPILE_OPTIONS /arch:armv8.2${KLEIDIAI_INTERNAL_EXTRA_ARCH})
+    set_source_files_properties(${KLEIDIAI_FILES_NEON_ASM}          PROPERTIES COMPILE_OPTIONS /arch:armv8.2${KLEIDIAI_INTERNAL_EXTRA_ARCH})
+    set_source_files_properties(${KLEIDIAI_FILES_SME_ASM}           PROPERTIES COMPILE_OPTIONS /arch:armv8.2${KLEIDIAI_INTERNAL_EXTRA_ARCH})
+    set_source_files_properties(${KLEIDIAI_FILES_SME2_ASM}          PROPERTIES COMPILE_OPTIONS /arch:armv8.2${KLEIDIAI_INTERNAL_EXTRA_ARCH})
 
     set(KLEIDIAI_FILES_ASM
         ${KLEIDIAI_FILES_SME_ASM}
@@ -448,6 +453,7 @@ if(KLEIDIAI_BUILD_TESTS)
             test/tests/float16_test.cpp
             test/tests/matmul_clamp_f32_qai8dxp_qsi4c32p_test.cpp
             test/tests/matmul_clamp_f32_qsi8d32p_qai4c32p_test.cpp
+            test/tests/matmul_clamp_bf16_qai8dxp_qsi4cxp_test.cpp
         )
     else()
         add_executable(kleidiai_test
@@ -455,6 +461,7 @@ if(KLEIDIAI_BUILD_TESTS)
             test/tests/buffer_test.cpp
             test/tests/float16_test.cpp
             test/tests/imatmul_test.cpp
+            test/tests/matmul_clamp_bf16_qai8dxp_qsi4cxp_test.cpp
             test/tests/matmul_clamp_f16_bf16p_bf16p_test.cpp
             test/tests/matmul_clamp_f32_bf16p_bf16p_test.cpp
             test/tests/matmul_clamp_f32_f32_f32p_test.cpp

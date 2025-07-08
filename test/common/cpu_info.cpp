@@ -279,4 +279,12 @@ bool cpu_has_sme2() {
     return CpuInfo::current().has_sme2;
 }
 
+bool cpu_has_dotprod_and_bf16() {
+    return cpu_has_dotprod() && cpu_has_bf16();
+}
+
+bool cpu_has_i8mm_and_bf16() {
+    return cpu_has_i8mm() && cpu_has_bf16();
+}
+
 }  // namespace kai::test
