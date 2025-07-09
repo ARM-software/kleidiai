@@ -436,7 +436,7 @@ TEST_P(MatMulTestBf16, Output) {
     const auto& [method, info, portion] = GetParam();
 
     if (method.fn_is_supported && !method.fn_is_supported()) {
-        GTEST_SKIP() << "CPU features are not supported by current CPU";
+        GTEST_SKIP() << "Unsupported CPU feature";
     }
 
     if (!method.has_main_kernel()) {

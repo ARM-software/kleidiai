@@ -473,7 +473,7 @@ TEST_P(MatMulTest, PackedLhs) {
     const auto& [method, info, portion] = GetParam();
 
     if (method.fn_is_supported && !method.fn_is_supported()) {
-        GTEST_SKIP() << "CPU features are not supported by current CPU";
+        GTEST_SKIP() << "Unsupported CPU feature";
     }
 
     if (!method.is_pack_lhs_needed()) {
@@ -525,7 +525,7 @@ TEST_P(MatMulTest, PackedRhs) {
     const auto& [method, info, portion] = GetParam();
 
     if (method.fn_is_supported && !method.fn_is_supported()) {
-        GTEST_SKIP() << "CPU features are not supported by current CPU";
+        GTEST_SKIP() << "Unsupported CPU feature";
     }
 
     if (!method.is_pack_rhs_needed()) {
@@ -597,7 +597,7 @@ TEST_P(MatMulTest, PackedTransposedRhs) {
     const auto& [method, info, portion] = GetParam();
 
     if (method.fn_is_supported && !method.fn_is_supported()) {
-        GTEST_SKIP() << "CPU features are not supported by current CPU";
+        GTEST_SKIP() << "Unsupported CPU feature";
     }
 
     if (!method.is_pack_rhs_nxk_needed()) {
@@ -658,7 +658,7 @@ TEST_P(MatMulTest, Output) {
     const auto& [method, info, portion] = GetParam();
 
     if (method.fn_is_supported && !method.fn_is_supported()) {
-        GTEST_SKIP() << "CPU features are not supported by current CPU";
+        GTEST_SKIP() << "Unsupported CPU feature";
     }
 
     if (!method.has_main_kernel()) {

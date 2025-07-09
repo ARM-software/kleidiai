@@ -17,7 +17,7 @@ std::ostream& operator<<(std::ostream& os, const MatMulShape& shape) {
 void PrintTo(const MatMulTestParams& param, std::ostream* os) {
     const auto& [method, shape, portion] = param;
 
-    *os << "Method_" << method.name << "__";
+    *os << method.name << "__";
     PrintTo(shape, os);
     *os << "__";
     PrintTo(portion, os);
@@ -28,17 +28,17 @@ void PrintTo(const MatMulShape& shape, std::ostream* os) {
 }
 
 void PrintTo(const MatrixPortion& portion, std::ostream* os) {
-    *os << "PortionStartRow_" << static_cast<int>(portion.start_row() * 1000)    //
-        << "__PortionStartCol_" << static_cast<int>(portion.start_col() * 1000)  //
-        << "__PortionHeight_" << static_cast<int>(portion.height() * 1000)       //
-        << "__PortionWidth_" << static_cast<int>(portion.width() * 1000);
+    *os << "Portion__R_" << static_cast<int>(portion.start_row() * 1000)  //
+        << "__C_" << static_cast<int>(portion.start_col() * 1000)         //
+        << "__H_" << static_cast<int>(portion.height() * 1000)            //
+        << "__W_" << static_cast<int>(portion.width() * 1000);
 }
 
 std::string test_description(
     const std::string_view& name, const MatMulShape& shape, const MatrixPortion& portion, bool bias) {
     std::ostringstream os;
 
-    os << "Method_" << name << "__";
+    os << name << "__";
     PrintTo(shape, &os);
     os << "__";
     PrintTo(portion, &os);

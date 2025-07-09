@@ -100,7 +100,7 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, Offset_RHS) {
     const auto& ukernel_variant = variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p.at(variant_index);
 
     if (ukernel_variant.ukernel.fn_is_supported && !ukernel_variant.ukernel.fn_is_supported()) {
-        GTEST_SKIP() << "CPU features are not supported by current CPU";
+        GTEST_SKIP() << "Unsupported CPU feature";
     }
 
     const size_t bl = 32;
@@ -130,7 +130,7 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, Offset_LHS) {
     const auto& ukernel_variant = variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p.at(variant_index);
 
     if (ukernel_variant.ukernel.fn_is_supported && !ukernel_variant.ukernel.fn_is_supported()) {
-        GTEST_SKIP() << "CPU features are not supported by current CPU";
+        GTEST_SKIP() << "Unsupported CPU feature";
     }
 
     const size_t bl = 32;
@@ -162,7 +162,7 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, EndToEnd) {
     const auto& ukernel_variant = variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p.at(variant_index);
 
     if (ukernel_variant.ukernel.fn_is_supported && !ukernel_variant.ukernel.fn_is_supported()) {
-        GTEST_SKIP() << "CPU features are not supported by current CPU";
+        GTEST_SKIP() << "Unsupported CPU feature";
     }
 
     const std::uint32_t seed = 0;

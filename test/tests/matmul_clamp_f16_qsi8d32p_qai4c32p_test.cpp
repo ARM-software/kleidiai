@@ -58,7 +58,7 @@ TEST_P(MatMulTest_f16_qsi8d32p_qai4c32p, EndToEnd) {
     const auto& ukernel_variant = variants_kai_matmul_clamp_f16_qsi8d32p_qai4c32p.at(variant_index);
 
     if (ukernel_variant.fn_is_supported && !ukernel_variant.fn_is_supported()) {
-        GTEST_SKIP() << "CPU features are not supported by current CPU";
+        GTEST_SKIP() << "Unsupported CPU feature";
     }
 
     const std::uint32_t seed = 0;

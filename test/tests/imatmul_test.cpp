@@ -162,7 +162,7 @@ const IndirectMatMulArray& get_indirect_matmul_methods() {
     static IndirectMatMulArray indirect_matmul_methods{};
 
     // F16 IMATMUL ////////////////////////////////////////////////////////////
-    indirect_matmul_methods[0].name = "indirect_matmul_f16_f16p_f16p_2vlx2vl_sme2_mopa";
+    indirect_matmul_methods[0].name = "imatmul_f16_f16p_f16p_2vlx2vl_sme2_mopa";
     indirect_matmul_methods[0].is_supported = cpu_has_sme2;
     indirect_matmul_methods[0].pack_shape.m = 2 * get_sme_vector_length<int32_t>();
     indirect_matmul_methods[0].pack_shape.n = 2 * get_sme_vector_length<int32_t>();
@@ -201,7 +201,7 @@ const IndirectMatMulArray& get_indirect_matmul_methods() {
     indirect_matmul_methods[0].imatmul.imatmul = ukernel_f16.run_imatmul;
 
     // F32 IMATMUL ////////////////////////////////////////////////////////////
-    indirect_matmul_methods[1].name = "indirect_matmul_f32_f32p_f32p_2vlx2vl_sme2_mopa";
+    indirect_matmul_methods[1].name = "imatmul_f32_f32p_f32p_2vlx2vl_sme2_mopa";
     indirect_matmul_methods[1].is_supported = cpu_has_sme2;
     indirect_matmul_methods[1].pack_shape.m = 2 * get_sme_vector_length<int32_t>();
     indirect_matmul_methods[1].pack_shape.n = 2 * get_sme_vector_length<int32_t>();
@@ -462,7 +462,7 @@ Buffer imatmul(
 TEST_P(IndirectMatMulTest, Output) {
     const auto& [method, shape, k_chunk_length, output_portion, clamp_rate] = GetParam();
     if (not method.is_supported()) {
-        GTEST_SKIP() << "CPU features are not supported by current CPU";
+        GTEST_SKIP() << "Unsupported CPU feature";
     }
 
     const KChunk k_chunk{shape.k, k_chunk_length};
@@ -493,7 +493,7 @@ TEST_P(IndirectMatMulTest, Output) {
 /// Name generator for test case
 [[maybe_unused]] static void PrintTo(const IndirectMatMulTestParams& param, std::ostream* os) {
     const auto& [method, shape, k_chunk_length, portion, clamp_rate] = param;
-    *os << "Method_" << method.name << "__";
+    *os << method.name << "__";
     PrintTo(shape, os);
     *os << "__K_chunk_length_" << k_chunk_length;
     *os << "__clamp_rate_" << static_cast<int>(clamp_rate * 100) << "__";

@@ -278,7 +278,7 @@ const std::array<IndirectMatMulVariant, 1>& get_indirect_gemm_variants() {
     static const kai_imatmul_clamp_qai8_qai8p_qsi8cxp_ukernel& ukernel =
         get_imatmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_sme2_dot_interface();
 
-    variants[0].name = "indirect_matmul_qai8_qai8p_qsi8cxp";
+    variants[0].name = "imatmul_qai8_qai8p_qsi8cxp";
     variants[0].acc_pack.m = 2 * get_sme_vector_length<int32_t>();
     variants[0].acc_pack.n = 2 * get_sme_vector_length<int32_t>();
     variants[0].acc_pack.k = sizeof(int32_t) / sizeof(int8_t);
@@ -733,8 +733,7 @@ static std::string test_description(
     const MatrixPortion& portion, size_t k_chunk_len, float clamp_ratio) {
     std::ostringstream sstream;
 
-    sstream << "Method_" << variant.name << "__M_" << shape.m << "__N_" << shape.n << "__k_chunk_count_" << shape.k
-            << "__";
+    sstream << variant.name << "__M_" << shape.m << "__N_" << shape.n << "__k_chunk_count_" << shape.k << "__";
     PrintTo(portion, &sstream);
     sstream << "__k_chunk_len_" << k_chunk_len << "__clamp_ratio_" << static_cast<int>(clamp_ratio * 100);
 
@@ -745,7 +744,7 @@ TEST_P(MatMulQuantizedTest, EndToEnd) {
     const auto& [variant, shape, output_portion, clamp_ratio] = GetParam();
 
     if (!variant.is_supported()) {
-        GTEST_SKIP() << "CPU features are not supported by current CPU";
+        GTEST_SKIP() << "Unsupported CPU feature";
     }
 
     TestDataId test_data_id{shape, variant.acc_pack, shape.k, false, clamp_ratio};
@@ -879,7 +878,7 @@ TEST_P(IndirectMatMulQuantizedTest, EndToEnd) {
     MatMulShape shape{shape_k_chunk.m, shape_k_chunk.n, k_chunk.count * k_chunk.length};
 
     if (!variant.is_supported()) {
-        GTEST_SKIP() << "CPU features are not supported by current CPU";
+        GTEST_SKIP() << "Unsupported CPU feature";
     }
 
     // Toggle padding testst when LHS has more than one row
