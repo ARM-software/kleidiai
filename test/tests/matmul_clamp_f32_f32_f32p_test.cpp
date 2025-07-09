@@ -19,6 +19,7 @@
 #include "kai/kai_common.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p16vlx1b_1x16vl_sme2_mla.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p2vlx1b_1x16vl_sme2_mla.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p2vlx1b_1x8vl_sme_mla.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p_interface.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_f32p16vlx1b_f32_f32_sme.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme.h"
@@ -36,7 +37,7 @@
 namespace kai::test {
 
 namespace {
-const std::array<UkernelVariant<kai_matmul_clamp_f32_f32_f32p_ukernel>, 2> ukernel_variants = {
+const std::array<UkernelVariant<kai_matmul_clamp_f32_f32_f32p_ukernel>, 3> ukernel_variants = {
     {{
          {kai_get_m_step_matmul_clamp_f32_f32_f32p16vlx1b_1x16vl_sme2_mla,
           kai_get_n_step_matmul_clamp_f32_f32_f32p16vlx1b_1x16vl_sme2_mla,
@@ -62,7 +63,19 @@ const std::array<UkernelVariant<kai_matmul_clamp_f32_f32_f32p_ukernel>, 2> ukern
        kai_get_dst_size_matmul_clamp_f32_f32_f32p2vlx1b_1x16vl_sme2_mla,
        kai_run_matmul_clamp_f32_f32_f32p2vlx1b_1x16vl_sme2_mla},
       "matmul_clamp_f32_f32_f32p2vlx1b_1x16vl_sme2_mla",
-      cpu_has_sme2}}};
+      cpu_has_sme2},
+     {{kai_get_m_step_matmul_clamp_f32_f32_f32p2vlx1b_1x8vl_sme_mla,
+       kai_get_n_step_matmul_clamp_f32_f32_f32p2vlx1b_1x8vl_sme_mla,
+       kai_get_nr_matmul_clamp_f32_f32_f32p2vlx1b_1x8vl_sme_mla,
+       kai_get_kr_matmul_clamp_f32_f32_f32p2vlx1b_1x8vl_sme_mla,
+       kai_get_sr_matmul_clamp_f32_f32_f32p2vlx1b_1x8vl_sme_mla,
+       kai_get_lhs_offset_matmul_clamp_f32_f32_f32p2vlx1b_1x8vl_sme_mla,
+       kai_get_rhs_packed_offset_matmul_clamp_f32_f32_f32p2vlx1b_1x8vl_sme_mla,
+       kai_get_dst_offset_matmul_clamp_f32_f32_f32p2vlx1b_1x8vl_sme_mla,
+       kai_get_dst_size_matmul_clamp_f32_f32_f32p2vlx1b_1x8vl_sme_mla,
+       kai_run_matmul_clamp_f32_f32_f32p2vlx1b_1x8vl_sme_mla},
+      "matmul_clamp_f32_f32_f32p2vlx1b_1x8vl_sme_mla",
+      cpu_has_sme}}};
 
 }  // namespace
 
@@ -120,6 +133,7 @@ TEST_P(MatMulTest_f32_f32_f32p, EndToEnd)  // NOLINT(google-readability-avoid-un
                 nullptr);
             break;
         case 1:  // matmul_clamp_f32_f32_f32p2vlx1b_1x16vl_sme2_mla
+        case 2:  // matmul_clamp_f32_f32_f32p2vlx1b_1x8vl_sme_mla
             imp_packed_rhs_size = kai_get_rhs_packed_size_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme(n, k);
             imp_packed_rhs = std::make_unique<Buffer>(imp_packed_rhs_size);
             kai_run_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme(
