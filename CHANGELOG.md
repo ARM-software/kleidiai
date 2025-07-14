@@ -15,6 +15,7 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
   - Matrix multiplication (1xN) Micro-kernels of QAI8DX LHS and QSI4CX RHS with BF16 output, optimized for FEAT_DotProd.
 - New SME micro-kernels:
   - Matrix multiplication (1xN) of F32 LHS and RHS with F32 output, using instructions compatible with FEAT_SME.
+  - Matrix multiplication (1xN) of F16 LHS and RHS with F16 output, using instructions compatible with FEAT_SME.
 
 ## v1.11.0
 
