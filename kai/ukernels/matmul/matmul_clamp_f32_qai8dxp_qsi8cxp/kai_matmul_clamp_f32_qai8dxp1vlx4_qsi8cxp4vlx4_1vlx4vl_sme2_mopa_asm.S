@@ -94,7 +94,6 @@ KAI_ASM_LABEL(label_3)          //      Block Loop
     KAI_ASM_INST(0xa041c564)	//     	ld1w	{ z4.s - z7.s }, pn9/z, [x11, #0x4, mul vl]
     KAI_ASM_INST(0xa042c568)	//     	ld1w	{ z8.s - z11.s }, pn9/z, [x11, #0x8, mul vl]
     addvl	x11, x11, #0xc
-    KAI_ASM_INST(0xc132e000)    //      scvtf	{ z0.s - z3.s }, { z0.s - z3.s }
     mov	x14, #0x0               // =0
     addvl	x15, x10, #0x1
 KAI_ASM_LABEL(label_4)
@@ -102,25 +101,20 @@ KAI_ASM_LABEL(label_4)
     ld1rw	{ z17.s }, p2/z, [x15]
     add	x10, x10, #0x4
     add	x15, x15, #0x4
-    scvtf	z16.s, p2/m, z16.s
-    fmul	z24.s, z16.s, z0.s
-    fmul	z25.s, z16.s, z1.s
-    fmul	z26.s, z16.s, z2.s
-    fmul	z27.s, z16.s, z3.s
+    KAI_ASM_INST(0xc006440c)	//     	mov	{ z12.b - z15.b }, za0h.b[w14, 0x0:0x3]
     fmul	z20.s, z17.s, z4.s
     fmul	z21.s, z17.s, z5.s
     fmul	z22.s, z17.s, z6.s
     fmul	z23.s, z17.s, z7.s
-    fmul	z24.s, z24.s, z20.s
-    fmul	z25.s, z25.s, z21.s
-    fmul	z26.s, z26.s, z22.s
-    fmul	z27.s, z27.s, z23.s
-    KAI_ASM_INST(0xc006440c)	//     	mov	{ z12.b - z15.b }, za0h.b[w14, 0x0:0x3]
+    mla	    z12.s, p2/m, z16.s, z0.s
+    mla	    z13.s, p2/m, z16.s, z1.s
+    mla	    z14.s, p2/m, z16.s, z2.s
+    mla	    z15.s, p2/m, z16.s, z3.s
     KAI_ASM_INST(0xc132e18c)	//     	scvtf	{ z12.s - z15.s }, { z12.s - z15.s }
-    fmla	z24.s, p2/m, z20.s, z12.s
-    fmla	z25.s, p2/m, z21.s, z13.s
-    fmla	z26.s, p2/m, z22.s, z14.s
-    fmla	z27.s, p2/m, z23.s, z15.s
+    fmul	z24.s, z20.s, z12.s
+    fmul	z25.s, z21.s, z13.s
+    fmul	z26.s, z22.s, z14.s
+    fmul	z27.s, z23.s, z15.s
     fadd	z24.s, p2/m, z24.s, z8.s
     fadd	z25.s, p2/m, z25.s, z9.s
     fadd	z26.s, p2/m, z26.s, z10.s
