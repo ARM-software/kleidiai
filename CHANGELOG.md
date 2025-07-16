@@ -16,6 +16,9 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 - New SME micro-kernels:
   - Matrix multiplication (1xN) of F32 LHS and RHS with F32 output, using instructions compatible with FEAT_SME.
   - Matrix multiplication (1xN) of F16 LHS and RHS with F16 output, using instructions compatible with FEAT_SME.
+- Convert SME transposed RHS packing micro-kernels to pure assembly:
+  - kai_rhs_pack_nxk_f32p2vlx1biasf32_f32_f32_sme
+  - kai_rhs_pack_nxk_x16p2vlx2b_x16_x16_sme
 - Fixes
   - Update kai_kernel_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa to improve accuracy
 

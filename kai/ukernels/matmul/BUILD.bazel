@@ -149,8 +149,6 @@ I8MM_KERNELS_ASM = [
 SME_KERNELS = [
     "pack/kai_lhs_pack_bf16p2vlx2_f32_sme",
     "pack/kai_rhs_pack_kxn_bf16p2vlx2b_f32_x32_sme",
-    "pack/kai_rhs_pack_nxk_f32p2vlx1biasf32_f32_f32_sme",
-    "pack/kai_rhs_pack_nxk_x16p2vlx2b_x16_x16_sme",
 ]
 
 # buildifier: keep sorted
@@ -172,6 +170,8 @@ SME_KERNELS_ASM = [
     "pack/kai_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme",
     "pack/kai_rhs_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme",
     "pack/kai_rhs_pack_kxn_x16p2vlx2b_x16_x16_sme",
+    "pack/kai_rhs_pack_nxk_f32p2vlx1biasf32_f32_f32_sme",
+    "pack/kai_rhs_pack_nxk_x16p2vlx2b_x16_x16_sme",
 ]
 
 # buildifier: keep sorted
