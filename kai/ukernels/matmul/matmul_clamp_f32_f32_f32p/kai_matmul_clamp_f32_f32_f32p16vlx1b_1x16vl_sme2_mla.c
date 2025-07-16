@@ -4,9 +4,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-// Do not flag up inline assembly blocks
-#pragma GCC diagnostic ignored "-Woverlength-strings"
-
 #if (!defined(__aarch64__) || !defined(__ARM_FEATURE_SVE2)) && !defined(_M_ARM64)
 #error This file must be compiled for AArch64, FEAT_SVE2.
 #else  // Architectural features check.

@@ -19,6 +19,13 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 - Convert SME transposed RHS packing micro-kernels to pure assembly:
   - kai_rhs_pack_nxk_f32p2vlx1biasf32_f32_f32_sme
   - kai_rhs_pack_nxk_x16p2vlx2b_x16_x16_sme
+- Include more micro-kernels in MSVC build:
+  - kai_matmul_clamp_f32_f32_f32p8x1biasf32_6x8x4_neon_mla
+  - kai_lhs_quant_pack_qsi8d32p_f32_neon
+  - kai_rhs_pack_kxn_qsi8cxp_qsi8cx_neon
+  - kai_rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon
+  - kai_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon
+  - kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon
 - Fixes
   - Update kai_kernel_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa to improve accuracy
 
