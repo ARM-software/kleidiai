@@ -29,6 +29,7 @@ config_setting(
 
 cc_library(
     name = "common",
+    srcs = ["kai/kai_common_sme_asm.S"],
     hdrs = ["kai/kai_common.h"],
 )
 

@@ -23,6 +23,7 @@ set(KAI_SOURCES
     ${KAI_PATH}/kai/ukernels/matmul/pack/kai_lhs_imatmul_pack_x16p2vlx2_x16p_sme.c
     ${KAI_PATH}/kai/ukernels/matmul/pack/kai_rhs_imatmul_pack_kxn_x16p2vlx2b_x16_x16_sme_asm.S
     ${KAI_PATH}/kai/ukernels/matmul/pack/kai_rhs_imatmul_pack_kxn_x16p2vlx2b_x16_x16_sme.c
+    ${KAI_PATH}/kai/kai_common_sme_asm.S
 )
 
 # Files requires to build the executable
