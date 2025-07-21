@@ -10,6 +10,8 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+## v1.12.0
+
 - New Advanced SIMD micro-kernels:
   - Matrix multiplication (MxN) Micro-kernels of QAI8DX LHS and QSI4CX RHS with BF16 output, optimized for FEAT_I8MM.
   - Matrix multiplication (1xN) Micro-kernels of QAI8DX LHS and QSI4CX RHS with BF16 output, optimized for FEAT_DotProd.
@@ -30,6 +32,9 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
   - kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon
 - Fixes
   - Update kai_kernel_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa to improve accuracy
+  - Convert common SME/SME2 code into assembly file kai_common_sme_asm.S
+- Documentation
+  - Added ONNX Runtime framework integration example
 
 ## v1.11.0
 
