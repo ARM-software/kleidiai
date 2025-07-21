@@ -197,6 +197,8 @@ set(KLEIDIAI_FILES_NEON_DOTPROD_ASM
     kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qai4c32p/kai_matmul_clamp_f32_qsi8d32p4x4_qai4c32p4x4_8x4_neon_dotprod_asm.S
     kai/ukernels/matmul/matmul_clamp_bf16_qai8dxp_qsi4cxp/kai_matmul_clamp_bf16_qai8dxp1x8_qsi4cxp8x8_1x8_neon_dotprod.c
     kai/ukernels/matmul/matmul_clamp_bf16_qai8dxp_qsi4cxp/kai_matmul_clamp_bf16_qai8dxp1x8_qsi4cxp8x8_1x8_neon_dotprod_asm.S
+    kai/ukernels/matmul/matmul_clamp_bf16_qai8dxp_qsi4c32p/kai_matmul_clamp_bf16_qai8dxp1x8_qsi4c32p4x8_1x4_neon_dotprod.c
+    kai/ukernels/matmul/matmul_clamp_bf16_qai8dxp_qsi4c32p/kai_matmul_clamp_bf16_qai8dxp1x8_qsi4c32p4x8_1x4_neon_dotprod_asm.S
 )
 
 set(KLEIDIAI_FILES_NEON_DOTPROD
@@ -227,6 +229,8 @@ set(KLEIDIAI_FILES_NEON_I8MM_ASM
     kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qai4c32p/kai_matmul_clamp_f32_qsi8d32p4x8_qai4c32p4x8_8x4_neon_i8mm.c
     kai/ukernels/matmul/matmul_clamp_bf16_qai8dxp_qsi4cxp/kai_matmul_clamp_bf16_qai8dxp4x8_qsi4cxp8x8_8x8_neon_i8mm.c
     kai/ukernels/matmul/matmul_clamp_bf16_qai8dxp_qsi4cxp/kai_matmul_clamp_bf16_qai8dxp4x8_qsi4cxp8x8_8x8_neon_i8mm_asm.S
+    kai/ukernels/matmul/matmul_clamp_bf16_qai8dxp_qsi4c32p/kai_matmul_clamp_bf16_qai8dxp4x8_qsi4c32p4x8_16x4_neon_i8mm.c
+    kai/ukernels/matmul/matmul_clamp_bf16_qai8dxp_qsi4c32p/kai_matmul_clamp_bf16_qai8dxp4x8_qsi4c32p4x8_16x4_neon_i8mm_asm.S
 )
 
 set(KLEIDIAI_FILES_NEON_I8MM
@@ -458,9 +462,9 @@ if(KLEIDIAI_BUILD_TESTS)
         add_executable(kleidiai_test
             test/tests/bfloat16_test.cpp
             test/tests/float16_test.cpp
-            test/tests/matmul_clamp_f32_qai8dxp_qsi4c32p_test.cpp
             test/tests/matmul_clamp_f32_qsi8d32p_qai4c32p_test.cpp
             test/tests/matmul_clamp_bf16_qai8dxp_qsi4cxp_test.cpp
+            test/tests/matmul_clamp_qai8dxp_qsi4c32p_test.cpp
         )
     else()
         add_executable(kleidiai_test
@@ -472,7 +476,6 @@ if(KLEIDIAI_BUILD_TESTS)
             test/tests/matmul_clamp_f16_bf16p_bf16p_test.cpp
             test/tests/matmul_clamp_f32_bf16p_bf16p_test.cpp
             test/tests/matmul_clamp_f32_f32_f32p_test.cpp
-            test/tests/matmul_clamp_f32_qai8dxp_qsi4c32p_test.cpp
             test/tests/matmul_clamp_f32_qai8dxp_qsi4cxp_test.cpp
             test/tests/matmul_clamp_f32_qai8dxp_qsi8cxp_test.cpp
             test/tests/matmul_clamp_f32_qsi8d32p_qsi4c32p_test.cpp
@@ -481,6 +484,7 @@ if(KLEIDIAI_BUILD_TESTS)
             test/tests/matmul_clamp_f16_qai8dxp_qsi4cxp_test.cpp
             test/tests/matmul_clamp_f16_qai8dxp_qsi8cxp_test.cpp
             test/tests/matmul_clamp_qai8_qai8p_qsi8cxp_test.cpp
+            test/tests/matmul_clamp_qai8dxp_qsi4c32p_test.cpp
             test/tests/matmul_test.cpp
         )
 
