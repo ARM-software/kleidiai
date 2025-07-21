@@ -195,6 +195,17 @@ Buffer matmul_nt_t_quantized(
 template <
     typename LhsData, typename LhsScale, typename LhsZeroPoint, typename RhsData, typename RhsScale,
     typename RhsZeroPoint, typename BiasData, typename BiasScale, typename BiasZeroPoint, typename DstData>
+Buffer matmul_nt_nt_quantized(
+    size_t m, size_t n, size_t k,  //
+    const void* lhs_data, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_height,
+    size_t lhs_quant_width,  //
+    const void* rhs_data, const void* rhs_scales, const void* rhs_zero_points, size_t rhs_quant_height,
+    size_t rhs_quant_width,  //
+    const void* bias_data, const void* bias_scales, const void* bias_zero_points, size_t bias_quant_width);
+
+template <
+    typename LhsData, typename LhsScale, typename LhsZeroPoint, typename RhsData, typename RhsScale,
+    typename RhsZeroPoint, typename BiasData, typename BiasScale, typename BiasZeroPoint, typename DstData>
 Buffer indirect_matmul_nt_t_quantized(
     size_t m, size_t n, size_t k_chunk_count, size_t k_chunk_length,  //
     const void* const* lhs_ptrs, uintptr_t lhs_offset, const void* lhs_padding_ptr, const void* lhs_scales,

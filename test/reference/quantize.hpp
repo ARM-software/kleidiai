@@ -358,4 +358,24 @@ template <typename SrcType, typename DstType, typename ScaleType, typename ZeroP
 std::tuple<Buffer, Buffer, Buffer> quantize_asymmetric_per_block_dynamic(
     const void* src, size_t height, size_t width, size_t quant_width);
 
+/// Reference quantization template for rhs packing, Int4 per-block.
+///
+/// Quantized values and scales are calculated using the
+/// @ref quantize_symmetric_per_block_dynamic function.
+/// If the quantized matrix needs to have KxN orientation the value matrix is then transposed using the
+/// @ref transpose_with_padding function.
+///
+/// @tparam SrcType The data type of the input data (must be floating-point).
+/// @tparam ScaleType The data type of the quantization scales (must be floating-point).
+///
+/// @param[in] N The number of input rows.
+/// @param[in] K The number of input columns.
+/// @param[in] bl The block length for quantization.
+/// @param[in] rhs The matrix to be quantized.
+/// @param[in] transposed Whether the quantized matrix should be transposed (NxK orientation) or non-transposed (KxN
+/// orientation) for an output matrix of MxN.
+///
+/// @return The quantized data matrix and the quantization scale matrix.
+template <typename SrcData, typename ScaleType>
+std::tuple<Buffer, Buffer> quantize_rhs_qsi4c32p(size_t N, size_t K, size_t bl, const Buffer& rhs, bool transposed);
 }  // namespace kai::test

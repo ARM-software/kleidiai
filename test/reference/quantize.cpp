@@ -20,6 +20,7 @@
 #include "test/common/round.hpp"
 #include "test/common/type_traits.hpp"
 #include "test/reference/cast.hpp"
+#include "test/reference/transpose.hpp"
 
 namespace kai::test {
 
@@ -293,4 +294,28 @@ template std::tuple<Buffer, Buffer, Buffer> quantize_asymmetric_per_block_dynami
     const void* src, size_t height, size_t width, size_t quant_width);
 template std::tuple<Buffer, Buffer, Buffer> quantize_asymmetric_per_block_dynamic<float, Int4, float, int32_t>(
     const void* src, size_t height, size_t width, size_t quant_width);
+
+// Reference quantization and packing => Int4 per-block.
+//   * Generates signed values for reference matmul
+//   * Generates reference scales from input RHS matrix
+template <typename SrcData, typename ScaleType>
+inline std::tuple<Buffer, Buffer> quantize_rhs_qsi4c32p(
+    size_t N, size_t K, size_t bl, const Buffer& rhs, bool transposed) {
+    auto [rhs_values_qsi4, rhs_scales] =
+        quantize_symmetric_per_block_dynamic<SrcData, Int4, ScaleType>(rhs.data(), N, K, bl);
+
+    const size_t width = transposed ? K : N;
+    const size_t height = transposed ? N : K;
+
+    const size_t qsi4_stride = round_up_multiple(width, 2);
+    const size_t qsi4_size_bytes = round_up_division(height * qsi4_stride, 2);
+
+    if (!transposed) {
+        rhs_values_qsi4 = transpose_with_padding<Int4>(rhs_values_qsi4.data(), N, K, K, qsi4_stride, qsi4_size_bytes);
+    }
+
+    return {std::move(rhs_values_qsi4), std::move(rhs_scales)};
+}
+template std::tuple<Buffer, Buffer> quantize_rhs_qsi4c32p<float, BFloat16>(
+    size_t N, size_t K, size_t bl, const Buffer& ref_rhs, bool transposed);
 }  // namespace kai::test
