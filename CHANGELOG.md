@@ -34,7 +34,7 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
   - Update kai_kernel_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa to improve accuracy
   - Convert common SME/SME2 code into assembly file kai_common_sme_asm.S
 - Documentation
-  - Added ONNX Runtime framework integration example
+  - Added ONNX Runtime MLAS library integration example.
 
 ## v1.11.0
 
