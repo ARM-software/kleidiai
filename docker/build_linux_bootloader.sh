@@ -32,11 +32,11 @@ else
     echo "Unknown $TARGETARCH" && exit 1
 fi
 
-TOOLCHAIN_VERSION=14.2.rel1
+TOOLCHAIN_VERSION=14.3.rel1
 TOOLCHAIN_TYPE=aarch64-none-elf
 TOOLCHAIN_DIR=$(pwd)/toolchain-${TOOLCHAIN_TYPE}
 CROSS_COMPILE=${TOOLCHAIN_DIR}/bin/${TOOLCHAIN_TYPE}-
-KERNEL_VERSION=6.16-rc2
+KERNEL_VERSION=6.16
 # Derive DTS version from kernel version
 DTS_VERSION=$(echo $KERNEL_VERSION | cut -d '.' -f 1,2)
 BOOTLOADER_VERSION=785302c1f7b9eceab3b72a8cb3d79eaf526fd2e3

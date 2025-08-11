@@ -17,11 +17,11 @@ ARG TARGETOS
 ARG TARGETPLATFORM
 
 # Component versions
-ARG FVP_UBUNTU_VERSION=24.04.2
-ARG BAZEL_BUILD_TOOLS_VER=v8.2.0
+ARG FVP_UBUNTU_VERSION=24.04.3
+ARG BAZEL_BUILD_TOOLS_VER=v8.2.1
 ARG BAZELISK_VERSION=v1.26.0
-ARG NDK_VERSION=r27c
-ARG FVP_VERSION=11.29_27
+ARG NDK_VERSION=r27d
+ARG FVP_VERSION=11.29_42
 
 ENV XDG_CACHE_HOME=/cache ANDROID_NDK=/opt/devtools/android-ndk BUILD_CACHE=/build_cache
 
@@ -74,15 +74,19 @@ WORKDIR /opt/devtools
 
 # Downloads the latest Fixed Virtual Platform.
 # The links could be found at https://developer.arm.com/Tools%20and%20Software/Fixed%20Virtual%20Platforms/Arm%20Architecture%20FVPs
-RUN --mount=type=cache,target=${BUILD_CACHE} \
-    export FVP_NAME=FVP_Base_RevC-2xAEMvA_${FVP_VERSION}_Linux64$(test "${TARGETARCH}" = "arm64" && echo -n "_armv8l") && \
-    export FVP_BASE_VERSION=$(echo -n ${FVP_VERSION} | cut -d '_' -f 1) && \
-    wget -cO ${BUILD_CACHE}/${FVP_NAME}.tgz \
-        "https://developer.arm.com/-/cdn-downloads/permalink/FVPs-Architecture/FM-${FVP_BASE_VERSION}/${FVP_NAME}.tgz" && \
-    mkdir -vp ${FVP_NAME} && \
-    tar xzf ${BUILD_CACHE}/${FVP_NAME}.tgz -C ${FVP_NAME} && \
+RUN --mount=type=cache,target=${BUILD_CACHE} <<EOF
+    FVP_NAME=FVP_Base_RevC-2xAEMvA_${FVP_VERSION}_Linux64$(test "${TARGETARCH}" = "arm64" && echo -n "_armv8l")
+    set -e
+    # Public URL changes quite frequent and using a different scheme. Try each variant sequentially for a bit of backward compatibility
+    for FVP_BASE_VERSION in $(echo -n ${FVP_VERSION} | cut -d '_' -f 1) $(echo -n ${FVP_VERSION} | tr '_' '-') ; do
+        wget -cO ${BUILD_CACHE}/${FVP_NAME}.tgz \
+            "https://developer.arm.com/-/cdn-downloads/permalink/FVPs-Architecture/FM-${FVP_BASE_VERSION}/${FVP_NAME}.tgz" && break
+    done
+    set +e
+    mkdir -vp ${FVP_NAME}
+    tar xzf ${BUILD_CACHE}/${FVP_NAME}.tgz -C ${FVP_NAME}
     ln -s /opt/devtools/${FVP_NAME}/Base_RevC_AEMvA_pkg /opt/devtools/fvp_base_aemva
-
+EOF
 
 # Creates the root filesystem.
 RUN --mount=type=cache,target=${BUILD_CACHE},sharing=locked \
