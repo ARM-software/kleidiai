@@ -42,17 +42,6 @@
 #include "test/reference/quantize.hpp"
 
 namespace kai::test {
-
-// clang-format off
-#define UKERNEL_MATMUL_PACK_VARIANT_WITH_S0S1(name, features_check, lhs_pack, rhs_pack, s0s1_input)     \
-{                                                                                                       \
-    {UKERNEL_MATMUL_VARIANT(name), "kai_matmul_" #name, features_check},                                \
-    UKERNEL_LHS_PACK_VARIANT(lhs_pack),                                                                 \
-    UKERNEL_RHS_PACK_VARIANT(rhs_pack),                                                                 \
-    s0s1_input                                                                                          \
-}
-// clang-format on
-
 // Interface for the LHS and RHS packed size and packing functions
 using kai_get_lhs_packed_size_func_t = decltype(&kai_get_lhs_packed_size_lhs_quant_pack_qsi8d32pscalef32_f32_neon);
 using kai_get_rhs_packed_size_func_t =
@@ -80,47 +69,34 @@ struct kai_qsi8d32p_pack_functions {
     kai_run_lhs_pack_func_t run_pack;
 };
 
-template <typename T, typename L, typename R>
-struct UkernelMatmulPackVariantWithS0S1 {
-    /// Interface for matmul variant.
-    UkernelVariant<T> ukernel;
-
-    L lhs_pack_interface;
-    R rhs_pack_interface;
-
-    bool rhs_s0s1_input;
-
-    UkernelMatmulPackVariantWithS0S1() = delete;
-};
-
 static const std::array<
-    UkernelMatmulPackVariantWithS0S1<
+    UkernelMatmulPackVariant<
         kai_matmul_clamp_f32_qsi8d32p_qai4c32p_ukernel, kai_qsi8d32p_pack_functions, kai_qai4c32p_pack_functions>,
     8>
     variants_kai_matmul_clamp_f32_qsi8d32p_qai4c32p = {
-        {UKERNEL_MATMUL_PACK_VARIANT_WITH_S0S1(
+        {UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p1x8_qai4c32p4x8_1x4_neon_dotprod, cpu_has_dotprod,
              lhs_quant_pack_qsi8d32pscalef32_f32_neon, rhs_pack_nxk_qai4c32p_qau4c32s0s1_f32_f32_f32_neon, true),
-         UKERNEL_MATMUL_PACK_VARIANT_WITH_S0S1(
+         UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p4x8_qai4c32p4x8_8x4_neon_i8mm, cpu_has_i8mm, lhs_quant_pack_qsi8d32pscalef32_f32_neon,
              rhs_pack_nxk_qai4c32p_qau4c32s0s1_f32_f32_f32_neon, true),
-         UKERNEL_MATMUL_PACK_VARIANT_WITH_S0S1(
+         UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p4x4_qai4c32p4x4_8x4_neon_dotprod, cpu_has_dotprod,
              lhs_quant_pack_qsi8d32pscalef32_f32_neon, rhs_pack_nxk_qai4c32p_qau4c32s0s1_f32_f32_f32_neon, true),
-         UKERNEL_MATMUL_PACK_VARIANT_WITH_S0S1(
+         UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p1x4_qai4c32p4x4_1x4_neon_dotprod, cpu_has_dotprod,
              lhs_quant_pack_qsi8d32pscalef32_f32_neon, rhs_pack_nxk_qai4c32p_qau4c32s0s1_f32_f32_f32_neon, true),
-         UKERNEL_MATMUL_PACK_VARIANT_WITH_S0S1(
+         UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p1x4_qai4c32p4vlx4_1x4vl_sme2_dot, cpu_has_sme2, lhs_quant_pack_qsi8d32pscalef32_f32_neon,
              rhs_pack_nxk_qai4c32ps1s0nrx4_qau4c32s1s0_f32_f32_f32_neon, false),
-         UKERNEL_MATMUL_PACK_VARIANT_WITH_S0S1(
+         UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p1vlx4_qai4c32p4vlx4_1vlx4vl_sme2_mopa, cpu_has_sme2,
              lhs_quant_pack_qsi8d32pscalef32_f32_neon, rhs_pack_nxk_qai4c32ps1s0nrx4_qau4c32s1s0_f32_f32_f32_neon,
              false),
-         UKERNEL_MATMUL_PACK_VARIANT_WITH_S0S1(
+         UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p1x4_qai4c32p4vlx4_1x4vl_sme2_dot, cpu_has_sme2, lhs_quant_pack_qsi8d32pscalef32_f32_neon,
              rhs_pack_nxk_qai4c32ps1s0nrx4_qau4c32s0s1_f32_f32_f32_neon, true),
-         UKERNEL_MATMUL_PACK_VARIANT_WITH_S0S1(
+         UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p1vlx4_qai4c32p4vlx4_1vlx4vl_sme2_mopa, cpu_has_sme2,
              lhs_quant_pack_qsi8d32pscalef32_f32_neon, rhs_pack_nxk_qai4c32ps1s0nrx4_qau4c32s0s1_f32_f32_f32_neon,
              true)}};
@@ -167,7 +143,6 @@ static inline std::tuple<Buffer, size_t> pack_rhs_qai4c32p(
     return {std::move(imp_packed_rhs), rhs_packed_offset};
 }
 
-using MatMulTestPortionedParamsWithBias_WithBL = std::tuple<size_t, MatMulShape, size_t, MatrixPortion, bool>;
 class MatMulTest_f32_qsi8d32p_qai4c32p : public ::testing::TestWithParam<MatMulTestPortionedParamsWithBias_WithBL> {};
 
 TEST_P(MatMulTest_f32_qsi8d32p_qai4c32p, LhsPackedWithSameBlockdepth) {

@@ -24,20 +24,6 @@
      kai_get_dst_size_matmul_## name,          \
      kai_run_matmul_## name}
 
-#define UKERNEL_MATMUL_PACK_VARIANT(name, features_check, lhs_pack, rhs_pack)                           \
-    {                                                                                                   \
-        {UKERNEL_MATMUL_VARIANT(name), "kai_matmul_" #name, features_check},                            \
-        {                                                                                               \
-            kai_get_lhs_packed_size_##lhs_pack,                                                         \
-            kai_get_rhs_packed_size_##rhs_pack,                                                         \
-            kai_get_lhs_packed_offset_##lhs_pack,                                                       \
-            kai_get_rhs_packed_offset_##rhs_pack,                                                       \
-            kai_get_lhs_offset_##lhs_pack,                                                              \
-            kai_get_rhs_offset_##rhs_pack,                                                              \
-            kai_run_##lhs_pack,                                                                         \
-            kai_run_##rhs_pack                                                                          \
-        }                                                                                               \
-    }
 
 #define UKERNEL_RHS_PACK_VARIANT(rhs_pack)           \
     {                                                \
@@ -54,6 +40,14 @@
         kai_get_lhs_offset_##lhs_pack,               \
         kai_run_##lhs_pack                           \
     }
+
+#define UKERNEL_MATMUL_PACK_VARIANT(name, features_check, lhs_pack, rhs_pack, s0s1_input)     \
+{                                                                                                       \
+    {UKERNEL_MATMUL_VARIANT(name), "kai_matmul_" #name, features_check},                                \
+    UKERNEL_LHS_PACK_VARIANT(lhs_pack),                                                                 \
+    UKERNEL_RHS_PACK_VARIANT(rhs_pack),                                                                 \
+    s0s1_input                                                                                          \
+}
 // clang-format on
 
 namespace kai::test {
@@ -76,11 +70,16 @@ struct UkernelVariant {
     }
 };
 
-template <typename T, typename P>
-struct UkernelPackVariant {
-    /// Interface for testing variant.
+template <typename T, typename L, typename R>
+struct UkernelMatmulPackVariant {
+    /// Interface for matmul variant.
     UkernelVariant<T> ukernel;
-    P pack_interface;
-};
 
+    L lhs_pack_interface;
+    R rhs_pack_interface;
+
+    bool rhs_s0s1_input;
+
+    UkernelMatmulPackVariant() = delete;
+};
 }  // namespace kai::test

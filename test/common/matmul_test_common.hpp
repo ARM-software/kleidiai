@@ -489,6 +489,7 @@ struct MatMulMethod {
 using MatMulTestParams = std::tuple<MatMulMethod, MatMulShape, MatrixPortion>;
 using MatMulTestPortionedParams = std::tuple<size_t, MatMulShape, MatrixPortion>;
 using MatMulTestPortionedParamsWithBias = std::tuple<size_t, MatMulShape, MatrixPortion, bool>;
+using MatMulTestPortionedParamsWithBias_WithBL = std::tuple<size_t, MatMulShape, size_t, MatrixPortion, bool>;
 
 /// Prints the test information.
 void PrintTo(const MatMulTestParams& param, std::ostream* os);
