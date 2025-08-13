@@ -10,7 +10,9 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
-- Improve performance of lhs_quant_pack_qsi8d32p_f32 using Advanced SIMD reimplemented as quant_pack_qsi8d32p4x8sb_f32_neon
+## v1.13.0
+
+- Improve performance of lhs_quant_pack_qsi8d32p_f32 using Advanced SIMD reimplemented as lhs_quant_pack_qsi8d32p4x8sb_f32_neon.
 - New SME2 micro-kernels:
   - Matrix multiplication (1xN) Micro-kernels of QSI8D32 LHS and QAI4C32 RHS with F16 output, optimized for FEAT_SME2.
   - Matrix multiplication (MxN) Micro-kernels of QSI8D32 LHS and QAI4C32 RHS with F16 output, optimized for FEAT_SME2.
