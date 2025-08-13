@@ -61,6 +61,15 @@ Output
 
 LHS packed matrix containing quantized (q) symmertric (s) signed int8 (i8) values, with block-wise quantization (d32p) parameters, i.e. the quantized elements are stored in blocks and each block has a scale factor.
 
+#### kai_run_lhs_quant_pack_qsi8d32p4x8sb_f32_neon()
+
+This routine follows the same format as kai_run_lhs_quant_pack_qsi8d32p_f32() above.
+
+However, it differs in the following way:
+
+1. Functionality is implemented using vectorized Advanced SIMD to improve performance
+1. The packing routine targets a specific shape with mr 4, kr 16, sr 2 & bl 32
+
 #### kai_run_lhs_quant_pack_qai8dxp_f32()
 
 Quantize and pack LHS matrix with per-dimension(row) quantization parameters.
