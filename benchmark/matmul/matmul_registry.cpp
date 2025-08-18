@@ -111,6 +111,7 @@
 
 // matmul_clamp_fp32_bf16p_bf16p
 #include "kai/ukernels/matmul/matmul_clamp_fp32_bf16p_bf16p/kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa.h"
+#include "kai/ukernels/matmul/matmul_clamp_fp32_bf16p_bf16p/kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme1_mopa.h"
 
 // matmul_clamp_qai8_qai8_qsi8cxp
 #include "kai/ukernels/matmul/matmul_clamp_qai8_qai8_qsi8cxp/kai_matmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_sme2_dot.h"
@@ -386,10 +387,15 @@ inline constexpr MatMulBlockwiseDynamicQuantInterface
         .run_matmul = kai_run_matmul_clamp_f32_qsi8d32p4x8_qsi4c32p4x8_16x4_neon_i8mm,
     };
 
+
 // matmul_clamp_fp32_bf16p_bf16p
 inline constexpr MatMulBaseInterface kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa_interface{
     .run_matmul = kai_run_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa,
 };
+inline constexpr MatMulBaseInterface kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme1_mopa_interface{
+    .run_matmul = kai_run_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme1_mopa,
+};
+
 
 // matmul_clamp_qai8_qai8_qsi8cxp
 inline constexpr MatMulStaticQuantInterface kai_matmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_sme2_dot_interface{
@@ -695,7 +701,11 @@ inline const std::array matmul_benchmarks{
         "kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa", kai_benchmark_matmul<MatMulBaseInterface>,
         kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa_interface, DataType::FP32, MatMulOp::GEMM,
         test::cpu_has_sme2),
-
+    RegisterBenchmark(
+        "kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme1_mopa", kai_benchmark_matmul<MatMulBaseInterface>,
+        kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme1_mopa_interface, DataType::FP32, MatMulOp::GEMM,
+        test::cpu_has_sme),
+        
     // matmul_clamp_qai8_qai8_qsi8cxp
     RegisterBenchmark(
         "kai_matmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_sme2_dot", kai_benchmark_matmul<MatMulStaticQuantInterface>,
@@ -718,7 +728,6 @@ inline const std::array matmul_benchmarks{
         test::cpu_has_sme),
 
 };
-
 
 void RegisterMatMulBenchmarks(const MatMulShape& shape, const size_t bl) {
     for (const auto& benchmark : matmul_benchmarks) {
