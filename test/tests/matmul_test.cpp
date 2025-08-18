@@ -51,6 +51,8 @@
 
 // matmul_nt_nt_fp32_fp32_fp32_2vlx2vl_sme2_mopa
 #include "kai/ukernels/matmul/matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme1_mopa.h"
+
 #include "kai/ukernels/matmul/pack/kai_lhs_pack_f32p2vlx1_f32_sme.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_f32p2vlx1biasf32_f32_f32_sme.h"
@@ -65,9 +67,9 @@
 
 namespace kai::test {
 
-static const std::array<MatMulMethod, 6>& get_matmul_methods() {
+static const std::array<MatMulMethod, 7>& get_matmul_methods() {
     // List of supported matrix multiplication methods.
-    static std::array<MatMulMethod, 6> matmul_methods{};
+    static std::array<MatMulMethod, 7> matmul_methods{};
 
     matmul_methods[0].name = "matmul_nt_nt_fp16_fp16_fp16_6x16_neon_mla";
     matmul_methods[0].m0 = 6;
@@ -309,6 +311,49 @@ static const std::array<MatMulMethod, 6>& get_matmul_methods() {
     matmul_methods[5].fn_get_dst_size = kai_get_dst_size_matmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa;
     matmul_methods[5].fn_matmul_f16_f16p_f16p = kai_run_matmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa;
 
+    matmul_methods[6].name = "matmul_nt_nt_fp32_fp32_fp32_2vlx2vl_sme1_mopa";
+    matmul_methods[6].m0 = 2 * get_sme_vector_length<float>();
+    matmul_methods[6].n0 = 2 * get_sme_vector_length<float>();
+    matmul_methods[6].dst_format = DataFormat(DataType::FP32);
+    matmul_methods[6].lhs_format = DataFormat(DataType::FP32);
+    matmul_methods[6].packed_lhs_format = DataFormat(DataType::FP32, 2 * get_sme_vector_length<float>(), 1);
+    matmul_methods[6].rhs_format = DataFormat(DataType::FP32);
+    matmul_methods[6].packed_rhs_format = DataFormat(
+        DataType::FP32, 2 * get_sme_vector_length<float>(), 0, DataFormat::PackFormat::BIAS_PER_ROW, DataType::FP32,
+        DataType::UNKNOWN, 2 * get_sme_vector_length<float>(), 1);
+    matmul_methods[6].bias_format = DataFormat(DataType::FP32);
+    matmul_methods[6].fn_is_supported = cpu_has_sme;
+    matmul_methods[6].fn_get_mr = kai_get_mr_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme1_mopa;
+    matmul_methods[6].fn_get_nr = kai_get_nr_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme1_mopa;
+    matmul_methods[6].fn_get_kr = kai_get_kr_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme1_mopa;
+    matmul_methods[6].fn_get_sr = kai_get_sr_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme1_mopa;
+    matmul_methods[6].fn_get_main_m_step = kai_get_m_step_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme1_mopa;
+    matmul_methods[6].fn_get_pack_rhs_n_step = kai_get_n_step_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme;
+    matmul_methods[6].fn_get_main_n_step = kai_get_n_step_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme1_mopa;
+    matmul_methods[6].fn_get_lhs_offset = kai_get_lhs_offset_lhs_pack_f32p2vlx1_f32_sme;
+    matmul_methods[6].fn_get_packed_lhs_size = kai_get_lhs_packed_size_lhs_pack_f32p2vlx1_f32_sme;
+    matmul_methods[6].fn_get_packed_lhs_offset =
+        kai_get_lhs_packed_offset_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme1_mopa;
+    matmul_methods[6].fn_pack_lhs = kai_run_lhs_pack_f32p2vlx1_f32_sme;
+    matmul_methods[6].fn_get_rhs_offset = kai_get_rhs_offset_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme;
+    matmul_methods[6].fn_get_packed_rhs_size = kai_get_rhs_packed_size_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme;
+    matmul_methods[6].fn_get_pack_rhs_packed_rhs_offset =
+        kai_get_rhs_packed_offset_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme;
+    matmul_methods[6].fn_get_main_packed_rhs_offset =
+        kai_get_rhs_packed_offset_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme1_mopa;
+    matmul_methods[6].fn_pack_rhs = kai_run_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme;
+    matmul_methods[6].fn_pack_rhs_nxk_get_n_step = kai_get_n_step_rhs_pack_nxk_f32p2vlx1biasf32_f32_f32_sme;
+    matmul_methods[6].fn_pack_rhs_nxk_get_rhs_offset = kai_get_rhs_offset_rhs_pack_nxk_f32p2vlx1biasf32_f32_f32_sme;
+    matmul_methods[6].fn_pack_rhs_nxk_get_bias_offset = kai_get_bias_offset_rhs_pack_nxk_f32p2vlx1biasf32_f32_f32_sme;
+    matmul_methods[6].fn_pack_rhs_nxk_get_packed_rhs_offset =
+        kai_get_rhs_packed_offset_rhs_pack_nxk_f32p2vlx1biasf32_f32_f32_sme;
+    matmul_methods[6].fn_pack_rhs_nxk_get_packed_rhs_size =
+        kai_get_rhs_packed_size_rhs_pack_nxk_f32p2vlx1biasf32_f32_f32_sme;
+    matmul_methods[6].fn_pack_rhs_nxk = kai_run_rhs_pack_nxk_f32p2vlx1biasf32_f32_f32_sme;
+    matmul_methods[6].fn_get_bias_offset = kai_get_bias_offset_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme;
+    matmul_methods[6].fn_get_dst_offset = kai_get_dst_offset_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme1_mopa;
+    matmul_methods[6].fn_get_dst_size = kai_get_dst_size_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme1_mopa;
+    matmul_methods[6].fn_matmul_f32_f32p_f32p = kai_run_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme1_mopa;
     return matmul_methods;
 }
 
@@ -787,7 +832,7 @@ TEST_P(MatMulTest, Output) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMul, MatMulTest,
+    MatMul_fp, MatMulTest,
     testing::Combine(
         testing::ValuesIn(get_matmul_methods()),
         testing::Values(
