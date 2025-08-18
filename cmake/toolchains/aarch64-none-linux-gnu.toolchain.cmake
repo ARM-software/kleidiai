@@ -1,15 +1,21 @@
-#
-# SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
-#
-# SPDX-License-Identifier: Apache-2.0
-#
+set(CMAKE_SYSTEM_NAME Linux)
+set(CMAKE_SYSTEM_PROCESSOR arm)
 
-# The Arm GNU Toolchain is available for download from Arm Developer.
-# https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads
+set(triple aarch64-linux-gnu)
+set(TOOLS_PATH /prj/qct/chips/swarch/tools)
+set(CROSS_COMPILE_LLVM_PATH ${TOOLS_PATH}/clang-16.0.0)
 
-set(CMAKE_SYSTEM_NAME      Linux)
-set(CMAKE_SYSTEM_PROCESSOR aarch64)
-set(CMAKE_CROSSCOMPILING   TRUE)
+set(CMAKE_C_COMPILER "${CROSS_COMPILE_LLVM_PATH}/bin/clang")
+set(CMAKE_C_COMPILER_TARGET ${triple})
+set(CMAKE_ASM_COMPILER_TARGET ${triple})
+set(CMAKE_C_FLAGS "-march=armv8.5-a+sme+sve2")
+set(CMAKE_ASM_FLAGS "-march=armv8.5-a+sme+sve2")
 
-set(CMAKE_C_COMPILER   aarch64-none-linux-gnu-gcc)
-set(CMAKE_CXX_COMPILER aarch64-none-linux-gnu-g++)
+set(CMAKE_CXX_COMPILER "${CROSS_COMPILE_LLVM_PATH}/bin/clang++")
+set(CMAKE_ASM_COMPILER "${CROSS_COMPILE_LLVM_PATH}/bin/clang++")
+set(CMAKE_CXX_COMPILER_TARGET ${triple})
+set(CMAKE_CXX_FLAGS "-march=armv8.5-a+sve2+sme")
+
+set(CMAKE_SHARED_LINKER_FLAGS "-static")
+set(CMAKE_MODULE_LINKER_FLAGS "-static")
+set(CMAKE_EXE_LINKER_FLAGS "-static")
