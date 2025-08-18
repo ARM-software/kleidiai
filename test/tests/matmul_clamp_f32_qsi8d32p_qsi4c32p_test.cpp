@@ -15,7 +15,9 @@
 #include <string>
 #include <tuple>
 
+#include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme1_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme1_sdot.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p4x8_1x4x32_neon_dotprod.h"
@@ -66,28 +68,34 @@ struct kai_matmul_f32_qsi8d32p_qsi4c32p_pack_functions {
     kai_run_lhs_pack_func_t lhs_pack;
     kai_run_rhs_pack_func_t rhs_pack;
 };
-
 static const std::array<
     UkernelPackVariant<kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_ukernel, kai_matmul_f32_qsi8d32p_qsi4c32p_pack_functions>,
-    7>
+    4>
     variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p = {
-        {UKERNEL_MATMUL_PACK_VARIANT(
-             clamp_f32_qsi8d32p4x8_qsi4c32p4x8_8x4x32_neon_i8mm, cpu_has_i8mm, lhs_quant_pack_qsi8d32p_f32,
-             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0),
+        {
+            // UKERNEL_MATMUL_PACK_VARIANT(
+             // clamp_f32_qsi8d32p4x8_qsi4c32p4x8_8x4x32_neon_i8mm, cpu_has_i8mm, lhs_quant_pack_qsi8d32p_f32,
+             // rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0),
+         // UKERNEL_MATMUL_PACK_VARIANT(
+             // clamp_f32_qsi8d32p4x8_qsi4c32p4x8_16x4_neon_i8mm, cpu_has_i8mm, lhs_quant_pack_qsi8d32p_f32,
+             // rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0),
+         // UKERNEL_MATMUL_PACK_VARIANT(
+             // clamp_f32_qsi8d32p1x8_qsi4c32p4x8_1x4x32_neon_dotprod, cpu_has_dotprod, lhs_quant_pack_qsi8d32p_f32,
+             // rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0),
+         // UKERNEL_MATMUL_PACK_VARIANT(
+             // clamp_f32_qsi8d32p4x4_qsi4c32p4x4_16x4_neon_dotprod, cpu_has_dotprod, lhs_quant_pack_qsi8d32p_f32,
+             // rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0),
+         // UKERNEL_MATMUL_PACK_VARIANT(
+             // clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod, cpu_has_dotprod, lhs_quant_pack_qsi8d32p_f32,
+             // rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0),
          UKERNEL_MATMUL_PACK_VARIANT(
-             clamp_f32_qsi8d32p4x8_qsi4c32p4x8_16x4_neon_i8mm, cpu_has_i8mm, lhs_quant_pack_qsi8d32p_f32,
-             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0),
-         UKERNEL_MATMUL_PACK_VARIANT(
-             clamp_f32_qsi8d32p1x8_qsi4c32p4x8_1x4x32_neon_dotprod, cpu_has_dotprod, lhs_quant_pack_qsi8d32p_f32,
-             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0),
-         UKERNEL_MATMUL_PACK_VARIANT(
-             clamp_f32_qsi8d32p4x4_qsi4c32p4x4_16x4_neon_dotprod, cpu_has_dotprod, lhs_quant_pack_qsi8d32p_f32,
-             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0),
-         UKERNEL_MATMUL_PACK_VARIANT(
-             clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod, cpu_has_dotprod, lhs_quant_pack_qsi8d32p_f32,
-             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0),
+             clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme1_mopa, cpu_has_sme, lhs_quant_pack_qsi8d32p_f32_neon,
+             rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon),
          UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa, cpu_has_sme2, lhs_quant_pack_qsi8d32p_f32_neon,
+             rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon),
+         UKERNEL_MATMUL_PACK_VARIANT(
+             clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme1_sdot, cpu_has_sme, lhs_quant_pack_qsi8d32p_f32_neon,
              rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon),
          UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot, cpu_has_sme2, lhs_quant_pack_qsi8d32p_f32_neon,
@@ -272,7 +280,7 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, EndToEnd) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMul, MatMulTest_f32_qsi8d32p_qsi4c32p,
+    MatMul_i8i4, MatMulTest_f32_qsi8d32p_qsi4c32p,
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p.size()),
         testing::Values(
@@ -281,7 +289,13 @@ INSTANTIATE_TEST_SUITE_P(
             MatMulShape{16, 32, 64},  //
             MatMulShape{8, 32, 64},   //
             MatMulShape{15, 32, 32},  //
-            MatMulShape{77, 99, 64}),
+            MatMulShape{77, 99, 64},
+            MatMulShape{1, 64, 64},  //
+            MatMulShape{1, 32, 64},  //
+            MatMulShape{1, 32, 32},  //
+            MatMulShape{1, 99, 64}
+                        
+),
         testing::Values(
             MatrixPortion(0, 0, 1, 1),     // Full matrix.
             MatrixPortion(0, 0, 1, 0.25),  // Leftmost portion.
