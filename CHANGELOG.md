@@ -10,6 +10,8 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+- Packing function kai_lhs_quant_pack_qai8dxp_f16_neon has been further optimized.
+
 ## v1.13.0
 
 - Improve performance of lhs_quant_pack_qsi8d32p_f32 using Advanced SIMD reimplemented as lhs_quant_pack_qsi8d32p4x8sb_f32_neon.
