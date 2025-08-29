@@ -393,12 +393,14 @@ else()
     target_sources(kleidiai PRIVATE ${KLEIDIAI_FILES_NEON_ASM})
     target_sources(kleidiai PRIVATE ${KLEIDIAI_FILES_NEON_DOTPROD_ASM})
     target_sources(kleidiai PRIVATE ${KLEIDIAI_FILES_NEON_I8MM_ASM})
+    target_sources(kleidiai PRIVATE ${KLEIDIAI_FILES_NEON_FP16_ASM})
     target_sources(kleidiai PRIVATE ${KLEIDIAI_FILES_SME_ASM})
     target_sources(kleidiai PRIVATE ${KLEIDIAI_FILES_SME2_ASM})
 
     set_source_files_properties(${KLEIDIAI_FILES_SCALAR}            PROPERTIES COMPILE_OPTIONS /arch:armv8.0${KLEIDIAI_INTERNAL_EXTRA_ARCH})
     set_source_files_properties(${KLEIDIAI_FILES_NEON_I8MM_ASM}     PROPERTIES COMPILE_OPTIONS /arch:armv8.2${KLEIDIAI_INTERNAL_EXTRA_ARCH})
     set_source_files_properties(${KLEIDIAI_FILES_NEON_DOTPROD_ASM}  PROPERTIES COMPILE_OPTIONS /arch:armv8.2${KLEIDIAI_INTERNAL_EXTRA_ARCH})
+    set_source_files_properties(${KLEIDIAI_FILES_NEON_FP16_ASM}     PROPERTIES COMPILE_OPTIONS /arch:armv8.2${KLEIDIAI_INTERNAL_EXTRA_ARCH})
     set_source_files_properties(${KLEIDIAI_FILES_NEON_ASM}          PROPERTIES COMPILE_OPTIONS /arch:armv8.2${KLEIDIAI_INTERNAL_EXTRA_ARCH})
     set_source_files_properties(${KLEIDIAI_FILES_SME_ASM}           PROPERTIES COMPILE_OPTIONS /arch:armv8.2${KLEIDIAI_INTERNAL_EXTRA_ARCH})
     set_source_files_properties(${KLEIDIAI_FILES_SME2_ASM}          PROPERTIES COMPILE_OPTIONS /arch:armv8.2${KLEIDIAI_INTERNAL_EXTRA_ARCH})
@@ -408,7 +410,8 @@ else()
         ${KLEIDIAI_FILES_SME2_ASM}
         ${KLEIDIAI_FILES_NEON_ASM}
         ${KLEIDIAI_FILES_NEON_DOTPROD_ASM}
-        ${KLEIDIAI_FILES_NEON_I8MM_ASM})
+        ${KLEIDIAI_FILES_NEON_I8MM_ASM}
+        ${KLEIDIAI_FILES_NEON_FP16_ASM})
     list(FILTER KLEIDIAI_FILES_ASM INCLUDE REGEX "^.*\.S$")
 
     set_source_files_properties(${KLEIDIAI_FILES_ASM} PROPERTIES LANGUAGE ASM_MARMASM)
