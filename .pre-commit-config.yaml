@@ -17,7 +17,8 @@ repos:
     rev: v4.5.0
     hooks:
       - id: check-added-large-files
-        args: [ '--maxkb=200' ]
+        args: [ '--maxkb=200', '--enforce-all' ]
+        exclude: 'third_party/.*\.zip$'
         stages: [ pre-commit ]
         name: "File size limit not exceeded"
       - id: check-yaml
