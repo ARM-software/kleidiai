@@ -10,7 +10,11 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
-- Packing function kai_lhs_quant_pack_qai8dxp_f16_neon has been further optimized.
+- New Advanced SIMD micro-kernels:
+  - Wider 6x32 block size variants of FP16 Matrix Multiplication, including a variant optimized for the Arm® Cortex®-A55 processor.
+  - Wider 6x16 block size variants of FP32 Matrix Multiplication, including a variant optimized for the Arm® Cortex®-A55 processor.
+- Optimizations:
+  - Packing function kai_lhs_quant_pack_qai8dxp_f16_neon has been further optimized.
 
 ## v1.13.0
 
