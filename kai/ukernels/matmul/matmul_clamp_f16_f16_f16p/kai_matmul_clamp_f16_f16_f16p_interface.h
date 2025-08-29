@@ -1,14 +1,9 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
 #pragma once
-
-#if !defined(__aarch64__) || !defined(__ARM_FEATURE_FP16_SCALAR_ARITHMETIC) || \
-    !defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
-#error This file must be compiled for AArch64, FEAT_FP16.
-#else  // Architectural features check.
 
 #include <stddef.h>
 
@@ -52,5 +47,3 @@ struct kai_matmul_clamp_f16_f16_f16p_ukernel {
 #ifdef __cplusplus
 }
 #endif
-
-#endif  // Architectural features check.
