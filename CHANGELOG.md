@@ -15,6 +15,10 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
   - Wider 6x16 block size variants of FP32 Matrix Multiplication, including a variant optimized for the Arm® Cortex®-A55 processor.
 - Optimizations:
   - Packing function kai_lhs_quant_pack_qai8dxp_f16_neon has been further optimized.
+- New SME2 micro-kernels:
+  - Depthwise Convolution (3x3) Planar kernel of F32 LHS and Packed F32 RHS with F32 output using MLA.
+- New SME micro-kernels:
+  - Depthwise Convolution RHS F32 Packing kernel.
 - Convert SME and SME2 matmul micro-kernels to pure assembly, and add MSVC support. Affects:
   - kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa
 

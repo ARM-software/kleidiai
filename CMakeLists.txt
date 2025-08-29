@@ -265,6 +265,7 @@ set(KLEIDIAI_FILES_NEON_I8MM
 
 set(KLEIDIAI_FILES_SME_ASM
     kai/kai_common_sme_asm.S
+    kai/ukernels/dwconv/pack/kai_rhs_dwconv_pack_x32p1vlx1b_x32_x32_sme.c
     kai/ukernels/matmul/matmul_clamp_f16_f16_f16p/kai_matmul_clamp_f16_f16_f16p2vlx2b_1x8vl_sme_mla.c
     kai/ukernels/matmul/matmul_clamp_f16_f16_f16p/kai_matmul_clamp_f16_f16_f16p2vlx2b_1x8vl_sme_mla_asm.S
     kai/ukernels/matmul/matmul_clamp_f16_f16p_f16p/kai_matmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa.c
@@ -310,6 +311,8 @@ set(KLEIDIAI_FILES_SME
 )
 
 set(KLEIDIAI_FILES_SME2_ASM
+    kai/ukernels/dwconv/dwconv_f32_f32_f32p/kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla.c
+    kai/ukernels/dwconv/dwconv_f32_f32_f32p/kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla_asm.S
     kai/ukernels/matmul/imatmul_clamp_f16_f16p_f16p/kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa.c
     kai/ukernels/matmul/imatmul_clamp_f16_f16p_f16p/kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa_asm.S
     kai/ukernels/matmul/imatmul_clamp_f32_f32p_f32p/kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme2_mopa.c
@@ -461,6 +464,7 @@ if(KLEIDIAI_BUILD_TESTS)
         test/reference/binary_elementwise.cpp
         test/reference/cast.cpp
         test/reference/clamp.cpp
+        test/reference/dwconv.cpp
         test/reference/fill.cpp
         test/reference/matmul.cpp
         test/reference/matmul_pack.cpp
@@ -505,6 +509,7 @@ if(KLEIDIAI_BUILD_TESTS)
             test/tests/buffer_test.cpp
             test/tests/float16_test.cpp
             test/tests/imatmul_test.cpp
+            test/tests/dwconv_test.cpp
             test/tests/matmul_clamp_bf16_qai8dxp_qsi4cxp_test.cpp
             test/tests/matmul_clamp_f16_bf16p_bf16p_test.cpp
             test/tests/matmul_clamp_f32_bf16p_bf16p_test.cpp
