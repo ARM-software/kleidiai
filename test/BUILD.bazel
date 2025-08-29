@@ -73,3 +73,21 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+[cc_test(
+    # Remove prefix tests/ and suffix .cpp
+    name = test_file.split("/")[-1][:-4],
+    srcs = [test_file],
+    copts = kai_cxxopts(kai_cpu_neon()),
+    includes = [],
+    linkstatic = True,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":common",
+        ":common_sme",
+        ":reference",
+        "//:common",
+        "//:kleidiai",
+        "@com_google_googletest//:gtest_main",
+    ],
+) for test_file in glob(["tests/*.cpp"])]

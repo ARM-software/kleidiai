@@ -492,7 +492,7 @@ if(KLEIDIAI_BUILD_TESTS)
     )
 
     if(MSVC)
-        add_executable(kleidiai_test
+        set(KLEIDIAI_FILES_TESTS
             test/tests/bfloat16_test.cpp
             test/tests/float16_test.cpp
             test/tests/matmul_clamp_f32_qsi8d32p_qai4c32p_test.cpp
@@ -500,7 +500,7 @@ if(KLEIDIAI_BUILD_TESTS)
             test/tests/matmul_clamp_qai8dxp_qsi4c32p_test.cpp
         )
     else()
-        add_executable(kleidiai_test
+        set(KLEIDIAI_FILES_TESTS
             test/tests/bfloat16_test.cpp
             test/tests/buffer_test.cpp
             test/tests/float16_test.cpp
@@ -531,6 +531,22 @@ if(KLEIDIAI_BUILD_TESTS)
             PROPERTIES COMPILE_FLAGS "-Wpedantic")
     endif()
 
+    # Build individual test binaries one per source file
+    message(STATUS "Building individual test executables:")
+    foreach(KLEIDIAI_TEST_FILE IN LISTS KLEIDIAI_FILES_TESTS)
+        get_filename_component(KLEIDIAI_TEST_NAME ${KLEIDIAI_TEST_FILE} NAME_WE)
+        add_executable(${KLEIDIAI_TEST_NAME} ${KLEIDIAI_TEST_FILE})
+        target_link_libraries(${KLEIDIAI_TEST_NAME}
+            PRIVATE kleidiai_test_framework
+            PRIVATE GTest::gtest_main
+        )
+        gtest_discover_tests(${KLEIDIAI_TEST_NAME} DISCOVERY_MODE PRE_TEST)
+        message(STATUS " ${KLEIDIAI_TEST_NAME}")
+    endforeach()
+
+    # Build monolithic test binary containing all tests
+    message(STATUS "Building monolithic test executable: kleidiai_test")
+    add_executable(kleidiai_test ${KLEIDIAI_FILES_TESTS})
     target_link_libraries(kleidiai_test
         PRIVATE kleidiai_test_framework
         PRIVATE GTest::gtest_main
