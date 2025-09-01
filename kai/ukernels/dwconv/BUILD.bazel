@@ -12,26 +12,26 @@ load(
 
 package(default_visibility = ["//visibility:private"])
 
+# buildifier: keep sorted
 SME2_KERNELS = [
     "pack/kai_rhs_dwconv_pack_x32p1vlx1b_x32_x32_sme",
 ]
 
+# buildifier: keep sorted
 SME2_KERNELS_ASM = [
     "dwconv_f32_f32_f32p/kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla",
 ]
 
 kai_c_library(
     name = "sme2_impl",
-    srcs = [ukernel + ".c" for ukernel in SME2_KERNELS],
     cpu_uarch = kai_cpu_sme2(),
-    textual_hdrs = [ukernel + ".h" for ukernel in SME2_KERNELS],
+    kernels = SME2_KERNELS,
 )
 
 kai_c_library(
     name = "sme2_impl_asm",
-    srcs = [ukernel + "_asm.S" for ukernel in SME2_KERNELS_ASM] + [ukernel + ".c" for ukernel in SME2_KERNELS_ASM],
     cpu_uarch = kai_cpu_sme2(),
-    textual_hdrs = [ukernel + ".h" for ukernel in SME2_KERNELS_ASM],
+    kernels_asm = SME2_KERNELS_ASM,
 )
 
 kai_c_library(

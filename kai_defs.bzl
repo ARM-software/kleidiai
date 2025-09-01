@@ -157,6 +157,18 @@ def _kai_c_cxx_common(name, copts_def_func, **kwargs):
     if "cpu_uarch" in kwargs:
         kwargs.pop("cpu_uarch")
 
+    # Add kernels source files
+    if "kernels" in kwargs:
+        kwargs["srcs"] = kwargs.get("srcs", []) + [ukernel + ".c" for ukernel in kwargs["kernels"]]
+        kwargs["textual_hdrs"] = kwargs.get("textual_hdrs", []) + [ukernel + ".h" for ukernel in kwargs["kernels"]]
+        kwargs.pop("kernels")
+
+    # Add assembly kernels source files
+    if "kernels_asm" in kwargs:
+        kwargs["srcs"] = kwargs.get("srcs", []) + [ukernel + "_asm.S" for ukernel in kwargs["kernels_asm"]] + [ukernel + ".c" for ukernel in kwargs["kernels_asm"]]
+        kwargs["textual_hdrs"] = kwargs.get("textual_hdrs", []) + [ukernel + ".h" for ukernel in kwargs["kernels_asm"]]
+        kwargs.pop("kernels_asm")
+
     native.cc_library(
         name = name,
         **kwargs

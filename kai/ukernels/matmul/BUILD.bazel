@@ -226,120 +226,103 @@ kai_c_library(
 
 kai_c_library(
     name = "scalar_impl",
-    srcs = [ukernel + ".c" for ukernel in SCALAR_KERNELS],
-    textual_hdrs = [ukernel + ".h" for ukernel in SCALAR_KERNELS],
+    kernels = SCALAR_KERNELS,
 )
 
 kai_c_library(
     name = "neon_impl",
-    srcs = [ukernel + ".c" for ukernel in NEON_KERNELS],
     cpu_uarch = kai_cpu_neon(),
-    textual_hdrs = [ukernel + ".h" for ukernel in NEON_KERNELS],
+    kernels = NEON_KERNELS,
 )
 
 kai_c_library(
     name = "neon_impl_asm",
-    srcs = [ukernel + "_asm.S" for ukernel in NEON_KERNELS_ASM] + [ukernel + ".c" for ukernel in NEON_KERNELS_ASM],
     cpu_uarch = kai_cpu_neon(),
-    textual_hdrs = [ukernel + ".h" for ukernel in NEON_KERNELS_ASM],
+    kernels_asm = NEON_KERNELS_ASM,
 )
 
 kai_c_library(
     name = "fp16_impl",
-    srcs = [ukernel + ".c" for ukernel in FP16_KERNELS],
     cpu_uarch = kai_cpu_fp16(),
-    textual_hdrs = [ukernel + ".h" for ukernel in FP16_KERNELS],
+    kernels = FP16_KERNELS,
 )
 
 kai_c_library(
     name = "fp16_impl_asm",
-    srcs = [ukernel + "_asm.S" for ukernel in FP16_KERNELS_ASM] + [ukernel + ".c" for ukernel in FP16_KERNELS_ASM],
     cpu_uarch = kai_cpu_fp16(),
-    textual_hdrs = [ukernel + ".h" for ukernel in FP16_KERNELS_ASM],
+    kernels_asm = FP16_KERNELS_ASM,
 )
 
 kai_c_library(
     name = "fp16_i8mm_impl_asm",
-    srcs = [ukernel + "_asm.S" for ukernel in FP16_I8MM_KERNELS_ASM] + [ukernel + ".c" for ukernel in FP16_I8MM_KERNELS_ASM],
     cpu_uarch = kai_cpu_fp16() + kai_cpu_i8mm(),
-    textual_hdrs = [ukernel + ".h" for ukernel in FP16_I8MM_KERNELS_ASM],
+    kernels_asm = FP16_I8MM_KERNELS_ASM,
 )
 
 kai_c_library(
     name = "fp16_dotprod_impl_asm",
-    srcs = [ukernel + "_asm.S" for ukernel in FP16_DOTPROD_KERNELS_ASM] + [ukernel + ".c" for ukernel in FP16_DOTPROD_KERNELS_ASM],
     cpu_uarch = kai_cpu_fp16() + kai_cpu_dotprod(),
-    textual_hdrs = [ukernel + ".h" for ukernel in FP16_DOTPROD_KERNELS_ASM],
+    kernels_asm = FP16_DOTPROD_KERNELS_ASM,
 )
 
 kai_c_library(
     name = "bf16_impl",
-    srcs = [ukernel + ".c" for ukernel in BF16_KERNELS],
     cpu_uarch = kai_cpu_bf16(),
-    textual_hdrs = [ukernel + ".h" for ukernel in BF16_KERNELS],
+    kernels = BF16_KERNELS,
 )
 
 kai_c_library(
     name = "fp16_bf16_impl",
-    srcs = [ukernel + ".c" for ukernel in FP16_BF16_KERNELS],
     cpu_uarch = kai_cpu_fp16() + kai_cpu_bf16(),
-    textual_hdrs = [ukernel + ".h" for ukernel in FP16_BF16_KERNELS],
+    kernels = FP16_BF16_KERNELS,
 )
 
 kai_c_library(
     name = "dotprod_impl",
-    srcs = [ukernel + ".c" for ukernel in DOTPROD_KERNELS],
     cpu_uarch = kai_cpu_dotprod(),
-    textual_hdrs = [ukernel + ".h" for ukernel in DOTPROD_KERNELS],
+    kernels = DOTPROD_KERNELS,
 )
 
 kai_c_library(
     name = "dotprod_impl_asm",
-    srcs = [ukernel + "_asm.S" for ukernel in DOTPROD_KERNELS_ASM] + [ukernel + ".c" for ukernel in DOTPROD_KERNELS_ASM],
     cpu_uarch = kai_cpu_dotprod(),
-    textual_hdrs = [ukernel + ".h" for ukernel in DOTPROD_KERNELS_ASM],
+    kernels_asm = DOTPROD_KERNELS_ASM,
 )
 
 kai_c_library(
     name = "i8mm_impl",
-    srcs = [ukernel + ".c" for ukernel in I8MM_KERNELS],
     cpu_uarch = kai_cpu_i8mm(),
-    textual_hdrs = [ukernel + ".h" for ukernel in I8MM_KERNELS],
+    kernels = I8MM_KERNELS,
 )
 
 kai_c_library(
     name = "i8mm_impl_asm",
-    srcs = [ukernel + "_asm.S" for ukernel in I8MM_KERNELS_ASM] + [ukernel + ".c" for ukernel in I8MM_KERNELS_ASM],
     cpu_uarch = kai_cpu_i8mm(),
-    textual_hdrs = [ukernel + ".h" for ukernel in I8MM_KERNELS_ASM],
+    kernels_asm = I8MM_KERNELS_ASM,
 )
 
 kai_c_library(
     name = "sme_impl",
-    srcs = [ukernel + ".c" for ukernel in SME_KERNELS],
     cpu_uarch = kai_cpu_sme(),
-    textual_hdrs = [ukernel + ".h" for ukernel in SME_KERNELS],
+    kernels = SME_KERNELS,
 )
 
 kai_c_library(
     name = "sme_impl_asm",
-    srcs = [ukernel + "_asm.S" for ukernel in SME_KERNELS_ASM] + [ukernel + ".c" for ukernel in SME_KERNELS_ASM],
     cpu_uarch = kai_cpu_sme(),
-    textual_hdrs = [ukernel + ".h" for ukernel in SME_KERNELS_ASM],
+    kernels_asm = SME_KERNELS_ASM,
 )
 
 kai_c_library(
     name = "sme2_impl",
-    srcs = [ukernel + ".c" for ukernel in SME2_KERNELS],
     cpu_uarch = kai_cpu_sme2(),
-    textual_hdrs = [ukernel + ".h" for ukernel in SME2_KERNELS],
+    kernels = SME2_KERNELS,
 )
 
 kai_c_library(
     name = "sme2_impl_asm",
-    srcs = [ukernel + "_asm.S" for ukernel in SME2_KERNELS_ASM] + [ukernel + ".c" for ukernel in SME2_KERNELS_ASM],
     cpu_uarch = kai_cpu_sme2(),
-    textual_hdrs = [ukernel + ".h" for ukernel in SME2_KERNELS_ASM],
+    kernels_asm = SME2_KERNELS_ASM,
 )
 
 kai_c_library(
