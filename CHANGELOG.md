@@ -10,6 +10,8 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+## v1.14.0
+
 - New Advanced SIMD micro-kernels:
   - Wider 6x32 block size variants of FP16 Matrix Multiplication, including a variant optimized for the Arm® Cortex®-A55 processor.
   - Wider 6x16 block size variants of FP32 Matrix Multiplication, including a variant optimized for the Arm® Cortex®-A55 processor.
