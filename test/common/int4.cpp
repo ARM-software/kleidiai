@@ -102,7 +102,9 @@ Int4 Int4::operator/(Int4 rhs) const {
 }
 
 uint8_t Int4::pack_u8(Int4 low, Int4 high) {
-    return (low._value & 0x0F) | (high._value << 4);
+    const uint8_t lo = low._value & 0x0F;
+    const uint8_t hi = high._value & 0x0F;
+    return (lo << 0) | (hi << 4);
 }
 
 std::tuple<Int4, Int4> Int4::unpack_u8(uint8_t value) {
