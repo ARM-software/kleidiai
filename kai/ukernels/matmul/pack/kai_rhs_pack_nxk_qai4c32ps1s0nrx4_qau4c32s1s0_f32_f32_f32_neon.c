@@ -9,6 +9,7 @@
 #else  // Architectural features check.
 #include "kai_rhs_pack_nxk_qai4c32ps1s0nrx4_qau4c32s1s0_f32_f32_f32_neon.h"
 
+#include <arm_neon.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -18,6 +19,7 @@ static const size_t kai_num_bytes_offset_rhs = sizeof(float);
 static const size_t kai_num_bytes_multiplier_rhs = sizeof(float);
 static const size_t kai_num_bytes_bias = sizeof(float);
 static const size_t kai_bl_multiple_of = 32;
+static const size_t kai_nr_multiple_of = 4;
 
 inline static size_t kai_get_num_blocks_per_row(size_t k, size_t bl) {
     KAI_ASSUME((k % 2) == 0);
@@ -73,14 +75,15 @@ void kai_run_rhs_pack_nxk_qai4c32ps1s0nrx4_qau4c32s1s0_f32_f32_f32_neon(
     KAI_ASSUME((k % 2) == 0);
     KAI_ASSUME((k % kr) == 0);
     KAI_ASSUME((k % bl) == 0);
-    KAI_ASSUME((bl % 32) == 0);
+    KAI_ASSUME((bl % kai_bl_multiple_of) == 0);
+    KAI_ASSUME((nr % kai_nr_multiple_of) == 0);
     KAI_ASSUME(extra_bytes == 0);
-    KAI_UNUSED(sr);
 
     KAI_ASSUME(sr == 2);
     KAI_ASSUME(kr / sr == 4);
     KAI_ASSUME(rhs != NULL);
     KAI_ASSUME(zero != NULL);
+    KAI_ASSUME(scale != NULL);
     KAI_ASSUME(rhs_packed != NULL);
     KAI_ASSUME(params != NULL);
     KAI_ASSUME(params->rhs_zero_point == 8);
@@ -91,95 +94,96 @@ void kai_run_rhs_pack_nxk_qai4c32ps1s0nrx4_qau4c32s1s0_f32_f32_f32_neon(
 
     const size_t block_length = kr / sr;
     const size_t num_blocks_per_row = k / bl;
-    const size_t rhs_stride = k;
+    const size_t rhs_stride = k / 2;
     const size_t rhs_packed_stride = kai_get_rhs_packed_stride(k, nr, kr, bl);
 
     const size_t dst_packed_block_size = kai_get_num_bytes_per_block(bl) * nr;
-    const size_t dst_block_data_size = (bl / 2) * nr;
+    const size_t dst_block_data_size = bl / 2;
     const size_t dst_num_rows = kai_roundup(n, nr) / nr;
     const size_t dst_bias_offset = num_blocks_per_row * dst_packed_block_size;
     const size_t k_block_length_in_bytes = (block_length * sizeof(uint8_t)) / 2;
-    const size_t k_interleaved_v = 1U;
-
-    const size_t rhs_zero_point = params->rhs_zero_point;
 
     for (size_t dst_row_idx = 0; dst_row_idx < dst_num_rows; ++dst_row_idx) {
         uint8_t* dst_row = (uint8_t*)rhs_packed + dst_row_idx * rhs_packed_stride;
         float* dst_row_bias = (float*)(dst_row + dst_bias_offset);
-
+        size_t row_idx = dst_row_idx * nr;
+        size_t rows_left = n - row_idx;
         for (size_t block_idx = 0; block_idx < num_blocks_per_row; block_idx++) {
             uint8_t* block_dst_row = dst_row + block_idx * dst_packed_block_size;
-            float* block_dst_zp = (float*)(block_dst_row + dst_block_data_size);
+            float* block_dst_zp = (float*)(block_dst_row + nr * dst_block_data_size);
             float* block_dst_scale = block_dst_zp + nr;
+            size_t k_idx = block_idx * bl;
+            for (size_t dst_byte_idx = 0; dst_byte_idx < dst_block_data_size; dst_byte_idx += 8) {
+                for (size_t nr_idx = 0; nr_idx <= nr - 4; nr_idx += 4) {
+                    const size_t n0_idx = KAI_MIN(dst_row_idx * nr + nr_idx, n - 1);
+                    const size_t n1_idx = KAI_MIN(n0_idx + 1, n - 1);
+                    const size_t n2_idx = KAI_MIN(n0_idx + 2, n - 1);
+                    const size_t n3_idx = KAI_MIN(n0_idx + 3, n - 1);
+                    const uint8_t* src_addr_byte = rhs + (k_idx / 2) + dst_byte_idx;
 
-            for (size_t block_byte_idx = 0; block_byte_idx < dst_block_data_size; ++block_byte_idx) {
-                const size_t dst_byte_idx = block_byte_idx;
-                const size_t k_block_idx = dst_byte_idx / k_block_length_in_bytes;
-                const size_t k_block_byte_idx = dst_byte_idx % k_block_length_in_bytes;
-                const size_t super_k_block_idx = k_block_idx / nr;
-                const size_t nr_idx = k_block_idx % nr;
+                    const uint8x8_t vec0_u8 = vld1_u8(src_addr_byte + n0_idx * rhs_stride);
+                    const uint8x8_t vec1_u8 = vld1_u8(src_addr_byte + n1_idx * rhs_stride);
+                    const uint8x8_t vec2_u8 = vld1_u8(src_addr_byte + n2_idx * rhs_stride);
+                    const uint8x8_t vec3_u8 = vld1_u8(src_addr_byte + n3_idx * rhs_stride);
 
-                const size_t k_adjustment =
-                    ((k_block_byte_idx + super_k_block_idx * k_block_length_in_bytes) / k_interleaved_v) *
-                    k_interleaved_v;
-                const size_t k0_idx = k_block_byte_idx + super_k_block_idx * k_block_length_in_bytes + k_adjustment;
-                const size_t k1_idx = k0_idx + k_interleaved_v;
-                const size_t n0_idx = dst_row_idx * nr + nr_idx;
+                    const uint16x4_t vec0_u16 = vreinterpret_u16_u8(vec0_u8);
+                    const uint16x4_t vec1_u16 = vreinterpret_u16_u8(vec1_u8);
+                    const uint16x4_t vec2_u16 = vreinterpret_u16_u8(vec2_u8);
+                    const uint16x4_t vec3_u16 = vreinterpret_u16_u8(vec3_u8);
 
-                // Clamp the index to avoid out-of-bound reads
-                const size_t n0_valid_idx = KAI_MIN(n0_idx, n - 1);
+                    const uint16x4_t vec01_lo_u16 = vzip1_u16(vec0_u16, vec1_u16);
+                    const uint16x4_t vec01_hi_u16 = vzip2_u16(vec0_u16, vec1_u16);
+                    const uint16x4_t vec23_lo_u16 = vzip1_u16(vec2_u16, vec3_u16);
+                    const uint16x4_t vec23_hi_u16 = vzip2_u16(vec2_u16, vec3_u16);
 
-                const size_t src_addr_byte0 = (k0_idx + n0_valid_idx * rhs_stride + block_idx * bl) / 2;
-                const size_t src_addr_byte1 = (k1_idx + n0_valid_idx * rhs_stride + block_idx * bl) / 2;
+                    const uint32x2_t vec01_lo_u32 = vreinterpret_u32_u16(vec01_lo_u16);
+                    const uint32x2_t vec01_hi_u32 = vreinterpret_u32_u16(vec01_hi_u16);
+                    const uint32x2_t vec23_lo_u32 = vreinterpret_u32_u16(vec23_lo_u16);
+                    const uint32x2_t vec23_hi_u32 = vreinterpret_u32_u16(vec23_hi_u16);
 
-                uint8_t byte0 = rhs_zero_point | rhs_zero_point << 4;
-                uint8_t byte1 = rhs_zero_point | rhs_zero_point << 4;
+                    const uint32x2_t vin0_u32 = vzip1_u32(vec01_lo_u32, vec23_lo_u32);
+                    const uint32x2_t vin1_u32 = vzip2_u32(vec01_lo_u32, vec23_lo_u32);
+                    const uint32x2_t vin2_u32 = vzip1_u32(vec01_hi_u32, vec23_hi_u32);
+                    const uint32x2_t vin3_u32 = vzip2_u32(vec01_hi_u32, vec23_hi_u32);
 
-                if (k0_idx < k) {
-                    byte0 = rhs[src_addr_byte0];
+                    const uint8x8_t vin0_u8 = vreinterpret_u8_u32(vin0_u32);
+                    const uint8x8_t vin1_u8 = vreinterpret_u8_u32(vin1_u32);
+                    const uint8x8_t vin2_u8 = vreinterpret_u8_u32(vin2_u32);
+                    const uint8x8_t vin3_u8 = vreinterpret_u8_u32(vin3_u32);
+
+                    uint8_t* dst_row_offset = block_dst_row + nr_idx * k_block_length_in_bytes;
+                    vst1_u8(dst_row_offset, vin0_u8);
+                    vst1_u8(dst_row_offset + nr * k_block_length_in_bytes, vin1_u8);
+                    vst1_u8(dst_row_offset + 2 * (nr * k_block_length_in_bytes), vin2_u8);
+                    vst1_u8(dst_row_offset + 3 * (nr * k_block_length_in_bytes), vin3_u8);
                 }
-                if (k1_idx < k) {
-                    byte1 = rhs[src_addr_byte1];
-                }
-
-                const size_t shift_right_x0 = (k0_idx % 2) * 4;
-                const size_t shift_right_x1 = (k1_idx % 2) * 4;
-
-                const uint8_t src_x0_lo = (byte0 >> shift_right_x0) & 0x0F;
-                const uint8_t src_x0_hi = (byte1 >> shift_right_x1) & 0x0F;
-
-                // NOLINTBEGIN(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
-                const int8_t dst_qs0 = src_x0_lo | (src_x0_hi << 4);
-                // NOLINTEND(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
-
-                *block_dst_row = dst_qs0;
-                block_dst_row += sizeof(uint8_t);
+                block_dst_row += nr * sizeof(uint8x8_t);
             }
 
             // Adjust the zero points and scales
-            for (size_t i = 0; i < nr; ++i) {
-                // Clamp the row index to avoid out-of-bound reads
-                const size_t src_row_idx = KAI_MIN(dst_row_idx * nr + i, n - 1);
-
-                const float* block_zero = (const float*)zero + num_blocks_per_row * src_row_idx;
-                const float* block_scale = (const float*)scale + num_blocks_per_row * src_row_idx;
-
-                *block_dst_zp = block_zero[block_idx];
-                *block_dst_scale = block_scale[block_idx];
-
-                block_dst_zp++;
-                block_dst_scale++;
+            if (rows_left >= nr) {
+                memcpy(block_dst_scale, &((const float*)scale)[row_idx], nr * kai_num_bytes_multiplier_rhs);
+                memcpy(block_dst_zp, &((const float*)zero)[row_idx], nr * kai_num_bytes_offset_rhs);
+            } else {
+                // Fill remaining values
+                memcpy(block_dst_scale, &((const float*)scale)[row_idx], rows_left * kai_num_bytes_multiplier_rhs);
+                memcpy(block_dst_zp, &((const float*)zero)[row_idx], rows_left * kai_num_bytes_offset_rhs);
+                // Set leftover to 0
+                memset(&block_dst_scale[rows_left], 0, (nr - rows_left) * kai_num_bytes_multiplier_rhs);
+                memset(&block_dst_zp[rows_left], 0, (nr - rows_left) * kai_num_bytes_offset_rhs);
             }
         }
         // Set the bias
         if (bias == NULL) {
             memset(dst_row_bias, 0, nr * kai_num_bytes_bias);
         } else {
-            for (size_t i = 0; i < nr; ++i) {
-                // Clamp the row index to avoid out-of-bound reads
-                const size_t src_row_idx = KAI_MIN(dst_row_idx * nr + i, n - 1);
-
-                dst_row_bias[i] = *((const float*)bias + src_row_idx);
+            if (rows_left >= nr) {
+                memcpy(dst_row_bias, &((const float*)bias)[row_idx], nr * kai_num_bytes_bias);
+            } else {
+                // Fill remaining values
+                memcpy(dst_row_bias, &((const float*)bias)[row_idx], rows_left * kai_num_bytes_bias);
+                // Set leftover to 0
+                memset(&dst_row_bias[rows_left], 0, (nr - rows_left) * kai_num_bytes_bias);
             }
         }
     }
