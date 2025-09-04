@@ -26,52 +26,41 @@
 #include "test/common/float16.hpp"
 #include "test/common/matmul_test_common.hpp"
 #include "test/common/matrix_portion.hpp"
-#include "test/common/printer.hpp"
 #include "test/common/sme.hpp"
 #include "test/reference/clamp.hpp"
 #include "test/reference/fill.hpp"
 #include "test/reference/pack.hpp"
+#include "test/reference/transpose.hpp"
 
-// matmul_nt_nt_fp16_fp16_fp16_6x16_neon_mla
+// matmul_clamp_f16_f16_f16p
 #include "kai/ukernels/matmul/matmul_clamp_f16_f16_f16p/kai_matmul_clamp_f16_f16_f16p16x1biasf16_6x16x8_neon_mla.h"
-#include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_f16p16x1biasf16_f16_f16_neon.h"
-
-// matmul_nt_nt_fp16_fp16_fp16_6x32_neon_mla
+#include "kai/ukernels/matmul/matmul_clamp_f16_f16_f16p/kai_matmul_clamp_f16_f16_f16p2vlx2b_1x16vl_sme2_dot.h"
+#include "kai/ukernels/matmul/matmul_clamp_f16_f16_f16p/kai_matmul_clamp_f16_f16_f16p2vlx2b_1x8vl_sme_mla.h"
 #include "kai/ukernels/matmul/matmul_clamp_f16_f16_f16p/kai_matmul_clamp_f16_f16_f16p32x1b_6x32_neon_mla.h"
 #include "kai/ukernels/matmul/matmul_clamp_f16_f16_f16p/kai_matmul_clamp_f16_f16_f16p32x1b_6x32_neon_mla_cortexa55.h"
+#include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_f16p16x1biasf16_f16_f16_neon.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_x16p32x1b_x16_x16_neon.h"
 
-// matmul_clamp_f16_f16p_f16p_2vlx2vl_sme2_mopa
+// matmul_clamp_f16_f16p_f16p
 #include "kai/ukernels/matmul/matmul_clamp_f16_f16p_f16p/kai_matmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa.h"
+#include "kai/ukernels/matmul/matmul_clamp_f16_f16p_f16p/kai_matmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_pack_x16p2vlx2_x16_sme.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_x16p2vlx2b_x16_x16_sme.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_x16p2vlx2b_x16_x16_sme.h"
 
-// matmul_clamp_f16_f16p_f16p_2vlx2vl_sme_mopa
-#include "kai/ukernels/matmul/matmul_clamp_f16_f16p_f16p/kai_matmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa.h"
+// matmul_clamp_f32_f32_f32p
+#include "kai/ukernels/matmul/matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p8x1biasf32_6x8x4_neon_mla.h"
+#include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_f32p8x1biasf32_f32_f32_neon.h"
+#include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_x32p16x1b_x32_x32_neon.h"
 
-// matmul_clamp_f16_f16_f16p
-#include "kai/ukernels/matmul/matmul_clamp_f16_f16_f16p/kai_matmul_clamp_f16_f16_f16p2vlx2b_1x16vl_sme2_dot.h"
-#include "kai/ukernels/matmul/matmul_clamp_f16_f16_f16p/kai_matmul_clamp_f16_f16_f16p2vlx2b_1x8vl_sme_mla.h"
-
-// matmul_nt_nt_fp32_fp32_fp32_2vlx2vl_sme2_mopa
+// matmul_clamp_f32_f32p_f32p
+#include "kai/ukernels/matmul/matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_pack_f32p2vlx1_f32_sme.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_f32p2vlx1biasf32_f32_f32_sme.h"
-
-// matmul_nt_nt_fp32_fp32_fp32_2vlx2vl_sme_mopa
-#include "kai/ukernels/matmul/matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa.h"
-
-// matmul_clamp_f32_f32_f32p_6x8_neon_mla
-#include "kai/ukernels/matmul/matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p8x1biasf32_6x8x4_neon_mla.h"
-#include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_f32p8x1biasf32_f32_f32_neon.h"
-
-// matmul_clamp_f32_f32_f32p_6x16_neon_mla
-#include "kai/ukernels/matmul/matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55.h"
-#include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_x32p16x1b_x32_x32_neon.h"
-#include "test/reference/transpose.hpp"
 
 namespace kai::test {
 
@@ -79,7 +68,7 @@ static const auto& get_matmul_methods() {
     // List of supported matrix multiplication methods.
     static std::array<MatMulMethod, 10> matmul_methods{};
 
-    matmul_methods[0].name = "matmul_nt_nt_fp16_fp16_fp16_6x16_neon_mla";
+    matmul_methods[0].name = "matmul_clamp_f16_f16_f16p16x1biasf16_6x16x8_neon_mla";
     matmul_methods[0].m0 = 6;
     matmul_methods[0].n0 = 16;
     matmul_methods[0].dst_format = DataFormat(DataType::FP16);
@@ -109,7 +98,7 @@ static const auto& get_matmul_methods() {
     matmul_methods[0].fn_get_dst_size = kai_get_dst_size_matmul_clamp_f16_f16_f16p16x1biasf16_6x16x8_neon_mla;
     matmul_methods[0].fn_matmul_f16_f16_f16p = kai_run_matmul_clamp_f16_f16_f16p16x1biasf16_6x16x8_neon_mla;
 
-    matmul_methods[1].name = "matmul_nt_nt_f16_f16p_f16p_2vlx2vl_sme2_mopa";
+    matmul_methods[1].name = "matmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa";
     matmul_methods[1].m0 = 2 * get_sme_vector_length<float>();
     matmul_methods[1].n0 = 2 * get_sme_vector_length<float>();
     matmul_methods[1].dst_format = DataFormat(DataType::FP16);
@@ -185,7 +174,7 @@ static const auto& get_matmul_methods() {
     matmul_methods[2].fn_get_dst_size = kai_get_dst_size_matmul_clamp_f32_f32_f32p8x1biasf32_6x8x4_neon_mla;
     matmul_methods[2].fn_matmul_f32_f32_f32p = kai_run_matmul_clamp_f32_f32_f32p8x1biasf32_6x8x4_neon_mla;
 
-    matmul_methods[3].name = "matmul_nt_nt_fp32_fp32_fp32_2vlx2vl_sme2_mopa";
+    matmul_methods[3].name = "matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa";
     matmul_methods[3].m0 = 2 * get_sme_vector_length<float>();
     matmul_methods[3].n0 = 2 * get_sme_vector_length<float>();
     matmul_methods[3].dst_format = DataFormat(DataType::FP32);
@@ -229,7 +218,7 @@ static const auto& get_matmul_methods() {
     matmul_methods[3].fn_get_dst_size = kai_get_dst_size_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa;
     matmul_methods[3].fn_matmul_f32_f32p_f32p = kai_run_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa;
 
-    matmul_methods[4].name = "matmul_nt_nt_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa";
+    matmul_methods[4].name = "matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa";
     matmul_methods[4].m0 = 2 * get_sme_vector_length<float>();
     matmul_methods[4].n0 = 2 * get_sme_vector_length<float>();
     matmul_methods[4].dst_format = DataFormat(DataType::FP32);
@@ -273,7 +262,7 @@ static const auto& get_matmul_methods() {
     matmul_methods[4].fn_get_dst_size = kai_get_dst_size_matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa;
     matmul_methods[4].fn_matmul_f32_f32p_f32p = kai_run_matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa;
 
-    matmul_methods[5].name = "matmul_nt_nt_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa";
+    matmul_methods[5].name = "matmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa";
     matmul_methods[5].m0 = 2 * get_sme_vector_length<float>();
     matmul_methods[5].n0 = 2 * get_sme_vector_length<float>();
     matmul_methods[5].dst_format = DataFormat(DataType::FP16);
@@ -319,7 +308,7 @@ static const auto& get_matmul_methods() {
     matmul_methods[5].fn_get_dst_size = kai_get_dst_size_matmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa;
     matmul_methods[5].fn_matmul_f16_f16p_f16p = kai_run_matmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa;
 
-    matmul_methods[6].name = "matmul_nt_nt_fp16_fp16_fp16_6x32_neon_mla";
+    matmul_methods[6].name = "matmul_clamp_f16_f16_f16p32x1b_6x32_neon_mla";
     matmul_methods[6].m0 = 6;
     matmul_methods[6].n0 = 32;
     matmul_methods[6].dst_format = DataFormat(DataType::FP16);
@@ -348,7 +337,7 @@ static const auto& get_matmul_methods() {
     matmul_methods[6].fn_get_dst_size = kai_get_dst_size_matmul_clamp_f16_f16_f16p32x1b_6x32_neon_mla;
     matmul_methods[6].fn_matmul_f16_f16_f16p = kai_run_matmul_clamp_f16_f16_f16p32x1b_6x32_neon_mla;
 
-    matmul_methods[7].name = "matmul_nt_nt_fp16_fp16_fp16_6x32_neon_mla_cortexa55";
+    matmul_methods[7].name = "matmul_clamp_f16_f16_f16p32x1b_6x32_neon_mla_cortexa55";
     matmul_methods[7].m0 = 6;
     matmul_methods[7].n0 = 32;
     matmul_methods[7].dst_format = DataFormat(DataType::FP16);
@@ -377,7 +366,7 @@ static const auto& get_matmul_methods() {
     matmul_methods[7].fn_get_dst_size = kai_get_dst_size_matmul_clamp_f16_f16_f16p32x1b_6x32_neon_mla_cortexa55;
     matmul_methods[7].fn_matmul_f16_f16_f16p = kai_run_matmul_clamp_f16_f16_f16p32x1b_6x32_neon_mla_cortexa55;
 
-    matmul_methods[8].name = "matmul_nt_nt_fp32_fp32_fp32_6x16_neon_mla";
+    matmul_methods[8].name = "matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla";
     matmul_methods[8].m0 = 6;
     matmul_methods[8].n0 = 16;
     matmul_methods[8].dst_format = DataFormat(DataType::FP32);
@@ -406,7 +395,7 @@ static const auto& get_matmul_methods() {
     matmul_methods[8].fn_get_dst_size = kai_get_dst_size_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla;
     matmul_methods[8].fn_matmul_f32_f32_f32p = kai_run_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla;
 
-    matmul_methods[9].name = "matmul_nt_nt_fp32_fp32_fp32_6x16_neon_mla_cortexa55";
+    matmul_methods[9].name = "matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55";
     matmul_methods[9].m0 = 6;
     matmul_methods[9].n0 = 16;
     matmul_methods[9].dst_format = DataFormat(DataType::FP32);
@@ -442,7 +431,7 @@ static const std::array<MatMulMethod, 2>& get_vecmul_methods() {
     // List of supported vector by matrix multiplication methods
     static std::array<MatMulMethod, 2> vecmul_methods{};
 
-    vecmul_methods[0].name = "vecmul_kxn_f16_f16_f16p2vlx2b_1x16vl_sme2_dot";
+    vecmul_methods[0].name = "matmul_clamp_f16_f16_f16p2vlx2b_1x16vl_sme2_dot";
     vecmul_methods[0].m0 = 1;
     vecmul_methods[0].n0 = 16 * get_sme_vector_length<float>();
     vecmul_methods[0].dst_format = DataFormat(DataType::FP16);
@@ -476,7 +465,7 @@ static const std::array<MatMulMethod, 2>& get_vecmul_methods() {
     vecmul_methods[0].fn_get_dst_size = kai_get_dst_size_matmul_clamp_f16_f16_f16p2vlx2b_1x16vl_sme2_dot;
     vecmul_methods[0].fn_matmul_f16_f16_f16p = kai_run_matmul_clamp_f16_f16_f16p2vlx2b_1x16vl_sme2_dot;
 
-    vecmul_methods[1].name = "vecmul_kxn_f16_f16_f16p2vlx2b_1x8vl_sme_mla";
+    vecmul_methods[1].name = "matmul_clamp_f16_f16_f16p2vlx2b_1x8vl_sme_mla";
     vecmul_methods[1].m0 = 1;
     vecmul_methods[1].n0 = 8 * get_sme_vector_length<float>();
     vecmul_methods[1].dst_format = DataFormat(DataType::FP16);
