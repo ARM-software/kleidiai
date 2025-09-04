@@ -26,6 +26,8 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
   - Depthwise Convolution RHS F32 Packing kernel.
 - Convert SME and SME2 matmul micro-kernels to pure assembly, and add MSVC support. Affects:
   - kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa
+- Fixes:
+  - Fix out-of-bounds write in `kai_matmul_clamp_f16_f16_f16p2vlx2b_1x8vl_sme_mla`
 
 ## v1.13.0
 

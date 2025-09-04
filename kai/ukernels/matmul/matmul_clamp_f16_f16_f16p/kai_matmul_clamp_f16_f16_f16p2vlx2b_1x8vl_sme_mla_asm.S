@@ -156,7 +156,7 @@ KAI_ASM_LABEL(label_4)  // Width 1: Multiply loop: multiply skip
     fmin z24.h, p2/M, z24.h, z17.h
     fmax z24.h, p2/M, z24.h, z16.h
 KAI_ASM_LABEL(label_5)  // Width 1: No activation
-    st1w { z24.s }, p1, [x9]
+    st1h { z24.h }, p1, [x9]
     b label_41
 KAI_ASM_LABEL(label_6)  // Width 2
     ld1h { z24.s }, p2/Z, [x11]
@@ -252,7 +252,7 @@ KAI_ASM_LABEL(label_9)  // Width 2: Multiply loop: multiply skip
     fmin z24.h, p2/M, z24.h, z17.h
     fmax z24.h, p2/M, z24.h, z16.h
 KAI_ASM_LABEL(label_10)  // Width 2: No activation
-    st1w { z24.s }, p1, [x9]
+    st1h { z24.h }, p1, [x9]
     b label_41
 KAI_ASM_LABEL(label_11)  // Width 3
     add x21, x11, x12
@@ -389,8 +389,8 @@ KAI_ASM_LABEL(label_14)  // Width 3: Multiply loop: multiply skip
     fmax z24.h, p2/M, z24.h, z16.h
     fmax z25.h, p2/M, z25.h, z16.h
 KAI_ASM_LABEL(label_15)  // Width 3: No activation
-    st1w { z24.s }, p2, [x9]
-    st1w { z25.s }, p1, [x9, #1, MUL VL]
+    st1h { z24.h }, p2, [x9]
+    st1h { z25.h }, p1, [x9, #1, MUL VL]
     b label_41
 KAI_ASM_LABEL(label_16)  // Width 4
     add x21, x11, x12
@@ -554,8 +554,8 @@ KAI_ASM_LABEL(label_19)  // Width 4: Multiply loop: multiply skip
     fmax z24.h, p2/M, z24.h, z16.h
     fmax z25.h, p2/M, z25.h, z16.h
 KAI_ASM_LABEL(label_20)  // Width 4: No activation
-    st1w { z24.s }, p2, [x9]
-    st1w { z25.s }, p1, [x9, #1, MUL VL]
+    st1h { z24.h }, p2, [x9]
+    st1h { z25.h }, p1, [x9, #1, MUL VL]
     b label_41
 KAI_ASM_LABEL(label_21)  // Width 5
     add x23, x11, x12
@@ -759,9 +759,9 @@ KAI_ASM_LABEL(label_24)  // Width 5: Multiply loop: multiply skip
     fmax z25.h, p2/M, z25.h, z16.h
     fmax z26.h, p2/M, z26.h, z16.h
 KAI_ASM_LABEL(label_25)  // Width 5: No activation
-    st1w { z24.s }, p2, [x9]
-    st1w { z25.s }, p2, [x9, #1, MUL VL]
-    st1w { z26.s }, p1, [x9, #2, MUL VL]
+    st1h { z24.h }, p2, [x9]
+    st1h { z25.h }, p2, [x9, #1, MUL VL]
+    st1h { z26.h }, p1, [x9, #2, MUL VL]
     b label_41
 KAI_ASM_LABEL(label_26)  // Width 6
     add x23, x11, x12
@@ -992,9 +992,9 @@ KAI_ASM_LABEL(label_29)  // Width 6: Multiply loop: multiply skip
     fmax z25.h, p2/M, z25.h, z16.h
     fmax z26.h, p2/M, z26.h, z16.h
 KAI_ASM_LABEL(label_30)  // Width 6: No activation
-    st1w { z24.s }, p2, [x9]
-    st1w { z25.s }, p2, [x9, #1, MUL VL]
-    st1w { z26.s }, p1, [x9, #2, MUL VL]
+    st1h { z24.h }, p2, [x9]
+    st1h { z25.h }, p2, [x9, #1, MUL VL]
+    st1h { z26.h }, p1, [x9, #2, MUL VL]
     b label_41
 KAI_ASM_LABEL(label_31)  // Width 7
     add x24, x11, x12, LSL #1
@@ -1264,10 +1264,10 @@ KAI_ASM_LABEL(label_34)  // Width 7: Multiply loop: multiply skip
     fmax z26.h, p2/M, z26.h, z16.h
     fmax z27.h, p2/M, z27.h, z16.h
 KAI_ASM_LABEL(label_35)  // Width 7: No activation
-    st1w { z24.s }, p2, [x9]
-    st1w { z25.s }, p2, [x9, #1, MUL VL]
-    st1w { z26.s }, p2, [x9, #2, MUL VL]
-    st1w { z27.s }, p1, [x9, #3, MUL VL]
+    st1h { z24.h }, p2, [x9]
+    st1h { z25.h }, p2, [x9, #1, MUL VL]
+    st1h { z26.h }, p2, [x9, #2, MUL VL]
+    st1h { z27.h }, p1, [x9, #3, MUL VL]
     b label_41
 KAI_ASM_LABEL(label_36)  // Width 8
     add x25, x11, x12, LSL #1
@@ -1566,12 +1566,12 @@ KAI_ASM_LABEL(label_39)  // Width 8: Multiply loop: multiply skip
     fmax z27.h, p2/M, z27.h, z16.h
 KAI_ASM_LABEL(label_40)  // Width 8: No activation
     subs x10, x10, #0x8
-    st1w { z24.s }, p2, [x9]
+    st1h { z24.h }, p2, [x9]
     mov x11, x22
-    st1w { z25.s }, p2, [x9, #1, MUL VL]
+    st1h { z25.h }, p2, [x9, #1, MUL VL]
     sub x14, x14, x15, LSL #3
-    st1w { z26.s }, p2, [x9, #2, MUL VL]
-    st1w { z27.s }, p1, [x9, #3, MUL VL]
+    st1h { z26.h }, p2, [x9, #2, MUL VL]
+    st1h { z27.h }, p1, [x9, #3, MUL VL]
     addvl x9, x9, #4
     bgt label_1
 KAI_ASM_LABEL(label_41)  // Exit
