@@ -61,6 +61,7 @@ KAI_ASM_FUNCTION_LABEL(kai_kernel_matmul_clamp_f16_qsi8d32p1vlx4_qai4c32p4vlx4_1
     ldr x19, [x0, #0x10]           // rhs_packed
     ld1rw z9.s, p0/z, [x0, #0x60]  // min
     ld1rw z10.s, p0/z, [x0, #0x64] // max
+    fmov z11.h, #0.0
     ldr	x4, [x0, #0x50]            // bl
     ldr	x21, [x0, #0x18]           // stride
     ldr	x20, [x0]                  // dst
@@ -130,10 +131,11 @@ KAI_ASM_LABEL(label_5)
     fmla z27.s, p0/m,  z7.s, z31.s
     b label_7
 KAI_ASM_LABEL(label_6)
-    ld1h z24.s , p0/z, [x25]
-    ld1h z25.s , p0/z, [x25,  #1, MUL VL]
-    ld1h z26.s , p0/z, [x25,  #2, MUL VL]
-    ld1h z27.s , p0/z, [x25,  #3, MUL VL]
+    KAI_ASM_INST(0xa040272c) //     ld1h {z12.h - z13.h}, pn9/z, [x25]
+    zip1 z24.h, z12.h, z11.h
+    zip2 z25.h, z12.h, z11.h
+    zip1 z26.h, z13.h, z11.h
+    zip2 z27.h, z13.h, z11.h
     fcvt z24.s, p0/m, z24.h
     fcvt z25.s, p0/m, z25.h
     fcvt z26.s, p0/m, z26.h
@@ -161,10 +163,11 @@ KAI_ASM_LABEL(label_8)
     KAI_ASM_INST(0xa040c0ac)        // ld1w {z12.s - z15.s}, pn8/z, [x5] \n "
     mov x12, 0
 KAI_ASM_LABEL(label_10)
-    ld1h z24.s , p0/z, [x24]
-    ld1h z25.s , p0/z, [x24,  #1, MUL VL]
-    ld1h z26.s , p0/z, [x24,  #2, MUL VL]
-    ld1h z27.s , p0/z, [x24,  #3, MUL VL]
+    KAI_ASM_INST(0xa0402700)        // ld1h {z0.h - z1.h}, pn9/z, [x24]
+    zip1 z24.h, z0.h, z11.h
+    zip2 z25.h, z0.h, z11.h
+    zip1 z26.h, z1.h, z11.h
+    zip2 z27.h, z1.h, z11.h
     fcvt z24.s, p0/m, z24.h
     fcvt z25.s, p0/m, z25.h
     fcvt z26.s, p0/m, z26.h

@@ -12,6 +12,8 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 - Optimizations:
   - Packing functions kai_rhs_pack_nxk_qai4c32ps1s0nrx4_qau4c32s1s0_f32_f32_f32_neon  and kai_run_rhs_pack_nxk_qai4c32ps1s0nrx4_qau4c32s0s1_f32_f32_f32_neon have been further optimized.
+- Fixes
+  - Fix out of bound read of intermediate values in kai_matmul_clamp_f16_qsi8d32p1vlx4_qai4c32p4vlx4_1vlx4vl_sme2_mopa micro-kernel
 
 ## v1.14.0
 
