@@ -152,7 +152,9 @@ void kai_run_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon(
                         sum += (int32_t)first_value + (int32_t)second_value;
 
                         // Truncate i8 to i4 and write to dst
-                        dst_kr_block[kr_block_idx / 2] = (second_value << 4) | (first_value & 0xF);
+                        const uint8_t hi = second_value & 0x0F;
+                        const uint8_t lo = first_value & 0x0F;
+                        dst_kr_block[kr_block_idx / 2] = (hi << 4) | lo;
                         // NOLINTEND(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
                     }
 
@@ -185,7 +187,9 @@ void kai_run_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon(
                         sum += (int32_t)first_value + (int32_t)second_value;
 
                         // Truncate i8 to i4 and write to dst
-                        dst_kr_block[kr_block_idx / 2] = (second_value << 4) | (first_value & 0xF);
+                        const uint8_t hi = second_value & 0x0F;
+                        const uint8_t lo = first_value & 0x0F;
+                        dst_kr_block[kr_block_idx / 2] = (hi << 4) | lo;
                         // NOLINTEND(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
                     }
 
