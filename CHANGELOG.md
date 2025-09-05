@@ -14,6 +14,7 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
   - Indirect matrix multiplication (MxN) of QAI8 input and output.
   - Indirect matrix multiplication (MxN) of F16 input and output.
   - Indirect matrix multiplication (MxN) of F32 input and output.
+  - Matrix multiplication (MxN) of QAI8 LHS and RHS with QAI8 output.
 - Optimizations:
   - Packing functions kai_rhs_pack_nxk_qai4c32ps1s0nrx4_qau4c32s1s0_f32_f32_f32_neon  and kai_run_rhs_pack_nxk_qai4c32ps1s0nrx4_qau4c32s0s1_f32_f32_f32_neon have been further optimized.
 - Fixes
