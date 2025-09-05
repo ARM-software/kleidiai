@@ -483,6 +483,7 @@ test-linux-aarch64-v8only-fvp:
 test-linux-aarch64-sme1only-fvp:
   extends:
     - .standard-rules
+  timeout: 1h
   stage: test
   needs:
     - build-clang
