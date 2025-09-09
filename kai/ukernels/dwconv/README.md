@@ -44,9 +44,8 @@ Input and output buffers can be described using the following form:
 | f16      | Half-precision floating-point                                                                    |
 | bf16     | Brain floating-point                                                                             |
 | x        | Data type agnostic. Usually used when describing moving data around like in packing microkernels |
-| q        | Quantized                                                                                        |
-| s        | Symmetric                                                                                        |
-| a        | Asymmetric                                                                                       |
+| qs       | Quantized symmetric                                                                              |
+| qa       | Quantized asymmetric                                                                             |
 | i        | Signed integer                                                                                   |
 | u        | Unsigned integer                                                                                 |
 | 4        | 4-bit quantized                                                                                  |
