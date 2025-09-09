@@ -35,6 +35,7 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
   - kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa
 - Fixes:
   - Fix out-of-bounds write in `kai_matmul_clamp_f16_f16_f16p2vlx2b_1x8vl_sme_mla`
+  - Fix out-of-bounds read in `kai_matmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_sme2_dot`
 
 ## v1.13.0
 
