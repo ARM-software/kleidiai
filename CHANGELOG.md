@@ -10,32 +10,28 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+## v1.14.0
+
 - New SME micro-kernels:
   - Indirect matrix multiplication (MxN) of QAI8 input and output.
   - Indirect matrix multiplication (MxN) of F16 input and output.
   - Indirect matrix multiplication (MxN) of F32 input and output.
   - Matrix multiplication (MxN) of QAI8 LHS and RHS with QAI8 output.
+  - Depthwise Convolution RHS F32 Packing kernel.
+- New SME2 micro-kernels:
+  - Depthwise Convolution (3x3) Planar kernel of F32 LHS and Packed F32 RHS with F32 output using MLA.
+- Convert SME2 matmul micro-kernels to pure assembly, and add MSVC support.
+  - Affects: kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa
 - Optimizations:
-  - Packing functions kai_rhs_pack_nxk_qai4c32ps1s0nrx4_qau4c32s1s0_f32_f32_f32_neon  and kai_run_rhs_pack_nxk_qai4c32ps1s0nrx4_qau4c32s0s1_f32_f32_f32_neon have been further optimized.
-- Fixes
-  - Fix out of bound read of intermediate values in kai_matmul_clamp_f16_qsi8d32p1vlx4_qai4c32p4vlx4_1vlx4vl_sme2_mopa micro-kernel
-
-## v1.14.0
-
+  - Packing functions kai_rhs_pack_nxk_qai4c32ps1s0nrx4_qau4c32s1s0_f32_f32_f32_neon and kai_rhs_pack_nxk_qai4c32ps1s0nrx4_qau4c32s0s1_f32_f32_f32_neon have been further optimized.
+  - Packing function kai_lhs_quant_pack_qai8dxp_f16_neon has been further optimized.
 - New Advanced SIMD micro-kernels:
   - Wider 6x32 block size variants of FP16 Matrix Multiplication, including a variant optimized for the Arm® Cortex®-A55 processor.
   - Wider 6x16 block size variants of FP32 Matrix Multiplication, including a variant optimized for the Arm® Cortex®-A55 processor.
-- Optimizations:
-  - Packing function kai_lhs_quant_pack_qai8dxp_f16_neon has been further optimized.
-- New SME2 micro-kernels:
-  - Depthwise Convolution (3x3) Planar kernel of F32 LHS and Packed F32 RHS with F32 output using MLA.
-- New SME micro-kernels:
-  - Depthwise Convolution RHS F32 Packing kernel.
-- Convert SME and SME2 matmul micro-kernels to pure assembly, and add MSVC support. Affects:
-  - kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa
 - Fixes:
-  - Fix out-of-bounds write in `kai_matmul_clamp_f16_f16_f16p2vlx2b_1x8vl_sme_mla`
-  - Fix out-of-bounds read in `kai_matmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_sme2_dot`
+  - Fix out-of-bound read of intermediate values in kai_matmul_clamp_f16_qsi8d32p1vlx4_qai4c32p4vlx4_1vlx4vl_sme2_mopa micro-kernel
+  - Fix out-of-bounds write in kai_matmul_clamp_f16_f16_f16p2vlx2b_1x8vl_sme_mla
+  - Fix out-of-bounds read in kai_matmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_sme2_dot
 
 ## v1.13.0
 
