@@ -8,6 +8,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 
 #include "test/common/data_type.hpp"
 
@@ -158,3 +159,18 @@ private:
 };
 
 }  // namespace kai::test
+
+template <>
+struct std::hash<kai::test::DataFormat> {
+    size_t operator()(const kai::test::DataFormat& df) const {
+        return kai::test::DataFormat::Hash{}(df);
+    }
+};
+
+template <>
+struct std::hash<kai::test::DataFormat::PackFormat> {
+    size_t operator()(const kai::test::DataFormat::PackFormat& pf) const {
+        using PF = std::underlying_type_t<kai::test::DataFormat::PackFormat>;
+        return std::hash<PF>{}(static_cast<PF>(pf));
+    }
+};

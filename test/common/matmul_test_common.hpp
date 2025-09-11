@@ -501,3 +501,10 @@ std::string test_description(
     const std::string_view& name, const MatMulShape& shape, const MatrixPortion& portion, bool bias);
 
 }  // namespace kai::test
+
+template <>
+struct std::hash<kai::test::MatMulShape> {
+    size_t operator()(const kai::test::MatMulShape& ms) const {
+        return kai::test::MatMulShape::Hash{}(ms);
+    }
+};

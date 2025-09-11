@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -8,6 +8,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 
 namespace kai::test {
 
@@ -110,3 +111,11 @@ enum class DataType : uint16_t {
 [[nodiscard]] bool data_type_is_quantized_asymm(DataType dt);
 
 }  // namespace kai::test
+
+template <>
+struct std::hash<kai::test::DataType> {
+    size_t operator()(const kai::test::DataType& dt) const {
+        using DT = std::underlying_type_t<kai::test::DataType>;
+        return std::hash<DT>{}(static_cast<DT>(dt));
+    }
+};

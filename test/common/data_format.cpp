@@ -177,17 +177,15 @@ size_t DataFormat::default_size_in_bytes(size_t height, size_t width) const {
 }
 
 size_t DataFormat::Hash::operator()(const DataFormat& format) const {
-    using DT = std::underlying_type_t<DataType>;
-    using PF = std::underlying_type_t<PackFormat>;
-    return                                                                //
-        (std::hash<DT>{}(static_cast<DT>(format._data_type)) << 0) ^      //
-        (std::hash<PF>{}(static_cast<PF>(format._zero_point_dt)) << 1) ^  //
-        (std::hash<DT>{}(static_cast<DT>(format._scale_dt) << 2)) ^       //
-        (std::hash<DT>{}(static_cast<DT>(format._zero_point_dt)) << 3) ^  //
-        (std::hash<size_t>{}(format._block_height) << 4) ^                //
-        (std::hash<size_t>{}(format._block_width) << 5) ^                 //
-        (std::hash<size_t>{}(format._subblock_height) << 6) ^             //
-        (std::hash<size_t>{}(format._subblock_width) << 7);               //
+    return                                                                 //
+        (std::hash<DataType>{}(format._data_type) << 0) ^                  //
+        (std::hash<DataFormat::PackFormat>{}(format._pack_format) << 1) ^  //
+        (std::hash<DataType>{}(format._scale_dt) << 2) ^                   //
+        (std::hash<DataType>{}(format._zero_point_dt) << 3) ^              //
+        (std::hash<size_t>{}(format._block_height) << 4) ^                 //
+        (std::hash<size_t>{}(format._block_width) << 5) ^                  //
+        (std::hash<size_t>{}(format._subblock_height) << 6) ^              //
+        (std::hash<size_t>{}(format._subblock_width) << 7);                //
 }
 
 }  // namespace kai::test
