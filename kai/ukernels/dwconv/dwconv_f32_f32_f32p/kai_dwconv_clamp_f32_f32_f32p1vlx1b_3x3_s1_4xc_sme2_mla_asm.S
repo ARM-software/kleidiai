@@ -57,9 +57,9 @@ KAI_ASM_FUNCTION_LABEL(kai_kernel_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme
     ptrue p2.b
     KAI_ASM_INST(0x25207812)  // ptrue pn10.b
     ldr x17, [x0, #0x8]
-    ld1rw { z13.s }, p2/Z, [x0, #80]
+    KAI_ASM_INST(0x8554c80d)  // ld1rw { z13.s }, p2/Z, [x0, #80]
     ldr x16, [x0, #0x68]
-    ld1rw { z24.s }, p2/Z, [x0, #84]
+    KAI_ASM_INST(0x8555c818)  // ld1rw { z24.s }, p2/Z, [x0, #84]
     sub x20, x20, x7
     ldr x15, [x0, #0x60]
     whilelt p1.s, XZR, x16
@@ -417,7 +417,7 @@ KAI_ASM_LABEL(label_18)  // End
     add x23, x23, x21, LSL #2
     add x22, x22, x20, LSL #2
     stp x23, x22, [x25, #0x10]
-    b.any label_1
+    b.ne label_1
     KAI_ASM_INST(0xd503467f)  // SMSTOP
     ldp x22, x23, [sp, 16]
     ldp x24, x25, [sp, 32]

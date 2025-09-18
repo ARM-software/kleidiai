@@ -121,7 +121,6 @@ void kai_run_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla(
     args.pad_top = pad_top;
     args.pad_bottom = pad_bottom;
     args.pad_left = pad_left;
-    args.rhs_packed = rhs_packed;
     args.input_cols = valid_input_cols;
     args.output_cols = output_cols;
     args.outptrs = outptrs;
@@ -131,6 +130,7 @@ void kai_run_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla(
     args.n_channels = num_channels;
     args.clamp_min = clamp_min;
     args.clamp_max = clamp_max;
+    args.rhs_packed = rhs_packed;
 
     kai_kernel_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla(
         &args, input_row_stride_in_elements, input_col_stride_in_elements);
