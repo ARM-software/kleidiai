@@ -358,7 +358,7 @@ TEST_P(MatMulTest_qmatmul_clamp_f32_qai8dxp_qsi4c32p, EndToEnd) {
         compare(reinterpret_cast<const uint8_t*>(imp_dst.data()), ref_dst.data(), dst_format, M, N, rect, handler);
     ASSERT_TRUE(success);
 
-    // Test vectorized packing functions, if packing parameters allow
+    // Test vectorized packing micro-kernels, if packing parameters allow
     if (rhs_pack_type == RhsPackType::NxK && (kr / sr == 8 || kr / sr == 4)) {
         const auto [imp_packed_rhs_neon, rhs_packed_offset_neon] = pack_rhs_qsi4c32pscalebf16_neon(
             N, K, bl, nr, kr, sr, ref_rhs_values_qsi4, ref_biases, bias_offset, ref_rhs_scales, rhs_pack_type,
@@ -497,7 +497,7 @@ TEST_P(MatMulTest_qmatmul_clamp_bf16_qai8dxp_qsi4c32p, EndToEnd) {
         compare(reinterpret_cast<const uint8_t*>(imp_dst.data()), ref_dst.data(), dst_format, M, N, rect, handler);
     ASSERT_TRUE(success);
 
-    // Test vectorized packing functions, if packing parameters allow
+    // Test vectorized packing micro-kernels, if packing parameters allow
     if (rhs_pack_type == RhsPackType::NxK && (kr / sr == 8 || kr / sr == 4)) {
         const auto [imp_packed_rhs_neon, rhs_packed_offset_neon] = pack_rhs_qsi4c32pscalebf16_neon(
             N, K, bl, nr, kr, sr, ref_rhs_values_qsi4, ref_biases, bias_offset, ref_rhs_scales, rhs_pack_type,

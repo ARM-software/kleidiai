@@ -1,5 +1,5 @@
 <!--
-    SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+    SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
 
     SPDX-License-Identifier: Apache-2.0
 -->
@@ -89,7 +89,7 @@ All functions defined in the <strong>.h</strong> header file of the micro-kernel
 <h1> Supported micro-kernels </h1>
 
 For a list of supported micro-kernels refer to the [source](/kai/ukernels/) directory. The micro-kernels are grouped in separate directories based on the performed operation.
-For example, all the matrix-multiplication micro-kernels are held in the `matmul/` directory. In there, the micro kernels are grouped into folders whose name syntax describes the micro kernel from a data type point of view of inputs and outputs.
+For example, all the matrix-multiplication micro-kernels are held in the `matmul/` directory. In there, the micro-kernels are grouped into folders whose name syntax describes the micro-kernel from a data type point of view of inputs and outputs.
 
 <h1> How to build </h1>
 

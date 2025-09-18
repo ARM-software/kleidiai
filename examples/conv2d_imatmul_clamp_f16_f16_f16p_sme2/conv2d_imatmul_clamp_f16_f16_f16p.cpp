@@ -133,7 +133,7 @@ void init_indirection_table(
             for (size_t output_x = 0; output_x < out_shape.w; output_x++) {
                 // Calculates column and row offsets for itable index with respect to current block location and itable
                 // column length (equivalent to m_step) The block start x/y offsets ensure the data is padded in the
-                // format expected by the LHS Packing kernel.
+                // format expected by the LHS Packing micro-kernel.
                 size_t block_start_x =
                     (((batch_idx * out_shape.h * out_shape.w) + (output_y * out_shape.w + output_x)) % itable_cols);
                 size_t block_start_y =

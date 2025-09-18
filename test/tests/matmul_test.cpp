@@ -618,7 +618,7 @@ private:
 std::map<MatMulTest::TestDataId, MatMulTest::TestData> MatMulTest::_data;
 // NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
-/// Tests the LHS packing kernel.
+/// Tests the LHS packing micro-kernel.
 TEST_P(MatMulTest, PackedLhs) {
     const auto& [method, info, portion] = GetParam();
 
@@ -670,7 +670,7 @@ TEST_P(MatMulTest, PackedLhs) {
     ASSERT_TRUE(success);
 }
 
-/// Tests the RHS packing kernel.
+/// Tests the RHS packing micro-kernel.
 TEST_P(MatMulTest, PackedRhs) {
     const auto& [method, info, portion] = GetParam();
 
@@ -742,7 +742,7 @@ TEST_P(MatMulTest, PackedRhs) {
     ASSERT_TRUE(success);
 }
 
-/// Tests the transposed RHS packing kernel.
+/// Tests the transposed RHS packing micro-kernel.
 TEST_P(MatMulTest, PackedTransposedRhs) {
     const auto& [method, info, portion] = GetParam();
 

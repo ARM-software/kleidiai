@@ -252,7 +252,7 @@ int main() {
                         kai_rhs_get_dst_size_dwconv_pack_x32p1vlx1b_x32_x32_sme(filter_height, filter_width, channels) /
                         sizeof(float);
 
-                    // Run packing kernel.
+                    // Run packing micro-kernel.
                     std::vector<float> weights_packed(packed_size);
                     kai_run_rhs_dwconv_pack_x32p1vlx1b_x32_x32_sme(
                         filter_height, filter_width, wei_shape[0], wei_shape[1], channels, weights.data(), bias.data(),

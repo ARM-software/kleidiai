@@ -268,8 +268,8 @@ struct MatMulVariant {
 
     std::function<bool(void)> is_supported;  ///< HW support check
 
-    std::optional<LhsPackKernel> lhs_pack;  ///< LHS packing kernel interface
-    RhsPackKernel rhs_pack;                 ///< RHS packing kernel interface
+    std::optional<LhsPackKernel> lhs_pack;  ///< LHS packing micro-kernel interface
+    RhsPackKernel rhs_pack;                 ///< RHS packing micro-kernel interface
     MatMulKernel matmul;                    ///< Matmul kernel interface
 };
 
@@ -280,8 +280,8 @@ struct IndirectMatMulVariant {
 
     std::function<bool(void)> is_supported;  ///< HW support check
 
-    LhsPackIndirectKernel lhs_pack;  ///< LHS packing kernel interface
-    RhsPackIndirectKernel rhs_pack;  ///< RHS packing kernel interface
+    LhsPackIndirectKernel lhs_pack;  ///< LHS packing micro-kernel interface
+    RhsPackIndirectKernel rhs_pack;  ///< RHS packing micro-kernel interface
     MatMulIndirectKernel matmul;     ///< Matmul kernel interface
 };
 
@@ -562,7 +562,7 @@ const TestReference& get_test_reference(const TestDataId& test_data_id) {
     }
     const auto indirection_base = reinterpret_cast<uintptr_t>(lhs_qai8.data());
 
-    // Reorder indirection pointers to layout the packing kernel expectes
+    // Reorder indirection pointers to layout the packing micro-kernel expects
     Buffer lhs_qai8_indirect_packed = reorder_block<const void*>(
         reinterpret_cast<const void*>(lhs_qai8_indirect.data()), shape.m, k_chunk_count, pack_shape.m, 1);
 
@@ -628,9 +628,9 @@ const TestReference& get_test_reference(const TestDataId& test_data_id) {
         shape.m * shape.n                                         // quantization window width
     );
 
-    // Runs the reference implementation of the packing functions.
+    // Runs the reference implementation of the packing micro-kernels.
     //
-    // The reference packing functions cannot be executed earlier
+    // The reference packing micro-kernels cannot be executed earlier
     // because we need the reference floating-point output first to have
     // the quantization information.
     auto packed_lhs = reorder_block<int8_t>(lhs_qai8.data(), shape.m, shape.k, pack_shape.m, pack_shape.k);

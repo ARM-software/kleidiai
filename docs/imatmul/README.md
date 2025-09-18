@@ -4,11 +4,11 @@
     SPDX-License-Identifier: Apache-2.0
 -->
 
-# How to run the indirect matmul kernels
+# How to run the indirect matmul micro-kernels
 
 The goal of this document is to give an overview of the steps needed to run an
-indirect `matmul`, denoted `imatmul`, kernel. The example is using the following
-kernels.
+indirect `matmul`, denoted `imatmul`, micro-kernel. The example is using the following
+micro-kernels.
 
 - `imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa`
 - `lhs_imatmul_pack_x16p2vlx2_x16p_sme`
@@ -39,10 +39,10 @@ than a table of values. This is the indirection part of the `imatmul`.
 
 ## Use case
 
-The benefit of using the `imatmul` kernels is that they allow much more
+The benefit of using the `imatmul` micro-kernels is that they allow much more
 efficient representations of convolutions by filters with shapes larger than
 1×1. For a walk through of this, please refer to the fp16 example of the
-`imatmul` kernel.
+`imatmul` micro-kernel.
 
 ## Packing
 
@@ -57,7 +57,7 @@ number of chunks. This will be referred to by an indirection table, a table of
 pointers, where each row will refer to a column of `m_step` chunks, as
 illustrated by the below example.
 
-The left hand side packing kernel operates on an indirection table, a table of
+The left hand side packing micro-kernel operates on an indirection table, a table of
 pointers to chunks, where each chunk contains `k_chunk_length` number of values.
 The layout of this table is a bit special, to allow linear memory access of the
 table entries. The memory layout is a row major table, where each row has M-step
@@ -109,7 +109,7 @@ for (size_t itable_block = 0; itable_block < itable_rows; itable_block += k_chun
 ```
 
 Using the indirection table above, you can then invoke the left hand side
-packing kernel using.
+packing micro-kernel using.
 
 ```cpp
 const size_t lhs_packed_size = kai_get_lhs_packed_size_lhs_imatmul_pack_x16p2vlx2_x16p_sme(m, k_chunk_count, k_chunk_length);
@@ -145,7 +145,7 @@ kai_run_rhs_imatmul_pack_kxn_x16p2vlx2b_x16_x16_sme(n, k_chunk_count, k_chunk_le
 ## `imatmul`
 
 Once the input data has been pack, as per description above the next step is
-simply to invoke the `imatmul` kernel.
+simply to invoke the `imatmul` micro-kernel.
 
 Similarly to the invocations above, you need some parameters representing your
 input. You need to allocate memory for output, and you need to invoke the

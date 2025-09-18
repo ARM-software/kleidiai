@@ -39,8 +39,9 @@ std::tuple<FloatData, ZeroPoint> get_scale_zero_point_from_range(FloatData min_v
         max_value = 0;
     }
 
-    // The reason for computing the inverted scale first is to make it bit-perfect with quantized packing kernels.
-    // If those kernels don't do it this way anymore, it makes more sense to calculate the scale directly.
+    // The reason for computing the inverted scale first is to make it bit-perfect with quantized packing
+    // micro-kernels. If those micro-kernels don't do it this way anymore, it makes more sense to calculate
+    // the scale directly.
     const FloatData inv_scale = max_value != min_value ? (q_max - q_min) / (max_value - min_value) : 1.0F;
     const FloatData scale = 1.0F / inv_scale;
 

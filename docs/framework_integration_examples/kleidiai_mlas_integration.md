@@ -106,7 +106,7 @@ kai_run_lhs_pack_f32p2vlx1_f32_sme().
 
 Characteristics:
 •	Parallelized across the batch dimension via MlasTrySimpleParallel (equivalent Threading function for other frameworks should be callable at this point).
-•	The packed memory layout conforms to KleidiAI’s internal microkernel expectations: typically mr × kr tiles (e.g., 32×32).
+•	The packed memory layout conforms to KleidiAI’s internal micro-kernel expectations: typically mr × kr tiles (e.g., 32×32).
 •	Each batch element A_i is packed into a contiguous buffer at offset batch_idx × LhsPackedStride.
 
 ```cpp
@@ -136,7 +136,7 @@ Data[0].BIsPacked == false
 
 i.e., the B matrix is not already pre-packed by the calling layer
 
-RHS Packing Function:
+RHS Packing micro-kernel:
 Conditionally performed if Data\[0\].BIsPacked == false, i.e., the B matrix is not already pre-packed by the calling layer
 
 ```cpp
@@ -147,7 +147,7 @@ This wraps the KleidiAI kai_run_rhs_pack_f32_sme(...) and ensures:
 
 ```
 •	Alignment to nr × kr tile shape
-•	Pointer-based layout suitable for direct loading into the microkernel
+•	Pointer-based layout suitable for direct loading into the micro-kernel
 ```
 
 Buffer Allocation:
@@ -193,7 +193,7 @@ Where:
 - `M tiles` correspond to partitioning the rows of matrix A.
 - `N tiles` correspond to partitioning the columns of matrix B.
 
-Initial tile counts are estimated by dividing the matrix sizes by the preferred kernel tile dimensions (`m_step`, `n_step`):
+Initial tile counts are estimated by dividing the matrix sizes by the preferred micro-kernel tile dimensions (`m_step`, `n_step`):
 
 ```cpp
 tile_count_M = ceil(M / m_step);
@@ -271,9 +271,9 @@ const float* ATile = reinterpret_cast<...>(KaiPackedData[BIdx].A + lhs_offset);
 const void*  BTile = reinterpret_cast<...>(KaiPackedData[BIdx].B + rhs_offset);
 ```
 
-#### 2.5.3 Kernel Invocation
+#### 2.5.3 Micro-kernel Invocation
 
-The SME2-optimized microkernel is called as:
+The SME2-optimized micro-kernel is called as:
 
 ```cpp
 kai_run_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa(
@@ -286,7 +286,7 @@ kai_run_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa(
 ```
 
 - `temp_tile` is a thread-local scratch buffer.
-- Kernel writes a raw `A*B` tile result without alpha/beta.
+- Micro-kernel writes a raw `A*B` tile result without alpha/beta.
 
 #### 2.5.4 Writing to Output Matrix `C`
 
@@ -340,7 +340,7 @@ ______________________________________________________________________
 - `kai_get_lhs_packed_offset_...`
 - `kai_run_matmul_clamp_...`
 
-These functions must be provided by KleidiAI for the SME2 kernel path.
+These functions must be provided by KleidiAI for the SME2 micro-kernel path.
 
 ______________________________________________________________________
 

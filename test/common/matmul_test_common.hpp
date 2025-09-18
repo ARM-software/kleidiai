@@ -112,7 +112,7 @@ struct MatMulMethod {
     /// @return The m step value.
     std::function<size_t(void)> fn_get_main_m_step{nullptr};
 
-    /// Gets n step value for RHS packing kernel.
+    /// Gets n step value for RHS packing micro-kernel.
     ///
     /// The starting row index must be divisible by `n_step`.
     ///
@@ -199,7 +199,7 @@ struct MatMulMethod {
     /// @return The size in bytes.
     std::function<size_t(size_t n, size_t k, size_t nr, size_t kr)> fn_get_packed_rhs_size_generic_block_size = nullptr;
 
-    /// Gets the offset in bytes of the packed RHS matrix in the RHS packing kernel
+    /// Gets the offset in bytes of the packed RHS matrix in the RHS packing micro-kernel
     ///
     /// @param[in] n_idx Coordinate of the matrix in N dimension.
     /// @param[in] k Size of the matrix in K dimension.
@@ -258,7 +258,7 @@ struct MatMulMethod {
     /// @return The size in bytes of the packed RHS buffer.
     std::function<size_t(size_t n, size_t k)> fn_pack_rhs_nxk_get_packed_rhs_size{nullptr};
 
-    /// Runs the RHS packing function for matrix multiplication.
+    /// Runs the RHS packing micro-kernel for matrix multiplication.
     ///
     /// The pointer of each buffers (RHS, bias and packed RHS) needs to be added with offset
     /// calculated using the following functions:

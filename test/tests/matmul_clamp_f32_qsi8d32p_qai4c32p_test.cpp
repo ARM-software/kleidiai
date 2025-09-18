@@ -42,7 +42,7 @@
 #include "test/reference/quantize.hpp"
 
 namespace kai::test {
-// Interface for the LHS and RHS packed size and packing functions
+// Interface for the LHS and RHS packed size and packing micro-kernels
 using kai_get_lhs_packed_size_func_t = decltype(&kai_get_lhs_packed_size_lhs_quant_pack_qsi8d32pscalef32_f32_neon);
 using kai_get_rhs_packed_size_func_t =
     decltype(&kai_get_rhs_packed_size_rhs_pack_nxk_qai4c32p_qau4c32s0s1_f32_f32_f32_neon);
@@ -285,7 +285,7 @@ TEST_P(MatMulTest_f32_qsi8d32p_qai4c32p, EndToEnd) {
 
     ASSERT_EQ(lhs_packed_offset, lhs_matmul_offset);
 
-    // Prepare the offsets as the RHS packing kernel expects the scaled zero-points in float.
+    // Prepare the offsets as the RHS packing micro-kernel expects the scaled zero-points in float.
     const size_t num_blocks_per_row = round_up_division(K, bl);
     const size_t ref_zp_size = N * num_blocks_per_row;
     const size_t ref_zp_size_in_bytes = ref_zp_size * sizeof(float);

@@ -42,7 +42,7 @@ struct DepthwisePlanarKernel {
         conv;
 };
 
-// Rhs packing kernel.
+// Rhs packing micro-kernel.
 struct RhsPackDepthwiseKernel {
     std::function<size_t(size_t fh, size_t fw, size_t nc)> get_rhs_packed_size;
     std::function<void(

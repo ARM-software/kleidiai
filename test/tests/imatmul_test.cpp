@@ -46,7 +46,7 @@ struct KChunk {
     size_t length;
 };
 
-/// Interface for indirect matmul LHS packing kernel
+/// Interface for indirect matmul LHS packing micro-kernel
 struct LhsPackIndirectKernel {
     std::function<size_t()> get_m_step;
     std::function<size_t(size_t m_idx, size_t k_chunk_count, size_t k_chunk_length)> get_lhs_packed_offset;
@@ -57,7 +57,7 @@ struct LhsPackIndirectKernel {
         pack;
 };
 
-/// Interface for indirect matmul RHS packing kernel
+/// Interface for indirect matmul RHS packing micro-kernel
 struct RhsPackIndirectKernel {
     std::function<size_t()> get_n_step;
     std::function<size_t(size_t n_idx)> get_rhs_offset;
@@ -580,7 +580,7 @@ TEST_P(IndirectMatMulTest, Output) {
         GTEST_SKIP() << "Empty dimension of matrix(" << portion.width() << "," << portion.height() << ")";
     }
 
-    // Call packing kernels, and then imatmul kernel
+    // Call packing micro-kernels, and then imatmul kernel
     Buffer lhs_packed = pack_lhs(method.lhs, portion, test_data, shape.m, k_chunk);
     Buffer rhs_packed = pack_rhs(method.rhs, portion, test_data, shape.n, k_chunk, method.format.rhs.data_type());
     Buffer out = imatmul(

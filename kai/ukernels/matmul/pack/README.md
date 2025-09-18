@@ -6,12 +6,12 @@
 
 # About
 
-Almost all matrix multiplication(matmul) micro kernels have some kind of packing involved with Right Hand Side (RHS) and/or Left Hand Side (LHS). They are done for performance
+Almost all matrix multiplication (matmul) micro-kernels have some kind of packing involved with Right Hand Side (RHS) and/or Left Hand Side (LHS). They are done for performance
 reasons. Here is a list of different packing micro-kernels that are used for matmul.
 
 # Packing
 
-For information about terminologies like mr, nr used here, please refer to the README in the main directory of the microkernel.
+For information about terminologies like mr, nr used here, please refer to the README in the main directory of the micro-kernel.
 
 #### kai_run_rhs_pack_kxn_f16p16x1biasf16_f16_f16_neon()
 
@@ -24,7 +24,7 @@ The pattern of the packed output is shown below
 
 ![rhs_pack_pattern_1](../../../../docs/imgs/kai_rhs_packing_pattern_1.png)</br>
 
-Each block has bias and weights arranged as expected by the micro kernel to produce a mr x nr output matrix. There can be padding involved in the blocks depending on the combination of underlying instruction used for the optimization in the micro kernel, the chosen values of mr and nr and input dimensions, M, N and K.
+Each block has bias and weights arranged as expected by the micro-kernel to produce a mr x nr output matrix. There can be padding involved in the blocks depending on the combination of underlying instruction used for the optimization in the micro-kernel, the chosen values of mr and nr and input dimensions, M, N and K.
 
 #### kai_run_rhs_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme()
 
@@ -42,11 +42,11 @@ Padding may be involved in the blocks depending on the values of mr, nr and kr a
 
 ## Packing for int4 matmul micro-kernels
 
-For optimal cache utilization, the operands are packed for the matmul operations. There are 2 types of packing functions used in int4 matmul micro-kernels:
+For optimal cache utilization, the operands are packed for the matmul operations. There are 2 types of packing micro-kernels used in int4 matmul micro-kernels:
 
 ### 1. Quantize and pack:
 
-These packing routines are used with LHS operand of the matmul. It quantizes the input to int8 and packs them along with their scale (and offset values in asymmetric quantization) in the destination matrix.
+These packing micro-kernels are used with LHS operand of the matmul. It quantizes the input to int8 and packs them along with their scale (and offset values in asymmetric quantization) in the destination matrix.
 
 #### kai_run_lhs_quant_pack_qsi8d32p_f32()
 
@@ -63,12 +63,12 @@ LHS packed matrix containing quantized (q) symmertric (s) signed int8 (i8) value
 
 #### kai_run_lhs_quant_pack_qsi8d32p4x8sb_f32_neon()
 
-This routine follows the same format as kai_run_lhs_quant_pack_qsi8d32p_f32() above.
+This micro-kernel follows the same format as kai_run_lhs_quant_pack_qsi8d32p_f32() above.
 
 However, it differs in the following way:
 
 1. Functionality is implemented using vectorized Advanced SIMD to improve performance
-1. The packing routine targets a specific shape with mr 4, kr 16, sr 2 & bl 32
+1. The packing micro-kernel targets a specific shape with mr 4, kr 16, sr 2 & bl 32
 
 #### kai_run_lhs_quant_pack_qai8dxp_f32()
 
@@ -85,7 +85,7 @@ LHS packed matrix containing quantized (q) asymmertric (a) signed int8 (i8) valu
 
 ### 2. Pack:
 
-These packing routines are used with RHS values. It takes 4-bit quantized unsigned int values, with their scales (and offset values in asymmetric quantization) and bias as inputs and packs them in the destination matrix. Optionally, reduction sums are also calculated and packed for each row/block as well.
+These packing micro-kernels are used with RHS values. It takes 4-bit quantized unsigned int values, with their scales (and offset values in asymmetric quantization) and bias as inputs and packs them in the destination matrix. Optionally, reduction sums are also calculated and packed for each row/block as well.
 
 #### kai_run_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0()
 
@@ -120,9 +120,9 @@ RHS packed matrix (N x K) contains quantized (q) symmetric (s) 4-bit signed int 
 
 Same as kai_run_rhs_pack_nxk_qsi4cxp_qs4cxs1s0() with the input RHS matrix dimensions as K x N.
 
-### Vectorized packing routines with predefined block depth
+### Vectorized packing micro-kernels with predefined block depth
 
-Alternative versions of certain packing functions are provided using Advanced SIMD, specialized for a predefined block depth (equal to kr / sr).
+Alternative versions of certain packing micro-kernels are provided using Advanced SIMD, specialized for a predefined block depth (equal to kr / sr).
 
 #### kai_run_rhs_pack_nxk_qsi4c32pnrx8_qsu4c32s1s0_neon()
 
