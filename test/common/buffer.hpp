@@ -57,6 +57,8 @@ public:
         return m_user_buffer_size;
     }
 
+    static constexpr const char* buffer_policy_env_name = "KAI_TEST_BUFFER_POLICY";
+
 private:
     /// Buffer can be protected with one of the following protection policies:
     ///   - @ref BufferProtectionPolicy::None              No protection mechanisms are enabled.

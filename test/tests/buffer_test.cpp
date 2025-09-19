@@ -24,19 +24,19 @@ namespace {
 constexpr size_t g_num_runs = 100;
 }  // namespace
 
-TEST(Buffer, NonePolicy) {
+TEST(BufferTest, NonePolicy) {
     std::random_device rd;
     std::mt19937 rng(rd());
     std::uniform_int_distribution<size_t> dist(1, std::numeric_limits<uint16_t>::max());
 
     // Store the current buffer policy
     std::string buffer_policy;
-    if (const char* buffer_policy_env = getenv("KAI_TEST_BUFFER_POLICY")) {
+    if (const char* buffer_policy_env = getenv(Buffer::buffer_policy_env_name)) {
         buffer_policy = std::string(buffer_policy_env);
     }
 
     // Overwrite the buffer policy for purpose of the test
-    ASSERT_EQ(setenv("KAI_TEST_BUFFER_POLICY", "NONE", 1 /* overwrite */), 0);
+    ASSERT_EQ(setenv(Buffer::buffer_policy_env_name, "NONE", 1 /* overwrite */), 0);
 
     for (size_t i = 0; i < g_num_runs; ++i) {
         const size_t buffer_size = dist(rng);
@@ -47,23 +47,28 @@ TEST(Buffer, NonePolicy) {
         ASSERT_NE(data, nullptr);
     }
 
-    // Restore the buffer policy to its original value
-    ASSERT_EQ(setenv("KAI_TEST_BUFFER_POLICY", buffer_policy.c_str(), 1 /* overwrite */), 0);
+    if (buffer_policy.empty()) {
+        // Remove variable if not present before
+        ASSERT_EQ(unsetenv(Buffer::buffer_policy_env_name), 0);
+    } else {
+        // Restore the buffer policy to its original value
+        ASSERT_EQ(setenv(Buffer::buffer_policy_env_name, buffer_policy.c_str(), 1 /* overwrite */), 0);
+    }
 }
 
-TEST(Buffer, InvalidPolicy) {
+TEST(BufferDeathTest, InvalidPolicy) {
     std::random_device rd;
     std::mt19937 rng(rd());
     std::uniform_int_distribution<size_t> dist(1, std::numeric_limits<uint16_t>::max());
 
     // Store the current buffer policy
     std::string buffer_policy;
-    if (const char* buffer_policy_env = getenv("KAI_TEST_BUFFER_POLICY")) {
+    if (const char* buffer_policy_env = getenv(Buffer::buffer_policy_env_name)) {
         buffer_policy = std::string(buffer_policy_env);
     }
 
     // Overwrite the buffer policy for purpose of the test
-    ASSERT_EQ(setenv("KAI_TEST_BUFFER_POLICY", "INVALID_POLICY_TEST", 1 /* overwrite */), 0);
+    ASSERT_EQ(setenv(Buffer::buffer_policy_env_name, "INVALID_POLICY_TEST", 1 /* overwrite */), 0);
 
     for (size_t i = 0; i < g_num_runs; ++i) {
         const size_t buffer_size = dist(rng);
@@ -75,24 +80,29 @@ TEST(Buffer, InvalidPolicy) {
 #pragma GCC diagnostic pop
     }
 
-    // Restore the buffer policy to its original value
-    ASSERT_EQ(setenv("KAI_TEST_BUFFER_POLICY", buffer_policy.c_str(), 1 /* overwrite */), 0);
+    if (buffer_policy.empty()) {
+        // Remove variable if not present before
+        ASSERT_EQ(unsetenv(Buffer::buffer_policy_env_name), 0);
+    } else {
+        // Restore the buffer policy to its original value
+        ASSERT_EQ(setenv(Buffer::buffer_policy_env_name, buffer_policy.c_str(), 1 /* overwrite */), 0);
+    }
 }
 
 #if defined(__linux__) || defined(__APPLE__)
-TEST(Buffer, ProtectUnderflowPolicy) {
+TEST(BufferDeathTest, ProtectUnderflowPolicy) {
     std::random_device rd;
     std::mt19937 rng(rd());
     std::uniform_int_distribution<size_t> dist(1, std::numeric_limits<uint16_t>::max());
 
     // Store the current buffer policy
     std::string buffer_policy;
-    if (const char* buffer_policy_env = getenv("KAI_TEST_BUFFER_POLICY")) {
+    if (const char* buffer_policy_env = getenv(Buffer::buffer_policy_env_name)) {
         buffer_policy = std::string(buffer_policy_env);
     }
 
     // Overwrite the buffer policy for purpose of the test
-    ASSERT_EQ(setenv("KAI_TEST_BUFFER_POLICY", "PROTECT_UNDERFLOW", 1 /* overwrite */), 0);
+    ASSERT_EQ(setenv(Buffer::buffer_policy_env_name, "PROTECT_UNDERFLOW", 1 /* overwrite */), 0);
 
     for (size_t i = 0; i < g_num_runs; ++i) {
         const size_t buffer_size = dist(rng);
@@ -118,23 +128,28 @@ TEST(Buffer, ProtectUnderflowPolicy) {
 #pragma GCC diagnostic pop
     }
 
-    // Restore the buffer policy to its original value
-    ASSERT_EQ(setenv("KAI_TEST_BUFFER_POLICY", buffer_policy.c_str(), 1 /* overwrite */), 0);
+    if (buffer_policy.empty()) {
+        // Remove variable if not present before
+        ASSERT_EQ(unsetenv(Buffer::buffer_policy_env_name), 0);
+    } else {
+        // Restore the buffer policy to its original value
+        ASSERT_EQ(setenv(Buffer::buffer_policy_env_name, buffer_policy.c_str(), 1 /* overwrite */), 0);
+    }
 }
 
-TEST(Buffer, ProtectOverflowPolicy) {
+TEST(BufferDeathTest, ProtectOverflowPolicy) {
     std::random_device rd;
     std::mt19937 rng(rd());
     std::uniform_int_distribution<size_t> dist(1, std::numeric_limits<uint16_t>::max());
 
     // Store the current buffer policy
     std::string buffer_policy;
-    if (const char* buffer_policy_env = getenv("KAI_TEST_BUFFER_POLICY")) {
+    if (const char* buffer_policy_env = getenv(Buffer::buffer_policy_env_name)) {
         buffer_policy = std::string(buffer_policy_env);
     }
 
     // Overwrite the buffer policy for purpose of the test
-    ASSERT_EQ(setenv("KAI_TEST_BUFFER_POLICY", "PROTECT_OVERFLOW", 1 /* overwrite */), 0);
+    ASSERT_EQ(setenv(Buffer::buffer_policy_env_name, "PROTECT_OVERFLOW", 1 /* overwrite */), 0);
 
     for (size_t i = 0; i < g_num_runs; ++i) {
         const size_t buffer_size = dist(rng);
@@ -160,8 +175,13 @@ TEST(Buffer, ProtectOverflowPolicy) {
 #pragma GCC diagnostic pop
     }
 
-    // Restore the buffer policy to its original value
-    ASSERT_EQ(setenv("KAI_TEST_BUFFER_POLICY", buffer_policy.c_str(), 1 /* overwrite */), 0);
+    if (buffer_policy.empty()) {
+        // Remove variable if not present before
+        ASSERT_EQ(unsetenv(Buffer::buffer_policy_env_name), 0);
+    } else {
+        // Restore the buffer policy to its original value
+        ASSERT_EQ(setenv(Buffer::buffer_policy_env_name, buffer_policy.c_str(), 1 /* overwrite */), 0);
+    }
 }
 #endif  // if defined(__linux__) || defined(__APPLE__)
 
