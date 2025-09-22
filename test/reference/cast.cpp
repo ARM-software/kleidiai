@@ -30,6 +30,18 @@ Buffer cast(const void* src, size_t length) {
     return dst;
 }
 
+template <>
+Buffer cast<BFloat16, Float16>(const void* src, size_t length) {
+    Buffer dst(round_up_division(length * size_in_bits<BFloat16>, 8));
+
+    for (size_t i = 0; i < length; ++i) {
+        float interim = static_cast<float>(read_array<Float16>(src, i));
+        write_array(dst.data(), i, BFloat16(interim));
+    }
+
+    return dst;
+}
+
 template Buffer cast<Float16, float>(const void* src, size_t length);
 template Buffer cast<BFloat16, float>(const void* src, size_t length);
 template Buffer cast<float, Float16>(const void* src, size_t length);
@@ -40,8 +52,10 @@ Buffer cast(const void* src, kai::test::DataType src_dt, DataType dst_dt, size_t
 
     if (src_dt == DataType::BF16 && dst_dt == DataType::FP32) {
         return cast<float, BFloat16>(src, length);
-    } else if (src_dt == DataType::FP16 && dst_dt == DataType::FP32) {
-        return cast<float, Float16>(src, length);
+    } else if (src_dt == DataType::FP16 && dst_dt == DataType::BF16) {
+        return cast<BFloat16, Float16>(src, length);
+    } else if (src_dt == DataType::FP32 && dst_dt == DataType::BF16) {
+        return cast<BFloat16, float>(src, length);
     }
 
     KAI_ERROR("Unsupported cast data type!");

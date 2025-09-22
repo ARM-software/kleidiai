@@ -27,6 +27,7 @@
 #include "test/common/matrix_portion.hpp"
 #include "test/common/printer.hpp"
 #include "test/common/sme.hpp"
+#include "test/reference/cast.hpp"
 #include "test/reference/fill.hpp"
 #include "test/reference/matmul.hpp"
 #include "test/reference/pack.hpp"
@@ -402,12 +403,24 @@ protected:
         KAI_ASSUME(method.rhs_format.is_raw());
         KAI_ASSUME(method.dst_format.is_raw());
 
-        auto ref_dst = matmul(
-            lhs.data(), nullptr, nullptr, method.lhs_format.data_type(),                         //
-            rhs.data(), rhs_scales.data(), nullptr, method.rhs_format.data_type(),               //
-            has_bias ? bias.data() : nullptr, nullptr, nullptr, method.bias_format.data_type(),  //
-            method.dst_format.data_type(),                                                       //
-            info.m, info.n, info.k, false, false);
+        Buffer tmp_lhs;
+        Buffer tmp_rhs;
+        const void* p_lhs_buff = lhs.data();
+        const void* p_rhs_buff = rhs.data();
+
+        if (method.lhs_format.data_type() == DataType::FP32 || method.lhs_format.data_type() == DataType::FP16) {
+            tmp_lhs = cast(p_lhs_buff, method.lhs_format.data_type(), DataType::BF16, lhs_h, lhs_w);
+            p_lhs_buff = tmp_lhs.data();
+        }
+        if (method.rhs_format.data_type() == DataType::FP32 || method.rhs_format.data_type() == DataType::FP16) {
+            tmp_rhs = cast(p_rhs_buff, method.rhs_format.data_type(), DataType::BF16, rhs_h, rhs_w);
+            p_rhs_buff = tmp_rhs.data();
+        }
+
+        auto ref_dst =
+            matmul_nt_nt_quantized<BFloat16, float, float, BFloat16, float, float, float, float, float, float>(
+                info.m, info.n, info.k, p_lhs_buff, nullptr, nullptr, 0, 0, p_rhs_buff, nullptr, nullptr, 0, 0,
+                bias.data(), nullptr, nullptr, 0);
 
         auto& data = _data[data_id] = {};
         data.lhs = std::move(lhs);
