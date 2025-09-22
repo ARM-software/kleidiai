@@ -491,12 +491,15 @@ if(KLEIDIAI_BUILD_TESTS)
     target_compile_options(kleidiai_test_framework
         PUBLIC ${KLEIDIAI_WARNING_FLAGS}
         PUBLIC $<$<NOT:$<BOOL:${MSVC}>>:-march=armv8-a${KLEIDIAI_INTERNAL_EXTRA_ARCH}>
+        PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/EHsc>
     )
 
     if(MSVC)
-        set_source_files_properties(test/common/bfloat16_asm.S PROPERTIES LANGUAGE ASM_MARMASM)
-        set_source_files_properties(test/common/float16_asm.S PROPERTIES LANGUAGE ASM_MARMASM)
-        set_source_files_properties(test/common/round_asm.S PROPERTIES LANGUAGE ASM_MARMASM)
+        set_source_files_properties(
+            test/common/bfloat16_asm.S
+            test/common/float16_asm.S
+            test/common/round_asm.S
+            PROPERTIES LANGUAGE ASM_MARMASM)
     else()
         set_source_files_properties(test/common/float16_asm.S PROPERTIES COMPILE_OPTIONS "-march=armv8.2-a+fp16${KLEIDIAI_INTERNAL_EXTRA_ARCH}")
         set_source_files_properties(test/common/bfloat16_asm.S PROPERTIES COMPILE_OPTIONS "-march=armv8.2-a+fp16+bf16${KLEIDIAI_INTERNAL_EXTRA_ARCH}")

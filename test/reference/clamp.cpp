@@ -49,11 +49,11 @@ template std::tuple<float, float> find_clamp_range(const void* src, size_t len, 
 template std::tuple<Float16, Float16> find_clamp_range(const void* src, size_t len, float ratio);
 
 std::tuple<float, float> find_clamp_range(DataType type, const void* src, size_t len, float ratio) {
-    auto max = std::numeric_limits<double>::min();
-    auto min = std::numeric_limits<double>::max();
+    auto max = std::numeric_limits<float>::min();
+    auto min = std::numeric_limits<float>::max();
 
     for (size_t i = 0; i < len; i += 1) {
-        const double value = read_array(type, src, i);
+        const float value = read_array(type, src, i);
         max = std::max(value, max);
         min = std::min(value, min);
     }
