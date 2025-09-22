@@ -59,8 +59,8 @@ KAI_ASM_FUNCTION_LABEL(kai_kernel_matmul_clamp_f16_qsi8d32p1vlx4_qai4c32p4vlx4_1
     ldr x6, [x0, #0x58]            // lut
     KAI_ASM_INST(0xe11f80c0)        // ldr zt0, [x6]
     ldr x19, [x0, #0x10]           // rhs_packed
-    ld1rw z9.s, p0/z, [x0, #0x60]  // min
-    ld1rw z10.s, p0/z, [x0, #0x64] // max
+    KAI_ASM_INST(0x8558c009)       // ld1rw z9.s, p0/z, [x0, #0x60]  // min
+    KAI_ASM_INST(0x8559c00a)       // ld1rw z10.s, p0/z, [x0, #0x64] //max
     fmov z11.h, #0.0
     ldr	x4, [x0, #0x50]            // bl
     ldr	x21, [x0, #0x18]           // stride
@@ -69,7 +69,7 @@ KAI_ASM_FUNCTION_LABEL(kai_kernel_matmul_clamp_f16_qsi8d32p1vlx4_qai4c32p4vlx4_1
     ldr x13, [x0, #0x40]           // n
     ldr x23, [x0, #0x48]           // k
     KAI_ASM_INST(0x256d6511)        //whilelt pn9.h, x8, x13, VLx4
-    b.none label_9
+    b.eq label_9                   // b.none label_9
 KAI_ASM_LABEL(label_1)              // N loop
     ldr	x9, [x0, #0x38]            // m
     ldr	x22, [x0, #0x8]            // lhs_packed
@@ -195,7 +195,7 @@ KAI_ASM_LABEL(label_10)
     add x19, x19, x5
     incb x8, all
     KAI_ASM_INST(0x256d6511)        // whilelt pn9.h, x8, x13, VLx4
-    b.first label_1
+    b.mi label_1                    // b.first label_1
 KAI_ASM_LABEL(label_9)
     KAI_ASM_INST(0xd503467f)        // smstop
     ldp     d14, d15, [sp, 112]

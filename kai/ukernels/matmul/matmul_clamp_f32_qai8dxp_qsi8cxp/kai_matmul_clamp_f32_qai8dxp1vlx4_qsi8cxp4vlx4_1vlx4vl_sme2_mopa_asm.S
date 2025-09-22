@@ -53,8 +53,8 @@ KAI_ASM_FUNCTION_LABEL(kai_kernel_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vl
     ldr	x20, [x0, #0x8]         //      lhs_packed
     cntw	x7
     ptrue	p2.b
-    ld1rw	{ z30.s }, p2/z, [x0, #0x58]    // clamp_min
-    ld1rw	{ z31.s }, p2/z, [x0, #0x5c]    // clamp_max
+    KAI_ASM_INST(0x8556c81e) // ld1rw { z30.s }, p2/z, [x0, #0x58] // clamp_min
+    KAI_ASM_INST(0x8557c81f) // ld1rw { z31.s }, p2/z, [x0, #0x5c] // clamp_max
     ldr	x12, [x0, #0x20]        //      m
     KAI_ASM_INST(0x25ac17e0)	//     	whilelt	p0.s, xzr, x12
 KAI_ASM_LABEL(label_1)          //      Row Loop
@@ -97,8 +97,8 @@ KAI_ASM_LABEL(label_3)          //      Block Loop
     mov	x14, #0x0               // =0
     addvl	x15, x10, #0x1
 KAI_ASM_LABEL(label_4)
-    ld1rw	{ z16.s }, p2/z, [x10]
-    ld1rw	{ z17.s }, p2/z, [x15]
+    KAI_ASM_INST(0x8540c950) // ld1rw { z16.s }, p2/z, [x10]
+    KAI_ASM_INST(0x8540c9f1) // ld1rw { z17.s }, p2/z, [x15]
     add	x10, x10, #0x4
     add	x15, x15, #0x4
     KAI_ASM_INST(0xc006440c)	//     	mov	{ z12.b - z15.b }, za0h.b[w14, 0x0:0x3]
@@ -137,7 +137,7 @@ KAI_ASM_LABEL(label_4)
     KAI_ASM_INST(0x25784572)	//     	whilelt	pn10.h, x11, x24, vlx2
     cntw	x24, ALL, MUL #0x4
     sub	x13, x13, x24
-    cmp	xzr, x13
+    subs xzr, xzr, x13         // cmp xzr, x13
     b.mi	label_2
     ldr	x24, [x0, #0x30]
     add	x20, x20, x24
