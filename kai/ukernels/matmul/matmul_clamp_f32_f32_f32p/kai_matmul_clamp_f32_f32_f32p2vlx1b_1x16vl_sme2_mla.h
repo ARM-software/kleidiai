@@ -8,8 +8,6 @@
 
 #include <stddef.h>
 
-#include "kai/kai_common.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif  // __cplusplus
@@ -102,11 +100,10 @@ size_t kai_get_dst_size_matmul_clamp_f32_f32_f32p2vlx1b_1x16vl_sme2_mla(size_t m
 /// @param[in]  n Number of output columns to be computed.
 /// @param[in]  k Common dimension of the LHS and RHS operand.
 /// @param[in]  lhs LHS matrix buffer.
-/// @param[in]  lhs_stride Row stride in bytes of the LHS matrix. Currently, an unused parameter.
 /// @param[in]  rhs_packed Packed RHS matrix buffer.
 /// @param[out] dst Output matrix buffer.
-/// @param[in]  dst_stride_row Row stride in bytes of the output matrix. Currently, an unused parameter.
-/// @param[in]  dst_stride_col Column stride in bytes of the output matrix. Currently, an unused parameter.
+/// @param[in]  dst_stride_row Row stride in bytes of the output matrix. Unused
+/// @param[in]  dst_stride_col Column stride in bytes of the output matrix. Unused
 /// @param[in]  clamp_min Minimum value to clamp the final result.
 /// @param[in]  clamp_max Maximum value to clamp the final result.
 void kai_run_matmul_clamp_f32_f32_f32p2vlx1b_1x16vl_sme2_mla(

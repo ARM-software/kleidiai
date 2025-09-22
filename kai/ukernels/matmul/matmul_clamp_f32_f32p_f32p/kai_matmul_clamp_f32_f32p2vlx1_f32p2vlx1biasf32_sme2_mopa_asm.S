@@ -143,10 +143,10 @@ KAI_ASM_LABEL(label_8)  // K oddments: End
     ldr x26, [x0, #0x10]
     sub x25, x13, x15
     cntw x24
-    ld1rw { z26.s }, p0/Z, [x0, #56]
+    KAI_ASM_INST(0x854ec01a)  // ld1rw { z26.s }, p0/Z, [x0, #56]
     ldr x23, [x0, #0x18]
     cmp x25, x24
-    ld1rw { z24.s }, p0/Z, [x0, #60]
+    KAI_ASM_INST(0x854fc018)  // ld1rw { z24.s }, p0/Z, [x0, #60]
     mov x12, #0x0
     csel x22, x25, x24, LT
     add x26, x26, x11, LSL #2  // C += n

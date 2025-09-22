@@ -89,9 +89,7 @@ void kai_run_matmul_clamp_f32_f32_f32p2vlx1b_1x16vl_sme2_mla(
     size_t dst_stride_row, size_t dst_stride_col, float clamp_min, float clamp_max) {
     KAI_UNUSED(dst_stride_row);
     KAI_UNUSED(dst_stride_col);
-
     KAI_UNUSED(lhs_stride);
-
     KAI_ASSUME(m == 1);
 
     uint64_t flags = 2;

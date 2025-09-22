@@ -149,8 +149,8 @@ KAI_ASM_LABEL(label_7)  // Width 1: Multiply loop: multiply skip
     add x21, x0, #0x4
     add x20, x0, #0x0
     KAI_ASM_INST(0xc0060c00)  // mova { z0.d-z3.d }, za.d[x8, #0]
-    ld1rw { z23.s }, p1/Z, [x21]
-    ld1rw { z22.s }, p1/Z, [x20]
+    KAI_ASM_INST(0x8540c6b7)  // ld1rw { z23.s }, p1/Z, [x21]
+    KAI_ASM_INST(0x8540c696)  // ld1rw { z22.s }, p1/Z, [x20]
     KAI_ASM_INST(0xc1b6cae0)  // fclamp { z0.s-z3.s }, z23.s, z22.s
     KAI_ASM_INST(0xa060c300)  // st1w { z0.s-z3.s }, p8, [x24]
     b label_9
@@ -234,8 +234,8 @@ KAI_ASM_LABEL(label_13)  // Width 2: Multiply loop: multiply skip
     add x20, x0, #0x0
     KAI_ASM_INST(0xc0060c04)  // mova { z4.d-z7.d }, za.d[x8, #0]
     KAI_ASM_INST(0xc0060c28)  // mova { z8.d-z11.d }, za.d[x8, #1]
-    ld1rw { z17.s }, p1/Z, [x21]
-    ld1rw { z23.s }, p1/Z, [x20]
+    KAI_ASM_INST(0x8540c6b1)  // ld1rw { z17.s }, p1/Z, [x21]
+    KAI_ASM_INST(0x8540c697)  // ld1rw { z23.s }, p1/Z, [x20]
     KAI_ASM_INST(0xc1b7ca24)  // fclamp { z4.s-z7.s }, z17.s, z23.s
     KAI_ASM_INST(0xc1b7ca28)  // fclamp { z8.s-z11.s }, z17.s, z23.s
     KAI_ASM_INST(0xa060c704)  // st1w { z4.s-z7.s }, pn9.b, [x24]
@@ -342,9 +342,9 @@ KAI_ASM_LABEL(label_19)  // Width 3: Multiply loop: multiply skip
     add x20, x0, #0x0
     KAI_ASM_INST(0xc0060c08)  // mova { z8.d-z11.d }, za.d[x8, #0]
     KAI_ASM_INST(0xc0060c2c)  // mova { z12.d-z15.d }, za.d[x8, #1]
-    ld1rw { z21.s }, p1/Z, [x21]
+    KAI_ASM_INST(0x8540c6b5)  // ld1rw { z21.s }, p1/Z, [x21]
     KAI_ASM_INST(0xc0060c50)  // mova { z16.d-z19.d }, za.d[x8, #2]
-    ld1rw { z20.s }, p1/Z, [x20]
+    KAI_ASM_INST(0x8540c694)  // ld1rw { z20.s }, p1/Z, [x20]
     KAI_ASM_INST(0xc1b4caa8)  // fclamp { z8.s-z11.s }, z21.s, z20.s
     KAI_ASM_INST(0xc1b4caac)  // fclamp { z12.s-z15.s }, z21.s, z20.s
     KAI_ASM_INST(0xc1b4cab0)  // fclamp { z16.s-z19.s }, z21.s, z20.s
@@ -474,9 +474,9 @@ KAI_ASM_LABEL(label_25)  // Width 4: Multiply loop: multiply skip
     add x20, x0, #0x0
     KAI_ASM_INST(0xc0060c04)  // mova { z4.d-z7.d }, za.d[x8, #0]
     KAI_ASM_INST(0xc0060c20)  // mova { z0.d-z3.d }, za.d[x8, #1]
-    ld1rw { z21.s }, p1/Z, [x21]
+    KAI_ASM_INST(0x8540c6b5)  // ld1rw { z21.s }, p1/Z, [x21]
     KAI_ASM_INST(0xc0060c4c)  // mova { z12.d-z15.d }, za.d[x8, #2]
-    ld1rw { z20.s }, p1/Z, [x20]
+    KAI_ASM_INST(0x8540c694)  // ld1rw { z20.s }, p1/Z, [x20]
     KAI_ASM_INST(0xc0060c70)  // mova { z16.d-z19.d }, za.d[x8, #3]
     KAI_ASM_INST(0xc1b4caa4)  // fclamp { z4.s-z7.s }, z21.s, z20.s
     KAI_ASM_INST(0xc1b4caa0)  // fclamp { z0.s-z3.s }, z21.s, z20.s

@@ -25,7 +25,6 @@ typedef struct {
     int32_t min;
     int32_t max;
     int32_t result_zero_point;
-    const int n_0;
     void* accumulator_buffer;
     uint64_t flags;
 } KernelArgs;
@@ -98,7 +97,7 @@ size_t kai_get_dst_size_matmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2
 void kai_run_matmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa(
     size_t m, size_t n, size_t k, const void* lhs_packed, const void* rhs_packed, void* dst, size_t dst_stride_row,
     size_t dst_stride_col, const struct kai_matmul_requantize32_params* params) {
-    KAI_ASSUME(dst_stride_col == sizeof(int8_t));
+    KAI_UNUSED(dst_stride_col);
     KernelArgs args;
 
     args.A = lhs_packed;
