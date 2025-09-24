@@ -11,9 +11,44 @@ stages:
   - deploy
 
 variables:
-  # Number of parallel jobs suitable for current CI runner configuration. The value need to be hardcoded
-  # becaues in some cases standard system tools might not provide correct number of CPUs reserved for jobs
-  PARALLEL_JOBS: 8
+  # Set of KUBERNETES_* variables applies only to dynamic EKS Linux cluster and do not work
+  # with other runners
+  #
+  # KUBERNETES_NODE_SELECTOR_ARCH selects architecture for job container.
+  # For arm64, it should be: 'kubernetes.io/arch=arm64'. This is default if possible
+  # For amd64 it should be: 'kubernetes.io/arch=amd64'
+  KUBERNETES_NODE_SELECTOR_ARCH: "kubernetes.io/arch=arm64"
+
+  # Define what type of node to use (on-demand or spot). Spot is recommended and is MUCH less expensive than on-demand.
+  # But it can be reclaimed by cloud at any time causing the pod to lose the node.
+  # on-demand is used for a longer runs to avoid retries
+  KUBERNETES_NODE_SELECTOR_TYPE: "karpenter.sh/capacity-type=spot"
+
+  # Define what generation of node to use (7 - Graviton 3, 8 - Graviton 4).
+  # For Graviton 4 - use 'karpenter.k8s.aws/instance-generation=8'
+  #   faster execution for jobs relying on CPU like compilation or on-host testing
+  #   and results in lower total cost
+  #
+  # For Graviton 3 - use 'karpenter.k8s.aws/instance-generation=7'
+  #   slower execution, but could be used for jobs waiting for different kind of
+  #   remote infrastructure like on-device testing or accessing servers
+  #
+  KUBERNETES_NODE_SELECTOR_INSTANCE_GENERATION: "karpenter.k8s.aws/instance-generation=8"
+
+  # KUBERNETES_CPU_REQUEST reserves the amount CPUs on a node. The amount is guaranteed for a container
+  KUBERNETES_CPU_REQUEST: 4
+  # KUBERNETES_CPU_LIMIT limits maximum limit of CPU the job container can use. This is not reserved or guaranteed
+  KUBERNETES_CPU_LIMIT: 6
+
+  # KUBERNETES_MEMORY_REQUEST reserves the amount memory on a node. The amount is guaranteed for a container
+  KUBERNETES_MEMORY_REQUEST: 4Gi
+  # KUBERNETES_MEMORY_LIMIT limits maximum limit of memory the job container can use. This is not reserved or guaranteed
+  KUBERNETES_MEMORY_LIMIT: 6Gi
+
+  # This variable defines a number of parallel jobs (-j) which should be used.
+  # We could not rely on `nproc` result as it would return number of ALL host CPUs, not one reserved.
+  # And this might cause huge memory usage and OOM of container
+  PARALLEL_JOBS: ${KUBERNETES_CPU_REQUEST}
 
   # Enable more verbose script section content printout
   FF_SCRIPT_SECTIONS: true
@@ -400,6 +435,8 @@ test-linux-aarch64-cov:
   needs:
     - build-clang-cov
   variables:
+    # A long running test job
+    KUBERNETES_NODE_SELECTOR_TYPE: "karpenter.sh/capacity-type=on-demand"
     FVP_TEST_EXECUTABLE: "./build/kleidiai_test --gtest_output=xml:kleidiai_test_results.xml"
   script:
     - *test-linux-fvp
@@ -426,6 +463,8 @@ test-linux-aarch64-cov:
     - build-clang
     - build-clang-bazel
   variables:
+    # A long running test job
+    KUBERNETES_NODE_SELECTOR_TYPE: "karpenter.sh/capacity-type=on-demand"
     FVP_MODEL_EXTRA: "-C cluster0.sve.has_sve2=0 -C cluster0.sve.sme_only=1"
     FVP_TEST_EXECUTABLE: "./build-${BUILD_JOB_PROVIDER}/kleidiai_test --gtest_output=xml:kleidiai_test_results-${BUILD_JOB_PROVIDER}.xml"
   script:
@@ -483,6 +522,9 @@ test-linux-aarch64-v8only-fvp:
 test-linux-aarch64-sme1only-fvp:
   extends:
     - .standard-rules
+  variables:
+    # A long running test job
+    KUBERNETES_NODE_SELECTOR_TYPE: "karpenter.sh/capacity-type=on-demand"
   timeout: 2h
   stage: test
   needs:
@@ -535,7 +577,6 @@ test-examples-sme-fvp:
     expire_in: 1 day
     paths:
       - "example_*.log"
-
 
 coverage:
   extends:
