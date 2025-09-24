@@ -24,12 +24,12 @@ variables:
   # on-demand is used for a longer runs to avoid retries
   KUBERNETES_NODE_SELECTOR_TYPE: "karpenter.sh/capacity-type=spot"
 
-  # Define what generation of node to use (7 - Graviton 3, 8 - Graviton 4).
-  # For Graviton 4 - use 'karpenter.k8s.aws/instance-generation=8'
+  # Define what generation of node to use
+  # For performance nodes - use 'karpenter.k8s.aws/instance-generation=8'
   #   faster execution for jobs relying on CPU like compilation or on-host testing
   #   and results in lower total cost
   #
-  # For Graviton 3 - use 'karpenter.k8s.aws/instance-generation=7'
+  # For cost-efficient nodes - use 'karpenter.k8s.aws/instance-generation=7'
   #   slower execution, but could be used for jobs waiting for different kind of
   #   remote infrastructure like on-device testing or accessing servers
   #
