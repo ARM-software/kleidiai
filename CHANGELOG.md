@@ -13,6 +13,19 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 - New SME micro-kernels:
   - Matrix multiplication (MxN) Micro-kernels of QAI8DX LHS and QSI8CX RHS with F32 input and output.
   - Matrix multiplication (1xN) Micro-kernels of QAI8DX LHS and QSI8CX RHS with F32 input and output.
+- Wider compiler compatibility for the following kernels:
+  - kai_matmul_clamp_f16_qsi8d32p1vlx4_qai4c32p4vlx4_1vlx4vl_sme2_mopa
+  - kai_matmul_clamp_f16_qsi8d32p1x4_qai4c32p4vlx4_1x4vl_sme2_dot
+  - kai_matmul_clamp_f32_f32_f32p16vlx1b_1x16vl_sme2_mla
+  - kai_matmul_clamp_f32_f32_f32p2vlx1b_1x16vl_sme2_mla
+  - kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa
+  - kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa
+  - kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa
+  - kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot
+  - kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme_dot
+  - kai_matmul_clamp_f32_qsi8d32p1vlx4_qai4c32p4vlx4_1vlx4vl_sme2_mopa
+  - kai_matmul_clamp_f32_qsi8d32p1x4_qai4c32p4vlx4_1x4vl_sme2_dot
+  - kai_matmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa
 
 ## v1.14.0
 
