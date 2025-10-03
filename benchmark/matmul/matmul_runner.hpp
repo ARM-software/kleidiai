@@ -141,6 +141,23 @@ inline void MatMulRunner<MatMulStaticQuantInterface>::run(const void* lhs, const
     );
 }
 
+/// Runs the matrix multiplication micro-kernel. Specialized on the dynamic blockwise quantization interface with
+/// generic destination buffer.
+///
+/// @param lhs Buffer containing LHS matrix data.
+/// @param rhs Buffer containing RHS matrix data.
+/// @param dst Destination buffer to write to.
+template <>
+inline void MatMulRunner<MatMulBlockwiseDynamicQuantGenericDstInterface>::run(
+    const void* lhs, const void* rhs, void* dst) {
+    matmul_interface_.run_matmul(
+        m_, n_, k_, bl_,                   //
+        lhs, rhs, dst,                     //
+        dst_stride_row_, dst_stride_col_,  //
+        -FLT_MAX, FLT_MAX                  //
+    );
+}
+
 /// Runs the matrix multiplication micro-kernel. Specialized on the dynamic blockwise quantization interface.
 ///
 /// @param lhs Buffer containing LHS matrix data.

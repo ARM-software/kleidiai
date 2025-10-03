@@ -63,7 +63,9 @@ void kai_benchmark_matmul(
         state.SkipWithMessage("GEMV optimized for m=1 only");
     }
 
-    if constexpr (std::is_same_v<MatMulInterface, MatMulBlockwiseDynamicQuantInterface>) {
+    if constexpr (
+        std::is_same_v<MatMulInterface, MatMulBlockwiseDynamicQuantInterface> ||
+        std::is_same_v<MatMulInterface, MatMulBlockwiseDynamicQuantGenericDstInterface>) {
         if (k % bl != 0) {
             state.SkipWithMessage("K must be a multiple of block size");
         }
