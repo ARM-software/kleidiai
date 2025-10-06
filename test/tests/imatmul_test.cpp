@@ -393,7 +393,7 @@ struct TestData {
 /// Uses test id to generate reference data, and caches it.
 struct ReferenceGenerator {
     /// Retrieve reference data for the provided test identification
-    static const TestData& get_test_reference(const TestDataId test_id) {
+    static const TestData& get_test_reference(const TestDataId& test_id) {
         static std::unordered_map<TestDataId, TestData, TestDataId::Hash> m_data;
         if (const auto itr = m_data.find(test_id); itr != end(m_data)) {
             return itr->second;
@@ -572,8 +572,8 @@ TEST_P(IndirectMatMulTest, Output) {
     const KChunk k_chunk{shape.k, k_chunk_length};
 
     // Retrieve reference data
-    const TestData& test_data =
-        ReferenceGenerator::get_test_reference({shape, method.pack_shape, method.format, k_chunk_length, clamp_rate});
+    const TestDataId test_id{shape, method.pack_shape, method.format, k_chunk_length, clamp_rate};
+    const TestData& test_data = ReferenceGenerator::get_test_reference(test_id);
     const Rect portion = output_portion.compute_portion(shape.m, shape.n, method.pack_shape.m, method.pack_shape.n);
 
     if (portion.height() == 0 || portion.width() == 0) {
