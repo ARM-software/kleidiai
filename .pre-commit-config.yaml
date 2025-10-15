@@ -13,6 +13,7 @@ repos:
       - id: reuse-lint-file
         stages: [ pre-commit ]
         name: "REUSE Compliant Copyright and License"
+        args: [ "--no-multiprocessing", "lint-file" ]
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
