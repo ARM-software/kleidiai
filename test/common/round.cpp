@@ -51,14 +51,17 @@ size_t round_to_nearest_even(float value) {
 }
 
 size_t round_up_multiple(size_t a, size_t b) {
+    KAI_ASSUME(b != 0);
     return ((a + b - 1) / b) * b;
 }
 
 size_t round_up_division(size_t a, size_t b) {
+    KAI_ASSUME(b != 0);
     return (a + b - 1) / b;
 }
 
 size_t round_down_multiple(size_t a, size_t b) {
+    KAI_ASSUME(b != 0);
     return (a / b) * b;
 }
 

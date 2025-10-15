@@ -224,6 +224,11 @@ Buffer indirect_matmul_nt_t_quantized(
     const void* rhs_data, const void* rhs_scales, const void* rhs_zero_points, size_t rhs_quant_height,
     size_t rhs_quant_width,  //
     const void* bias_data, const void* bias_scales, const void* bias_zero_points, size_t bias_quant_width) {
+    KAI_ASSUME(lhs_quant_width != 0);
+    KAI_ASSUME(rhs_quant_width != 0);
+    KAI_ASSUME(lhs_quant_height != 0);
+    KAI_ASSUME(rhs_quant_height != 0);
+    KAI_ASSUME(bias_quant_width != 0);
     const auto lhs_num_quant_per_row = round_up_division(k_chunk_count * k_chunk_length, lhs_quant_width);
     const auto rhs_num_quant_per_row = round_up_division(k_chunk_count * k_chunk_length, rhs_quant_width);
 
@@ -300,6 +305,12 @@ Buffer matmul_nt_t_quantized(
     size_t rhs_quant_height, size_t rhs_quant_width,                               //
     const void* bias_data, const void* bias_scales, const void* bias_zero_points,  //
     size_t bias_quant_width) {
+    KAI_ASSUME(lhs_quant_width != 0);
+    KAI_ASSUME(rhs_quant_width != 0);
+    KAI_ASSUME(lhs_quant_height != 0);
+    KAI_ASSUME(rhs_quant_height != 0);
+    KAI_ASSUME(bias_quant_width != 0);
+
     const auto lhs_num_quant_per_row = round_up_division(k, lhs_quant_width);
     const auto rhs_num_quant_per_row = round_up_division(k, rhs_quant_width);
 
@@ -397,6 +408,12 @@ Buffer matmul_nt_nt_quantized(
     size_t rhs_quant_height, size_t rhs_quant_width,                               //
     const void* bias_data, const void* bias_scales, const void* bias_zero_points,  //
     size_t bias_quant_width) {
+    KAI_ASSUME(lhs_quant_width != 0);
+    KAI_ASSUME(rhs_quant_width != 0);
+    KAI_ASSUME(lhs_quant_height != 0);
+    KAI_ASSUME(rhs_quant_height != 0);
+    KAI_ASSUME(bias_quant_width != 0);
+
     const auto lhs_num_quant_per_row = round_up_division(k, lhs_quant_width);
     const auto rhs_num_quant_per_row = round_up_division(k, rhs_quant_width);
 
@@ -486,6 +503,8 @@ Buffer matmul_clamp_nt_t(
     const void* rhs_data, const void* rhs_scales, const void* rhs_zero_points, size_t rhs_quant_width,  //
     const void* biases,                                                                                 //
     DstData min_value, DstData max_value) {
+    KAI_ASSUME(lhs_quant_width != 0);
+    KAI_ASSUME(rhs_quant_width != 0);
     const auto lhs_num_quant_per_row = round_up_division(k, lhs_quant_width);
     const auto rhs_num_quant_per_row = round_up_division(k, rhs_quant_width);
 
@@ -570,6 +589,8 @@ Buffer matmul_clamp_nt_nt(
     const void* rhs_data, const void* rhs_scales, const void* rhs_zero_points, size_t rhs_quant_width,  //
     const void* biases,                                                                                 //
     DstData min_value, DstData max_value) {
+    KAI_ASSUME(lhs_quant_width != 0);
+    KAI_ASSUME(rhs_quant_width != 0);
     const auto lhs_num_quant_per_row = round_up_division(k, lhs_quant_width);
     const auto rhs_num_quant_per_row = round_up_division(k, rhs_quant_width);
 
