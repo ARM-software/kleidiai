@@ -89,9 +89,9 @@ static const std::array<UkernelVariant<kai_matmul_clamp_f32_qai8dxp_qsi4c32p_uke
 static const std::array<UkernelVariant<kai_matmul_clamp_bf16_qai8dxp_qsi4c32p_ukernel>, 2>
     variants_kai_matmul_clamp_bf16_qai8dxp_qsi4c32p = {{
         {UKERNEL_MATMUL_VARIANT(clamp_bf16_qai8dxp1x8_qsi4c32p4x8_1x4_neon_dotprod),
-         "kai_matmul_clamp_bf16_qai8dxp1x8_qsi4c32p4x8_1x4_neon_dotprod", cpu_has_dotprod},
+         "kai_matmul_clamp_bf16_qai8dxp1x8_qsi4c32p4x8_1x4_neon_dotprod", cpu_has_dotprod_and_bf16},
         {UKERNEL_MATMUL_VARIANT(clamp_bf16_qai8dxp4x8_qsi4c32p4x8_16x4_neon_i8mm),
-         "kai_matmul_clamp_bf16_qai8dxp4x8_qsi4c32p4x8_16x4_neon_i8mm", cpu_has_i8mm},
+         "kai_matmul_clamp_bf16_qai8dxp4x8_qsi4c32p4x8_16x4_neon_i8mm", cpu_has_i8mm_and_bf16},
     }};
 
 static const auto test_matmul_shapes = testing::Values(

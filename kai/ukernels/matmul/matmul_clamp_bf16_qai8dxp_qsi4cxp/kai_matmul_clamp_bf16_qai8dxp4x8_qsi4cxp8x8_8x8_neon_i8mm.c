@@ -3,8 +3,10 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 //
-#if !defined(__aarch64__) && !defined(__ARM_FEATURE_MATMUL_INT8) && !defined(_M_ARM64)
-#error "I8mm extension required to compile this micro-kernel"
+#if (                                                                                                                  \
+    !defined(__aarch64__) || !defined(__ARM_FEATURE_MATMUL_INT8) || !defined(__ARM_FEATURE_BF16_VECTOR_ARITHMETIC)) && \
+    !defined(_M_ARM64)
+#error "I8mm extension and bf16 vector arithmetic required to compile this micro-kernel"
 #else  // Architectural features check.
 
 #include "kai_matmul_clamp_bf16_qai8dxp4x8_qsi4cxp8x8_8x8_neon_i8mm.h"

@@ -3,8 +3,9 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 //
-#if !defined(__aarch64__) && !defined(__ARM_FEATURE_DOTPROD) && !defined(_M_ARM64)
-#error "Dotprod extension required to compile this micro-kernel"
+#if (!defined(__aarch64__) || !defined(__ARM_FEATURE_DOTPROD) || !defined(__ARM_FEATURE_BF16_VECTOR_ARITHMETIC)) && \
+    !defined(_M_ARM64)
+#error "Dotprod extension and bf16 vector arithmetic required to compile this micro-kernel"
 #else  // Architectural features check.
 
 #include "kai_matmul_clamp_bf16_qai8dxp1x8_qsi4cxp8x8_1x8_neon_dotprod.h"
