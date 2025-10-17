@@ -10,6 +10,9 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+- Fixes
+  - Added missing checks for bf16 support for quantised matmuls with bf16 input/output.
+
 ## v1.15.0
 
 - New SME micro-kernels:
