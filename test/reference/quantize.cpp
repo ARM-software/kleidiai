@@ -174,7 +174,9 @@ template std::tuple<Buffer, Buffer> quantize_symmetric_per_block_dynamic<float, 
     const void* src, size_t height, size_t width, size_t quant_width);
 template std::tuple<Buffer, Buffer> quantize_symmetric_per_block_dynamic<float, Int4, float>(
     const void* src, size_t height, size_t width, size_t quant_width);
-template std::tuple<Buffer, Buffer> quantize_symmetric_per_block_dynamic<float, Int4, BFloat16>(
+template std::tuple<Buffer, Buffer> quantize_symmetric_per_block_dynamic<float, Int4, BFloat16<true>>(
+    const void* src, size_t height, size_t width, size_t quant_width);
+template std::tuple<Buffer, Buffer> quantize_symmetric_per_block_dynamic<float, Int4, BFloat16<false>>(
     const void* src, size_t height, size_t width, size_t quant_width);
 template std::tuple<Buffer, Buffer> quantize_symmetric_per_block_dynamic<float, int8_t, Float16>(
     const void* src, size_t height, size_t width, size_t quant_width);
@@ -291,7 +293,7 @@ std::tuple<Buffer, Buffer, Buffer> quantize_asymmetric_per_block_dynamic(
 
 template std::tuple<Buffer, Buffer, Buffer> quantize_asymmetric_per_block_dynamic<float, int8_t, float, int32_t>(
     const void* src, size_t height, size_t width, size_t quant_width);
-template std::tuple<Buffer, Buffer, Buffer> quantize_asymmetric_per_block_dynamic<float, int8_t, BFloat16, int32_t>(
+template std::tuple<Buffer, Buffer, Buffer> quantize_asymmetric_per_block_dynamic<float, int8_t, BFloat16<>, int32_t>(
     const void* src, size_t height, size_t width, size_t quant_width);
 template std::tuple<Buffer, Buffer, Buffer> quantize_asymmetric_per_block_dynamic<float, Int4, float, int32_t>(
     const void* src, size_t height, size_t width, size_t quant_width);
@@ -317,6 +319,8 @@ inline std::tuple<Buffer, Buffer> quantize_rhs_qsi4c32p(
 
     return {std::move(rhs_values_qsi4), std::move(rhs_scales)};
 }
-template std::tuple<Buffer, Buffer> quantize_rhs_qsi4c32p<float, BFloat16>(
-    size_t N, size_t K, size_t bl, const Buffer& ref_rhs, bool transposed);
+
+template std::tuple<Buffer, Buffer> quantize_rhs_qsi4c32p<float, BFloat16<false>>(
+    size_t N, size_t K, size_t bl, const Buffer& rhs, bool transposed);
+
 }  // namespace kai::test

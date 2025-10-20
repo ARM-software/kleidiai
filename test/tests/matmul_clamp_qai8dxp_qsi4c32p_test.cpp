@@ -57,6 +57,8 @@
 #include "test/reference/quantize.hpp"
 #include "test/reference/transpose.hpp"
 
+// Using BFloat truncate implementation (BFloat16<false>) to match existing packing/inference
+
 namespace kai::test {
 
 enum class RhsPackType { NxK, KxN };
@@ -285,21 +287,20 @@ TEST_P(MatMulTest_qmatmul_clamp_f32_qai8dxp_qsi4c32p, EndToEnd) {
     auto [ref_lhs_qvalues, ref_lhs_scales, ref_lhs_zero_points] =
         quantize_asymmetric_per_block_dynamic<float, int8_t, float, int32_t>(ref_lhs.data(), M, K, K);
     auto [ref_rhs_values_qsi4, ref_rhs_scales] =
-        quantize_rhs_qsi4c32p<float, BFloat16>(N, K, bl, ref_rhs, rhs_pack_type == RhsPackType::NxK);
+        quantize_rhs_qsi4c32p<float, BFloat16<false>>(N, K, bl, ref_rhs, rhs_pack_type == RhsPackType::NxK);
 
     Buffer ref_dst_noclamp;
     if (rhs_pack_type == RhsPackType::NxK) {
         ref_dst_noclamp =
-            matmul_nt_t_quantized<int8_t, float, int32_t, Int4, BFloat16, int32_t, float, float, int32_t, float>(
+            matmul_nt_t_quantized<int8_t, float, int32_t, Int4, BFloat16<false>, int32_t, float, float, int32_t, float>(
                 M, N, K, ref_lhs_qvalues.data(), ref_lhs_scales.data(), ref_lhs_zero_points.data(), 1, K,
                 ref_rhs_values_qsi4.data(), ref_rhs_scales.data(), nullptr, 1, bl, ref_biases.data(), nullptr, nullptr,
                 1);
     } else {
-        ref_dst_noclamp =
-            matmul_nt_nt_quantized<int8_t, float, int32_t, Int4, BFloat16, int32_t, float, float, int32_t, float>(
-                M, N, K, ref_lhs_qvalues.data(), ref_lhs_scales.data(), ref_lhs_zero_points.data(), 1, K,
-                ref_rhs_values_qsi4.data(), ref_rhs_scales.data(), nullptr, 1, bl, ref_biases.data(), nullptr, nullptr,
-                1);
+        ref_dst_noclamp = matmul_nt_nt_quantized<
+            int8_t, float, int32_t, Int4, BFloat16<false>, int32_t, float, float, int32_t, float>(
+            M, N, K, ref_lhs_qvalues.data(), ref_lhs_scales.data(), ref_lhs_zero_points.data(), 1, K,
+            ref_rhs_values_qsi4.data(), ref_rhs_scales.data(), nullptr, 1, bl, ref_biases.data(), nullptr, nullptr, 1);
     }
 
     // Clamps the reference output.
@@ -406,13 +407,14 @@ TEST_P(MatMulTest_qmatmul_clamp_bf16_qai8dxp_qsi4c32p, EndToEnd) {
     }
 
     // Generates input data.
-    const auto ref_lhs_bf16 = fill_random<BFloat16>(M * K, seed + 0);
+    const auto ref_lhs_bf16 = fill_random<BFloat16<false>>(M * K, seed + 0);
     const auto ref_rhs = fill_random<float>(N * K, seed + 1);
     const auto ref_biases = fill_random<float>(N, seed + 2);
 
     // For reference implementation, Casting BF16 input to FP32 type and FP32 output back to BF16 because the matmul
     // implementation works with FP32 accumulation and casts the result to BF16
-    const auto ref_lhs = cast<float, BFloat16>(ref_lhs_bf16.data(), ref_lhs_bf16.size() * 8 / size_in_bits<BFloat16>);
+    const auto ref_lhs =
+        cast<float, BFloat16<false>>(ref_lhs_bf16.data(), ref_lhs_bf16.size() * 8 / size_in_bits<BFloat16<false>>);
 
     // Runs the reference implementation.
     //   * Quantizes the LHS matrix using 8-bit symmetric quantization.
@@ -421,21 +423,20 @@ TEST_P(MatMulTest_qmatmul_clamp_bf16_qai8dxp_qsi4c32p, EndToEnd) {
     auto [ref_lhs_qvalues, ref_lhs_scales, ref_lhs_zero_points] =
         quantize_asymmetric_per_block_dynamic<float, int8_t, float, int32_t>(ref_lhs.data(), M, K, K);
     auto [ref_rhs_values_qsi4, ref_rhs_scales] =
-        quantize_rhs_qsi4c32p<float, BFloat16>(N, K, bl, ref_rhs, rhs_pack_type == RhsPackType::NxK);
+        quantize_rhs_qsi4c32p<float, BFloat16<false>>(N, K, bl, ref_rhs, rhs_pack_type == RhsPackType::NxK);
 
     Buffer ref_dst_noclamp;
     if (rhs_pack_type == RhsPackType::NxK) {
         ref_dst_noclamp =
-            matmul_nt_t_quantized<int8_t, float, int32_t, Int4, BFloat16, int32_t, float, float, int32_t, float>(
+            matmul_nt_t_quantized<int8_t, float, int32_t, Int4, BFloat16<false>, int32_t, float, float, int32_t, float>(
                 M, N, K, ref_lhs_qvalues.data(), ref_lhs_scales.data(), ref_lhs_zero_points.data(), 1, K,
                 ref_rhs_values_qsi4.data(), ref_rhs_scales.data(), nullptr, 1, bl, ref_biases.data(), nullptr, nullptr,
                 1);
     } else {
-        ref_dst_noclamp =
-            matmul_nt_nt_quantized<int8_t, float, int32_t, Int4, BFloat16, int32_t, float, float, int32_t, float>(
-                M, N, K, ref_lhs_qvalues.data(), ref_lhs_scales.data(), ref_lhs_zero_points.data(), 1, K,
-                ref_rhs_values_qsi4.data(), ref_rhs_scales.data(), nullptr, 1, bl, ref_biases.data(), nullptr, nullptr,
-                1);
+        ref_dst_noclamp = matmul_nt_nt_quantized<
+            int8_t, float, int32_t, Int4, BFloat16<false>, int32_t, float, float, int32_t, float>(
+            M, N, K, ref_lhs_qvalues.data(), ref_lhs_scales.data(), ref_lhs_zero_points.data(), 1, K,
+            ref_rhs_values_qsi4.data(), ref_rhs_scales.data(), nullptr, 1, bl, ref_biases.data(), nullptr, nullptr, 1);
     }
 
     // Clamps the reference output.
@@ -444,7 +445,7 @@ TEST_P(MatMulTest_qmatmul_clamp_bf16_qai8dxp_qsi4c32p, EndToEnd) {
     auto ref_dst_float = clamp<float>(ref_dst_noclamp.data(), M * N, clamp_min, clamp_max);
 
     // Cast the reference output to BF16
-    auto ref_dst = cast<BFloat16, float>(ref_dst_float.data(), ref_dst_float.size() * 8 / size_in_bits<float>);
+    auto ref_dst = cast<BFloat16<false>, float>(ref_dst_float.data(), ref_dst_float.size() * 8 / size_in_bits<float>);
 
     // Runs the LHS packing micro-kernel.
     const auto lhs_start_row = rect.start_row();

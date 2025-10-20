@@ -418,7 +418,7 @@ protected:
         }
 
         auto ref_dst =
-            matmul_nt_nt_quantized<BFloat16, float, float, BFloat16, float, float, float, float, float, float>(
+            matmul_nt_nt_quantized<BFloat16<>, float, float, BFloat16<>, float, float, float, float, float, float>(
                 info.m, info.n, info.k, p_lhs_buff, nullptr, nullptr, 1, info.k, p_rhs_buff, nullptr, nullptr, 1,
                 info.k, bias.data(), nullptr, nullptr, info.k);
 

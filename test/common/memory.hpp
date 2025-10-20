@@ -43,9 +43,12 @@ T read_array(const void* array, size_t index) {
     } else if constexpr (std::is_same_v<T, Int4>) {
         const auto [lo, hi] = Int4::unpack_u8(reinterpret_cast<const uint8_t*>(array)[index / 2]);
         return index % 2 == 0 ? lo : hi;
-    } else if constexpr (std::is_same_v<T, BFloat16>) {
+    } else if constexpr (std::is_same_v<T, BFloat16<false>>) {
         uint16_t raw_value = reinterpret_cast<const uint16_t*>(array)[index];
-        return BFloat16(kai_cast_f32_bf16(raw_value));
+        return BFloat16<false>(kai_cast_f32_bf16(raw_value));
+    } else if constexpr (std::is_same_v<T, BFloat16<true>>) {
+        uint16_t raw_value = reinterpret_cast<const uint16_t*>(array)[index];
+        return BFloat16<true>(kai_cast_f32_bf16(raw_value));
     } else {
         return reinterpret_cast<const T*>(array)[index];
     }

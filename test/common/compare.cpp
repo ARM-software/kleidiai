@@ -244,7 +244,7 @@ bool compare(
                     return compare_raw<Float16>(imp_data, ref_data, format, full_height, full_width, rect, handler);
 
                 case DataType::BF16:
-                    return compare_raw<BFloat16>(imp_data, ref_data, format, full_height, full_width, rect, handler);
+                    return compare_raw<BFloat16<>>(imp_data, ref_data, format, full_height, full_width, rect, handler);
 
                 default:
                     break;
@@ -260,7 +260,7 @@ bool compare(
                 return compare_per_row<float, std::nullptr_t, float>(
                     imp_data, ref_data, format, full_height, full_width, rect, handler);
             } else if (data_type == DataType::BF16 && offset_dt == DataType::FP32) {
-                return compare_per_row<BFloat16, std::nullptr_t, float>(
+                return compare_per_row<BFloat16<>, std::nullptr_t, float>(
                     imp_data, ref_data, format, full_height, full_width, rect, handler);
             }
 

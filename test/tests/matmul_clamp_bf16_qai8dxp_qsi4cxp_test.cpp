@@ -42,6 +42,8 @@
 #include "test/reference/quantize.hpp"
 #include "test/reference/transpose.hpp"
 
+// Using BFloat truncate implementation (BFloat16<false>) to match existing packing/inference
+
 namespace kai::test {
 
 static const std::array<UkernelVariant<kai_matmul_clamp_bf16_qai8dxp_qsi4cxp_ukernel>, 2>
@@ -85,7 +87,7 @@ TEST_P(MatMulTest_bf16_qai8dxp_qsi4cxp, EndToEnd_RHS_NxK) {
     }
 
     // Generates input data.
-    const auto ref_lhs_bf16 = fill_random<BFloat16>(M * K, seed + 0);
+    const auto ref_lhs_bf16 = fill_random<BFloat16<false>>(M * K, seed + 0);
     const auto ref_rhs = fill_random<float>(N * K, seed + 1);
 
     Buffer ref_biases_buf;
@@ -95,7 +97,8 @@ TEST_P(MatMulTest_bf16_qai8dxp_qsi4cxp, EndToEnd_RHS_NxK) {
 
     // For reference implementation, Casting BF16 input to FP32 type and FP32 output back to BFP16 because the matmul
     // implementation works with FP32 accumulation and casts the result to BFP16
-    const auto ref_lhs = cast<float, BFloat16>(ref_lhs_bf16.data(), ref_lhs_bf16.size() * 8 / size_in_bits<BFloat16>);
+    const auto ref_lhs =
+        cast<float, BFloat16<false>>(ref_lhs_bf16.data(), ref_lhs_bf16.size() * 8 / size_in_bits<BFloat16<false>>);
 
     // Runs the reference implementation.
     //   * Quantizes the LHS matrix using 8-bit symmetric quantization.
@@ -117,7 +120,7 @@ TEST_P(MatMulTest_bf16_qai8dxp_qsi4cxp, EndToEnd_RHS_NxK) {
     const auto ref_dst_float = clamp<float>(ref_dst_no_clamp.data(), M * N, clamp_min, clamp_max);
 
     // Cast the reference output to BF16
-    auto ref_dst = cast<BFloat16, float>(ref_dst_float.data(), ref_dst_float.size() * 8 / size_in_bits<float>);
+    auto ref_dst = cast<BFloat16<false>, float>(ref_dst_float.data(), ref_dst_float.size() * 8 / size_in_bits<float>);
 
     // Runs the LHS packing micro-kernel.
     const auto lhs_start_row = rect.start_row();
@@ -203,14 +206,15 @@ TEST_P(MatMulTest_bf16_qai8dxp_qsi4cxp, EndToEnd_RHS_KxN) {
     const auto sr = ukernel_variant.interface.get_sr();
 
     // Generates input data.
-    const auto ref_lhs_bf16 = fill_random<BFloat16>(M * K, seed + 0);
+    const auto ref_lhs_bf16 = fill_random<BFloat16<false>>(M * K, seed + 0);
     const auto ref_rhs = fill_random<float>(N * K, seed + 1);
     Buffer ref_biases_buf;
     if (has_bias) {
         ref_biases_buf = Buffer(fill_random<float>(N, seed + 2));
     }
 
-    const auto ref_lhs = cast<float, BFloat16>(ref_lhs_bf16.data(), ref_lhs_bf16.size() * 8 / size_in_bits<BFloat16>);
+    const auto ref_lhs =
+        cast<float, BFloat16<false>>(ref_lhs_bf16.data(), ref_lhs_bf16.size() * 8 / size_in_bits<BFloat16<false>>);
 
     // Transposed(nxk) RHS dimensions
     const size_t ref_rhs_qsi4_nxk_stride = K;
@@ -244,7 +248,7 @@ TEST_P(MatMulTest_bf16_qai8dxp_qsi4cxp, EndToEnd_RHS_KxN) {
     const auto ref_dst_float = clamp<float>(ref_dst_fp32_clamp.data(), M * N, clamp_min, clamp_max);
 
     // Cast the reference output to BF16
-    auto ref_dst = cast<BFloat16, float>(ref_dst_float.data(), ref_dst_float.size() * 8 / size_in_bits<float>);
+    auto ref_dst = cast<BFloat16<false>, float>(ref_dst_float.data(), ref_dst_float.size() * 8 / size_in_bits<float>);
 
     auto m_step = ukernel_variant.interface.get_m_step();
     ASSERT_TRUE(m_step % mr == 0);

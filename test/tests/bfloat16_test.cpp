@@ -8,11 +8,16 @@
 
 #include <gtest/gtest.h>
 
+#include "test/common/cpu_info.hpp"
 #include "test/common/numeric_limits.hpp"
 
 namespace kai::test {
 
 TEST(BFloat16, SimpleTest) {
+    if (!(cpu_has_bf16())) {
+        GTEST_SKIP() << "Unsupported CPU feature";
+    }
+
     ASSERT_EQ(static_cast<float>(BFloat16()), 0.0F);
     ASSERT_EQ(static_cast<float>(BFloat16(1.25F)), 1.25F);
     ASSERT_EQ(static_cast<float>(BFloat16(-1.25F)), -1.25F);
@@ -29,8 +34,11 @@ TEST(BFloat16, SimpleTest) {
 }
 
 TEST(BFloat16, NumericLimitTest) {
-    ASSERT_EQ(static_cast<float>(numeric_lowest<BFloat16>), -338953138925153547590470800371487866880.0F);
-    ASSERT_EQ(static_cast<float>(numeric_highest<BFloat16>), 338953138925153547590470800371487866880.0F);
+    if (!(cpu_has_bf16())) {
+        GTEST_SKIP() << "Unsupported CPU feature";
+    }
+    ASSERT_EQ(static_cast<float>(numeric_lowest<BFloat16<>>), -338953138925153547590470800371487866880.0F);
+    ASSERT_EQ(static_cast<float>(numeric_highest<BFloat16<>>), 338953138925153547590470800371487866880.0F);
 }
 
 }  // namespace kai::test

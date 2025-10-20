@@ -45,7 +45,7 @@ inline void print_data(std::ostream& os, const uint8_t* data, size_t len, DataTy
                     break;
 
                 case DataType::BF16:
-                    os << reinterpret_cast<const BFloat16*>(data)[i];
+                    os << reinterpret_cast<const BFloat16<>*>(data)[i];
                     break;
 
                 case DataType::I32:

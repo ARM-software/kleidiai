@@ -389,7 +389,8 @@ template Buffer matmul_nt_t_quantized<int8_t, float, int32_t, int8_t, float, int
     size_t rhs_quant_width,  //
     const void* bias_data, const void* bias_scales, const void* bias_zero_points, size_t bias_quant_width);
 
-template Buffer matmul_nt_t_quantized<int8_t, float, int32_t, Int4, BFloat16, int32_t, float, float, int32_t, float>(
+template Buffer
+matmul_nt_t_quantized<int8_t, float, int32_t, Int4, BFloat16<false>, int32_t, float, float, int32_t, float>(
     size_t m, size_t n, size_t k,  //
     const void* lhs_data, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_height,
     size_t lhs_quant_width,  //
@@ -468,7 +469,8 @@ Buffer matmul_nt_nt_quantized(
     return dst;
 }
 
-template Buffer matmul_nt_nt_quantized<int8_t, float, int32_t, Int4, BFloat16, int32_t, float, float, int32_t, float>(
+template Buffer
+matmul_nt_nt_quantized<int8_t, float, int32_t, Int4, BFloat16<false>, int32_t, float, float, int32_t, float>(
     size_t m, size_t n, size_t k,  //
     const void* lhs_data, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_height,
     size_t lhs_quant_width,  //
@@ -476,7 +478,7 @@ template Buffer matmul_nt_nt_quantized<int8_t, float, int32_t, Int4, BFloat16, i
     size_t rhs_quant_width,  //
     const void* bias_data, const void* bias_scales, const void* bias_zero_points, size_t bias_quant_width);
 
-template Buffer matmul_nt_nt_quantized<BFloat16, float, float, BFloat16, float, float, float, float, float, float>(
+template Buffer matmul_nt_nt_quantized<BFloat16<>, float, float, BFloat16<>, float, float, float, float, float, float>(
     size_t m, size_t n, size_t k,  //
     const void* lhs_data, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_height,
     size_t lhs_quant_width,  //
@@ -566,7 +568,7 @@ template Buffer matmul_clamp_nt_t<int8_t, Float16, int32_t, Int4, Float16, int32
     const void* biases,                                                                                 //
     float min_value, float max_value);
 
-template Buffer matmul_clamp_nt_t<int8_t, float, int32_t, Int4, BFloat16, int32_t, float, int32_t, float>(
+template Buffer matmul_clamp_nt_t<int8_t, float, int32_t, Int4, BFloat16<false>, int32_t, float, int32_t, float>(
     size_t m, size_t n, size_t k,                                                                       //
     const void* lhs_data, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_width,  //
     const void* rhs_data, const void* rhs_scales, const void* rhs_zero_points, size_t rhs_quant_width,  //
@@ -658,7 +660,7 @@ template Buffer matmul_clamp_nt_nt<int8_t, Float16, int32_t, Int4, Float16, int3
     const void* biases,                                                                                 //
     float min_value, float max_value);
 
-template Buffer matmul_clamp_nt_nt<int8_t, float, int32_t, Int4, BFloat16, int32_t, float, int32_t, float>(
+template Buffer matmul_clamp_nt_nt<int8_t, float, int32_t, Int4, BFloat16<false>, int32_t, float, int32_t, float>(
     size_t m, size_t n, size_t k,                                                                       //
     const void* lhs_data, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_width,  //
     const void* rhs_data, const void* rhs_scales, const void* rhs_zero_points, size_t rhs_quant_width,  //

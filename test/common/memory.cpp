@@ -20,7 +20,7 @@ double read_array(DataType type, const void* array, size_t index) {
         case DataType::FP16:
             return static_cast<float>(read_array<Float16>(array, index));
         case DataType::BF16:
-            return static_cast<float>(read_array<BFloat16>(array, index));
+            return static_cast<float>(read_array<BFloat16<>>(array, index));
         case DataType::I32:
             return read_array<int32_t>(array, index);
         case DataType::QAI8:
@@ -47,7 +47,7 @@ void write_array(DataType type, void* array, size_t index, double value) {
             return;
         }
         case DataType::BF16: {
-            write_array<BFloat16>(array, index, static_cast<BFloat16>(value));
+            write_array<BFloat16<>>(array, index, static_cast<BFloat16<>>(value));
             return;
         }
         case DataType::I32: {

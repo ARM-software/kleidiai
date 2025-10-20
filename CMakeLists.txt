@@ -478,6 +478,7 @@ if(KLEIDIAI_BUILD_TESTS)
 
     add_library(kleidiai_test_framework
         test/common/bfloat16.cpp
+        test/common/bfloat16_asm.S
         test/common/buffer.cpp
         test/common/compare.cpp
         test/common/cpu_info.cpp

@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <functional>
 
+#include "test/common/bfloat16.hpp"
 #include "test/common/buffer.hpp"
 
 namespace kai::test {

@@ -33,7 +33,7 @@ inline constexpr Float16 numeric_highest<Float16> = Float16::from_binary(0x7bff)
 
 /// Highest finite value of @ref BFloat16.
 template <>
-inline constexpr BFloat16 numeric_highest<BFloat16> = BFloat16::from_binary(0x7f7f);
+inline constexpr BFloat16 numeric_highest<BFloat16<>> = BFloat16<>::from_binary(0x7f7f);
 
 /// Lowest finite value of type `T`.
 template <typename T>
@@ -53,6 +53,6 @@ inline constexpr Float16 numeric_lowest<Float16> = Float16::from_binary(0xfbff);
 
 /// Lowest finite value of @ref BFloat16.
 template <>
-inline constexpr BFloat16 numeric_lowest<BFloat16> = BFloat16::from_binary(0xff7f);
+inline constexpr BFloat16 numeric_lowest<BFloat16<>> = BFloat16<>::from_binary(0xff7f);
 
 }  // namespace kai::test

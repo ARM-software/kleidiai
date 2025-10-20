@@ -26,14 +26,14 @@ namespace kai::test {
 
 namespace {
 
-BFloat16 convert(const uint8_t* src_ptr_elm, DataType src_dtype, DataType dst_dtype) {
+BFloat16<> convert(const uint8_t* src_ptr_elm, DataType src_dtype, DataType dst_dtype) {
     KAI_ASSUME((src_dtype == DataType::FP32 || src_dtype == DataType::FP16) && dst_dtype == DataType::BF16);
 
     switch (src_dtype) {
         case DataType::FP32:
-            return BFloat16(*reinterpret_cast<const float*>(src_ptr_elm));
+            return BFloat16<>(*reinterpret_cast<const float*>(src_ptr_elm));
         case DataType::FP16:
-            return BFloat16(static_cast<float>(*reinterpret_cast<const Float16*>(src_ptr_elm)));
+            return BFloat16<>(static_cast<float>(*reinterpret_cast<const Float16*>(src_ptr_elm)));
         default:
             KAI_ERROR("Unsupported Data Type");
     }
