@@ -6,7 +6,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(KleidiAI
-    VERSION 1.15.0
+    VERSION 1.15.1
     LANGUAGES C CXX
 )
 
