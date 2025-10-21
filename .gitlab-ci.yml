@@ -487,13 +487,12 @@ test-examples-sme-fvp:
     paths:
       - "example_*.log"
 
-coverage-clang:
+.coverage-base:
   extends:
     - .standard-rules
-  stage: analyze
   needs: []
-  tags:
-    - apple_silicon
+  variables:
+    GCOV_EXECUTABLE: ""
   script:
     # Configure and build
     - cmake -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
@@ -511,17 +510,51 @@ coverage-clang:
       root=${PWD}
       exclude=${PWD}/${CI_JOB_NAME_SLUG}
       gcov-ignore-parse-errors=suspicious_hits.warn
-      gcov-executable=xcrun llvm-cov gcov
+      gcov-executable=$GCOV_EXECUTABLE
       exclude-unreachable-branches=yes
       exclude-lines-by-pattern=.*KAI_(?:ASSERT|ASSUME|ERROR).*
       exclude-branches-by-pattern=.*KAI_(?:ASSERT|ASSUME).*" > build/gcovr.cfg
     # Post-process generated coverage report
     - gcovr --json=build/coverage/${CI_JOB_NAME_SLUG}.json -j ${PARALLEL_JOBS} --config build/gcovr.cfg
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - build/coverage/${CI_JOB_NAME_SLUG}.json
+
+coverage-linux:
+  extends:
+    - .coverage-base
+  stage: analyze
+  variables:
+    GCOV_EXECUTABLE: "llvm-cov gcov"
+  before_script:
+    - pip3 install -U --break-system-packages --user gcovr
+
+coverage-clang:
+  extends:
+    - .coverage-base
+  stage: analyze
+  tags:
+    - apple_silicon
+  variables:
+    GCOV_EXECUTABLE: "xcrun llvm-cov gcov"
+
+coverage:
+  extends:
+    - .standard-rules
+  stage: deploy
+  needs:
+    - coverage-linux
+    - coverage-clang
+  tags:
+    - apple_silicon
+  script:
     # Generage Cobertura and HTML reports
     - mkdir -p build/html/coverage
     - gcovr --json-add-tracefile "build/coverage/*.json" --print-summary
       --cobertura=build/coverage.xml --html-details=build/html/coverage/coverage_report.html
-      --html-title="KleidiAI Coverage Report" -j ${PARALLEL_JOBS}
+      --html-title="KleidiAI Coverage Report" --merge-mode-functions=separate --merge-lines
+      -j ${PARALLEL_JOBS}
   coverage: '/^lines:\s+(\d+.\d)%\s+/'
   artifacts:
     name: ${CI_JOB_NAME}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}
@@ -541,7 +574,7 @@ pages:
   tags:
     - apple_silicon
   needs:
-    - coverage-clang
+    - coverage
   script:
     - |
       echo '
