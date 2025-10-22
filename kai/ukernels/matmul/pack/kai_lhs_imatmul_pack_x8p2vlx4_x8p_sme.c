@@ -66,7 +66,8 @@ void kai_run_lhs_imatmul_pack_x8p2vlx4_x8p_sme(
                 KAI_ASSERT(i_k_chunk + (i_m + y) * k_chunk_count < m * k_chunk_count);
                 in[y] = *(lhs_ptrs + i_m * k_chunk_count + i_k_chunk * m_step + y);
                 if (in[y] != pad_ptr) {
-                    in[y] += lhs_ptr_offset;
+                    uintptr_t in_ptr = (uintptr_t)in[y] + lhs_ptr_offset;
+                    in[y] = (const uint8_t*)in_ptr;  // NOLINT(performance-no-int-to-ptr)
                 }
             }
 

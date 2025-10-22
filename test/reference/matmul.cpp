@@ -197,13 +197,17 @@ Buffer indirect_matmul(
     const size_t n_chunks = m * k_chunk_count;
     Buffer lhs(n_chunks * chunk_bytes);
 
+    const uintptr_t lhs_padding_ptr_uint = reinterpret_cast<uintptr_t>(lhs_padding_ptr);
+
     // Copy all chunks to the created matrix
     for (size_t i = 0; i < n_chunks; i += 1) {
-        const uint8_t* src_pointer = static_cast<const uint8_t*>(lhs_idata[i]);
-        if (src_pointer != lhs_padding_ptr) {
+        uintptr_t src_pointer = reinterpret_cast<uintptr_t>(lhs_idata[i]);
+        if (src_pointer != lhs_padding_ptr_uint) {
             src_pointer += lhs_offset;
         }
-        memcpy(lhs.data() + i * chunk_bytes, src_pointer, chunk_bytes);
+        memcpy(
+            lhs.data() + i * chunk_bytes, reinterpret_cast<const void*>(src_pointer),
+            chunk_bytes);  // NOLINT(performance-no-int-to-ptr)
     }
 
     return matmul(
