@@ -87,7 +87,5 @@ struct UkernelMatmulPackVariant {
     R rhs_pack_interface;
 
     bool rhs_s0s1_input;
-
-    UkernelMatmulPackVariant() = delete;
 };
 }  // namespace kai::test
