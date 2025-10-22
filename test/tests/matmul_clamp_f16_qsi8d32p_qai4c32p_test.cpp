@@ -222,12 +222,7 @@ TEST_P(MatMulTest_f16_qsi8d32p_qai4c32p, LhsPackedWithSameBlockdepth) {
     const auto rect = portion.compute_portion(M, N, m_step, n_step);
 
     // Generates input data.
-    const auto ref_lhs = fill_random<float>(M * K, seed + 0);
-
-    // Runs the reference implementation.
-    //   * Quantizes the LHS matrix using 8-bit symmetric quantization.
-    const auto [ref_lhs_qvalues, ref_lhs_scales] =
-        quantize_symmetric_per_block_dynamic<float, int8_t, float>(ref_lhs.data(), M, K, bl);
+    const auto ref_lhs = fill_random<Float16>(M * K, seed + 0);
 
     // Runs the LHS packing micro-kernel.
     const auto lhs_start_row = rect.start_row();
