@@ -127,7 +127,7 @@ static inline std::tuple<Buffer, size_t> pack_rhs_qsi4c32pscalebf16(
     const size_t rhs_stride_bytes = round_up_division(width, 2);
     const size_t scales_stride_bytes = round_up_division(K, bl) * kai_get_datatype_size_in_bytes(scale_dt);
 
-    KAI_ASSUME(rhs_values_qsi4.size() == round_up_division(height * rhs_stride, 2));
+    KAI_ASSUME_ALWAYS(rhs_values_qsi4.size() == round_up_division(height * rhs_stride, 2));
 
     const auto rhs_values_qsu4 = cast_qsu4_qsi4(rhs_values_qsi4.data(), rhs_values_qsi4.size() * 2);
     auto rhs_qsu4 =
@@ -177,7 +177,7 @@ static inline std::tuple<Buffer, size_t> pack_rhs_qsi4c32pscalebf16(
 static inline std::tuple<Buffer, size_t> pack_rhs_qsi4c32pscalebf16_neon(
     size_t N, size_t K, size_t bl, size_t nr, size_t kr, size_t sr, const Buffer& rhs_values_qsi4, const Buffer& biases,
     size_t bias_offset, const Buffer& rhs_scales, RhsPackType pack_type, size_t rect_start_row, size_t rect_width) {
-    KAI_ASSUME(kr / sr == 8 || kr / sr == 4);
+    KAI_ASSUME_ALWAYS(kr / sr == 8 || kr / sr == 4);
     const size_t width = pack_type == RhsPackType::KxN ? N : K;
     const size_t height = pack_type == RhsPackType::KxN ? K : N;
     kai_datatype scale_dt = kai_datatype::kai_dt_bf16;
@@ -186,7 +186,7 @@ static inline std::tuple<Buffer, size_t> pack_rhs_qsi4c32pscalebf16_neon(
     const size_t rhs_stride_bytes = round_up_division(width, 2);
     const size_t scales_stride_bytes = round_up_division(K, bl) * kai_get_datatype_size_in_bytes(scale_dt);
 
-    KAI_ASSUME(rhs_values_qsi4.size() == round_up_division(height * rhs_stride, 2));
+    KAI_ASSUME_ALWAYS(rhs_values_qsi4.size() == round_up_division(height * rhs_stride, 2));
 
     const auto rhs_values_qsu4 = cast_qsu4_qsi4(rhs_values_qsi4.data(), rhs_values_qsi4.size() * 2);
     auto rhs_qsu4 =
@@ -256,8 +256,8 @@ TEST_P(MatMulTest_qmatmul_clamp_f32_qai8dxp_qsi4c32p, EndToEnd) {
     size_t N = matmul_shape.n;
     size_t K = matmul_shape.k;
 
-    KAI_ASSUME((K % bl) == 0);
-    KAI_ASSUME((bl % 32) == 0);
+    KAI_ASSUME_ALWAYS((K % bl) == 0);
+    KAI_ASSUME_ALWAYS((bl % 32) == 0);
 
     auto mr = ukernel_variant.interface.get_mr();
     auto nr = ukernel_variant.interface.get_nr();

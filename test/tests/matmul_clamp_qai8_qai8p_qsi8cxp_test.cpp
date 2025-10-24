@@ -666,7 +666,7 @@ const TestReference& get_test_reference(const TestDataId& test_data_id) {
 /// Test LHS packing
 void test_lhs_pack(
     const MatMulShape& shape, const MatMulVariant& variant, const Rect& output_area, const TestReference& reference) {
-    KAI_ASSUME(variant.lhs_pack.has_value());
+    KAI_ASSUME_ALWAYS(variant.lhs_pack.has_value());
 
     const auto imp_packed_lhs_size =
         variant.lhs_pack->get_packed_lhs_size(shape.m, shape.k, variant.acc_pack.m, variant.acc_pack.k, 1);

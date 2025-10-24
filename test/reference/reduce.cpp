@@ -34,7 +34,7 @@ Buffer reduce_any_op_type(const void* src, size_t height, size_t width, size_t d
     switch (dimension) {
         case 0: {
             Buffer dst(height * size_in_bits<Output> / 8);
-            KAI_ASSUME(height * size_in_bits<Output> % 8 == 0);
+            KAI_ASSUME_ALWAYS(height * size_in_bits<Output> % 8 == 0);
 
             for (size_t y = 0; y < height; ++y) {
                 Output acc = read_array<Input>(src, y * width);
@@ -52,7 +52,7 @@ Buffer reduce_any_op_type(const void* src, size_t height, size_t width, size_t d
 
         case 1: {
             Buffer dst(width * size_in_bits<Output> / 8);
-            KAI_ASSUME(width * size_in_bits<Output> % 8 == 0);
+            KAI_ASSUME_ALWAYS(width * size_in_bits<Output> % 8 == 0);
 
             for (size_t x = 0; x < width; ++x) {
                 Output acc = read_array<Input>(src, x);
@@ -77,11 +77,11 @@ template <const ReductionOperator op>
 Buffer reduce_any_op(
     const void* src, const DataFormat& src_format, size_t height, size_t width, const DataFormat& dst_format,
     size_t dimension) {
-    KAI_ASSUME(src_format.is_raw());
-    KAI_ASSUME(dst_format.is_raw());
-    KAI_ASSUME(dimension < 2);
-    KAI_ASSUME(height > 0);
-    KAI_ASSUME(width > 0);
+    KAI_ASSUME_ALWAYS(src_format.is_raw());
+    KAI_ASSUME_ALWAYS(dst_format.is_raw());
+    KAI_ASSUME_ALWAYS(dimension < 2);
+    KAI_ASSUME_ALWAYS(height > 0);
+    KAI_ASSUME_ALWAYS(width > 0);
 
     const auto src_dt = src_format.data_type();
     const auto dst_dt = dst_format.data_type();
@@ -131,7 +131,7 @@ template Buffer reduce_add_x<int8_t, int32_t>(const void* src, size_t height, si
 
 template <typename T>
 T reduce_min(const void* src, size_t len) {
-    KAI_ASSUME(len > 0);
+    KAI_ASSUME_ALWAYS(len > 0);
 
     T min = read_array<T>(src, 0);
 
@@ -146,7 +146,7 @@ template float reduce_min(const void* src, size_t len);
 
 template <typename T>
 T reduce_max(const void* src, size_t len) {
-    KAI_ASSUME(len > 0);
+    KAI_ASSUME_ALWAYS(len > 0);
 
     T max = read_array<T>(src, 0);
 

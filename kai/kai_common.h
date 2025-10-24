@@ -24,33 +24,97 @@ extern "C" {
 //   * cppcoreguidelines-avoid-do-while: do-while is necessary for macros.
 //   * cppcoreguidelines-pro-type-vararg: use of variadic arguments in fprintf is expected.
 //   * cert-err33-c: checking the output of fflush and fprintf is not necessary for error reporting.
-#define KAI_ERROR(msg)                                        \
-    do {                                                      \
-        fflush(stdout);                                       \
-        fprintf(stderr, "%s:%d %s", __FILE__, __LINE__, msg); \
-        abort();                                              \
+
+#ifndef KLEIDIAI_ERROR_TRAP
+#define KLEIDIAI_ERROR_TRAP 0
+#endif
+
+#ifndef KLEIDIAI_HAS_BUILTIN_UNREACHABLE
+#define KLEIDIAI_HAS_BUILTIN_UNREACHABLE 0
+#endif
+
+#ifndef KLEIDIAI_HAS_BUILTIN_ASSUME0
+#define KLEIDIAI_HAS_BUILTIN_ASSUME0 0
+#endif
+
+#if KLEIDIAI_ERROR_TRAP
+#define KAI_ABORT() __builtin_trap()
+#else
+#define KAI_ABORT() abort()
+#endif
+
+#if KLEIDIAI_HAS_BUILTIN_UNREACHABLE
+#define KAI_UNREACHABLE() __builtin_unreachable()
+#elif KLEIDIAI_HAS_BUILTIN_ASSUME0
+#define KAI_UNREACHABLE() __assume(0);
+#else
+#define KAI_UNREACHABLE()
+#endif
+
+#ifdef NDEBUG
+#define KAI_ERROR(msg)   \
+    do {                 \
+        KAI_UNUSED(msg); \
+        KAI_ABORT();     \
     } while (0)
 
 #define KAI_ASSERT_MSG(cond, msg) \
     do {                          \
+        KAI_UNUSED(msg);          \
         if (!(cond)) {            \
-            KAI_ERROR(msg);       \
+            KAI_UNREACHABLE();    \
         }                         \
+    } while (0)
+#else
+#define KAI_ERROR(msg)                                        \
+    do {                                                      \
+        fflush(stdout);                                       \
+        fprintf(stderr, "%s:%d %s", __FILE__, __LINE__, msg); \
+        KAI_ABORT();                                          \
+    } while (0)
+
+#define KAI_ASSERT_MSG(cond, msg) KAI_ASSERT_ALWAYS_MSG(cond, msg)
+#endif  // NDEBUG
+
+#define KAI_ASSERT_ALWAYS_MSG(cond, msg) \
+    do {                                 \
+        if (!(cond)) {                   \
+            KAI_ERROR(msg);              \
+        }                                \
     } while (0)
 
 // NOLINTEND(cppcoreguidelines-avoid-do-while,cppcoreguidelines-pro-type-vararg,cert-err33-c)
 
+/// KAI_ASSERT* is used for logic sanity checking in the program
+/// flow. Checks are optimized away in release builds same as
+/// `assert`
 #define KAI_ASSERT(cond) KAI_ASSERT_MSG(cond, #cond)
-
 #define KAI_ASSERT_IF_MSG(precond, cond, msg) KAI_ASSERT_MSG(!(precond) || (cond), msg)
 #define KAI_ASSERT_IF(precond, cond) KAI_ASSERT_IF_MSG(precond, cond, #precond " |-> " #cond)
 
+/// `KAI_ASSERT_ALWAYS*` is same as `KAI_ASSERT*`, but doesn't get removed by `NDEBUG`
+#define KAI_ASSERT_ALWAYS(cond) KAI_ASSERT_ALWAYS_MSG(cond, #cond)
+#define KAI_ASSERT_ALWAYS_IF_MSG(precond, cond, msg) KAI_ASSERT_ALWAYS_MSG(!(precond) || (cond), msg)
+#define KAI_ASSERT_ALWAYS_IF(precond, cond) KAI_ASSERT_ALWAYS_IF_MSG(precond, cond, #precond " |-> " #cond)
+
+/// KAI_ASSUME* is used for function pre-condition checking, similar to `[[assume]]` in C++23.
+/// So KAI_ASSUME should be used directly on the function parameters, rather than inside
+/// function logic.
 #define KAI_ASSUME_MSG KAI_ASSERT_MSG
 #define KAI_ASSUME KAI_ASSERT
 #define KAI_ASSUME_IF_MSG KAI_ASSERT_IF_MSG
 #define KAI_ASSUME_IF KAI_ASSERT_IF
 
+/// `KAI_ASSUME_ALWAYS*` is same as `KAI_ASSUME*`, but doesn't get removed by `NDEBUG`
+#define KAI_ASSUME_ALWAYS_MSG KAI_ASSERT_ALWAYS_MSG
+#define KAI_ASSUME_ALWAYS KAI_ASSERT_ALWAYS
+#define KAI_ASSUME_ALWAYS_IF_MSG KAI_ASSERT_ALWAYS_IF_MSG
+#define KAI_ASSUME_ALWAYS_IF KAI_ASSERT_ALWAYS_IF
+
+/// Indicate that result of `x` is unused
 #define KAI_UNUSED(x) (void)(x)
+
+/// Return minimum or maximum of `a` and `b`
 #define KAI_MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define KAI_MAX(a, b) (((a) > (b)) ? (a) : (b))
 

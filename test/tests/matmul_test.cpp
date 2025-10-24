@@ -663,7 +663,7 @@ protected:
         const auto rhs_w = info.n;
         auto rhs = fill_matrix_random(rhs_h, rhs_w, method.rhs_format, 1);
 
-        KAI_ASSUME(method.rhs_format.is_raw());
+        KAI_ASSUME_ALWAYS(method.rhs_format.is_raw());
         auto rhs_t = transpose(rhs.data(), method.rhs_format.data_type(), rhs_h, rhs_w);
 
         Buffer rhs_scales;
@@ -687,9 +687,9 @@ protected:
                 true);
         }
 
-        KAI_ASSUME(method.lhs_format.is_raw());
-        KAI_ASSUME(method.rhs_format.is_raw());
-        KAI_ASSUME(method.dst_format.is_raw());
+        KAI_ASSUME_ALWAYS(method.lhs_format.is_raw());
+        KAI_ASSUME_ALWAYS(method.rhs_format.is_raw());
+        KAI_ASSUME_ALWAYS(method.dst_format.is_raw());
         auto ref_dst = matmul(
             lhs.data(), nullptr, nullptr, method.lhs_format.data_type(),            //
             rhs.data(), rhs_scales.data(), nullptr, method.rhs_format.data_type(),  //

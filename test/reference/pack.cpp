@@ -27,7 +27,7 @@ namespace kai::test {
 namespace {
 
 BFloat16<> convert(const uint8_t* src_ptr_elm, DataType src_dtype, DataType dst_dtype) {
-    KAI_ASSUME((src_dtype == DataType::FP32 || src_dtype == DataType::FP16) && dst_dtype == DataType::BF16);
+    KAI_ASSUME_ALWAYS((src_dtype == DataType::FP32 || src_dtype == DataType::FP16) && dst_dtype == DataType::BF16);
 
     switch (src_dtype) {
         case DataType::FP32:
@@ -91,7 +91,7 @@ Buffer pack_block(
         }
     }
 
-    KAI_ASSERT(reinterpret_cast<uintptr_t>(dst_ptr) - reinterpret_cast<uintptr_t>(dst.data()) == dst_bytes);
+    KAI_ASSERT_ALWAYS(reinterpret_cast<uintptr_t>(dst_ptr) - reinterpret_cast<uintptr_t>(dst.data()) == dst_bytes);
 
     return dst;
 }
@@ -101,7 +101,7 @@ Buffer pack_bias_per_row(
     DataType src_dtype, DataType bias_dtype, DataType dst_dtype, size_t src_esize, size_t bias_esize, size_t dst_esize,
     const void* src, const void* bias, size_t height, size_t width, size_t block_height, size_t block_width,
     size_t subblock_height, size_t subblock_width) {
-    KAI_ASSUME(src_dtype == bias_dtype);
+    KAI_ASSUME_ALWAYS(src_dtype == bias_dtype);
 
     const auto num_groups = (height + block_height - 1) / block_height;
     const auto group_num_blocks = (width + block_width - 1) / block_width;
@@ -163,7 +163,7 @@ Buffer pack_bias_per_row(
         }
     }
 
-    KAI_ASSERT(reinterpret_cast<uintptr_t>(dst_ptr) - reinterpret_cast<uintptr_t>(dst.data()) == dst_bytes);
+    KAI_ASSERT_ALWAYS(reinterpret_cast<uintptr_t>(dst_ptr) - reinterpret_cast<uintptr_t>(dst.data()) == dst_bytes);
 
     return dst;
 }
@@ -184,7 +184,7 @@ Buffer pack(
     const auto subblock_width = dst_format.actual_subblock_width(width);
 
     if (src_qf == DataFormat::PackFormat::NONE && dst_qf == DataFormat::PackFormat::BIAS_PER_ROW) {
-        KAI_ASSUME(
+        KAI_ASSUME_ALWAYS(
             (src_dt == dst_dt) || (src_dt == DataType::FP32 && dst_dt == DataType::BF16) ||
             (src_dt == DataType::FP16 && dst_dt == DataType::BF16));
 
@@ -193,7 +193,7 @@ Buffer pack(
         const auto bias_esize = data_type_size_in_bits(dst_format.zero_point_data_type());
         const auto bias_dt = dst_format.zero_point_data_type();
 
-        KAI_ASSUME(dst_esize % 8 == 0 && bias_esize % 8 == 0 && src_esize % 8 == 0);
+        KAI_ASSUME_ALWAYS(dst_esize % 8 == 0 && bias_esize % 8 == 0 && src_esize % 8 == 0);
 
         return pack_bias_per_row(
             src_dt, bias_dt, dst_dt, src_esize / 8, bias_esize / 8, dst_esize / 8, src, bias, height, width,
@@ -201,14 +201,14 @@ Buffer pack(
     }
 
     if (src_qf == DataFormat::PackFormat::NONE && dst_qf == DataFormat::PackFormat::NONE) {
-        KAI_ASSUME(
+        KAI_ASSUME_ALWAYS(
             (src_dt == dst_dt) || (src_dt == DataType::FP32 && dst_dt == DataType::BF16) ||
             (src_dt == DataType::FP16 && dst_dt == DataType::BF16));
 
         const auto dst_esize = data_type_size_in_bits(dst_dt);
         const auto src_esize = data_type_size_in_bits(src_dt);
 
-        KAI_ASSUME(src_esize % 8 == 0 && dst_esize % 8 == 0);
+        KAI_ASSUME_ALWAYS(src_esize % 8 == 0 && dst_esize % 8 == 0);
 
         return pack_block(
             src, src_dt, dst_dt, src_esize / 8, dst_esize / 8, height, width, block_height, block_width,
@@ -220,8 +220,8 @@ Buffer pack(
 
 template <typename Data, typename Scale>
 Buffer pack_data_scales(const void* data, const void* scales, size_t height, size_t width, size_t quant_width) {
-    KAI_ASSUME_IF(size_in_bits<Data> < 8, quant_width % (8 / size_in_bits<Data>) == 0);
-    KAI_ASSUME_IF(size_in_bits<Data> < 8, width % (8 / size_in_bits<Data>) == 0);
+    KAI_ASSUME_ALWAYS_IF(size_in_bits<Data> < 8, quant_width % (8 / size_in_bits<Data>) == 0);
+    KAI_ASSUME_ALWAYS_IF(size_in_bits<Data> < 8, width % (8 / size_in_bits<Data>) == 0);
 
     const auto num_quant_packets_x = round_up_multiple(width, quant_width) / quant_width;
 
@@ -250,7 +250,7 @@ Buffer pack_data_scales(const void* data, const void* scales, size_t height, siz
         }
     }
 
-    KAI_ASSERT(dst_ptr == dst.data() + dst.size());
+    KAI_ASSERT_ALWAYS(dst_ptr == dst.data() + dst.size());
 
     return dst;
 }
@@ -260,15 +260,15 @@ Buffer pack_zero_points_data_scales_per_block(
     const void* zero_points, const void* data, const void* scales, size_t num_blocks, size_t block_num_zero_points,
     size_t block_num_data, size_t block_num_scales) {
     // Only data is allowed to be sub-byte.
-    KAI_ASSUME(size_in_bits<ZeroPoint> % 8 == 0);
-    KAI_ASSUME(size_in_bits<Scale> % 8 == 0);
+    KAI_ASSUME_ALWAYS(size_in_bits<ZeroPoint> % 8 == 0);
+    KAI_ASSUME_ALWAYS(size_in_bits<Scale> % 8 == 0);
 
     // Checks for memory alignment.
-    KAI_ASSUME(size_in_bits<ZeroPoint> % size_in_bits<Data> == 0);
-    KAI_ASSUME(
+    KAI_ASSUME_ALWAYS(size_in_bits<ZeroPoint> % size_in_bits<Data> == 0);
+    KAI_ASSUME_ALWAYS(
         (block_num_zero_points * size_in_bits<ZeroPoint> + block_num_data * size_in_bits<Data>) % size_in_bits<Scale> ==
         0);
-    KAI_ASSUME(
+    KAI_ASSUME_ALWAYS(
         (block_num_data * size_in_bits<Data> + block_num_scales * size_in_bits<Scale>) % size_in_bits<ZeroPoint> == 0);
 
     Buffer dst(round_up_division(
@@ -296,7 +296,7 @@ Buffer pack_zero_points_data_scales_per_block(
         dst_ptr += block_num_scales * sizeof(Scale);
     }
 
-    KAI_ASSERT(dst_ptr == dst.data() + dst.size());
+    KAI_ASSERT_ALWAYS(dst_ptr == dst.data() + dst.size());
 
     return dst;
 }
@@ -308,10 +308,10 @@ template Buffer pack_zero_points_data_scales_per_block<int32_t, int8_t, float>(
 template <typename Data, typename Scale>
 Buffer pack_data_scales_interleave_block(
     const void* data, const void* scales, size_t height, size_t width, size_t quant_width) {
-    KAI_ASSUME_IF(size_in_bits<Data> < 8, quant_width % (8 / size_in_bits<Data>) == 0);
-    KAI_ASSUME_IF(size_in_bits<Data> < 8, width % (8 / size_in_bits<Data>) == 0);
-    KAI_ASSUME(width % quant_width == 0);
-    KAI_ASSUME(quant_width % 2 == 0);
+    KAI_ASSUME_ALWAYS_IF(size_in_bits<Data> < 8, quant_width % (8 / size_in_bits<Data>) == 0);
+    KAI_ASSUME_ALWAYS_IF(size_in_bits<Data> < 8, width % (8 / size_in_bits<Data>) == 0);
+    KAI_ASSUME_ALWAYS(width % quant_width == 0);
+    KAI_ASSUME_ALWAYS(quant_width % 2 == 0);
 
     const auto num_quant_packets_x = round_up_multiple(width, quant_width) / quant_width;
 
@@ -340,7 +340,7 @@ Buffer pack_data_scales_interleave_block(
         }
     }
 
-    KAI_ASSERT(dst_ptr == dst.data() + dst.size());
+    KAI_ASSERT_ALWAYS(dst_ptr == dst.data() + dst.size());
 
     return dst;
 }
@@ -358,8 +358,8 @@ Buffer pack_block_data_zero_points_scale_bias(
         quant_width = round_up_multiple(quant_width, block_width);
     }
 
-    KAI_ASSERT(quant_height == block_height);
-    KAI_ASSERT(quant_width % block_width == 0);
+    KAI_ASSERT_ALWAYS(quant_height == block_height);
+    KAI_ASSERT_ALWAYS(quant_width % block_width == 0);
 
     if (interleave_x_blocks == 0) {
         interleave_x_blocks = quant_width / block_width;
@@ -444,7 +444,7 @@ Buffer pack_block_data_zero_points_scale_bias(
         }
     }
 
-    KAI_ASSERT(dst_ptr == dst.data() + dst.size());
+    KAI_ASSERT_ALWAYS(dst_ptr == dst.data() + dst.size());
 
     return dst;
 }

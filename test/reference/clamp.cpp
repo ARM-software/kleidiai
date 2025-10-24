@@ -20,8 +20,8 @@ namespace kai::test {
 
 template <typename T>
 std::tuple<T, T> find_clamp_range(const void* src, size_t len, float ratio) {
-    KAI_ASSUME(ratio > 0.0F);
-    KAI_ASSUME(ratio <= 1.0F);
+    KAI_ASSUME_ALWAYS(ratio > 0.0F);
+    KAI_ASSUME_ALWAYS(ratio <= 1.0F);
 
     T min_value = numeric_highest<T>;
     T max_value = numeric_lowest<T>;

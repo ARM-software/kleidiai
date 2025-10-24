@@ -101,7 +101,7 @@ size_t DataFormat::scheduler_block_height([[maybe_unused]] size_t full_height) c
 
         case PackFormat::BIAS_PER_ROW:
         case PackFormat::QUANTIZE_PER_ROW:
-            KAI_ASSUME(_block_height > 0);
+            KAI_ASSUME_ALWAYS(_block_height > 0);
             return padded_block_height;
 
         default:
@@ -133,12 +133,12 @@ uintptr_t DataFormat::default_row_stride(size_t width) const {
             return (_block_height > 0 ? _block_height : 1) * padded_width * data_type_size_in_bits(_data_type) / 8;
 
         case PackFormat::BIAS_PER_ROW:
-            KAI_ASSUME(_block_height > 0);
+            KAI_ASSUME_ALWAYS(_block_height > 0);
             return _block_height * data_type_size_in_bits(_zero_point_dt) / 8 +  //
                 _block_height * padded_width * data_type_size_in_bits(_data_type) / 8;
 
         case PackFormat::QUANTIZE_PER_ROW:
-            KAI_ASSUME(_block_height > 0);
+            KAI_ASSUME_ALWAYS(_block_height > 0);
             return _block_height * data_type_size_in_bits(_zero_point_dt) / 8 +          //
                 _block_height * padded_width * data_type_size_in_bits(_data_type) / 8 +  //
                 _block_height * data_type_size_in_bits(_scale_dt) / 8;
@@ -152,7 +152,7 @@ uintptr_t DataFormat::default_offset_in_bytes(size_t row, size_t col, size_t wid
     const auto row_stride = default_row_stride(width);
     const auto block_width = scheduler_block_width(width);
 
-    KAI_ASSERT(col % block_width == 0);
+    KAI_ASSERT_ALWAYS(col % block_width == 0);
 
     switch (_pack_format) {
         case PackFormat::NONE:
@@ -161,8 +161,8 @@ uintptr_t DataFormat::default_offset_in_bytes(size_t row, size_t col, size_t wid
 
         case PackFormat::BIAS_PER_ROW:
         case PackFormat::QUANTIZE_PER_ROW:
-            KAI_ASSUME(row % _block_height == 0);
-            KAI_ASSUME(col == 0);
+            KAI_ASSUME_ALWAYS(row % _block_height == 0);
+            KAI_ASSUME_ALWAYS(col == 0);
             return (row / _block_height) * row_stride;
 
         default:

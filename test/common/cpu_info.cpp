@@ -94,11 +94,11 @@ const std::array<std::tuple<CpuFeatures, uint64_t, uint64_t>, CpuFeatures::LAST_
 }};
 
 bool get_cap_support(CpuFeatures feature) {
-    KAI_ASSERT(feature < cpu_caps.size());
+    KAI_ASSERT_ALWAYS(feature < cpu_caps.size());
 
     auto [cpu_feature, cap_id, cap_bits] = cpu_caps[static_cast<int>(feature)];
     // Make sure CPU feature is correctly initialized
-    KAI_ASSERT(feature == cpu_feature);
+    KAI_ASSERT_ALWAYS(feature == cpu_feature);
 
     const uint64_t hwcaps = getauxval(cap_id);
 
@@ -118,21 +118,21 @@ const std::array<std::tuple<CpuFeatures, std::string_view>, CpuFeatures::LAST_EL
 }};
 
 bool get_cap_support(CpuFeatures feature) {
-    KAI_ASSERT(feature < CpuFeatures::LAST_ELEMENT);
+    KAI_ASSERT_ALWAYS(feature < CpuFeatures::LAST_ELEMENT);
 
     auto [cpu_feature, cap_name] = cpu_caps[static_cast<int>(feature)];
-    KAI_ASSERT(feature == cpu_feature);
+    KAI_ASSERT_ALWAYS(feature == cpu_feature);
 
     uint32_t value{};
 
     if (cap_name.length() > 0) {
         size_t size = sizeof(value);
 
-        KAI_ASSERT(sysctlbyname(cap_name.data(), nullptr, &size, nullptr, 0) == 0);
-        KAI_ASSERT(size == sizeof(value));
+        KAI_ASSERT_ALWAYS(sysctlbyname(cap_name.data(), nullptr, &size, nullptr, 0) == 0);
+        KAI_ASSERT_ALWAYS(size == sizeof(value));
 
         [[maybe_unused]] int status = sysctlbyname(cap_name.data(), &value, &size, nullptr, 0);
-        KAI_ASSERT(status == 0);
+        KAI_ASSERT_ALWAYS(status == 0);
     }
 
     return value == 1;
@@ -169,13 +169,13 @@ uint64_t read_sysreg(const char* name) {
         HKEY_LOCAL_MACHINE, "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0", name, RRF_RT_REG_QWORD, nullptr,
         &value, &size);
 
-    KAI_ASSERT(status == ERROR_SUCCESS);
+    KAI_ASSERT_ALWAYS(status == ERROR_SUCCESS);
 
     return value;
 }
 
 bool get_cap_support(CpuFeatures feature) {
-    KAI_ASSERT(feature < CpuFeatures::LAST_ELEMENT);
+    KAI_ASSERT_ALWAYS(feature < CpuFeatures::LAST_ELEMENT);
     auto [cpu_feature, cap_id, reg_name, reg_mask] = cpu_caps[static_cast<int>(feature)];
 
     if (cap_id != 0) {

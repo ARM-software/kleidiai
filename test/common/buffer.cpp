@@ -25,7 +25,7 @@ Buffer::Buffer(const size_t size) : Buffer(size, 0) {
 }
 
 Buffer::Buffer(const size_t size, const uint8_t init_value = 0) : m_user_buffer_size(size) {
-    KAI_ASSUME_MSG(size > 0, "Buffers must be of non-zero size");
+    KAI_ASSUME_ALWAYS_MSG(size > 0, "Buffers must be of non-zero size");
 
     const char* val = getenv(buffer_policy_env_name);
     const std::string buffer_policy = (val != nullptr) ? std::string(val) : std::string("NONE");
@@ -66,14 +66,14 @@ Buffer::Buffer(const size_t size, const uint8_t init_value = 0) : m_user_buffer_
 
 void Buffer::allocate() {
     m_buffer = handle(std::malloc(m_user_buffer_size), &std::free);
-    KAI_ASSUME_MSG(m_buffer.get() != nullptr, "Failure allocating memory");
-    KAI_ASSUME_MSG(m_user_buffer_offset == 0, "Buffer offset must be zero for naive allocation");
+    KAI_ASSUME_ALWAYS_MSG(m_buffer.get() != nullptr, "Failure allocating memory");
+    KAI_ASSUME_ALWAYS_MSG(m_user_buffer_offset == 0, "Buffer offset must be zero for naive allocation");
 }
 
 #if defined(__linux__) || defined(__APPLE__)
 void Buffer::allocate_with_guard_pages() {
     const auto sc_pagesize_res = sysconf(_SC_PAGESIZE);
-    KAI_ASSUME_MSG(sc_pagesize_res != -1, "Error finding page size");
+    KAI_ASSUME_ALWAYS_MSG(sc_pagesize_res != -1, "Error finding page size");
 
     const auto page_size = static_cast<size_t>(sc_pagesize_res);
 

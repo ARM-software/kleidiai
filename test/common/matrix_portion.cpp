@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -33,10 +33,10 @@ float MatrixPortion::width() const {
 
 Rect MatrixPortion::compute_portion(
     size_t full_height, size_t full_width, size_t scheduler_block_height, size_t scheduler_block_width) const {
-    KAI_ASSUME(_start_row >= 0.0F && _start_row <= 1.0F);
-    KAI_ASSUME(_start_col >= 0.0F && _start_col <= 1.0F);
-    KAI_ASSUME(_height >= 0.0F && _height <= 1.0F);
-    KAI_ASSUME(_width >= 0.0F && _width <= 1.0F);
+    KAI_ASSUME_ALWAYS(_start_row >= 0.0F && _start_row <= 1.0F);
+    KAI_ASSUME_ALWAYS(_start_col >= 0.0F && _start_col <= 1.0F);
+    KAI_ASSUME_ALWAYS(_height >= 0.0F && _height <= 1.0F);
+    KAI_ASSUME_ALWAYS(_width >= 0.0F && _width <= 1.0F);
 
     auto start_row = round_to_nearest_even_usize(_start_row * static_cast<float>(full_height));
     auto start_col = round_to_nearest_even_usize(_start_col * static_cast<float>(full_width));

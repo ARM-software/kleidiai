@@ -27,10 +27,24 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 include(GNUInstallDirs)
+include(CheckCSourceCompiles)
 
 option(KLEIDIAI_BUILD_TESTS       "Build unit tests."             ON)
 option(KLEIDIAI_BUILD_BENCHMARK   "Build the benchmark tool."     OFF)
 option(KLEIDIAI_ENABLE_CLANG_TIDY "Build with Clang-Tidy checks." OFF)
+option(KLEIDIAI_ERROR_TRAP        "Use trap instead of abort."    OFF)
+
+check_c_source_compiles("int main(void) { return 0; __assume(0); }"             KLEIDIAI_HAS_BUILTIN_ASSUME0)
+check_c_source_compiles("int main(void) { return 0; __builtin_unreachable(); }" KLEIDIAI_HAS_BUILTIN_UNREACHABLE)
+
+if(KLEIDIAI_ERROR_TRAP)
+    check_c_source_compiles("int main(void) { __builtin_trap(); return 0; }"        KLEIDIAI_HAS_BUILTIN_TRAP)
+endif()
+
+if(NOT KLEIDIAI_HAS_BUILTIN_TRAP AND KLEIDIAI_ERROR_TRAP)
+    message(WARNING "KleidiAI: Error trapping requested but not supported by compiler.")
+    set(KLEIDIAI_ERROR_TRAP OFF CACHE BOOL "" FORCE)
+endif()
 
 if(KLEIDIAI_ENABLE_CLANG_TIDY)
     set(CMAKE_C_CLANG_TIDY "clang-tidy")
@@ -457,6 +471,14 @@ endif()
 target_include_directories(kleidiai PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+target_compile_definitions(kleidiai
+    PUBLIC
+        KLEIDIAI_ERROR_TRAP=$<BOOL:${KLEIDIAI_ERROR_TRAP}>
+        KLEIDIAI_HAS_BUILTIN_ASSUME0=$<BOOL:${KLEIDIAI_HAS_BUILTIN_ASSUME0}>
+        KLEIDIAI_HAS_BUILTIN_TRAP=$<BOOL:${KLEIDIAI_HAS_BUILTIN_TRAP}>
+        KLEIDIAI_HAS_BUILTIN_UNREACHABLE=$<BOOL:${KLEIDIAI_HAS_BUILTIN_UNREACHABLE}>
 )
 
 target_compile_options(kleidiai

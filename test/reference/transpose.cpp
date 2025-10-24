@@ -19,7 +19,7 @@
 namespace kai::test {
 
 Buffer transpose(const void* data, DataType data_type, size_t height, size_t width) {
-    KAI_ASSUME(data_type_size_in_bits(data_type) % 8 == 0);
+    KAI_ASSUME_ALWAYS(data_type_size_in_bits(data_type) % 8 == 0);
     const auto element_size = data_type_size_in_bits(data_type) / 8;
 
     Buffer output(height * width * element_size);

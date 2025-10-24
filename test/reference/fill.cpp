@@ -83,7 +83,7 @@ Buffer fill_matrix_random_raw<UInt4>(size_t height, size_t width, uint32_t seed)
 template <typename T>
 Buffer fill_matrix_raw(size_t height, size_t width, std::function<T(size_t, size_t)> gen) {
     const auto size = height * width * size_in_bits<T> / 8;
-    KAI_ASSUME(width * size_in_bits<T> % 8 == 0);
+    KAI_ASSUME_ALWAYS(width * size_in_bits<T> % 8 == 0);
 
     Buffer data(size);
     auto ptr = reinterpret_cast<T*>(data.data());

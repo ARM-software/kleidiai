@@ -72,7 +72,7 @@ Buffer binary_elementwise_any_op_type(
     const auto height = std::max(lhs_height, rhs_height);
     const auto width = std::max(lhs_width, rhs_width);
 
-    KAI_ASSUME(width * size_in_bits<T> % 8 == 0);
+    KAI_ASSUME_ALWAYS(width * size_in_bits<T> % 8 == 0);
     Buffer dst(height * width * size_in_bits<T> / 8);
 
     for (size_t y = 0; y < height; ++y) {
@@ -97,9 +97,9 @@ template <const BinaryElementwiseOperator op>
 Buffer binary_elementwise_any_type(
     const void* lhs, DataType lhs_dt, size_t lhs_height, size_t lhs_width,  //
     const void* rhs, DataType rhs_dt, size_t rhs_height, size_t rhs_width) {
-    KAI_ASSUME(lhs_dt == rhs_dt);
-    KAI_ASSUME(lhs_height == 1 || rhs_height == 1 || lhs_height == rhs_height);
-    KAI_ASSUME(lhs_width == 1 || rhs_width == 1 || lhs_width == rhs_width);
+    KAI_ASSUME_ALWAYS(lhs_dt == rhs_dt);
+    KAI_ASSUME_ALWAYS(lhs_height == 1 || rhs_height == 1 || lhs_height == rhs_height);
+    KAI_ASSUME_ALWAYS(lhs_width == 1 || rhs_width == 1 || lhs_width == rhs_width);
 
     switch (lhs_dt) {
         case DataType::FP32:

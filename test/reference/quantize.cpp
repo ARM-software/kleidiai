@@ -84,7 +84,7 @@ Buffer compute_symmetric_per_block_quantization_info(const void* src, size_t hei
     static_assert(is_integral<DstType>);
     static_assert(is_floating_point<ScaleType>);
 
-    KAI_ASSUME(quant_width != 0);
+    KAI_ASSUME_ALWAYS(quant_width != 0);
 
     const auto num_quant_packets_x = round_up_division(width, quant_width);
 
@@ -193,7 +193,7 @@ std::tuple<Buffer, Buffer> compute_asymmetric_per_block_quantization_info(
     static_assert(is_floating_point<ScaleType>);
     static_assert(is_integral<ZeroPointType>);
 
-    KAI_ASSUME(quant_width != 0);
+    KAI_ASSUME_ALWAYS(quant_width != 0);
 
     const auto num_quant_packets_x = round_up_division(width, quant_width);
 

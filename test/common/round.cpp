@@ -36,7 +36,7 @@ int32_t round_to_nearest_even_i32(float value) {
 
 size_t round_to_nearest_even_usize(float value) {
     static_assert(sizeof(size_t) == sizeof(uint64_t));
-    KAI_ASSUME(value >= 0);
+    KAI_ASSUME_ALWAYS(value >= 0);
     return static_cast<size_t>(kai_test_round_to_nearest_even_i64_f32(value));
 }
 
@@ -51,17 +51,17 @@ size_t round_to_nearest_even(float value) {
 }
 
 size_t round_up_multiple(size_t a, size_t b) {
-    KAI_ASSUME(b != 0);
+    KAI_ASSUME_ALWAYS(b != 0);
     return ((a + b - 1) / b) * b;
 }
 
 size_t round_up_division(size_t a, size_t b) {
-    KAI_ASSUME(b != 0);
+    KAI_ASSUME_ALWAYS(b != 0);
     return (a + b - 1) / b;
 }
 
 size_t round_down_multiple(size_t a, size_t b) {
-    KAI_ASSUME(b != 0);
+    KAI_ASSUME_ALWAYS(b != 0);
     return (a / b) * b;
 }
 

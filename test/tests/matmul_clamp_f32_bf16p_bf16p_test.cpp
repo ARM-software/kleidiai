@@ -399,9 +399,9 @@ protected:
                 packed_rhs.data());
         }
 
-        KAI_ASSUME(method.lhs_format.is_raw());
-        KAI_ASSUME(method.rhs_format.is_raw());
-        KAI_ASSUME(method.dst_format.is_raw());
+        KAI_ASSUME_ALWAYS(method.lhs_format.is_raw());
+        KAI_ASSUME_ALWAYS(method.rhs_format.is_raw());
+        KAI_ASSUME_ALWAYS(method.dst_format.is_raw());
 
         Buffer tmp_lhs;
         Buffer tmp_rhs;

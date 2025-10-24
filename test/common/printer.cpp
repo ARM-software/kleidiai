@@ -131,7 +131,7 @@ void print_matrix_per_row(
 
     const auto num_blocks = (height + block_height - 1) / block_height;
 
-    KAI_ASSUME(format.default_size_in_bytes(height, width) % num_blocks == 0);
+    KAI_ASSUME_ALWAYS(format.default_size_in_bytes(height, width) % num_blocks == 0);
     const auto block_data_bytes = block_height * width * data_type_size_in_bits(format.data_type()) / 8;
     const auto block_offsets_bytes = block_height * data_type_size_in_bits(format.zero_point_data_type()) / 8;
     const auto block_scales_bytes = has_scale ? block_height * data_type_size_in_bits(format.scale_data_type()) / 8 : 0;

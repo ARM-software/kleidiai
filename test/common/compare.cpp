@@ -134,10 +134,10 @@ bool compare_per_row(
     const auto subblock_height = format.actual_subblock_height(full_height);
     const auto subblock_width = format.actual_subblock_width(full_width);
 
-    KAI_ASSUME(format.scheduler_block_height(full_height) == block_height);
-    KAI_ASSUME(format.scheduler_block_width(full_width) == full_width);
-    KAI_ASSUME(rect.start_col() == 0);
-    KAI_ASSUME(rect.width() == full_width);
+    KAI_ASSUME_ALWAYS(format.scheduler_block_height(full_height) == block_height);
+    KAI_ASSUME_ALWAYS(format.scheduler_block_width(full_width) == full_width);
+    KAI_ASSUME_ALWAYS(rect.start_col() == 0);
+    KAI_ASSUME_ALWAYS(rect.width() == full_width);
 
     const size_t row_block_zero_points_bytes = block_height * sizeof(Offset);
     const size_t row_block_scales_bytes = has_scale ? block_height * sizeof(Scale) : 0;
@@ -305,15 +305,15 @@ DefaultMismatchHandler::DefaultMismatchHandler(const DefaultMismatchHandler& rhs
     _num_mismatches(0),
     _failed(false) {
     // Cannot copy mismatch handler that is already in use.
-    KAI_ASSUME(rhs._num_mismatches == 0);
-    KAI_ASSUME(!rhs._failed);
+    KAI_ASSUME_ALWAYS(rhs._num_mismatches == 0);
+    KAI_ASSUME_ALWAYS(!rhs._failed);
 }
 
 DefaultMismatchHandler& DefaultMismatchHandler::operator=(const DefaultMismatchHandler& rhs) {
     if (this != &rhs) {
         // Cannot copy mismatch handler that is already in use.
-        KAI_ASSUME(rhs._num_mismatches == 0);
-        KAI_ASSUME(!rhs._failed);
+        KAI_ASSUME_ALWAYS(rhs._num_mismatches == 0);
+        KAI_ASSUME_ALWAYS(!rhs._failed);
 
         _abs_error_threshold = rhs._abs_error_threshold;
         _rel_error_threshold = rhs._rel_error_threshold;
