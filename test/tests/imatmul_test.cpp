@@ -8,6 +8,7 @@
 
 #include <array>
 #include <cstddef>
+#include <initializer_list>
 #include <string_view>
 #include <tuple>
 #include <unordered_map>
@@ -124,9 +125,6 @@ struct IndirectMatMul {
     MatMulIndirectKernel imatmul;
 };
 
-/// Convenience type for test list
-using IndirectMatMulArray = std::array<IndirectMatMul, 4>;
-
 /// Test parameter bundle type
 using IndirectMatMulTestParams = std::tuple<IndirectMatMul, MatMulShape, size_t, MatrixPortion, float>;
 
@@ -184,8 +182,8 @@ const kai_imatmul_clamp_f32_f32p_f32p_ukernel& get_imatmul_clamp_f32_f32p2vlx1_f
 }
 
 /// Retreive the test list
-const IndirectMatMulArray& get_indirect_matmul_methods() {
-    static IndirectMatMulArray indirect_matmul_methods{};
+const auto& get_indirect_matmul_methods() {
+    static std::array<IndirectMatMul, 4> indirect_matmul_methods{};
 
     // F16 IMATMUL SME2 ///////////////////////////////////////////////////////
     indirect_matmul_methods[0].name = "imatmul_f16_f16p_f16p_2vlx2vl_sme2_mopa";
@@ -604,62 +602,127 @@ TEST_P(IndirectMatMulTest, Output) {
     PrintTo(portion, os);
 }
 
-///  Test parameter listing
+static auto get_indirect_matmul_shapes() {
+    static const std::array indirect_matmul_shapes{
+        // clang-format off
+        MatMulShape{  1,   1,   1},
+        MatMulShape{  1,  17,   4},
+        MatMulShape{  1,  19,  24},
+        MatMulShape{  1,  32,   4},
+        MatMulShape{  1,  32,  32},
+        MatMulShape{  1,  33,   7},
+        MatMulShape{  1,  49,  21},
+        MatMulShape{  1,  64,   4},
+        MatMulShape{  1,  65,   4},
+        MatMulShape{  3,   6,   6},
+        MatMulShape{  3,  28,  25},
+        MatMulShape{  4,  16,   4},
+        MatMulShape{  4,  16,  27},
+        MatMulShape{  6,  18,  31},
+        MatMulShape{  6,  28,   1},
+        MatMulShape{  6,  29,  24},
+        MatMulShape{  8,  16,  16},
+        MatMulShape{ 16,  16,   4},
+        MatMulShape{ 16,  16,  16},
+        MatMulShape{ 20,  30,  40},
+        MatMulShape{ 23,   1,  43},
+        MatMulShape{ 32,  14,   1},
+        MatMulShape{ 32,  16,  27},
+        MatMulShape{ 32,  32,   3},
+        MatMulShape{ 32,  32,   4},
+        MatMulShape{ 33,  29,  24},
+        MatMulShape{ 64,  64,   3},
+        MatMulShape{ 64,  64,   4},
+        MatMulShape{ 96,  96,   3},
+        MatMulShape{ 96,  97,   3},
+        MatMulShape{ 97,  96,   3},
+        MatMulShape{123,  85,  45},
+        MatMulShape{128, 128,   3},
+        MatMulShape{130, 130,   6},
+        // clang-format on
+    };
+
+    return indirect_matmul_shapes;
+}
+
+static auto get_indirect_matmul_portions() {
+    static const std::array<MatrixPortion, 6> indirect_matmul_portions{
+        //       (Start row , start col , height , width)
+        MatrixPortion(0, 0, 1, 1),          // Full matrix.
+        MatrixPortion(0, 0, 1, 0.5),        // Left half
+        MatrixPortion(0, 0, 0.5, 1),        // Upper half
+        MatrixPortion(0, 0.5, 1, 0.5),      // Right half
+        MatrixPortion(0.5, 0, 0.5, 1),      // Bottom half
+        MatrixPortion(0.4, 0.4, 0.3, 0.3),  // Center ninth
+    };
+
+    return indirect_matmul_portions;
+}
+
+// Test suite focused on small K chunk
 INSTANTIATE_TEST_SUITE_P(
-    IndirectMatMul, IndirectMatMulTest,
+    ShapesSmallKC, IndirectMatMulTest,
+    testing::Combine(
+        testing::ValuesIn(get_indirect_matmul_methods()),                         //
+        testing::ValuesIn(get_indirect_matmul_shapes()),                          //
+        testing::ValuesIn(std::initializer_list<size_t>{1, 2, 3, 4, 8, 11, 16}),  //
+        testing::ValuesIn(get_indirect_matmul_portions()),                        //
+        testing::Values(0.5F)),                                                   //
+    testing::PrintToStringParamName());
+
+// Test suite focused on K chunk 31
+INSTANTIATE_TEST_SUITE_P(
+    ShapesKC31, IndirectMatMulTest,
+    testing::Combine(
+        testing::ValuesIn(get_indirect_matmul_methods()),   //
+        testing::ValuesIn(get_indirect_matmul_shapes()),    //
+        testing::Values(static_cast<size_t>(31)),           //
+        testing::ValuesIn(get_indirect_matmul_portions()),  //
+        testing::Values(0.5F)),                             //
+    testing::PrintToStringParamName());
+
+// Test suite focused on K chunk 32
+INSTANTIATE_TEST_SUITE_P(
+    ShapesKC32, IndirectMatMulTest,
+    testing::Combine(
+        testing::ValuesIn(get_indirect_matmul_methods()),   //
+        testing::ValuesIn(get_indirect_matmul_shapes()),    //
+        testing::Values(static_cast<size_t>(32)),           //
+        testing::ValuesIn(get_indirect_matmul_portions()),  //
+        testing::Values(0.5F)),                             //
+    testing::PrintToStringParamName());
+
+// Test suite focused on K chunk 64
+INSTANTIATE_TEST_SUITE_P(
+    ShapesKC64, IndirectMatMulTest,
+    testing::Combine(
+        testing::ValuesIn(get_indirect_matmul_methods()),   //
+        testing::ValuesIn(get_indirect_matmul_shapes()),    //
+        testing::Values(static_cast<size_t>(64)),           //
+        testing::ValuesIn(get_indirect_matmul_portions()),  //
+        testing::Values(0.5F)),                             //
+    testing::PrintToStringParamName());
+
+// Test suite focused on K chunk 65, other parametes are limited
+INSTANTIATE_TEST_SUITE_P(
+    ShapesKC65, IndirectMatMulTest,
+    testing::Combine(
+        testing::ValuesIn(get_indirect_matmul_methods()),   //
+        testing::ValuesIn(get_indirect_matmul_shapes()),    //
+        testing::Values(static_cast<size_t>(65)),           //
+        testing::ValuesIn(get_indirect_matmul_portions()),  //
+        testing::Values(0.5F)),                             //
+    testing::PrintToStringParamName());
+
+// Test suite focused on clamping values, other parametes are limited
+INSTANTIATE_TEST_SUITE_P(
+    Clamp, IndirectMatMulTest,
     testing::Combine(
         testing::ValuesIn(get_indirect_matmul_methods()),  //
-        testing::ValuesIn({
-            // clang-format off
-            MatMulShape{  1,    1,   1}, //
-            MatMulShape{  1,   17,   4}, //
-            MatMulShape{  1,   19,  24}, //
-            MatMulShape{  1,   32,   4}, //
-            MatMulShape{  1,   32,  32}, //
-            MatMulShape{  1,   33, 200}, //
-            MatMulShape{  1,   49,  21}, //
-            MatMulShape{  1,   64,   4}, //
-            MatMulShape{  1,   65,   4}, //
-            MatMulShape{  3,    6,   6}, //
-            MatMulShape{  3,   28,  25}, //
-            MatMulShape{  4,   16,   4}, //
-            MatMulShape{  4,   16,  27}, //
-            MatMulShape{  6,   18,  31}, //
-            MatMulShape{  6,   28,   1}, //
-            MatMulShape{  6,   29,  24}, //
-            MatMulShape{  8,   16,  16}, //
-            MatMulShape{ 16,   16,   4}, //
-            MatMulShape{ 16,   16,  16}, //
-            MatMulShape{ 20,   30,  40}, //
-            MatMulShape{ 23,    1,  43}, //
-            MatMulShape{ 32,   14,   1}, //
-            MatMulShape{ 32,   16,  27}, //
-            MatMulShape{ 32,   32,   3}, //
-            MatMulShape{ 32,   32,   4}, //
-            MatMulShape{ 33,   29,  24}, //
-            MatMulShape{ 64,   64,   3}, //
-            MatMulShape{ 64,   64,   4}, //
-            MatMulShape{ 96,   96,   3}, //
-            MatMulShape{ 96,   97,   3}, //
-            MatMulShape{ 97,   96,   3}, //
-            MatMulShape{123,   85,  45}, //
-            MatMulShape{128,  128,   3}, //
-            MatMulShape{130,  130,   6}, //
-            // clang-format on
-        }),
-        testing::ValuesIn(std::initializer_list<size_t>{1, 2, 3, 4, 8, 11, 16, 32, 33, 64, 65}),  //
-        testing::ValuesIn({
-            // clang-format off
-            //       (Start row , start col , height , width)
-            MatrixPortion(   0  , 0         , 1      , 1   ), // Full matrix.
-            MatrixPortion(   0  , 0         , 1      , 0.5 ), // Left half
-            MatrixPortion(   0  , 0         , 0.5    , 1   ), // Upper half
-            MatrixPortion(   0  , 0.5       , 1      , 0.5 ), // Right half
-            MatrixPortion( 0.5  , 0         , 0.5    , 1   ), // Bottom half
-            MatrixPortion( 0.4  , 0.4       , 0.3    , 0.3 ), // Center ninth
-            // clang-format on
-        }),
-        testing::ValuesIn(std::initializer_list<float>{0.0F, 0.1F, 0.5F})),  //
+        testing::ValuesIn(get_indirect_matmul_shapes()),   //
+        testing::Values(static_cast<size_t>(3)),           //
+        testing::Values(MatrixPortion(0, 0, 1, 1)),        //
+        testing::Values(0.0F, 0.1F, 0.5F)),                //
     testing::PrintToStringParamName());
 
 }  // namespace kai::test

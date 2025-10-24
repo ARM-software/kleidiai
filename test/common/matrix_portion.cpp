@@ -15,10 +15,6 @@
 
 namespace kai::test {
 
-MatrixPortion::MatrixPortion(float start_row, float start_col, float height, float width) :
-    _start_row(start_row), _start_col(start_col), _height(height), _width(width) {
-}
-
 float MatrixPortion::start_row() const {
     return _start_row;
 }

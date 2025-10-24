@@ -285,7 +285,7 @@ struct IndirectMatMulVariant {
     MatMulIndirectKernel matmul;     ///< Matmul kernel interface
 };
 
-const std::array<MatMulVariant, 2>& get_gemm_variants() {
+const auto& get_gemm_variants() {
     static std::array<MatMulVariant, 2> variants;
     static const kai_matmul_clamp_qai8_qai8p_qsi8cxpsb_ukernel& ukernel_sme2 =
         get_matmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa_interface();
@@ -339,7 +339,7 @@ const std::array<MatMulVariant, 2>& get_gemm_variants() {
     return variants;
 }
 
-const std::array<IndirectMatMulVariant, 2>& get_indirect_gemm_variants() {
+const auto& get_indirect_gemm_variants() {
     static std::array<IndirectMatMulVariant, 2> variants;
     static const kai_imatmul_clamp_qai8_qai8p_qsi8cxp_ukernel& ukernel_sme =
         get_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxp2vlx4sb_2vlx2vl_sme_mopa_interface();
@@ -407,7 +407,7 @@ const std::array<IndirectMatMulVariant, 2>& get_indirect_gemm_variants() {
     return variants;
 }
 
-const std::array<MatMulVariant, 1>& get_gemv_variants() {
+const auto& get_gemv_variants() {
     static std::array<MatMulVariant, 1> variants;
     static const kai_matmul_clamp_qai8_qai8p_qsi8cxp_ukernel& ukernel =
         get_matmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_sme2_dot_interface();
@@ -809,8 +809,8 @@ void test_matmul(
 }  // namespace
 
 using MatMulQuantizedTest = testing::TestWithParam<std::tuple<MatMulVariant, MatMulShape, MatrixPortion, float>>;
-using IndirectMatMulQuantizedTest =
-    testing::TestWithParam<std::tuple<IndirectMatMulVariant, MatMulShape, MatrixPortion, size_t, float>>;
+using IndirectMatMulQuantizedTestParams = std::tuple<IndirectMatMulVariant, MatMulShape, size_t, MatrixPortion, float>;
+using IndirectMatMulQuantizedTest = testing::TestWithParam<IndirectMatMulQuantizedTestParams>;
 
 static std::string test_description(
     const MatMulVariant& variant,  //
@@ -824,17 +824,14 @@ static std::string test_description(
     return sstream.str();
 };
 
-static std::string test_description(
-    const IndirectMatMulVariant& variant,  //
-    const MatMulShape& shape,              //
-    const MatrixPortion& portion, size_t k_chunk_len, float clamp_ratio) {
-    std::ostringstream sstream;
+[[maybe_unused]] static void PrintTo(const IndirectMatMulQuantizedTestParams& param, std::ostream* os) {
+    const auto& [variant, shape, k_chunk_length, portion, clamp_rate] = param;
 
-    sstream << variant.name << "__M_" << shape.m << "__N_" << shape.n << "__k_chunk_count_" << shape.k << "__";
-    PrintTo(portion, &sstream);
-    sstream << "__k_chunk_len_" << k_chunk_len << "__clamp_ratio_" << static_cast<int>(clamp_ratio * 100);
-
-    return sstream.str();
+    *os << variant.name << "__";
+    PrintTo(shape, os);
+    *os << "__K_chunk_length_" << k_chunk_length;
+    *os << "__clamp_rate_" << static_cast<int>(clamp_rate * 100) << "__";
+    PrintTo(portion, os);
 };
 
 TEST_P(MatMulQuantizedTest, EndToEnd) {
@@ -970,7 +967,7 @@ TEST_P(IndirectMatMulQuantizedTest, EndToEnd) {
     /* This is a bit special, as shape.k must be k_chunk_len * k_chunk_count
      * so instead of inventing a new special kind of shape, simply multiply
      * with `k_chunk_len` here */
-    const auto& [variant, shape_k_chunk, output_portion, k_chunk_len, clamp_ratio] = GetParam();
+    const auto& [variant, shape_k_chunk, k_chunk_len, output_portion, clamp_ratio] = GetParam();
     const KChunk k_chunk{shape_k_chunk.k, k_chunk_len};
     MatMulShape shape{shape_k_chunk.m, shape_k_chunk.n, k_chunk.count * k_chunk.length};
 
@@ -1028,6 +1025,18 @@ static constexpr std::array shapes{
     MatMulShape{123,   85, 45},
     MatMulShape{128,  128,  3},
     MatMulShape{130,  130,  6},
+    // clang-format on
+};
+
+static constexpr std::array portions{
+    // clang-format off
+    //       (Start row , start col , height , width)
+    MatrixPortion(   0  , 0         , 1      , 1)     , // Full matrix.
+    MatrixPortion(   0  , 0         , 1      , 0.5)   , // Left half
+    MatrixPortion(   0  , 0         , 0.5    , 1)     , // Upper half
+    MatrixPortion(   0  , 0.5       , 1      , 0.5)   , // Right half
+    MatrixPortion( 0.5  , 0         , 0.5    , 1)     , // Bottom half
+    MatrixPortion( 0.4  , 0.4       , 0.3    , 0.3)   , // Center ninth
     // clang-format on
 };
 
@@ -1093,31 +1102,39 @@ INSTANTIATE_TEST_SUITE_P(
     });
 
 INSTANTIATE_TEST_SUITE_P(
-    indirect_matmul_clamp_qai8_qai8p_qsi8cxp, IndirectMatMulQuantizedTest,
+    ShapesSmallKC, IndirectMatMulQuantizedTest,
     testing::Combine(
         testing::ValuesIn(get_indirect_gemm_variants()),  //
         testing::ValuesIn(shapes),                        //
-        testing::ValuesIn({
-            // clang-format off
-            //       (Start row , start col , height , width)
-            MatrixPortion(   0  , 0         , 1      , 1)     , // Full matrix.
-            MatrixPortion(   0  , 0         , 1      , 0.5)   , // Left half
-            MatrixPortion(   0  , 0         , 0.5    , 1)     , // Upper half
-            MatrixPortion(   0  , 0.5       , 1      , 0.5)   , // Right half
-            MatrixPortion( 0.5  , 0         , 0.5    , 1)     , // Bottom half
-            MatrixPortion( 0.4  , 0.4       , 0.3    , 0.3)   , // Center ninth
-            // clang-format on
-        }),
         // k_chunk_len
-        testing::ValuesIn(std::initializer_list<size_t>{1, 2, 3, 4, 8, 11, 32}),
+        testing::ValuesIn(std::initializer_list<size_t>{1, 2, 3, 4, 8, 11}),  //
+        testing::ValuesIn(portions),                                          //
         // Clamp range
-        testing::ValuesIn(std::initializer_list<float>{0.0F, 0.1F, 0.5F})),
-    [](const auto& info) -> std::string {
-        return test_description(
-            std::get<IndirectMatMulVariant>(info.param),  //
-            std::get<MatMulShape>(info.param),            //
-            std::get<MatrixPortion>(info.param),          //
-            std::get<size_t>(info.param),                 //
-            std::get<float>(info.param));
-    });
+        testing::Values(0.1F)),
+    testing::PrintToStringParamName());
+
+INSTANTIATE_TEST_SUITE_P(
+    ShapesKC32, IndirectMatMulQuantizedTest,
+    testing::Combine(
+        testing::ValuesIn(get_indirect_gemm_variants()),  //
+        testing::ValuesIn(shapes),                        //
+        // k_chunk_len
+        testing::ValuesIn(std::initializer_list<size_t>{32}),  //
+        testing::ValuesIn(portions),                           //
+        // Clamp range
+        testing::Values(0.1F)),
+    testing::PrintToStringParamName());
+
+INSTANTIATE_TEST_SUITE_P(
+    Clamp, IndirectMatMulQuantizedTest,
+    testing::Combine(
+        testing::ValuesIn(get_indirect_gemm_variants()),  //
+        testing::ValuesIn(shapes),                        //
+        // k_chunk_len
+        testing::ValuesIn(std::initializer_list<size_t>{1}),  //
+        testing::Values(MatrixPortion(0, 0, 1, 1)),           //
+        // Clamp range
+        testing::ValuesIn(std::initializer_list<float>{0.0F, 0.1F, 0.5F})),  //
+    testing::PrintToStringParamName());
+
 }  // namespace kai::test
