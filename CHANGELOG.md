@@ -12,6 +12,9 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 - Fixes:
   - All SME and SME2 micro-kernels now commit ZA lazy save buffer when building with SME support.
+  - Fixed incorrect handling of zero point and scale into two packing kernels which caused incorrect de-quantisation is certain cases:
+    - kai_rhs_pack_nxk_qai4c32ps1s0nrx4_qau4c32s0s1_f32_f32_f32_neon
+    - kai_rhs_pack_nxk_qai4c32ps1s0nrx4_qau4c32s1s0_f32_f32_f32_neon
 
 ## v1.15.1
 

@@ -161,16 +161,12 @@ void kai_run_rhs_pack_nxk_qai4c32ps1s0nrx4_qau4c32s1s0_f32_f32_f32_neon(
             }
 
             // Adjust the zero points and scales
-            if (rows_left >= nr) {
-                memcpy(block_dst_scale, &((const float*)scale)[row_idx], nr * kai_num_bytes_multiplier_rhs);
-                memcpy(block_dst_zp, &((const float*)zero)[row_idx], nr * kai_num_bytes_offset_rhs);
-            } else {
-                // Fill remaining values
-                memcpy(block_dst_scale, &((const float*)scale)[row_idx], rows_left * kai_num_bytes_multiplier_rhs);
-                memcpy(block_dst_zp, &((const float*)zero)[row_idx], rows_left * kai_num_bytes_offset_rhs);
-                // Set leftover to 0
-                memset(&block_dst_scale[rows_left], 0, (nr - rows_left) * kai_num_bytes_multiplier_rhs);
-                memset(&block_dst_zp[rows_left], 0, (nr - rows_left) * kai_num_bytes_offset_rhs);
+            for (size_t i = 0; i < nr; ++i) {
+                const size_t src_row_idx = KAI_MIN(row_idx + i, n - 1);
+                const size_t src_idx = src_row_idx * num_blocks_per_row + block_idx;
+
+                block_dst_scale[i] = ((const float*)scale)[src_idx];
+                block_dst_zp[i] = ((const float*)zero)[src_idx];
             }
         }
         // Set the bias
