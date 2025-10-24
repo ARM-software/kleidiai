@@ -10,7 +10,6 @@
 
 #include "kai_matmul_clamp_f16_f16_f16p2vlx2b_1x16vl_sme2_dot.h"
 
-#include <arm_neon.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -27,14 +26,15 @@ typedef struct {
     uint64_t flags;
 } KernelArgs;
 
-void kai_kernel_matmul_clamp_f16_f16_f16p2vlx2b_1x16vl_sme2_dot(KernelArgs* args_ptr);
-uint16_t kai_f16_from_float_matmul_clamp_f16_f16_f16p2vlx2b_1x16vl_sme2_dot(float value);
-
 static const size_t kai_m_step = 1;
 static const size_t kai_nr = 2;
 static const size_t kai_n_step = 16;
 static const size_t kai_kr = 2;
 static const size_t kai_sr = 1;
+
+void kai_kernel_matmul_clamp_f16_f16_f16p2vlx2b_1x16vl_sme2_dot(KernelArgs* args_ptr);
+
+uint16_t kai_f16_from_float_matmul_clamp_f16_f16_f16p2vlx2b_1x16vl_sme2_dot(float value);
 
 size_t kai_get_m_step_matmul_clamp_f16_f16_f16p2vlx2b_1x16vl_sme2_dot(void) {
     return kai_m_step;
@@ -91,9 +91,7 @@ void kai_run_matmul_clamp_f16_f16_f16p2vlx2b_1x16vl_sme2_dot(
     size_t dst_stride_row, size_t dst_stride_col, float clamp_min, float clamp_max) {
     KAI_UNUSED(dst_stride_row);
     KAI_UNUSED(dst_stride_col);
-
     KAI_UNUSED(lhs_stride);
-
     KAI_ASSUME(m == 1);
 
     uint64_t flags = 2;
@@ -102,13 +100,14 @@ void kai_run_matmul_clamp_f16_f16_f16p2vlx2b_1x16vl_sme2_dot(
 
     args.minval = kai_f16_from_float_matmul_clamp_f16_f16_f16p2vlx2b_1x16vl_sme2_dot(clamp_min);
     args.maxval = kai_f16_from_float_matmul_clamp_f16_f16_f16p2vlx2b_1x16vl_sme2_dot(clamp_max);
-
     args.A_ptr = lhs;
     args.B_ptr = rhs_packed;
     args.N = n;
     args.K = k;
     args.output_ptr = dst;
     args.flags = flags;
+
+    kai_commit_za();
 
     kai_kernel_matmul_clamp_f16_f16_f16p2vlx2b_1x16vl_sme2_dot(&args);
 }

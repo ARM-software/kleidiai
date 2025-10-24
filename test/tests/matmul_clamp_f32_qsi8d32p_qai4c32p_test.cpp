@@ -25,6 +25,7 @@
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qai4c32p_qau4c32s0s1_f32_f32_f32_neon.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qai4c32ps1s0nrx4_qau4c32s0s1_f32_f32_f32_neon.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qai4c32ps1s0nrx4_qau4c32s1s0_f32_f32_f32_neon.h"
+#include "test/common/abi_checker.hpp"
 #include "test/common/buffer.hpp"
 #include "test/common/compare.hpp"
 #include "test/common/cpu_info.hpp"
@@ -111,8 +112,9 @@ static inline std::tuple<Buffer, size_t> pack_lhs_qsi8d32p(
     auto lhs_offset = pack_interface.get_offset(rect_start_row, stride);
     auto lhs_packed_offset = pack_interface.get_packed_offset(rect_start_row, K, bl, mr, kr, sr);
 
-    pack_interface.run_pack(
-        rect_height, K, bl, mr, kr, sr, 0, reinterpret_cast<const float*>(lhs_values_qsi8.data() + lhs_offset), stride,
+    abi_check(
+        pack_interface.run_pack, rect_height, K, bl, mr, kr, sr, 0,
+        reinterpret_cast<const float*>(lhs_values_qsi8.data() + lhs_offset), stride,
         imp_packed_lhs.data() + lhs_packed_offset);
 
     return {std::move(imp_packed_lhs), lhs_packed_offset};
@@ -135,8 +137,8 @@ static inline std::tuple<Buffer, size_t> pack_rhs_qai4c32p(
     params.lhs_zero_point = 1;
     params.rhs_zero_point = 8;
 
-    pack_interface.run_pack(
-        1, N, K, nr, kr, sr, bl,
+    abi_check(
+        pack_interface.run_pack, 1, N, K, nr, kr, sr, bl,
         reinterpret_cast<const uint8_t*>(s0s1_input ? convert_s0s1_s1s0(rhs_qau4s1s0).data() : rhs_qau4s1s0.data()),
         rhs_zp.data(), has_bias ? biases.data() : nullptr, rhs_scales.data(), imp_packed_rhs.data(), 0, &params);
 
@@ -315,10 +317,10 @@ TEST_P(MatMulTest_f32_qsi8d32p_qai4c32p, EndToEnd) {
     const auto imp_dst_size = ukernel_variant.ukernel.interface.get_dst_size(M, N);
     ASSERT_EQ(imp_dst_size, ref_dst.size());
     Buffer imp_dst(imp_dst_size);
-    ukernel_variant.ukernel.interface.run_matmul(
-        rect.height(), rect.width(), K, bl, imp_packed_lhs.data() + lhs_matmul_offset,
-        imp_packed_rhs.data() + rhs_matmul_offset, reinterpret_cast<float*>(imp_dst.data() + dst_offset),
-        dst_stride_row, dst_stride_col, clamp_min, clamp_max);
+    abi_check(
+        ukernel_variant.ukernel.interface.run_matmul, rect.height(), rect.width(), K, bl,
+        imp_packed_lhs.data() + lhs_matmul_offset, imp_packed_rhs.data() + rhs_matmul_offset,
+        reinterpret_cast<float*>(imp_dst.data() + dst_offset), dst_stride_row, dst_stride_col, clamp_min, clamp_max);
 
     // Compares the output of the micro-kernels against the output of the reference implementation for the portion
     // tested.

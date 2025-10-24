@@ -23,6 +23,7 @@
 #include "kai/ukernels/matmul/pack/kai_lhs_imatmul_pack_x32p2vlx1_x32p_sme.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_imatmul_pack_kxn_x16p2vlx2b_x16_x16_sme.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_imatmul_pack_kxn_x32p2vlx1b_x32_x32_sme.h"
+#include "test/common/abi_checker.hpp"
 #include "test/common/buffer.hpp"
 #include "test/common/compare.hpp"
 #include "test/common/cpu_info.hpp"
@@ -498,7 +499,8 @@ Buffer pack_lhs(
     const size_t dst_offset = kernel.get_lhs_packed_offset(portion.start_row(), k_chunk.count, k_chunk.length);
 
     // Perform packing
-    kernel.pack(
+    abi_check(
+        kernel.pack,                                      // Kernel
         portion.height(), k_chunk.count, k_chunk.length,  // Dimensions
         indirection_pointer + input_offset,               // Indirection input
         reference.indirection_offset,                     // Chunk offset
@@ -522,7 +524,8 @@ Buffer pack_rhs(
     const size_t dst_offset = kernel.get_rhs_packed_offset(portion.start_col(), k_chunk.count, k_chunk.length);
 
     // Perform actual packing
-    kernel.pack(
+    abi_check(
+        kernel.pack,                                                 // Kernel
         portion.width(), k_chunk.count, k_chunk.length, row_stride,  // Dimensions
         reference.rhs.data() + rhs_offset,                           // RHS input
         reference.bias.data() + bias_offset,                         // Bias
@@ -548,7 +551,8 @@ Buffer imatmul(
     const size_t dst_offset = kernel.get_dst_offset(portion.start_row(), portion.start_col(), row_stride);
 
     // Call matmul kernel
-    kernel.imatmul(
+    abi_check(
+        kernel.imatmul,                                                    // Kernel
         portion.height(), portion.width(), k_chunk.count, k_chunk.length,  // Dimensions
         lhs_packed.data() + lhs_offset,                                    // LHS
         rhs_packed.data() + rhs_offset,                                    // RHS

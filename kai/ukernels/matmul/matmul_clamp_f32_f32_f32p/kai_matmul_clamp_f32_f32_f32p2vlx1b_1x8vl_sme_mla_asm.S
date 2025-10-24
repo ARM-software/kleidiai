@@ -85,7 +85,7 @@ KAI_ASM_LABEL(label_1)  // Column loop
     ld1w { z24.s }, p2/Z, [x9]
     cmp x25, #0x4
     mov x24, x11
-    addvl x9, x9, #2
+    incb x9, ALL, MUL #2
     ble label_3
 KAI_ASM_LABEL(label_2)  // Width 1: Multiply loop: Main loop head
     whilelt p0.s, XZR, x25
@@ -145,7 +145,7 @@ KAI_ASM_LABEL(label_6)  // Width 2
     cmp x25, #0x4
     ld1w { z25.s }, p2/Z, [x9, #1, MUL VL]
     mov x24, x11
-    addvl x9, x9, #2
+    incb x9, ALL, MUL #2
     ble label_8
 KAI_ASM_LABEL(label_7)  // Width 2: Multiply loop: Main loop head
     whilelt p0.s, XZR, x25
@@ -227,8 +227,8 @@ KAI_ASM_LABEL(label_11)  // Width 3
     cmp x25, #0x4
     ld1w { z26.s }, p2/Z, [x20]
     mov x24, x11
-    addvl x9, x9, #2
-    addvl x20, x20, #2
+    incb x9, ALL, MUL #2
+    incb x20, ALL, MUL #2
     ble label_13
 KAI_ASM_LABEL(label_12)  // Width 3: Multiply loop: Main loop head
     whilelt p0.s, XZR, x25
@@ -337,8 +337,8 @@ KAI_ASM_LABEL(label_16)  // Width 4
     ld1w { z26.s }, p2/Z, [x20]
     mov x24, x11
     ld1w { z27.s }, p2/Z, [x20, #1, MUL VL]
-    addvl x9, x9, #2
-    addvl x20, x20, #2
+    incb x9, ALL, MUL #2
+    incb x20, ALL, MUL #2
     ble label_18
 KAI_ASM_LABEL(label_17)  // Width 4: Multiply loop: Main loop head
     whilelt p0.s, XZR, x25
@@ -468,9 +468,9 @@ KAI_ASM_LABEL(label_21)  // Width 5
     mov x24, x11
     ld1w { z27.s }, p2/Z, [x21, #1, MUL VL]
     ld1w { z28.s }, p2/Z, [x20]
-    addvl x9, x9, #2
-    addvl x21, x21, #2
-    addvl x20, x20, #2
+    incb x9, ALL, MUL #2
+    incb x21, ALL, MUL #2
+    incb x20, ALL, MUL #2
     ble label_23
 KAI_ASM_LABEL(label_22)  // Width 5: Multiply loop: Main loop head
     whilelt p0.s, XZR, x25
@@ -626,10 +626,10 @@ KAI_ASM_LABEL(label_26)  // Width 6
     mov x24, x11
     ld1w { z27.s }, p2/Z, [x21, #1, MUL VL]
     ld1w { z28.s }, p2/Z, [x20]
-    addvl x9, x9, #2
-    addvl x21, x21, #2
+    incb x9, ALL, MUL #2
+    incb x21, ALL, MUL #2
     ld1w { z29.s }, p2/Z, [x20, #1, MUL VL]
-    addvl x20, x20, #2
+    incb x20, ALL, MUL #2
     ble label_28
 KAI_ASM_LABEL(label_27)  // Width 6: Multiply loop: Main loop head
     whilelt p0.s, XZR, x25
@@ -805,12 +805,12 @@ KAI_ASM_LABEL(label_31)  // Width 7
     ld1w { z26.s }, p2/Z, [x21]
     mov x24, x11
     ld1w { z27.s }, p2/Z, [x21, #1, MUL VL]
-    addvl x9, x9, #2
+    incb x9, ALL, MUL #2
     ld1w { z29.s }, p2/Z, [x23, #1, MUL VL]
-    addvl x21, x21, #2
-    addvl x23, x23, #2
+    incb x21, ALL, MUL #2
+    incb x23, ALL, MUL #2
     ld1w { z30.s }, p2/Z, [x20]
-    addvl x20, x20, #2
+    incb x20, ALL, MUL #2
     ble label_33
 KAI_ASM_LABEL(label_32)  // Width 7: Multiply loop: Main loop head
     whilelt p0.s, XZR, x25
@@ -1014,12 +1014,12 @@ KAI_ASM_LABEL(label_36)  // Width 8
     add x22, x9, x10, LSL #2
     ld1w { z27.s }, p2/Z, [x21, #1, MUL VL]
     ld1w { z29.s }, p2/Z, [x23, #1, MUL VL]
-    addvl x9, x9, #2
-    addvl x21, x21, #2
+    incb x9, ALL, MUL #2
+    incb x21, ALL, MUL #2
     ld1w { z30.s }, p2/Z, [x20]
-    addvl x23, x23, #2
+    incb x23, ALL, MUL #2
     ld1w { z31.s }, p2/Z, [x20, #1, MUL VL]
-    addvl x20, x20, #2
+    incb x20, ALL, MUL #2
     ble label_38
 KAI_ASM_LABEL(label_37)  // Width 8: Multiply loop: Main loop head
     whilelt p0.s, XZR, x25

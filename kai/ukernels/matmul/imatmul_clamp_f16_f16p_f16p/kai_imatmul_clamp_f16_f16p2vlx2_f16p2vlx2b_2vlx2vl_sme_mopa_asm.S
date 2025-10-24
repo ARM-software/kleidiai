@@ -39,7 +39,6 @@
     KAI_ASM_ALIGN
 
     KAI_ASM_GLOBAL(kai_kernel_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa)
-
     KAI_ASM_GLOBAL(kai_f16_from_float_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa)
 
 KAI_ASM_FUNCTION_TYPE(kai_f16_from_float_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa)

@@ -99,6 +99,8 @@ void kai_run_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa(
     args.accumulator_buffer = NULL;
     args.flags = 0;
 
+    kai_commit_za();
+
     kai_kernel_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa(&args);
 }
 

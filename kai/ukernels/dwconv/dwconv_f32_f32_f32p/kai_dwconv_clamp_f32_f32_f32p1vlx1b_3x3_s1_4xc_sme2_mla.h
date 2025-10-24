@@ -74,7 +74,7 @@ size_t kai_get_src_offset_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla(si
 /// Runs a depthwise convolution operation followed by a clamp operation
 ///
 /// @param[in]  src	Pointer to the start of valid input row to be processed.
-/// @param[in]  rhs_packed Pointer to packed weights and bias
+/// @param[in]  rhs_packed Pointer to packed weights
 /// @param[in]  dst Pointer to the first element of the top output row for this tile (four rows written)
 /// @param[in]  in_stride_row Row stride of input tensor in bytes.
 ///                           Same as input_w * input_channel when row_dilation = 1

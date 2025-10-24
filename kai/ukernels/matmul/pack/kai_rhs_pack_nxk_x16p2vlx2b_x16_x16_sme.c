@@ -84,6 +84,8 @@ void kai_run_rhs_pack_nxk_x16p2vlx2b_x16_x16_sme(
     const uint8_t* rhs_ptr = rhs;
     const uint8_t* bias_ptr = bias;
 
+    kai_commit_za();
+
     for (size_t block_y = 0; block_y < n; block_y += block_height) {
         const size_t height = KAI_MIN(n - block_y, block_height);
         uint8_t* out = rhs_packed_ptr + block_y * (NUM_BYTES_BIAS + kai_roundup(k, KR) * NUM_BYTES_DATA);

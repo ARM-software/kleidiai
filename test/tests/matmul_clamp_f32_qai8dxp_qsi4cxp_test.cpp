@@ -33,6 +33,7 @@
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_qsi4cxp_qs4cxs1s0.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4cxp_qs4cxs1s0.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon.h"
+#include "test/common/abi_checker.hpp"
 #include "test/common/buffer.hpp"
 #include "test/common/compare.hpp"
 #include "test/common/cpu_info.hpp"
@@ -358,8 +359,8 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsi4cx) {
     params.lhs_zero_point = 1;
     params.rhs_zero_point = 0;
 
-    ukernel_variant.run_rhs_pack(
-        1, rect.width() /* n */, K, nr, kr, sr,
+    abi_check(
+        ukernel_variant.run_rhs_pack, 1, rect.width() /* n */, K, nr, kr, sr,
         reinterpret_cast<const uint8_t*>(ref_rhs_qsi4_padded.data() + rhs_offset),
         reinterpret_cast<const float*>(ref_biases.data() + bias_offset),
         reinterpret_cast<const float*>(ref_rhs_scales.data() + scale_offset), imp_packed_rhs.data() + rhs_packed_offset,
@@ -374,8 +375,8 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsi4cx) {
     const auto imp_dst_size = ukernel_variant.interface.get_dst_size(M, N);
     ASSERT_EQ(imp_dst_size, ref_dst.size());
     Buffer imp_dst(imp_dst_size);
-    ukernel_variant.interface.run_matmul(
-        rect.height(), rect.width(), K, imp_packed_lhs.data() + lhs_matmul_offset,
+    abi_check(
+        ukernel_variant.interface.run_matmul, rect.height(), rect.width(), K, imp_packed_lhs.data() + lhs_matmul_offset,
         imp_packed_rhs.data() + rhs_matmul_offset, reinterpret_cast<float*>(imp_dst.data() + dst_offset),
         N * sizeof(float), sizeof(float), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max());
 
@@ -490,8 +491,8 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsu4cx) {
     kai_rhs_pack_nxk_qsi4cxp_qs4cxs1s0_params params{};
     params.lhs_zero_point = 1;
     params.rhs_zero_point = 8;
-    ukernel_variant.run_rhs_pack(
-        1, rect.width() /* n */, K, nr, kr, sr,
+    abi_check(
+        ukernel_variant.run_rhs_pack, 1, rect.width() /* n */, K, nr, kr, sr,
         reinterpret_cast<const uint8_t*>(ref_rhs_qsu4_padded.data() + rhs_offset),
         reinterpret_cast<const float*>(ref_biases.data() + bias_offset),
         reinterpret_cast<const float*>(ref_rhs_scales.data() + scale_offset), imp_packed_rhs.data() + rhs_packed_offset,
@@ -505,8 +506,8 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsu4cx) {
     const auto imp_dst_size = ukernel_variant.interface.get_dst_size(M, N);
     ASSERT_EQ(imp_dst_size, ref_dst.size());
     Buffer imp_dst(imp_dst_size);
-    ukernel_variant.interface.run_matmul(
-        rect.height(), rect.width(), K, imp_packed_lhs.data() + lhs_matmul_offset,
+    abi_check(
+        ukernel_variant.interface.run_matmul, rect.height(), rect.width(), K, imp_packed_lhs.data() + lhs_matmul_offset,
         imp_packed_rhs.data() + rhs_matmul_offset, reinterpret_cast<float*>(imp_dst.data() + dst_offset),
         N * sizeof(float), sizeof(float), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max());
 
@@ -626,8 +627,8 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsi4cx) {
     kai_rhs_pack_kxn_qsi4cxp_qs4cxs1s0_params params{};
     params.lhs_zero_point = 1;
     params.rhs_zero_point = 0;
-    ukernel_variant.run_rhs_pack(
-        1, N, K, nr, kr, sr, reinterpret_cast<const uint8_t*>(ref_rhs_qsi4_padded.data()),
+    abi_check(
+        ukernel_variant.run_rhs_pack, 1, N, K, nr, kr, sr, reinterpret_cast<const uint8_t*>(ref_rhs_qsi4_padded.data()),
         reinterpret_cast<const float*>(ref_biases.data()), reinterpret_cast<const float*>(ref_rhs_scales.data()),
         imp_packed_rhs.data(), 0, &params);
 
@@ -640,8 +641,8 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsi4cx) {
     const auto imp_dst_size = ukernel_variant.interface.get_dst_size(M, N);
     ASSERT_EQ(imp_dst_size, ref_dst.size());
     Buffer imp_dst(imp_dst_size);
-    ukernel_variant.interface.run_matmul(
-        rect.height(), rect.width(), K, imp_packed_lhs.data() + lhs_matmul_offset,
+    abi_check(
+        ukernel_variant.interface.run_matmul, rect.height(), rect.width(), K, imp_packed_lhs.data() + lhs_matmul_offset,
         imp_packed_rhs.data() + rhs_matmul_offset, reinterpret_cast<float*>(imp_dst.data() + dst_offset),
         N * sizeof(float), sizeof(float), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max());
 
@@ -764,8 +765,8 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsu4cx) {
     kai_rhs_pack_kxn_qsi4cxp_qs4cxs1s0_params params{};
     params.lhs_zero_point = 1;
     params.rhs_zero_point = 8;
-    ukernel_variant.run_rhs_pack(
-        1, N, K, nr, kr, sr, reinterpret_cast<const uint8_t*>(ref_rhs_qsu4_padded.data()),
+    abi_check(
+        ukernel_variant.run_rhs_pack, 1, N, K, nr, kr, sr, reinterpret_cast<const uint8_t*>(ref_rhs_qsu4_padded.data()),
         reinterpret_cast<const float*>(ref_biases.data()), reinterpret_cast<const float*>(ref_rhs_scales.data()),
         imp_packed_rhs.data(), 0, &params);
 
@@ -778,8 +779,8 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsu4cx) {
     const auto imp_dst_size = ukernel_variant.interface.get_dst_size(M, N);
     ASSERT_EQ(imp_dst_size, ref_dst.size());
     Buffer imp_dst(imp_dst_size);
-    ukernel_variant.interface.run_matmul(
-        rect.height(), rect.width(), K, imp_packed_lhs.data() + lhs_matmul_offset,
+    abi_check(
+        ukernel_variant.interface.run_matmul, rect.height(), rect.width(), K, imp_packed_lhs.data() + lhs_matmul_offset,
         imp_packed_rhs.data() + rhs_matmul_offset, reinterpret_cast<float*>(imp_dst.data() + dst_offset),
         N * sizeof(float), sizeof(float), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max());
 

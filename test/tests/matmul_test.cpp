@@ -18,12 +18,12 @@
 #include <utility>
 
 #include "kai/kai_common.h"
+#include "test/common/abi_checker.hpp"
 #include "test/common/buffer.hpp"
 #include "test/common/compare.hpp"
 #include "test/common/cpu_info.hpp"
 #include "test/common/data_format.hpp"
 #include "test/common/data_type.hpp"
-#include "test/common/float16.hpp"
 #include "test/common/matmul_test_common.hpp"
 #include "test/common/matrix_portion.hpp"
 #include "test/common/sme.hpp"
@@ -769,9 +769,9 @@ TEST_P(MatMulTest, PackedLhs) {
     ASSERT_EQ(packed_lhs_offset, ref_packed_lhs_offset);
 
     Buffer packed_lhs(packed_lhs_size, 0);
-    method.fn_pack_lhs(
-        rect.height(), rect.width(), mr, kr, sr, 0, data.lhs.data() + lhs_offset, ref_lhs_row_stride,
-        packed_lhs.data() + packed_lhs_offset);
+    abi_check(
+        method.fn_pack_lhs, rect.height(), rect.width(), mr, kr, sr, 0, data.lhs.data() + lhs_offset,
+        ref_lhs_row_stride, packed_lhs.data() + packed_lhs_offset);
 
     DefaultMismatchHandler handler(0, 0.0001, 0, 0.001);
     const auto success =
@@ -838,8 +838,9 @@ TEST_P(MatMulTest, PackedRhs) {
 
     /** Perform RHS packing, and compare with reference result **/
     Buffer packed_rhs(packed_rhs_size, 0);
-    method.pack_rhs(
-        height, width, data.rhs.data() + rhs_offset, rhs_row_stride, data.bias.data() + bias_offset,
+    abi_check(
+        &MatMulMethod::pack_rhs, method, height, width, data.rhs.data() + rhs_offset, rhs_row_stride,
+        data.bias.data() + bias_offset,
         data.rhs_scales.data() != nullptr ? data.rhs_scales.data() + ref_rhs_scales_offset : nullptr,
         packed_rhs.data() + packed_rhs_offset);
 
@@ -900,8 +901,9 @@ TEST_P(MatMulTest, PackedTransposedRhs) {
 
     Buffer packed_rhs(packed_rhs_size, 0);
 
-    method.pack_rhs_nxk(
-        rect.height(), rect.width(), data.rhs_t.data() + rhs_offset, ref_rhs_row_stride, data.bias.data() + bias_offset,
+    abi_check(
+        &MatMulMethod::pack_rhs_nxk, method, rect.height(), rect.width(), data.rhs_t.data() + rhs_offset,
+        ref_rhs_row_stride, data.bias.data() + bias_offset,
         data.rhs_scales.data() != nullptr ? data.rhs_scales.data() + ref_rhs_scales_offset : nullptr,
         packed_rhs.data() + packed_rhs_offset);
 
@@ -1001,9 +1003,10 @@ TEST_P(MatMulTest, Output) {
 
     Buffer dst(dst_size, 0);
 
-    method.main_kernel(
-        rect.height(), rect.width(), info.k, lhs_data + lhs_offset, rhs_data + rhs_offset, bias_data + bias_offset,
-        dst.data() + dst_offset, lhs_stride, rhs_stride, dst_stride, data.clamp_min, data.clamp_max);
+    abi_check(
+        &MatMulMethod::main_kernel, method, rect.height(), rect.width(), info.k, lhs_data + lhs_offset,
+        rhs_data + rhs_offset, bias_data + bias_offset, dst.data() + dst_offset, lhs_stride, rhs_stride, dst_stride,
+        data.clamp_min, data.clamp_max);
 
     DefaultMismatchHandler handler(0, 0.1, 0, 0.05);
     const auto success = compare(dst.data(), data.ref_dst.data(), method.dst_format, info.m, info.n, rect, handler);

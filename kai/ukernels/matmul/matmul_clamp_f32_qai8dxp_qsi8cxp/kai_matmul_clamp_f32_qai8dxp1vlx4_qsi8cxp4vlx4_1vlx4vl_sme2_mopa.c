@@ -173,6 +173,8 @@ void kai_run_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa(
     args.clamp_min = scalar_min;
     args.clamp_max = scalar_max;
 
+    kai_commit_za();
+
     kai_kernel_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa(&args);
 }
 

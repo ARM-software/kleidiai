@@ -63,6 +63,11 @@ Some of the key features of KleidiAI are the following:
 - Scalable Matrix Extension(SME)
 - Scalable Matrix Extension 2(SME2)
 
+The SME and SME2 micro-kernels require compiler support to generate SME ABI-compliant code.
+You can still use the micro-kernels without compiler support, but not within a call chain that already uses ZA register.
+At the moment this is not automatically detected, and you need to build with `KLEIDIAI_INTERNAL_EXTRA_ARCH=+sme` to
+enable this support.
+
 <h1> Filename convention </h1>
 
 The `kai/ukernels` directory is the home for all micro-kernels. The micro-kernels are grouped in separate directories based on the performed operation. For example, all the matrix-multiplication micro-kernels are held in the `matmul/` operator directory.

@@ -109,7 +109,7 @@ size_t kai_get_dst_size_matmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa(s
 /// @param[in] rhs_packed Packed RHS matrix buffer.
 /// @param[out] dst Output matrix buffer.
 /// @param[in] dst_stride_row Row stride in bytes of the output matrix.
-/// @param[in] dst_stride_col Column stride in bytes of the output matrix. Currently, an unused parameter.
+/// @param[in] dst_stride_col Column stride in bytes of the output matrix. Unused
 /// @param[in] clamp_min Minimum value to clamp the final result.
 /// @param[in] clamp_max Maximum value to clamp the final result.
 ///

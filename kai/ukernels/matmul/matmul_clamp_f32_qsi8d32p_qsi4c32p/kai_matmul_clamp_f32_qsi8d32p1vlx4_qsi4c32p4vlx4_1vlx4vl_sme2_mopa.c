@@ -173,6 +173,8 @@ void kai_run_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa(
     const uint16_t* rhs_scales = (const uint16_t*)((const uint8_t*)rhs_packed + ka.rhs_packed_stride -
                                                    (nr * num_blocks) * kai_num_bytes_multiplier_rhs);
 
+    kai_commit_za();
+
     __asm__ volatile(
         // Switch to streaming mode with ZA enabling
         " .inst 0xd503477f // smstart \n"

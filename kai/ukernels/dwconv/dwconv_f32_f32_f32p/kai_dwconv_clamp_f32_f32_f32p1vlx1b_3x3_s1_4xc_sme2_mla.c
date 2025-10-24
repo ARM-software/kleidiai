@@ -132,6 +132,8 @@ void kai_run_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla(
     args.clamp_max = clamp_max;
     args.rhs_packed = rhs_packed;
 
+    kai_commit_za();
+
     kai_kernel_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla(
         &args, input_row_stride_in_elements, input_col_stride_in_elements);
 }

@@ -98,7 +98,6 @@ void kai_run_matmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa(
     size_t m, size_t n, size_t k, const void* lhs_packed, const void* rhs_packed, void* dst, size_t dst_stride_row,
     size_t dst_stride_col, float clamp_min, float clamp_max) {
     KAI_UNUSED(dst_stride_col);
-
     KernelArgs args;
 
     args.A = lhs_packed;
@@ -112,6 +111,8 @@ void kai_run_matmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa(
     args.max = kai_f16_from_float_matmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa(clamp_max);
     args.accumulator_buffer = NULL;
     args.flags = 0;
+
+    kai_commit_za();
 
     kai_kernel_matmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa(&args);
 }

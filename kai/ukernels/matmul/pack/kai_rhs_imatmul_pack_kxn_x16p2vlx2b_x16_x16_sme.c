@@ -7,6 +7,7 @@
 #if (!defined(__aarch64__) || !defined(__ARM_FEATURE_SVE2)) && !defined(_M_ARM64)
 #error This file must be compiled for AArch64, FEAT_SVE2.
 #else  // Architectural features check.
+
 #include "kai_rhs_imatmul_pack_kxn_x16p2vlx2b_x16_x16_sme.h"
 
 #include <stddef.h>
@@ -53,7 +54,7 @@ size_t kai_get_bias_offset_rhs_imatmul_pack_kxn_x16p2vlx2b_x16_x16_sme(size_t n_
     return n_idx * kai_num_bytes_bias;
 }
 
-static size_t kai_get_rhs_packed_stride_rhs_imatmul_pack_kxn_x16p2vlx2b_x16_x16_sme(
+size_t kai_get_rhs_packed_stride_rhs_imatmul_pack_kxn_x16p2vlx2b_x16_x16_sme(
     size_t k_chunk_count, size_t k_chunk_length) {
     return kai_get_n_step_rhs_imatmul_pack_kxn_x16p2vlx2b_x16_x16_sme() *
         (kai_num_bytes_bias + k_chunk_count * kai_roundup(k_chunk_length, KR) * kai_num_bytes_output);
@@ -96,6 +97,8 @@ void kai_run_rhs_imatmul_pack_kxn_x16p2vlx2b_x16_x16_sme(
     args.out_stride =
         kai_get_rhs_packed_stride_rhs_imatmul_pack_kxn_x16p2vlx2b_x16_x16_sme(k_chunk_count, k_chunk_length);
     args.pad_row = pad_row;
+
+    kai_commit_za();
 
     kai_kernel_rhs_imatmul_pack_kxn_x16p2vlx2b_x16_x16_sme(&args);
 }

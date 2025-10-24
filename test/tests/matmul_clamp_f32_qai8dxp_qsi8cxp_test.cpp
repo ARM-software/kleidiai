@@ -26,6 +26,7 @@
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp_f32.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_qsi8cxp_qsi8cx_neon.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon.h"
+#include "test/common/abi_checker.hpp"
 #include "test/common/buffer.hpp"
 #include "test/common/cache.hpp"
 #include "test/common/cpu_info.hpp"
@@ -229,10 +230,11 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi8cxp, EndToEnd_RHS_nxk_qsi8cx) {
     const auto imp_dst_size = ukernel_variant.interface.get_dst_size(M, N);
     ASSERT_EQ(imp_dst_size, ref_dst.size());
     Buffer imp_dst(imp_dst_size);
-    ukernel_variant.interface.run_matmul(
-        rect.height(), rect.width(), K, imp_packed_lhs.data() + matmul_lhs_packed_offset,
-        imp_packed_rhs.data() + matmul_rhs_packed_offset, reinterpret_cast<float*>(imp_dst.data() + dst_offset),
-        N * sizeof(float), sizeof(float), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max());
+    abi_check(
+        ukernel_variant.interface.run_matmul, rect.height(), rect.width(), K,
+        imp_packed_lhs.data() + matmul_lhs_packed_offset, imp_packed_rhs.data() + matmul_rhs_packed_offset,
+        reinterpret_cast<float*>(imp_dst.data() + dst_offset), N * sizeof(float), sizeof(float),
+        std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max());
 
     // Compares the output of the micro-kernels against the output of the reference implementation.
     for (size_t y = 0; y < rect.height(); ++y) {
@@ -354,10 +356,11 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi8cxp, EndToEnd_RHS_kxn_qsi8cx) {
     const auto imp_dst_size = ukernel_variant.interface.get_dst_size(M, N);
     ASSERT_EQ(imp_dst_size, ref_dst.size());
     Buffer imp_dst(imp_dst_size);
-    ukernel_variant.interface.run_matmul(
-        rect.height(), rect.width(), K, imp_packed_lhs.data() + matmul_lhs_packed_offset,
-        imp_packed_rhs.data() + matmul_rhs_packed_offset, reinterpret_cast<float*>(imp_dst.data() + dst_offset),
-        N * sizeof(float), sizeof(float), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max());
+    abi_check(
+        ukernel_variant.interface.run_matmul, rect.height(), rect.width(), K,
+        imp_packed_lhs.data() + matmul_lhs_packed_offset, imp_packed_rhs.data() + matmul_rhs_packed_offset,
+        reinterpret_cast<float*>(imp_dst.data() + dst_offset), N * sizeof(float), sizeof(float),
+        std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max());
 
     // Compares the output of the micro-kernels against the output of the reference implementation.
     for (size_t y = 0; y < rect.height(); ++y) {

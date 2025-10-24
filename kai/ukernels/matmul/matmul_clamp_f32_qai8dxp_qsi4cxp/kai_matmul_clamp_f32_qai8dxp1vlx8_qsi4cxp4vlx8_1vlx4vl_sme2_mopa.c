@@ -126,6 +126,8 @@ void kai_run_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa(
     uint64_t dst_inc = mr * dst_stride_row;
     float scalar_bounds[2] = {scalar_min, scalar_max};
 
+    kai_commit_za();
+
     /* ---------------------------------------------------
                   Registers allocations
         x7:  Look up table(lut)

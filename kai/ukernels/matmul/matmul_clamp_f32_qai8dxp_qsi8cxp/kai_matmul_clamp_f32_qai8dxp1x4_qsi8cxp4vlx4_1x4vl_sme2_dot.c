@@ -180,6 +180,8 @@ void kai_run_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot(
     args.rhs_row_bytes = rhs_row_bytes;
     args.lhs_end = lhs_end_ptr;
 
+    kai_commit_za();
+
     kai_kernel_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot(&args);
 }
 

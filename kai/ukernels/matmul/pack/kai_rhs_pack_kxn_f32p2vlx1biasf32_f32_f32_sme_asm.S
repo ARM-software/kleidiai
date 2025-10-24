@@ -125,9 +125,8 @@ KAI_ASM_LABEL(label_3)  // Main row loop: Column loop
 KAI_ASM_LABEL(label_5)  // Main loop skip
 KAI_ASM_LABEL(label_6)  // Tail row loop: Head
     mov x26, x28
-    cntw x22, ALL, MUL #8
-    add x28, x26, x10
     mov x25, x11
+    add x28, x26, x10
     sub x27, x27, #0x1
     mov x21, x12
 KAI_ASM_LABEL(label_7)  // Tail row loop: Column loop
@@ -139,7 +138,7 @@ KAI_ASM_LABEL(label_7)  // Tail row loop: Column loop
     cmp x21, #0x0
     ld1w { z17.s }, p1/Z, [x26]
     ld1w { z16.s }, p0/Z, [x26, #1, MUL VL]
-    add x26, x26, x22
+    addvl x26, x26, #2
     st1w { z17.s }, p2, [x25]
     st1w { z16.s }, p2, [x25, #1, MUL VL]
     add x25, x25, x9

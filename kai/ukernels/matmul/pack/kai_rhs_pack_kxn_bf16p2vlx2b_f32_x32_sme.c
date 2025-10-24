@@ -76,6 +76,8 @@ void kai_run_rhs_pack_kxn_bf16p2vlx2b_f32_x32_sme(
 
     size_t out_stride = kai_get_rhs_packed_stride_rhs_pack_kxn_bf16p2vlx2b_f32_x32_sme(height);
 
+    kai_commit_za();
+
     __asm__ __volatile__(
         ".inst 0xd503477f  // SMSTART ZA\n"
         "mov x22, %x[out]\n"

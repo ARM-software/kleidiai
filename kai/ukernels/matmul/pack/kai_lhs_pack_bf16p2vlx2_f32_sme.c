@@ -10,7 +10,6 @@
 #if !defined(__aarch64__) || !defined(__ARM_FEATURE_SVE2)
 #error This file must be compiled for AArch64, FEAT_SVE2.
 #else  // Architectural features check.
-
 #include "kai_lhs_pack_bf16p2vlx2_f32_sme.h"
 
 #include <stddef.h>
@@ -18,75 +17,81 @@
 
 #include "kai/kai_common.h"
 
-static const size_t kai_mr = 2;
-static const size_t kai_kr = 2;
-static const size_t kai_sr = 1;
+enum {
+    MR = 2,
+    KR = 2,
+    MAX_M_STEP = MR * (KAI_SME_VEC_LENGTH_MAX_BYTES / sizeof(uint16_t)) / KR,
+    SR = 1,
+};
 
 static size_t kai_get_mr_lhs_pack_bf16p2vlx2_f32_sme(void) {
-    return kai_mr * kai_get_sme_vector_length_u16() / kai_kr;
+    return MR * kai_get_sme_vector_length_u16() / KR;
 }
 
 size_t kai_get_m_step_lhs_pack_bf16p2vlx2_f32_sme(size_t mr) {
     KAI_ASSUME(mr == kai_get_mr_lhs_pack_bf16p2vlx2_f32_sme());
     KAI_UNUSED(mr);
-
     return kai_get_mr_lhs_pack_bf16p2vlx2_f32_sme();
 }
 
-size_t kai_get_lhs_offset_lhs_pack_bf16p2vlx2_f32_sme(size_t m_idx, size_t lhs_stride) {
+size_t kai_get_lhs_offset_lhs_pack_bf16p2vlx2_f32_sme(size_t m_idx, size_t lhs_stride_row) {
     KAI_ASSUME(m_idx % kai_get_mr_lhs_pack_bf16p2vlx2_f32_sme() == 0);
 
-    return m_idx * lhs_stride;
+    return m_idx * lhs_stride_row;
 }
 
 size_t kai_get_lhs_packed_offset_lhs_pack_bf16p2vlx2_f32_sme(size_t m_idx, size_t k, size_t mr, size_t kr, size_t sr) {
     KAI_ASSUME(m_idx % kai_get_m_step_lhs_pack_bf16p2vlx2_f32_sme(mr) == 0);
     KAI_ASSUME(mr == kai_get_mr_lhs_pack_bf16p2vlx2_f32_sme());
-    KAI_ASSUME(kr == kai_kr);
-    KAI_ASSUME(sr == kai_sr);
+    KAI_ASSUME(kr == KR);
+    KAI_ASSUME(sr == SR);
 
     KAI_UNUSED(mr);
     KAI_UNUSED(kr);
     KAI_UNUSED(sr);
 
-    return m_idx * kai_roundup(k, kr) * sizeof(uint16_t);
+    return m_idx * kai_roundup(k, KR) * sizeof(uint16_t);
 }
 
 size_t kai_get_lhs_packed_size_lhs_pack_bf16p2vlx2_f32_sme(size_t m, size_t k, size_t mr, size_t kr, size_t sr) {
     KAI_ASSUME(mr == kai_get_mr_lhs_pack_bf16p2vlx2_f32_sme());
-    KAI_ASSUME(kr == kai_kr);
-    KAI_ASSUME(sr == kai_sr);
+    KAI_ASSUME(kr == KR);
+    KAI_ASSUME(sr == SR);
 
     KAI_UNUSED(mr);
     KAI_UNUSED(kr);
     KAI_UNUSED(sr);
-
-    return kai_roundup(m, kai_get_mr_lhs_pack_bf16p2vlx2_f32_sme()) * kai_roundup(k, kai_kr) * sizeof(uint16_t);
+    return kai_roundup(m, kai_get_mr_lhs_pack_bf16p2vlx2_f32_sme()) * kai_roundup(k, KR) * sizeof(uint16_t);
 }
 
 void kai_run_lhs_pack_bf16p2vlx2_f32_sme(
-    size_t m, size_t k, size_t mr, size_t kr, size_t sr, size_t m_idx_start, const void* lhs, size_t lhs_stride,
+    size_t m, size_t k, size_t mr, size_t kr, size_t sr, size_t m_idx_start, const void* lhs, size_t lhs_stride_row,
     void* lhs_packed) {
     KAI_ASSUME(mr == kai_get_mr_lhs_pack_bf16p2vlx2_f32_sme());
-    KAI_ASSUME(kr == kai_kr);
-    KAI_ASSUME(sr == kai_sr);
+    KAI_ASSUME(kr == KR);
+    KAI_ASSUME(sr == SR);
+    KAI_ASSUME(m_idx_start == 0);
     KAI_ASSUME(lhs != NULL);
     KAI_ASSUME(lhs_packed != NULL);
 
-    KAI_ASSUME(m_idx_start == 0);
-
-    const size_t block_height = mr;
+    const size_t m_step = kai_get_mr_lhs_pack_bf16p2vlx2_f32_sme();
     const size_t width = k;
-    const size_t row_offset = 0;
 
-    const void* in[block_height];
+    KAI_ASSERT(m_step <= MAX_M_STEP);
+    const uint8_t* in[MAX_M_STEP];
 
-    for (size_t block_y = 0; block_y < m; block_y += block_height) {
-        const size_t height = KAI_MIN(m - block_y, block_height);
-        void* out = (char*)lhs_packed + (block_y * kai_roundup(k, kai_kr) * sizeof(uint16_t));
+    uint8_t* out_base = lhs_packed;
+    const uint8_t* lhs_ptr = lhs;
+
+    kai_commit_za();
+
+    for (size_t i_m = 0; i_m < m; i_m += m_step) {
+        const size_t height = KAI_MIN(m - i_m, m_step);
+        void* out = out_base;
+        out_base += m_step * kai_roundup(k, KR) * sizeof(uint16_t);
 
         for (size_t y = 0; y < height; y++) {
-            in[y] = (const void*)((const char*)lhs + (block_y + y) * lhs_stride);
+            in[y] = lhs_ptr + (i_m + y) * lhs_stride_row;
         }
 
         __asm__ __volatile__(
@@ -111,7 +116,7 @@ void kai_run_lhs_pack_bf16p2vlx2_f32_sme(
             "mov x25, %x[in]\n"
             "ptrue p0.b\n"
             "mov x24, %x[outptr_raw]\n"
-            "mov x23, %x[row_offset]\n"
+            "mov x23, #0x0\n"
             "lsr x10, x10, #0x1\n"
             "lsr x27, x27, #0x1\n"
             "mov x12, #0x0\n"
@@ -236,11 +241,11 @@ void kai_run_lhs_pack_bf16p2vlx2_f32_sme(
             "mov %x[outptr_raw], x24\n"
             ".inst 0xd503467f  // SMSTOP\n"
             : [outptr_raw] "+&r"(out)
-            : [height] "r"(height), [in] "r"(in), [row_offset] "r"(row_offset), [width] "r"(width)
-            : "cc", "memory", "p0", "p1", "p10", "p11", "p12", "p13", "p14", "p15", "p2", "p3", "p4", "p5", "p6", "p7",
-              "p8", "p9", "x10", "x12", "x20", "x21", "x22", "x23", "x24", "x25", "x26", "x27", "x28", "x9", "z0", "z1",
-              "z10", "z11", "z12", "z13", "z14", "z15", "z16", "z17", "z18", "z19", "z2", "z20", "z21", "z22", "z23",
-              "z24", "z25", "z26", "z27", "z28", "z29", "z3", "z30", "z31", "z4", "z5", "z6", "z7", "z8", "z9");
+            : [height] "r"(height), [in] "r"(in), [width] "r"(width)
+            : "cc", "memory", "p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9", "p10", "p11", "p12", "p13",
+              "p14", "p15", "x9", "x10", "x12", "x20", "x21", "x22", "x23", "x24", "x25", "x26", "x27", "x28", "z0",
+              "z1", "z2", "z3", "z4", "z5", "z6", "z7", "z8", "z9", "z10", "z11", "z12", "z13", "z14", "z15", "z16",
+              "z17", "z18", "z19", "z20", "z21", "z22", "z23", "z24", "z25", "z26", "z27", "z28", "z29", "z30", "z31");
     }
 }
 

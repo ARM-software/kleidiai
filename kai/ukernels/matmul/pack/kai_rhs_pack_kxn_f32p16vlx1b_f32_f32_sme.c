@@ -7,6 +7,7 @@
 #if (!defined(__aarch64__) || !defined(__ARM_FEATURE_SVE2)) && !defined(_M_ARM64)
 #error This file must be compiled for AArch64, FEAT_SVE2.
 #else  // Architectural features check.
+
 #include "kai_rhs_pack_kxn_f32p16vlx1b_f32_f32_sme.h"
 
 #include <stddef.h>
@@ -88,6 +89,8 @@ void kai_run_rhs_pack_kxn_f32p16vlx1b_f32_f32_sme(
     args.out = rhs_packed;
     args.in_stride = rhs_stride_row;
     args.out_stride = kai_get_rhs_packed_stride_rhs_pack_kxn_f32p16vlx1b_f32_f32_sme(args.height);
+
+    kai_commit_za();
 
     kai_kernel_rhs_pack_kxn_f32p16vlx1b_f32_f32_sme(&args);
 }

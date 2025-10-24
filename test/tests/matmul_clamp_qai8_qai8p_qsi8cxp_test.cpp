@@ -31,6 +31,7 @@
 #include "kai/ukernels/matmul/pack/kai_lhs_pack_x8p2vlx4_x8_sme.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme.h"
+#include "test/common/abi_checker.hpp"
 #include "test/common/buffer.hpp"
 #include "test/common/cpu_info.hpp"
 #include "test/common/matmul_test_common.hpp"
@@ -676,8 +677,8 @@ void test_lhs_pack(
     const auto imp_packed_lhs_offset = variant.lhs_pack->get_packed_lhs_offset(
         output_area.start_row(), shape.k, variant.acc_pack.m, variant.acc_pack.k, 1);
 
-    variant.lhs_pack->pack(
-        output_area.height(), shape.k, variant.acc_pack.m, variant.acc_pack.k, 1, 0,
+    abi_check(
+        variant.lhs_pack->pack, output_area.height(), shape.k, variant.acc_pack.m, variant.acc_pack.k, 1, 0,
         reference.lhs_qai8.data() + imp_lhs_offset, shape.k * sizeof(int8_t),
         imp_packed_lhs.data() + imp_packed_lhs_offset);
 
@@ -714,11 +715,11 @@ void test_rhs_pack(
     imp_pack_rhs_params.lhs_zero_point = reference.qa_lhs.zero_point;
     imp_pack_rhs_params.scale_multiplier = reference.qa_lhs.scale / reference.qa_dst.scale;
 
-    variant.rhs_pack.pack(
-        1, output_area.width(), shape.k, variant.acc_pack.n, variant.acc_pack.k, 1, shape.n * sizeof(int8_t),
-        reference.rhs_qsi8.data() + imp_rhs_offset, reference.bias_qsi32.data() + imp_bias_offset,
-        reference.rhs_scales.data() + imp_scale_offset, imp_packed_rhs.data() + imp_packed_rhs_offset, 0,
-        &imp_pack_rhs_params);
+    abi_check(
+        variant.rhs_pack.pack, 1, output_area.width(), shape.k, variant.acc_pack.n, variant.acc_pack.k, 1,
+        shape.n * sizeof(int8_t), reference.rhs_qsi8.data() + imp_rhs_offset,
+        reference.bias_qsi32.data() + imp_bias_offset, reference.rhs_scales.data() + imp_scale_offset,
+        imp_packed_rhs.data() + imp_packed_rhs_offset, 0, &imp_pack_rhs_params);
 
     const auto imp_packed_rhs_end_offset = output_area.end_col() < shape.n
         ? variant.rhs_pack.get_packed_rhs_offset(output_area.end_col(), shape.k)
@@ -798,8 +799,8 @@ void test_matmul(
     imp_main_params.max_value = reference.clamp.max;
     imp_main_params.output_zero_point = reference.qa_dst.zero_point;
 
-    variant.matmul.matmul(
-        output_area.height(), output_area.width(), shape.k, lhs_data.data() + imp_lhs_offset,
+    abi_check(
+        variant.matmul.matmul, output_area.height(), output_area.width(), shape.k, lhs_data.data() + imp_lhs_offset,
         reference.packed_rhs.data() + imp_packed_rhs_offset, imp_dst.data() + imp_dst_offset, shape.n * sizeof(int8_t),
         sizeof(int8_t), &imp_main_params);
 
@@ -889,7 +890,8 @@ static Buffer lhs_pack(
     const size_t input_offset = portion.start_row() * k_chunk.count;
     const size_t dst_offset = variant.get_packed_lhs_offset(portion.start_row(), k_chunk.count, k_chunk.length);
 
-    variant.pack(
+    abi_check(
+        variant.pack,                                     // Kernel
         portion.height(), k_chunk.count, k_chunk.length,  // Dimensions
         indirection_pointer + input_offset,               // Indirection input
         reference.lhs_qai8_indirect_offset,               // chunk offset
@@ -920,13 +922,14 @@ static Buffer rhs_pack(
     const size_t dst_offset = variant.get_packed_rhs_offset(portion.start_col(), k_chunk.count, k_chunk.length);
 
     // Pack
-    variant.pack(
-        portion.width(), k_chunk.count, k_chunk.length,
-        n * sizeof(uint8_t),                         // Dimensions, row stride
-        reference.rhs_qsi8.data() + rhs_offset,      // RHS matrix
-        reference.bias_qsi32.data() + bias_offset,   // Bias
-        reference.rhs_scales.data() + scale_offset,  // Scales
-        packed.data() + dst_offset,                  // Output
+    abi_check(
+        variant.pack,                                    // Kernel
+        portion.width(), k_chunk.count, k_chunk.length,  // Dimensions
+        n * sizeof(uint8_t),                             // Row stride
+        reference.rhs_qsi8.data() + rhs_offset,          // RHS matrix
+        reference.bias_qsi32.data() + bias_offset,       // Bias
+        reference.rhs_scales.data() + scale_offset,      // Scales
+        packed.data() + dst_offset,                      // Output
         &quantization);
 
     return packed;
@@ -952,7 +955,8 @@ static Buffer matmul(
     requantization.output_zero_point = reference.qa_dst.zero_point;
 
     // Call matmul kernel
-    variant.imatmul(
+    abi_check(
+        variant.imatmul,                                                   // Kernel
         portion.height(), portion.width(), k_chunk.count, k_chunk.length,  // Dimensions
         packed_lhs.data() + lhs_offset,                                    // LHS
         packed_rhs.data() + rhs_offset,                                    // RHS

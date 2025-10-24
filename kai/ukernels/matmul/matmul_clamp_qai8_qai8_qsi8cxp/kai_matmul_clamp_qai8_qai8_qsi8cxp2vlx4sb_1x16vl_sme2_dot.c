@@ -27,13 +27,13 @@ typedef struct {
     uint64_t flags;
 } KernelArgs;
 
-void kai_kernel_matmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_sme2_dot(KernelArgs* args_ptr);
-
 static const size_t kai_m_step = 1;
 static const size_t kai_nr = 2;
 static const size_t kai_n_step = 16;
 static const size_t kai_kr = 4;
 static const size_t kai_sr = 1;
+
+void kai_kernel_matmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_sme2_dot(KernelArgs* args_ptr);
 
 size_t kai_get_m_step_matmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_sme2_dot(void) {
     return kai_m_step;
@@ -90,7 +90,6 @@ void kai_run_matmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_sme2_dot(
     size_t dst_stride_col, const struct kai_matmul_requantize32_params* params) {
     KAI_UNUSED(dst_stride_row);
     KAI_UNUSED(dst_stride_col);
-
     KAI_ASSUME(m == 1);
 
     uint64_t flags = 2;
@@ -105,6 +104,8 @@ void kai_run_matmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_sme2_dot(
     args.K = k;
     args.output_ptr = dst;
     args.flags = flags;
+
+    kai_commit_za();
 
     kai_kernel_matmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_sme2_dot(&args);
 }

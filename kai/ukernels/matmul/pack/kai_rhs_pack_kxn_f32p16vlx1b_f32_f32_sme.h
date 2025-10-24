@@ -35,7 +35,7 @@ size_t kai_get_bias_offset_rhs_pack_kxn_f32p16vlx1b_f32_f32_sme(size_t n_idx);
 
 /// Gets row stride in bytes of the packed RHS matrix.
 ///
-/// @param[in] k Number of columns of the unpacked RHS matrix.
+/// @param[in] k Number of rows.
 ///
 /// @return Row stride in bytes.
 size_t kai_get_rhs_packed_stride_rhs_pack_kxn_f32p16vlx1b_f32_f32_sme(size_t k);
@@ -58,7 +58,7 @@ size_t kai_get_rhs_packed_size_rhs_pack_kxn_f32p16vlx1b_f32_f32_sme(size_t n, si
 
 /// Runs the RHS packing function for matrix multiplication.
 ///
-/// The pointer of each buffers (RHS, bias and packed RHS) needs to be added with offset
+/// The pointer of each buffer (RHS, bias and packed RHS) needs to be added with offset
 /// calculated using the following functions:
 ///
 ///   * RHS: @ref kai_get_rhs_offset_rhs_pack_kxn_f32p16vlx1b_f32_f32_sme.

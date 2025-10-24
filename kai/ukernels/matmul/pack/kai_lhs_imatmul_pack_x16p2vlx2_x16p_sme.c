@@ -20,8 +20,7 @@ enum {
     MAX_M_STEP = MR * (KAI_SME_VEC_LENGTH_MAX_BYTES / sizeof(uint16_t)) / KR,
 };
 
-void kai_kernel_lhs_imatmul_pack_x16p2vlx2_x16p_sme(
-    size_t height, size_t width, const void* in, size_t row_offset, void* out);
+void kai_kernel_lhs_imatmul_pack_x16p2vlx2_x16p_sme(size_t height, size_t width, const void* in, void* out);
 
 static size_t kai_get_mr_lhs_imatmul_pack_x16p2vlx2_x16p_sme(void) {
     return MR * kai_get_sme_vector_length_u16() / KR;
@@ -51,17 +50,20 @@ void kai_run_lhs_imatmul_pack_x16p2vlx2_x16p_sme(
     KAI_ASSUME(lhs_packed != NULL);
 
     const size_t m_step = kai_get_mr_lhs_imatmul_pack_x16p2vlx2_x16p_sme();
-    const size_t row_offset = 0;
     const size_t width = k_chunk_length;
 
     KAI_ASSERT(m_step <= MAX_M_STEP);
     const uint8_t* in[MAX_M_STEP];
 
     uint8_t* out_base = lhs_packed;
+
+    kai_commit_za();
+
     for (size_t i_m = 0; i_m < m; i_m += m_step) {
         for (size_t i_k_chunk = 0; i_k_chunk < k_chunk_count; i_k_chunk += 1) {
             const size_t height = KAI_MIN(m - i_m, m_step);
             void* out = out_base;
+            out_base += m_step * kai_roundup(k_chunk_length, KR) * sizeof(uint16_t);
             for (size_t y = 0; y < height; y += 1) {
                 KAI_ASSERT(i_k_chunk + (i_m + y) * k_chunk_count < m * k_chunk_count);
                 in[y] = *(lhs_ptrs + i_m * k_chunk_count + i_k_chunk * m_step + y);
@@ -72,8 +74,7 @@ void kai_run_lhs_imatmul_pack_x16p2vlx2_x16p_sme(
             }
 
             kai_kernel_lhs_imatmul_pack_x16p2vlx2_x16p_sme(
-                height, width, in, row_offset, out);  // NOLINT(bugprone-multi-level-implicit-pointer-conversion)
-            out_base += m_step * kai_roundup(k_chunk_length, KR) * sizeof(uint16_t);
+                height, width, in, out);  // NOLINT(bugprone-multi-level-implicit-pointer-conversion)
         }
     }
 }

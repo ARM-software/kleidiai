@@ -497,7 +497,9 @@ test-examples-sme-fvp:
     # Configure and build
     - cmake -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
       -DCMAKE_CXX_FLAGS="-Werror --coverage" -DCMAKE_C_FLAGS="-Werror --coverage" -DCMAKE_BUILD_TYPE=Release
-      -DKLEIDIAI_BUILD_TESTS=ON -DKLEIDIAI_BUILD_BENCHMARK=ON -S . -B ${CI_JOB_NAME_SLUG}
+      -DKLEIDIAI_BUILD_TESTS=ON -DKLEIDIAI_BUILD_BENCHMARK=ON
+      ${CMAKE_EXTRA_FLAGS}
+      -S . -B ${CI_JOB_NAME_SLUG}
     - cmake --build ${CI_JOB_NAME_SLUG} -j${PARALLEL_JOBS} --verbose
     # Run kleidiai_test to generate coverage report for unit tests
     - ./${CI_JOB_NAME_SLUG}/kleidiai_test --gtest_brief=1
@@ -538,6 +540,7 @@ coverage-clang:
     - apple_silicon
   variables:
     GCOV_EXECUTABLE: "xcrun llvm-cov gcov"
+    CMAKE_EXTRA_FLAGS: "-DKLEIDIAI_INTERNAL_EXTRA_ARCH='+sme'"
 
 coverage:
   extends:

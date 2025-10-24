@@ -129,6 +129,8 @@ void kai_run_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot(
     uint64_t rhs_row_bytes = nr * k_internal / 2;
     uint64_t lhs_end_ptr = ((uint64_t)lhs_packed) + (m * lhs_stride);
 
+    kai_commit_za();
+
     /*
      * x11: zero = 0 // MUST BE x8-x11
      * x15: n initialized as n

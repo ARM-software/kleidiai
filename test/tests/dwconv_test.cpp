@@ -18,6 +18,7 @@
 #include "kai/ukernels/dwconv/dwconv_f32_f32_f32p/kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla.h"
 #include "kai/ukernels/dwconv/dwconv_f32_f32_f32p/kai_dwconv_clamp_f32_f32_f32p_interface.h"
 #include "kai/ukernels/dwconv/pack/kai_rhs_dwconv_pack_x32p1vlx1b_x32_x32_sme.h"
+#include "test/common/abi_checker.hpp"
 #include "test/common/buffer.hpp"
 #include "test/common/compare.hpp"
 #include "test/common/cpu_info.hpp"
@@ -196,7 +197,9 @@ Buffer pack_rhs(const RhsPackDepthwiseKernel& kernel, const MatMulShape& shape, 
     Buffer dst(dst_size);
 
     // RHS Pack API is subject to change.
-    kernel.pack(shape.m, shape.n, shape.m, shape.n, shape.k, reference.rhs.data(), reference.bias.data(), dst.data());
+    abi_check(
+        kernel.pack, shape.m, shape.n, shape.m, shape.n, shape.k, reference.rhs.data(), reference.bias.data(),
+        dst.data());
     return dst;
 }
 
@@ -221,10 +224,10 @@ Buffer dwconv(
         const size_t valid_input_rows = (in_row < in_shape.m) ? (in_shape.m - in_row) : 0;
         const size_t valid_out_rows = (out_shape.m - out_row);
 
-        kernel.conv(
-            reference.lhs.data() + (in_row * stride_in_row), rhs_packed.data(), dst.data() + (out_row * dst_stride_row),
-            stride_in_row, stride_col, dst_stride_row, stride_col, valid_input_rows, valid_out_rows, pad.left, pad_top,
-            0.f, clamp_range.min, clamp_range.max);
+        abi_check(
+            kernel.conv, reference.lhs.data() + (in_row * stride_in_row), rhs_packed.data(),
+            dst.data() + (out_row * dst_stride_row), stride_in_row, stride_col, dst_stride_row, stride_col,
+            valid_input_rows, valid_out_rows, pad.left, pad_top, 0.f, clamp_range.min, clamp_range.max);
     }
 
     return dst;

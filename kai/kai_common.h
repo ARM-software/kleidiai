@@ -156,6 +156,9 @@ inline static uint64_t kai_get_sme_vector_length_u16(void) {
 inline static uint64_t kai_get_sme_vector_length_u32(void) {
     return kai_get_sme_vector_length_u8() / 4;
 }
+
+/// Commit ZA to lazy save buffer
+void kai_commit_za(void);
 #endif  // defined(__ARM_FEATURE_SVE2) || defined(_M_ARM64)
 
 /// Extends the sign bit of int 4-bit value (stored in int8_t variable)

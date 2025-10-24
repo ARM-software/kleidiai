@@ -112,6 +112,10 @@ size_t kai_get_dst_size_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa(si
 /// @param[in] dst_stride_col Column stride in bytes of the output matrix. Unused
 /// @param[in] clamp_min Minimum value to clamp the final result.
 /// @param[in] clamp_max Maximum value to clamp the final result.
+///
+/// @note Clamp minimum and maximum values are cast internally to the destination type before clamping the computed
+/// values.
+///
 void kai_run_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa(
     size_t m, size_t n, size_t k, const void* lhs_packed, const void* rhs_packed, void* dst, size_t dst_stride_row,
     size_t dst_stride_col, float clamp_min, float clamp_max);
