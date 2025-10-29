@@ -225,6 +225,9 @@ inline static uint64_t kai_get_sme_vector_length_u32(void) {
 void kai_commit_za(void);
 #endif  // defined(__ARM_FEATURE_SVE2) || defined(_M_ARM64)
 
+/// Gets the SVE vector length for 8-bit elements.
+uint64_t kai_get_sve_vector_length_u8(void);
+
 /// Extends the sign bit of int 4-bit value (stored in int8_t variable)
 /// @param[in] value The 4-bit int value
 ///

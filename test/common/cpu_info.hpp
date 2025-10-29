@@ -32,6 +32,9 @@ bool cpu_has_bf16();
 /// Returns a value indicating whether the current CPU supports FEAT_SVE.
 bool cpu_has_sve();
 
+/// Returns a value indicating whether the current CPU supports FEAT_SVE with 256-bit vector lengths.
+bool cpu_has_sve_vl256();
+
 /// Returns a value indicating whether the current CPU supports FEAT_SVE2.
 bool cpu_has_sve2();
 
@@ -46,5 +49,11 @@ bool cpu_has_dotprod_and_bf16();
 
 /// Returns a value indicating whether the current CPU supports FEAT_BF16 and FEAT_I8MM
 bool cpu_has_i8mm_and_bf16();
+
+/// Returns a value indicating whether the current CPU supports a set of features
+template <bool (*... Pred)()>
+bool cpu_check() {
+    return (Pred() && ...);
+}
 
 }  // namespace kai::test

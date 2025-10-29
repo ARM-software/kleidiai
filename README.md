@@ -60,6 +60,7 @@ Some of the key features of KleidiAI are the following:
 <h1> Supported instructions and extensions </h1>
 
 - Advanced SIMD instructions
+- Scalable Vector Extension (SVE)
 - Scalable Matrix Extension(SME)
 - Scalable Matrix Extension 2(SME2)
 

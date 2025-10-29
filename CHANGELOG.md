@@ -15,6 +15,9 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
   - Fixed incorrect handling of zero point and scale into two packing kernels which caused incorrect de-quantisation is certain cases:
     - kai_rhs_pack_nxk_qai4c32ps1s0nrx4_qau4c32s0s1_f32_f32_f32_neon
     - kai_rhs_pack_nxk_qai4c32ps1s0nrx4_qau4c32s1s0_f32_f32_f32_neon
+- NEW SVE micro-kernels (256-bit Vector length specific):
+  - Matrix multiplication (MxN) Micro-kernels of QSI8DX LHS and QSI4CX RHS with F32 input and output.
+  - Matrix multiplication (1xN) Micro-kernels of QSI8DX LHS and QSI4CX RHS with F32 input and output.
 
 ## v1.15.1
 
