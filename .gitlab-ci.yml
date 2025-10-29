@@ -278,6 +278,15 @@ test-linux-aarch64:
     reports:
       junit: ${UT_REPORT_PATH}*.xml
 
+# Extra test jobs to test SVE with VL 256b
+test-linux-aarch64-sve256:
+  extends:
+    - test-linux-aarch64
+  variables:
+    # Use instance with SVE VL 256
+    KUBERNETES_NODE_SELECTOR_INSTANCE_GENERATION: "karpenter.k8s.aws/instance-generation=7"
+    GTEST_FILTER: "*_sve_*"
+
 # Script to run binary provided in FVP environment
 # * FVP_TEST_EXECUTABLE - mandatory path in CI for file and parameters to execute
 # * FVP_MODEL_EXTRA - optional additional FVP parameters, default is nothing
@@ -532,6 +541,15 @@ coverage-linux:
   before_script:
     - pip3 install -U --break-system-packages --user gcovr
 
+# Extra coverage jobs to test SVE with VL 256b
+coverage-linux-sve256:
+  extends:
+    - coverage-linux
+  variables:
+    # Use instance with SVE VL 256
+    KUBERNETES_NODE_SELECTOR_INSTANCE_GENERATION: "karpenter.k8s.aws/instance-generation=7"
+    GTEST_FILTER: "*_sve_*"
+
 coverage-clang:
   extends:
     - .coverage-base
@@ -548,6 +566,7 @@ coverage:
   stage: deploy
   needs:
     - coverage-linux
+    - coverage-linux-sve256
     - coverage-clang
   tags:
     - apple_silicon
