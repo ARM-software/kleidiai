@@ -10,6 +10,8 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+## v1.16.0
+
 - Fixes:
   - All SME and SME2 micro-kernels now commit ZA lazy save buffer when building with SME support.
   - Fixed incorrect handling of zero point and scale into two packing kernels which caused incorrect de-quantisation is certain cases:
