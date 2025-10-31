@@ -101,12 +101,9 @@ RUN --mount=type=cache,target=${BUILD_CACHE},sharing=locked \
 
 WORKDIR /
 
-# Bazel 6.5 cache config does not use XDG_CACHE_HOME and always ${HOME}/.cache/bazel
-# but HOME is not set in the container environment
+# Download and install bazelisk
 RUN wget "https://github.com/bazelbuild/bazelisk/releases/download/${BAZELISK_VERSION}/bazelisk-${TARGETOS}-${TARGETARCH}" -O /usr/bin/bazelisk && \
-    chmod a+x /usr/bin/bazelisk && \
-    USE_BAZEL_VERSION=7.x bazelisk && \
-    chmod -R a+rw ${XDG_CACHE_HOME} && ln -s ${XDG_CACHE_HOME} /.cache
+    chmod a+x /usr/bin/bazelisk
 
 RUN wget "https://github.com/bazelbuild/buildtools/releases/download/${BAZEL_BUILD_TOOLS_VER}/buildifier-${TARGETOS}-${TARGETARCH}" -O /usr/bin/buildifier && \
     wget "https://github.com/bazelbuild/buildtools/releases/download/${BAZEL_BUILD_TOOLS_VER}/buildozer-${TARGETOS}-${TARGETARCH}" -O /usr/bin/buildozer && \

@@ -53,6 +53,9 @@ variables:
   # Enable more verbose script section content printout
   FF_SCRIPT_SECTIONS: true
 
+  # Default cache policy is to pull only
+  CACHE_POLICY: pull
+
 default:
   image: registry.gitlab.arm.com/kleidi/kleidiai/image:latest
   tags:
@@ -70,6 +73,8 @@ default:
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      variables:
+        CACHE_POLICY: pull-push
     - if: $CI_COMMIT_TAG && $CI_COMMIT_REF_PROTECTED == "true"
 
 workflow:
@@ -104,10 +109,13 @@ build-gcc-bazel:
   extends:
     - .standard-rules
   stage: build
+  variables:
+    BAZELISK_HOME: '.cache/bazelisk'
   cache:
     - key: cache-bazelisk
       paths:
-      - /cache/bazelisk
+        - $BAZELISK_HOME
+      policy: $CACHE_POLICY
   script:
     - bazelisk clean
     - bazelisk build -c opt --copt="-Werror" --cxxopt="-Werror" --jobs=${PARALLEL_JOBS} -k --subcommands --verbose_failures --curses=no //...
@@ -121,10 +129,13 @@ build-clang-bazel:
   extends:
     - .standard-rules
   stage: build
+  variables:
+    BAZELISK_HOME: '.cache/bazelisk'
   cache:
     - key: cache-bazelisk
       paths:
-      - /cache/bazelisk
+        - $BAZELISK_HOME
+      policy: $CACHE_POLICY
   script:
     - bazelisk clean
     # explicitly disable layering_check feature
@@ -195,14 +206,15 @@ test-clang-tidy:
 
 pre-commit-hooks:
   variables:
-    PRE_COMMIT_HOME: '/cache/pre-commit'
+    PRE_COMMIT_HOME: '.cache/pre-commit'
   extends:
     - .standard-rules
   stage: build
   cache:
     - key: cache-pre-commit
       paths:
-      - $PRE_COMMIT_HOME
+        - $PRE_COMMIT_HOME
+      policy: $CACHE_POLICY
   script:
     - PRE_COMMIT_HOME=$PRE_COMMIT_HOME pre-commit run --all-files
 
@@ -470,8 +482,14 @@ coverage-linux:
   stage: analyze
   variables:
     GCOV_EXECUTABLE: "llvm-cov gcov"
+    PIP_CACHE_DIR: ".cache/pip3"
+  cache:
+    - key: cache-pip3
+      paths:
+        - $PIP_CACHE_DIR
+      policy: $CACHE_POLICY
   before_script:
-    - pip3 install -U --break-system-packages --user gcovr
+    - pip3 install --cache-dir=$PIP_CACHE_DIR -U --break-system-packages --user gcovr
 
 # Extra coverage jobs to test SVE with VL 256b
 coverage-linux-sve256:
