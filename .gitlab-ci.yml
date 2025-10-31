@@ -456,8 +456,18 @@ test-examples-sme-fvp:
     - cmake --build ${CI_JOB_NAME_SLUG} -j${PARALLEL_JOBS} --verbose
     # Run kleidiai_test to generate coverage report for unit tests
     - ./${CI_JOB_NAME_SLUG}/kleidiai_test --gtest_brief=1
-    # Run kleidiai_kleidiai_benchmark to generate coverage report for benchmark
+    # Run combined benchmark three times (backwards compatibility, matmul and imatmul)
     - ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark --benchmark_dry_run=true -m 1 -n 30 -k 64
+    - ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark matmul  --benchmark_dry_run=true -m 1 -n 30 -k 64
+    - ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark imatmul --benchmark_dry_run=true -m 1 -n 30 -c 4 -l 15
+    # List benchmarks to generate coverage
+    - ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark --benchmark_list_tests
+    - ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark matmul --benchmark_list_tests
+    - ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark imatmul --benchmark_list_tests
+    # Run info message with no subcommand to hit print_global_usage, but don't fail the job
+    - ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark || true
+    - ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark matmul || true
+    - ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark imatmul || true
     # Generate gcovr configuration
     - mkdir -p build/coverage
     - |

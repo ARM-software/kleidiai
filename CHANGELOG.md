@@ -12,6 +12,9 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## v1.16.0
 
+- Extended the benchmarking framework to support multiple operators.
+  - Initial support for matrix multiplication (matmul) & indirect matrix multiplication (imatmul)
+  - Added all imatmul and matmul micro-kernels to the benchmark suite
 - Fixes:
   - All SME and SME2 micro-kernels now commit ZA lazy save buffer when building with SME support.
   - Fixed incorrect handling of zero point and scale into two packing kernels which caused incorrect de-quantisation is certain cases:

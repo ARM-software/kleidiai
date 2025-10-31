@@ -681,12 +681,16 @@ if(KLEIDIAI_BUILD_BENCHMARK)
 
     include(FetchGBench)
 
+    # Single benchmark binary combining matmul and imatmul
     add_executable(kleidiai_benchmark
         benchmark/main.cpp
         benchmark/matmul/matmul_registry.cpp
+        benchmark/imatmul/imatmul_registry.cpp
     )
     set_source_files_properties(benchmark/matmul/matmul_registry.cpp
-        PROPERTIES COMPILE_OPTIONS "-march=armv8-a+sve2${KLEIDIAI_INTERNAL_EXTRA_ARCH}")
+        PROPERTIES COMPILE_OPTIONS "-fno-tree-vectorize;-march=armv8-a+sve+sve2${KLEIDIAI_INTERNAL_EXTRA_ARCH}")
+    set_source_files_properties(benchmark/imatmul/imatmul_registry.cpp
+        PROPERTIES COMPILE_OPTIONS "-fno-tree-vectorize;-march=armv8-a+sve+sve2${KLEIDIAI_INTERNAL_EXTRA_ARCH}")
 
     target_link_libraries(kleidiai_benchmark
         PRIVATE
