@@ -31,7 +31,6 @@ SCALAR_KERNELS = [
 
 # buildifier: keep sorted
 NEON_KERNELS = [
-    "pack/kai_lhs_pack_f16pmrx2_f32_neon",
     "pack/kai_lhs_quant_pack_qai8dxp_bf16_neon",
     "pack/kai_lhs_quant_pack_qsi8d32p4x8sb_f32_neon",
     "pack/kai_lhs_quant_pack_qsi8d32p_f32_neon",
@@ -233,7 +232,6 @@ SME2_KERNELS_ASM = [
     "matmul_clamp_f16_f16p_f16p/kai_matmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa",
     "matmul_clamp_f16_qsi8d32p_qai4c32p/kai_matmul_clamp_f16_qsi8d32p1vlx4_qai4c32p4vlx4_1vlx4vl_sme2_mopa",
     "matmul_clamp_f16_qsi8d32p_qai4c32p/kai_matmul_clamp_f16_qsi8d32p1x4_qai4c32p4vlx4_1x4vl_sme2_dot",
-    "matmul_clamp_f32_f16p_qsi4c32p/kai_matmul_clamp_f32_f16p1vlx2_qsi4c32p4vlx2_1vlx4vl_sme2_mopa",
     "matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p16vlx1b_1x16vl_sme2_mla",
     "matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p2vlx1b_1x16vl_sme2_mla",
     "matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa",
