@@ -37,8 +37,7 @@ inline static size_t kai_get_lhs_packed_stride(size_t k, size_t mr, size_t kr, s
 }
 
 size_t kai_get_m_step_lhs_quant_pack_qsi8d32pscalef32_f32_neon(size_t mr) {
-    KAI_UNUSED(mr);
-    return 1;
+    return mr;
 }
 
 size_t kai_get_lhs_offset_lhs_quant_pack_qsi8d32pscalef32_f32_neon(size_t m_idx, size_t lhs_stride) {

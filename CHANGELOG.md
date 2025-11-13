@@ -10,6 +10,17 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+- Fixes
+  - Some micro-kernels report incorrect m_step value.
+    - kai_lhs_quant_pack_qai8dxp_bf16_neon
+    - kai_lhs_quant_pack_qai8dxp_f16_neon
+    - kai_lhs_quant_pack_qai8dxp_f32
+    - kai_lhs_quant_pack_qsi8d32p4x8sb_f32_neon
+    - kai_lhs_quant_pack_qsi8d32p_f32
+    - kai_lhs_quant_pack_qsi8d32p_f32_neon
+    - kai_lhs_quant_pack_qsi8d32pscalef32_f16_neon
+    - kai_lhs_quant_pack_qsi8d32pscalef32_f32_neon
+
 ## v1.16.0
 
 - Extended the benchmarking framework to support multiple operators.
