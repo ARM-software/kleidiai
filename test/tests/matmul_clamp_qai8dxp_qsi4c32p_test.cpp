@@ -284,23 +284,42 @@ TEST_P(MatMulTest_qmatmul_clamp_f32_qai8dxp_qsi4c32p, EndToEnd) {
     //   * Quantizes the LHS matrix using 8-bit symmetric quantization.
     //   * Quantizes the RHS matrix using 8-bit asymmetric quantization.
     //   * Performs GEMM.
-    auto [ref_lhs_qvalues, ref_lhs_scales, ref_lhs_zero_points] =
-        quantize_asymmetric_per_block_dynamic<float, int8_t, float, int32_t>(ref_lhs.data(), M, K, K);
-    auto [ref_rhs_values_qsi4, ref_rhs_scales] =
-        quantize_rhs_qsi4c32p<float, BFloat16<false>>(N, K, bl, ref_rhs, rhs_pack_type == RhsPackType::NxK);
+    QuantizationInfo lhs_qinfo{};
+    lhs_qinfo.quant_width = K;
+    lhs_qinfo.dst_type = DataType::QAI8;
+    lhs_qinfo.scale_type = DataType::FP32;
+    lhs_qinfo.zero_point_type = DataType::I32;
+    auto [ref_lhs_quant, lhs_qoutputs] = quantize_dynamic(ref_lhs.data(), DataType::FP32, M, K, lhs_qinfo);
+
+    QuantizationInfo rhs_qinfo{};
+    rhs_qinfo.quant_width = bl;
+    rhs_qinfo.dst_type = DataType::QSI4;
+    rhs_qinfo.scale_type = DataType::BF16;
+    auto [ref_rhs_quant, rhs_qoutputs] = quantize_dynamic(ref_rhs.data(), DataType::FP32, N, K, rhs_qinfo);
+
+    bool transposed = (rhs_pack_type == RhsPackType::NxK);
+    const size_t width = transposed ? K : N;
+    const size_t height = transposed ? N : K;
+
+    const size_t qsi4_stride = round_up_multiple(width, 2);
+    const size_t qsi4_size_bytes = round_up_division(height * qsi4_stride, 2);
+
+    if (!transposed) {
+        ref_rhs_quant = transpose_with_padding<Int4>(ref_rhs_quant.data(), N, K, K, qsi4_stride, qsi4_size_bytes);
+    }
 
     Buffer ref_dst_noclamp;
-    if (rhs_pack_type == RhsPackType::NxK) {
+    if (transposed) {
         ref_dst_noclamp =
             matmul_nt_t_quantized<int8_t, float, int32_t, Int4, BFloat16<false>, int32_t, float, float, int32_t, float>(
-                M, N, K, ref_lhs_qvalues.data(), ref_lhs_scales.data(), ref_lhs_zero_points.data(), 1, K,
-                ref_rhs_values_qsi4.data(), ref_rhs_scales.data(), nullptr, 1, bl, ref_biases.data(), nullptr, nullptr,
+                M, N, K, ref_lhs_quant.data(), lhs_qoutputs.scales.data(), lhs_qoutputs.zero_points.data(), 1, K,
+                ref_rhs_quant.data(), rhs_qoutputs.scales.data(), nullptr, 1, bl, ref_biases.data(), nullptr, nullptr,
                 1);
     } else {
         ref_dst_noclamp = matmul_nt_nt_quantized<
             int8_t, float, int32_t, Int4, BFloat16<false>, int32_t, float, float, int32_t, float>(
-            M, N, K, ref_lhs_qvalues.data(), ref_lhs_scales.data(), ref_lhs_zero_points.data(), 1, K,
-            ref_rhs_values_qsi4.data(), ref_rhs_scales.data(), nullptr, 1, bl, ref_biases.data(), nullptr, nullptr, 1);
+            M, N, K, ref_lhs_quant.data(), lhs_qoutputs.scales.data(), lhs_qoutputs.zero_points.data(), 1, K,
+            ref_rhs_quant.data(), rhs_qoutputs.scales.data(), nullptr, 1, bl, ref_biases.data(), nullptr, nullptr, 1);
     }
 
     // Clamps the reference output.
@@ -328,8 +347,8 @@ TEST_P(MatMulTest_qmatmul_clamp_f32_qai8dxp_qsi4c32p, EndToEnd) {
     size_t bias_offset = rhs_start_row * sizeof(float);
 
     auto [imp_packed_rhs, rhs_packed_offset] = pack_rhs_qsi4c32pscalebf16(
-        N, K, bl, nr, kr, sr, ref_rhs_values_qsi4, ref_biases, bias_offset, ref_rhs_scales, rhs_pack_type,
-        rhs_start_row, rect.width());
+        N, K, bl, nr, kr, sr, ref_rhs_quant, ref_biases, bias_offset, rhs_qoutputs.scales, rhs_pack_type, rhs_start_row,
+        rect.width());
 
     auto rhs_matmul_offset = ukernel_variant.interface.get_rhs_packed_offset(rhs_start_row, K, bl);
     ASSERT_EQ(rhs_packed_offset, rhs_matmul_offset);
@@ -362,7 +381,7 @@ TEST_P(MatMulTest_qmatmul_clamp_f32_qai8dxp_qsi4c32p, EndToEnd) {
     // Test vectorized packing micro-kernels, if packing parameters allow
     if (rhs_pack_type == RhsPackType::NxK && (kr / sr == 8 || kr / sr == 4)) {
         const auto [imp_packed_rhs_neon, rhs_packed_offset_neon] = pack_rhs_qsi4c32pscalebf16_neon(
-            N, K, bl, nr, kr, sr, ref_rhs_values_qsi4, ref_biases, bias_offset, ref_rhs_scales, rhs_pack_type,
+            N, K, bl, nr, kr, sr, ref_rhs_quant, ref_biases, bias_offset, rhs_qoutputs.scales, rhs_pack_type,
             rhs_start_row, rect.width());
         ASSERT_EQ(rhs_packed_offset_neon, rhs_packed_offset);
 
@@ -420,23 +439,42 @@ TEST_P(MatMulTest_qmatmul_clamp_bf16_qai8dxp_qsi4c32p, EndToEnd) {
     //   * Quantizes the LHS matrix using 8-bit symmetric quantization.
     //   * Quantizes the RHS matrix using 8-bit asymmetric quantization.
     //   * Performs GEMM.
-    auto [ref_lhs_qvalues, ref_lhs_scales, ref_lhs_zero_points] =
-        quantize_asymmetric_per_block_dynamic<float, int8_t, float, int32_t>(ref_lhs.data(), M, K, K);
-    auto [ref_rhs_values_qsi4, ref_rhs_scales] =
-        quantize_rhs_qsi4c32p<float, BFloat16<false>>(N, K, bl, ref_rhs, rhs_pack_type == RhsPackType::NxK);
+    QuantizationInfo lhs_qinfo{};
+    lhs_qinfo.quant_width = K;
+    lhs_qinfo.dst_type = DataType::QAI8;
+    lhs_qinfo.scale_type = DataType::FP32;
+    lhs_qinfo.zero_point_type = DataType::I32;
+    auto [ref_lhs_quant, lhs_qoutputs] = quantize_dynamic(ref_lhs.data(), DataType::FP32, M, K, lhs_qinfo);
+
+    QuantizationInfo rhs_qinfo{};
+    rhs_qinfo.quant_width = bl;
+    rhs_qinfo.dst_type = DataType::QSI4;
+    rhs_qinfo.scale_type = DataType::BF16;
+    auto [ref_rhs_quant, rhs_qoutputs] = quantize_dynamic(ref_rhs.data(), DataType::FP32, N, K, rhs_qinfo);
+
+    bool transposed = (rhs_pack_type == RhsPackType::NxK);
+    const size_t width = transposed ? K : N;
+    const size_t height = transposed ? N : K;
+
+    const size_t qsi4_stride = round_up_multiple(width, 2);
+    const size_t qsi4_size_bytes = round_up_division(height * qsi4_stride, 2);
+
+    if (!transposed) {
+        ref_rhs_quant = transpose_with_padding<Int4>(ref_rhs_quant.data(), N, K, K, qsi4_stride, qsi4_size_bytes);
+    }
 
     Buffer ref_dst_noclamp;
-    if (rhs_pack_type == RhsPackType::NxK) {
+    if (transposed) {
         ref_dst_noclamp =
             matmul_nt_t_quantized<int8_t, float, int32_t, Int4, BFloat16<false>, int32_t, float, float, int32_t, float>(
-                M, N, K, ref_lhs_qvalues.data(), ref_lhs_scales.data(), ref_lhs_zero_points.data(), 1, K,
-                ref_rhs_values_qsi4.data(), ref_rhs_scales.data(), nullptr, 1, bl, ref_biases.data(), nullptr, nullptr,
+                M, N, K, ref_lhs_quant.data(), lhs_qoutputs.scales.data(), lhs_qoutputs.zero_points.data(), 1, K,
+                ref_rhs_quant.data(), rhs_qoutputs.scales.data(), nullptr, 1, bl, ref_biases.data(), nullptr, nullptr,
                 1);
     } else {
         ref_dst_noclamp = matmul_nt_nt_quantized<
             int8_t, float, int32_t, Int4, BFloat16<false>, int32_t, float, float, int32_t, float>(
-            M, N, K, ref_lhs_qvalues.data(), ref_lhs_scales.data(), ref_lhs_zero_points.data(), 1, K,
-            ref_rhs_values_qsi4.data(), ref_rhs_scales.data(), nullptr, 1, bl, ref_biases.data(), nullptr, nullptr, 1);
+            M, N, K, ref_lhs_quant.data(), lhs_qoutputs.scales.data(), lhs_qoutputs.zero_points.data(), 1, K,
+            ref_rhs_quant.data(), rhs_qoutputs.scales.data(), nullptr, 1, bl, ref_biases.data(), nullptr, nullptr, 1);
     }
 
     // Clamps the reference output.
@@ -467,8 +505,8 @@ TEST_P(MatMulTest_qmatmul_clamp_bf16_qai8dxp_qsi4c32p, EndToEnd) {
     size_t bias_offset = rhs_start_row * sizeof(float);
 
     auto [imp_packed_rhs, rhs_packed_offset] = pack_rhs_qsi4c32pscalebf16(
-        N, K, bl, nr, kr, sr, ref_rhs_values_qsi4, ref_biases, bias_offset, ref_rhs_scales, rhs_pack_type,
-        rhs_start_row, rect.width());
+        N, K, bl, nr, kr, sr, ref_rhs_quant, ref_biases, bias_offset, rhs_qoutputs.scales, rhs_pack_type, rhs_start_row,
+        rect.width());
 
     auto rhs_matmul_offset = ukernel_variant.interface.get_rhs_packed_offset(rhs_start_row, K, bl);
     ASSERT_EQ(rhs_packed_offset, rhs_matmul_offset);
@@ -501,7 +539,7 @@ TEST_P(MatMulTest_qmatmul_clamp_bf16_qai8dxp_qsi4c32p, EndToEnd) {
     // Test vectorized packing micro-kernels, if packing parameters allow
     if (rhs_pack_type == RhsPackType::NxK && (kr / sr == 8 || kr / sr == 4)) {
         const auto [imp_packed_rhs_neon, rhs_packed_offset_neon] = pack_rhs_qsi4c32pscalebf16_neon(
-            N, K, bl, nr, kr, sr, ref_rhs_values_qsi4, ref_biases, bias_offset, ref_rhs_scales, rhs_pack_type,
+            N, K, bl, nr, kr, sr, ref_rhs_quant, ref_biases, bias_offset, rhs_qoutputs.scales, rhs_pack_type,
             rhs_start_row, rect.width());
         ASSERT_EQ(rhs_packed_offset_neon, rhs_packed_offset);
 

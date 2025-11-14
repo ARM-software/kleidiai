@@ -259,14 +259,22 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, EndToEnd) {
     const auto ref_rhs = fill_random<float>(N * K, seed + 1);
 
     // Runs the reference implementation.
-    const auto [ref_lhs_qvalues, ref_lhs_scales] =
-        quantize_symmetric_per_block_dynamic<float, int8_t, Float16>(ref_lhs.data(), M, K, bl);
-    const auto [ref_rhs_qsi4, ref_rhs_scales] =
-        quantize_symmetric_per_block_dynamic<float, Int4, Float16>(ref_rhs.data(), N, K, bl);
+    QuantizationInfo lhs_qinfo{};
+    lhs_qinfo.quant_width = bl;
+    lhs_qinfo.dst_type = DataType::QSI8;
+    lhs_qinfo.scale_type = DataType::FP16;
+    const auto [ref_lhs_quant, lhs_qoutputs] = quantize_dynamic(ref_lhs.data(), DataType::FP32, M, K, lhs_qinfo);
+
+    QuantizationInfo rhs_qinfo{};
+    rhs_qinfo.quant_width = bl;
+    rhs_qinfo.dst_type = DataType::QSI4;
+    rhs_qinfo.scale_type = DataType::FP16;
+    const auto [ref_rhs_quant, rhs_qoutputs] = quantize_dynamic(ref_rhs.data(), DataType::FP32, N, K, rhs_qinfo);
 
     const auto ref_dst = matmul_clamp_nt_t<int8_t, Float16, int32_t, Int4, Float16, int32_t, float, int32_t, float>(
-        M, N, K, ref_lhs_qvalues.data(), ref_lhs_scales.data(), nullptr, bl, ref_rhs_qsi4.data(), ref_rhs_scales.data(),
-        nullptr, bl, nullptr, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max());
+        M, N, K, ref_lhs_quant.data(), lhs_qoutputs.scales.data(), nullptr, bl, ref_rhs_quant.data(),
+        rhs_qoutputs.scales.data(), nullptr, bl, nullptr, std::numeric_limits<float>::lowest(),
+        std::numeric_limits<float>::max());
 
     // Clamp reference output
     const auto [min, max] = find_clamp_range(DataType::FP32, ref_dst.data(), M * N, 1.0F - clamp_rate);
@@ -290,9 +298,9 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, EndToEnd) {
         imp_packed_lhs.data() + lhs_packed_offset);
 
     // Runs the RHS packing micro-kernel.
-    const auto ref_rhs_qsu4 = cast_qsu4_qsi4(ref_rhs_qsi4.data(), N * K);
+    const auto ref_rhs_qsu4 = cast_qsu4_qsi4(ref_rhs_quant.data(), N * K);
     const auto ref_rhs_qsu4_scale_f16 =
-        pack_data_scales_interleave_block<UInt4, Float16>(ref_rhs_qsu4.data(), ref_rhs_scales.data(), N, K, bl);
+        pack_data_scales_interleave_block<UInt4, Float16>(ref_rhs_qsu4.data(), rhs_qoutputs.scales.data(), N, K, bl);
 
     const auto imp_packed_rhs_size = ukernel_variant.rhs_pack_interface.packed_size(N, K, nr, kr, bl);
     Buffer imp_packed_rhs(imp_packed_rhs_size);

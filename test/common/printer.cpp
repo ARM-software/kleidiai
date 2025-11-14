@@ -28,7 +28,7 @@ inline void print_data(std::ostream& os, const uint8_t* data, size_t len, DataTy
             const auto [low, high] = UInt4::unpack_u8(data[i]);
             os << static_cast<int32_t>(low) << ", " << static_cast<int32_t>(high) << ", ";
         }
-    } else if (data_type == DataType::QSI4) {
+    } else if (data_type == DataType::QSI4 || data_type == DataType::QAI4) {
         for (size_t i = 0; i < len / 2; ++i) {
             const auto [low, high] = Int4::unpack_u8(data[i]);
             os << static_cast<int32_t>(low) << ", " << static_cast<int32_t>(high) << ", ";
@@ -53,6 +53,7 @@ inline void print_data(std::ostream& os, const uint8_t* data, size_t len, DataTy
                     break;
 
                 case DataType::QAI8:
+                case DataType::QSI8:
                     os << static_cast<int32_t>(reinterpret_cast<const int8_t*>(data)[i]);
                     break;
 

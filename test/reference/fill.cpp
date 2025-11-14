@@ -113,6 +113,7 @@ Buffer fill_matrix_random(size_t height, size_t width, const DataFormat& format,
                 case DataType::QSU4:
                     return fill_matrix_random_raw<UInt4>(height, width, seed);
 
+                case DataType::QAI4:
                 case DataType::QSI4:
                     return fill_matrix_random_raw<Int4>(height, width, seed);
 

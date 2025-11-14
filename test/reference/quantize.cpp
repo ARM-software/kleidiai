@@ -20,7 +20,6 @@
 #include "test/common/round.hpp"
 #include "test/common/type_traits.hpp"
 #include "test/reference/cast.hpp"
-#include "test/reference/transpose.hpp"
 
 namespace kai::test {
 
@@ -54,8 +53,14 @@ std::tuple<FloatData, ZeroPoint> get_scale_zero_point_from_range(FloatData min_v
     return {scale, zero_point};
 }
 
-}  // namespace
-
+/// Quantized a float value to an integer datatype using a provided scale.
+///
+/// @tparam IntType Quantized integer datatype.
+///
+/// @param[in] float The value to quantize
+/// @param[in] scale The scale used to quantize the provided float value.
+///
+/// @return The quantized data matrix, the quantization scale matrix and the quantization zero point matrix.
 template <typename IntType>
 IntType quantize_symmetric(float value, float scale) {
     const auto inv_scale = scale != 0 ? 1.0F / scale : 0.0F;
@@ -68,16 +73,62 @@ IntType quantize_symmetric(float value, float scale) {
     return static_cast<IntType>(std::clamp<int32_t>(qsi32, numeric_lowest<IntType>, numeric_highest<IntType>));
 }
 
-template <typename FloatType, typename IntType, typename ZeroPointType>
-IntType quantize_asymmetric(FloatType value, FloatType scale, ZeroPointType zero_point) {
-    const auto inv_scale = scale != 0 ? 1.0F / scale : 0.0F;
-    auto quantized_value = round_to_nearest_even<ZeroPointType>(value * inv_scale) + zero_point;
-    return static_cast<IntType>(
-        std::clamp<ZeroPointType>(quantized_value, numeric_lowest<IntType>, numeric_highest<IntType>));
-}
-
-template int8_t quantize_asymmetric(float value, float scale, int32_t zero_point);
-
+/// Computes the quantization information using symmetric per-block quantization method.
+///
+/// The input matrix is divided into quantization blocks of the same size.
+///
+/// The height of the block does not affect the behavior of this function hence it is omitted
+/// from the function arguments and the figures below.
+///
+/// ```
+/// Quantization blocks -------+
+///          |                 |
+///          |                 |
+///          v                 v
+/// +-----------------+-----------------+----- ...
+/// | f00 f01 f02 f03 | f04 f05 f06 f07 | ........
+/// | f10 f11 f12 f13 | f14 f15 f16 f17 | ........
+/// | f20 f21 f22 f23 | f24 f25 f26 f27 | ........
+/// | f30 f31 f32 f33 | f34 f35 f36 f37 | ........
+/// | ............... | ............... | ........
+/// : ............... : ............... : ........
+/// ```
+///
+/// Each row of the quantization block is quantized individually.
+///
+/// ```
+/// Floating-point data           Scale
+/// +-----------------+          +-----+
+/// | f00 f01 f02 f03 | -------> | s00 |
+/// | f10 f11 f12 f13 | -------> | s10 |
+/// | f20 f21 f22 f23 | -------> | s20 |
+/// | f30 f31 f32 f33 | -------> | s30 |
+/// | ............... |          | ... |
+/// : ............... :          : ... :
+/// ```
+///
+/// The computed quantization scale matrix:
+///
+/// ```
+/// +-----+-----+-- ...
+/// | s00 | s01 | .....
+/// | s10 | s11 | .....
+/// | s20 | s21 | .....
+/// | s30 | s31 | .....
+/// | ... | ... | .....
+/// : ... : ... : .....
+/// ```
+///
+/// @tparam SrcType The data type of the input data (must be floating-point).
+/// @tparam DstType The data type of the output data (must be integer).
+/// @tparam ScaleType The data type of the quantization scales (must be floating-point).
+///
+/// @param[in] src The input matrix.
+/// @param[in] height The number of rows.
+/// @param[in] width The number of columns.
+/// @param[in] quant_width The number of columns of the quantization block.
+///
+/// @return The quantization scale matrix.
 template <typename SrcType, typename DstType, typename ScaleType>
 Buffer compute_symmetric_per_block_quantization_info(const void* src, size_t height, size_t width, size_t quant_width) {
     static_assert(is_floating_point<SrcType>);
@@ -117,6 +168,200 @@ Buffer compute_symmetric_per_block_quantization_info(const void* src, size_t hei
     return scales;
 }
 
+/// Dynamically quantizes each block of the matrix using symmetric quantization method.
+///
+/// The quantization information is calculated using
+/// @ref compute_symmetric_per_block_quantization_info function.
+/// The floating-point data is then quantized using
+/// @ref quantize_symmetric_per_block function.
+///
+/// To retain highest quantization accuracy, the data is quantized using the quantization scale
+/// with the same data type as the input data.
+/// After that the quantization scale can be stored in the buffer using `ScaleType` data type
+/// which might have lowest precision than the input data type.
+///
+/// @tparam SrcType The data type of the input data (must be floating-point).
+/// @tparam DstType The data type of the output data (must be integer).
+/// @tparam ScaleType The data type of the quantization scales (must be floating-point).
+///
+/// @param[in] src The input matrix.
+/// @param[in] height The number of rows.
+/// @param[in] width The number of columns.
+/// @param[in] quant_width The number of columns of the quantization block.
+///
+/// @return The quantized data matrix and the quantization scale matrix.
+template <typename SrcType, typename DstType, typename ScaleType>
+std::tuple<Buffer, Buffer> quantize_symmetric_per_block_dynamic(
+    const void* src, size_t height, size_t width, size_t quant_width) {
+    auto scales_src_type =
+        compute_symmetric_per_block_quantization_info<SrcType, DstType, SrcType>(src, height, width, quant_width);
+    auto data = quantize_symmetric_per_block<SrcType, DstType, SrcType>(
+        src, scales_src_type.data(), height, width, quant_width);
+
+    if constexpr (std::is_same_v<ScaleType, SrcType>) {
+        return {std::move(data), std::move(scales_src_type)};
+    } else {
+        auto scales =
+            cast<ScaleType, SrcType>(scales_src_type.data(), scales_src_type.size() * 8 / size_in_bits<SrcType>);
+
+        return {std::move(data), std::move(scales)};
+    }
+}
+
+/// Dynamically quantizes each block of the matrix using symmetric quantization method.
+///
+/// @param[in] src The input matrix.
+/// @param[in] src_type The data type of the input data (must be FP32).
+/// @param[in] height The number of rows.
+/// @param[in] width The number of columns.
+/// @param[in] qinfo The quantization information.
+///
+/// @return The quantized data matrix and the quantization scale matrix.
+std::tuple<Buffer, Buffer> quantize_symmetric_per_block_dynamic(
+    const void* src, DataType src_type, size_t height, size_t width, const QuantizationInfo& qinfo) {
+    // Fail fast for datatypes that must be fixed.
+    KAI_ASSUME_ALWAYS(src_type == DataType::FP32);
+
+    switch (qinfo.dst_type) {
+        case DataType::QSI4:
+            switch (qinfo.scale_type) {
+                case DataType::FP16:
+                    return quantize_symmetric_per_block_dynamic<float, Int4, Float16>(
+                        src, height, width, qinfo.quant_width);
+                case DataType::FP32:
+                    return quantize_symmetric_per_block_dynamic<float, Int4, float>(
+                        src, height, width, qinfo.quant_width);
+                case DataType::BF16:
+                    return quantize_symmetric_per_block_dynamic<float, Int4, BFloat16<>>(
+                        src, height, width, qinfo.quant_width);
+                default:
+                    break;
+            }
+            break;
+        case DataType::QSI8:
+            switch (qinfo.scale_type) {
+                case DataType::FP16:
+                    return quantize_symmetric_per_block_dynamic<float, int8_t, Float16>(
+                        src, height, width, qinfo.quant_width);
+                case DataType::FP32:
+                    return quantize_symmetric_per_block_dynamic<float, int8_t, float>(
+                        src, height, width, qinfo.quant_width);
+                default:
+                    break;
+            }
+            break;
+        case DataType::I32:
+            if (qinfo.scale_type == DataType::FP32) {
+                return quantize_symmetric_per_block_dynamic<float, int32_t, float>(
+                    src, height, width, qinfo.quant_width);
+            }
+            break;
+        default:
+            break;
+    }
+    KAI_ERROR("Unsupported combination of data types for symmetric quantization.");
+}
+
+/// Dynamically quantizes each block of the matrix using asymmetric quantization method.
+///
+/// The quantization information is calculated using
+/// @ref compute_asymmetric_per_block_quantization_info function.
+/// The floating-point data is then quantized using
+/// @ref quantize_asymmetric_per_block function.
+///
+/// To retain highest quantization accuracy, the data is quantized using the quantization scale
+/// with the same data type as the input data.
+/// After that the quantization scale can be stored in the buffer using `ScaleType` data type
+/// which might have lowest precision than the input data type.
+///
+/// @tparam SrcType The data type of the input data (must be floating-point).
+/// @tparam DstType The data type of the output data (must be integer).
+/// @tparam ScaleType The data type of the quantization scales (must be floating-point).
+/// @tparam ZeroPointType The data type of the quantization zero points (must be integer).
+///
+/// @param[in] src The input matrix.
+/// @param[in] height The number of rows.
+/// @param[in] width The number of columns.
+/// @param[in] quant_width The number of columns of the quantization block.
+///
+/// @return The quantized data matrix, the quantization scale matrix and the quantization zero point matrix.
+template <typename SrcType, typename DstType, typename ScaleType, typename ZeroPointType>
+std::tuple<Buffer, Buffer, Buffer> quantize_asymmetric_per_block_dynamic(
+    const void* src, size_t height, size_t width, size_t quant_width) {
+    /* Calculate the asymmetric quantization information, one scaling per row  */
+    auto [scales_src_type, zero_points] =
+        compute_asymmetric_per_block_quantization_info<SrcType, DstType, SrcType, ZeroPointType>(
+            src, height, width, quant_width);
+
+    /* Do the actual quantization */
+    auto data = quantize_asymmetric_per_block<SrcType, DstType, SrcType, ZeroPointType>(
+        src, scales_src_type.data(), zero_points.data(), height, width, quant_width);
+
+    if constexpr (std::is_same_v<ScaleType, SrcType>) {
+        return {std::move(data), std::move(scales_src_type), std::move(zero_points)};
+    } else {
+        auto scales =
+            cast<ScaleType, SrcType>(scales_src_type.data(), scales_src_type.size() * 8 / size_in_bits<SrcType>);
+
+        return {std::move(data), std::move(scales), std::move(zero_points)};
+    }
+}
+
+/// Dynamically quantizes each block of the matrix using asymmetric quantization method.
+///
+/// @param[in] src The input matrix.
+/// @param[in] src_type The data type of the input data (must be FP32).
+/// @param[in] height The number of rows.
+/// @param[in] width The number of columns.
+/// @param[in] qinfo The quantization information.
+///
+/// @return The quantized data matrix, the quantization scale matrix and the quantization zero point matrix.
+std::tuple<Buffer, Buffer, Buffer> quantize_asymmetric_per_block_dynamic(
+    const void* src, DataType src_type, size_t height, size_t width, const QuantizationInfo& qinfo) {
+    // Fail fast for datatypes that must be fixed.
+    KAI_ASSUME_ALWAYS(src_type == DataType::FP32);
+    KAI_ASSUME_ALWAYS(qinfo.zero_point_type == DataType::I32);
+
+    switch (qinfo.dst_type) {
+        case DataType::QAI8:
+            switch (qinfo.scale_type) {
+                case DataType::FP32:
+                    return quantize_asymmetric_per_block_dynamic<float, int8_t, float, int32_t>(
+                        src, height, width, qinfo.quant_width);
+                case DataType::BF16:
+                    return quantize_asymmetric_per_block_dynamic<float, int8_t, BFloat16<>, int32_t>(
+                        src, height, width, qinfo.quant_width);
+                default:
+                    break;
+            }
+            break;
+        case DataType::QAI4:
+            switch (qinfo.scale_type) {
+                case DataType::FP32:
+                    return quantize_asymmetric_per_block_dynamic<float, Int4, float, int32_t>(
+                        src, height, width, qinfo.quant_width);
+                default:
+                    break;
+            }
+            break;
+        default:
+            break;
+    }
+    KAI_ERROR("Unsupported combination of destination/scale types for asymmetric quantization.");
+}
+
+}  // namespace
+
+template <typename FloatType, typename IntType, typename ZeroPointType>
+IntType quantize_asymmetric(FloatType value, FloatType scale, ZeroPointType zero_point) {
+    const auto inv_scale = scale != 0 ? 1.0F / scale : 0.0F;
+    auto quantized_value = round_to_nearest_even<ZeroPointType>(value * inv_scale) + zero_point;
+    return static_cast<IntType>(
+        std::clamp<ZeroPointType>(quantized_value, numeric_lowest<IntType>, numeric_highest<IntType>));
+}
+
+template int8_t quantize_asymmetric(float value, float scale, int32_t zero_point);
+
 template <typename SrcType, typename DstType, typename ScaleType>
 Buffer quantize_symmetric_per_block(
     const void* src, const void* scales, size_t height, size_t width, size_t quant_width) {
@@ -151,39 +396,6 @@ Buffer quantize_symmetric_per_block(
 
 template Buffer quantize_symmetric_per_block<float, int32_t, float>(
     const void* src, const void* scales, size_t height, size_t width, size_t quant_width);
-
-template <typename SrcType, typename DstType, typename ScaleType>
-std::tuple<Buffer, Buffer> quantize_symmetric_per_block_dynamic(
-    const void* src, size_t height, size_t width, size_t quant_width) {
-    auto scales_src_type =
-        compute_symmetric_per_block_quantization_info<SrcType, DstType, SrcType>(src, height, width, quant_width);
-    auto data = quantize_symmetric_per_block<SrcType, DstType, SrcType>(
-        src, scales_src_type.data(), height, width, quant_width);
-
-    if constexpr (std::is_same_v<ScaleType, SrcType>) {
-        return {std::move(data), std::move(scales_src_type)};
-    } else {
-        auto scales =
-            cast<ScaleType, SrcType>(scales_src_type.data(), scales_src_type.size() * 8 / size_in_bits<SrcType>);
-
-        return {std::move(data), std::move(scales)};
-    }
-}
-
-template std::tuple<Buffer, Buffer> quantize_symmetric_per_block_dynamic<float, Int4, Float16>(
-    const void* src, size_t height, size_t width, size_t quant_width);
-template std::tuple<Buffer, Buffer> quantize_symmetric_per_block_dynamic<float, Int4, float>(
-    const void* src, size_t height, size_t width, size_t quant_width);
-template std::tuple<Buffer, Buffer> quantize_symmetric_per_block_dynamic<float, Int4, BFloat16<true>>(
-    const void* src, size_t height, size_t width, size_t quant_width);
-template std::tuple<Buffer, Buffer> quantize_symmetric_per_block_dynamic<float, Int4, BFloat16<false>>(
-    const void* src, size_t height, size_t width, size_t quant_width);
-template std::tuple<Buffer, Buffer> quantize_symmetric_per_block_dynamic<float, int8_t, Float16>(
-    const void* src, size_t height, size_t width, size_t quant_width);
-template std::tuple<Buffer, Buffer> quantize_symmetric_per_block_dynamic<float, int8_t, float>(
-    const void* src, size_t height, size_t width, size_t quant_width);
-template std::tuple<Buffer, Buffer> quantize_symmetric_per_block_dynamic<float, int32_t, float>(
-    const void* src, size_t height, size_t width, size_t quant_width);
 
 template <typename SrcType, typename DstType, typename ScaleType, typename ZeroPointType>
 std::tuple<Buffer, Buffer> compute_asymmetric_per_block_quantization_info(
@@ -269,58 +481,18 @@ Buffer quantize_asymmetric_per_block(
     return data;
 }
 
-template <typename SrcType, typename DstType, typename ScaleType, typename ZeroPointType>
-std::tuple<Buffer, Buffer, Buffer> quantize_asymmetric_per_block_dynamic(
-    const void* src, size_t height, size_t width, size_t quant_width) {
-    /* Calculate the asymmetric quantization information, one scaling per row  */
-    auto [scales_src_type, zero_points] =
-        compute_asymmetric_per_block_quantization_info<SrcType, DstType, SrcType, ZeroPointType>(
-            src, height, width, quant_width);
-
-    /* Do the actual quantization */
-    auto data = quantize_asymmetric_per_block<SrcType, DstType, SrcType, ZeroPointType>(
-        src, scales_src_type.data(), zero_points.data(), height, width, quant_width);
-
-    if constexpr (std::is_same_v<ScaleType, SrcType>) {
-        return {std::move(data), std::move(scales_src_type), std::move(zero_points)};
+std::tuple<Buffer, QuantizationOutputs> quantize_dynamic(
+    const void* src, DataType src_type, size_t height, size_t width, const QuantizationInfo& qinfo) {
+    KAI_ASSUME_ALWAYS(data_type_is_quantized(qinfo.dst_type));
+    Buffer data;
+    QuantizationOutputs qoutputs;
+    if (data_type_is_quantized_asymm(qinfo.dst_type)) {
+        KAI_ASSUME_ALWAYS(qinfo.zero_point_type != DataType::UNKNOWN);
+        std::tie(data, qoutputs.scales, qoutputs.zero_points) =
+            quantize_asymmetric_per_block_dynamic(src, src_type, height, width, qinfo);
     } else {
-        auto scales =
-            cast<ScaleType, SrcType>(scales_src_type.data(), scales_src_type.size() * 8 / size_in_bits<SrcType>);
-
-        return {std::move(data), std::move(scales), std::move(zero_points)};
+        std::tie(data, qoutputs.scales) = quantize_symmetric_per_block_dynamic(src, src_type, height, width, qinfo);
     }
+    return {std::move(data), std::move(qoutputs)};
 }
-
-template std::tuple<Buffer, Buffer, Buffer> quantize_asymmetric_per_block_dynamic<float, int8_t, float, int32_t>(
-    const void* src, size_t height, size_t width, size_t quant_width);
-template std::tuple<Buffer, Buffer, Buffer> quantize_asymmetric_per_block_dynamic<float, int8_t, BFloat16<>, int32_t>(
-    const void* src, size_t height, size_t width, size_t quant_width);
-template std::tuple<Buffer, Buffer, Buffer> quantize_asymmetric_per_block_dynamic<float, Int4, float, int32_t>(
-    const void* src, size_t height, size_t width, size_t quant_width);
-
-// Reference quantization and packing => Int4 per-block.
-//   * Generates signed values for reference matmul
-//   * Generates reference scales from input RHS matrix
-template <typename SrcData, typename ScaleType>
-inline std::tuple<Buffer, Buffer> quantize_rhs_qsi4c32p(
-    size_t N, size_t K, size_t bl, const Buffer& rhs, bool transposed) {
-    auto [rhs_values_qsi4, rhs_scales] =
-        quantize_symmetric_per_block_dynamic<SrcData, Int4, ScaleType>(rhs.data(), N, K, bl);
-
-    const size_t width = transposed ? K : N;
-    const size_t height = transposed ? N : K;
-
-    const size_t qsi4_stride = round_up_multiple(width, 2);
-    const size_t qsi4_size_bytes = round_up_division(height * qsi4_stride, 2);
-
-    if (!transposed) {
-        rhs_values_qsi4 = transpose_with_padding<Int4>(rhs_values_qsi4.data(), N, K, K, qsi4_stride, qsi4_size_bytes);
-    }
-
-    return {std::move(rhs_values_qsi4), std::move(rhs_scales)};
-}
-
-template std::tuple<Buffer, Buffer> quantize_rhs_qsi4c32p<float, BFloat16<false>>(
-    size_t N, size_t K, size_t bl, const Buffer& rhs, bool transposed);
-
 }  // namespace kai::test

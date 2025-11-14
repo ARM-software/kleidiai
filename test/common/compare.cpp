@@ -267,10 +267,11 @@ bool compare(
             break;
 
         case DataFormat::PackFormat::QUANTIZE_PER_ROW:
-            if (data_type == DataType::QAI8 && scale_dt == DataType::FP32 && offset_dt == DataType::I32) {
+            if (data_type_is_quantized_int8(data_type) && scale_dt == DataType::FP32 && offset_dt == DataType::I32) {
                 return compare_per_row<int8_t, float, int32_t>(
                     imp_data, ref_data, format, full_height, full_width, rect, handler);
-            } else if (data_type == DataType::QSI4 && scale_dt == DataType::FP32 && offset_dt == DataType::I32) {
+            } else if (
+                data_type_is_quantized_int4(data_type) && scale_dt == DataType::FP32 && offset_dt == DataType::I32) {
                 return compare_per_row<Int4, float, int32_t>(
                     imp_data, ref_data, format, full_height, full_width, rect, handler);
             }

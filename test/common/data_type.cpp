@@ -76,4 +76,12 @@ bool data_type_is_quantized_asymm(DataType dt) {
     return data_type_is_quantized(dt) && has_a(dt);
 }
 
+bool data_type_is_quantized_int8(DataType dt) {
+    return data_type_is_quantized(dt) && data_type_size_in_bits(dt) == 8;
+}
+
+bool data_type_is_quantized_int4(DataType dt) {
+    return data_type_is_quantized(dt) && data_type_size_in_bits(dt) == 4;
+}
+
 }  // namespace kai::test

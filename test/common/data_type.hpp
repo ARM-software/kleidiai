@@ -45,9 +45,11 @@ enum class DataType : uint16_t {
     I32 = 0b1'1'0'0'0000'00100000,  ///< 32-bit signed integer.
 
     QAI8 = 0b1'1'1'1'0000'00001000,  ///< 8-bit signed asymmetric quantized.
+    QSI8 = 0b1'1'1'0'0000'00001000,  ///< 8-bit signed symmetric quantized.
 
     QSU4 = 0b1'0'1'0'0000'00000100,  ///< 4-bit unsigned symmetric quantized.
     QSI4 = 0b1'1'1'0'0000'00000100,  ///< 4-bit signed symmetric quantized.
+    QAI4 = 0b1'1'1'1'0000'00000100,  ///< 4-bit signed asymmetric quantized.
 };
 
 /// Gets the size in bits of the specified data type.
@@ -109,6 +111,20 @@ enum class DataType : uint16_t {
 ///
 /// @return `true` if the data type is asymmetric quantized.
 [[nodiscard]] bool data_type_is_quantized_asymm(DataType dt);
+
+/// Gets a value indicating whether the data type is quantized int8.
+///
+/// @param[in] dt The data type.
+///
+/// @return `true` if the data type is quantized int8.
+[[nodiscard]] bool data_type_is_quantized_int8(DataType dt);
+
+/// Gets a value indicating whether the data type is quantized int4.
+///
+/// @param[in] dt The data type.
+///
+/// @return `true` if the data type is quantized int4.
+[[nodiscard]] bool data_type_is_quantized_int4(DataType dt);
 
 }  // namespace kai::test
 

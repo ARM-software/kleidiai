@@ -533,13 +533,16 @@ const TestReference& get_test_reference(const TestDataId& test_data_id) {
     //   * LHS: 8-bit asymmetric per-matrix quantization.
     //   * RHS: 8-bit symmetric per-channel quantization.
     //   * Bias: 32-bit symmetric per-channel quantization.
-    //
-    //   Treat entire LHS as one row vector, to calculate one single pair of <scale, zero_point>
-    auto [lhs_qai8, lhs_qai8_scales, lhs_qai8_zero_points] =
-        quantize_asymmetric_per_block_dynamic<float, int8_t, float, int32_t>(
-            lhs_f32.data(), 1, shape.m * shape.k, shape.m * shape.k);
-    const auto lhs_scale = read_array<float>(lhs_qai8_scales.data(), 0);
-    const auto lhs_zero_point = read_array<int32_t>(lhs_qai8_zero_points.data(), 0);
+
+    QuantizationInfo lhs_qinfo{};
+    lhs_qinfo.quant_width = shape.m * shape.k;
+    lhs_qinfo.dst_type = DataType::QAI8;
+    lhs_qinfo.scale_type = DataType::FP32;
+    lhs_qinfo.zero_point_type = DataType::I32;
+    auto [lhs_ref_quant, lhs_qoutputs] =
+        quantize_dynamic(lhs_f32.data(), DataType::FP32, 1, shape.m * shape.k, lhs_qinfo);
+    const auto lhs_scale = read_array<float>(lhs_qoutputs.scales.data(), 0);
+    const auto lhs_zero_point = read_array<int32_t>(lhs_qoutputs.zero_points.data(), 0);
 
     const size_t k_chunk_count = shape.k / k_chunk_len;
     assert(k_chunk_count * k_chunk_len == shape.k);
@@ -561,7 +564,7 @@ const TestReference& get_test_reference(const TestDataId& test_data_id) {
             }
         }
     }
-    const auto indirection_base = reinterpret_cast<uintptr_t>(lhs_qai8.data());
+    const auto indirection_base = reinterpret_cast<uintptr_t>(lhs_ref_quant.data());
 
     // Reorder indirection pointers to layout the packing micro-kernel expects
     Buffer lhs_qai8_indirect_packed = reorder_block<const void*>(
@@ -570,12 +573,17 @@ const TestReference& get_test_reference(const TestDataId& test_data_id) {
     // Transpose, then quantize symmetrically, then transpose back. This will give one
     // quantization value for each column
     const auto rhs_f32_t = transpose<float>(rhs_f32.data(), shape.k, shape.n);
-    auto [rhs_qsi8_t, rhs_scales] =
-        quantize_symmetric_per_block_dynamic<float, int8_t, float>(rhs_f32_t.data(), shape.n, shape.k, shape.k);
-    auto rhs_qsi8 = transpose<int8_t>(rhs_qsi8_t.data(), shape.n, shape.k);
+
+    QuantizationInfo rhs_qinfo{};
+    rhs_qinfo.quant_width = shape.k;
+    rhs_qinfo.dst_type = DataType::QSI8;
+    rhs_qinfo.scale_type = DataType::FP32;
+    auto [rhs_ref_quant_t, rhs_qoutputs] =
+        quantize_dynamic(rhs_f32_t.data(), DataType::FP32, shape.n, shape.k, rhs_qinfo);
+    auto rhs_qsi8 = transpose<int8_t>(rhs_ref_quant_t.data(), shape.n, shape.k);
 
     // Multiply all bias values with the LHS scale
-    const auto bias_scales = mul<float>(&lhs_scale, 1, 1, rhs_scales.data(), 1, shape.n);
+    const auto bias_scales = mul<float>(&lhs_scale, 1, 1, rhs_qoutputs.scales.data(), 1, shape.n);
     // Calculate quantized bias values, by treating bias as column, and
     // scale using RHS scales. This will scale each bias value indiviually
     auto bias_qsi32 =
@@ -585,14 +593,14 @@ const TestReference& get_test_reference(const TestDataId& test_data_id) {
     const void* const* lhs_iptr = reinterpret_cast<const void* const*>(lhs_qai8_indirect.data());
     const auto ref_dst_f32 =
         indirect_matmul_nt_t_quantized<int8_t, float, int32_t, int8_t, float, int32_t, int32_t, float, int32_t, float>(
-            shape.m, shape.n, k_chunk_count, k_chunk_len,    // matmul shape
-            lhs_iptr, indirection_base, lhs_padding.data(),  // LHS indirection, offset and padding
-            &lhs_scale, &lhs_zero_point,                     // LHS, scaling factor and zero point
-            shape.m, shape.k,                                // LHS quantization window shape
-            rhs_qsi8_t.data(), rhs_scales.data(), nullptr,   // RHS scaling factors
-            1, shape.k,                                      // RHS quantization window shape
-            bias_qsi32.data(), bias_scales.data(), nullptr,  // Bias, scaling and zero points
-            1                                                // Bias quantization window shape
+            shape.m, shape.n, k_chunk_count, k_chunk_len,                 // matmul shape
+            lhs_iptr, indirection_base, lhs_padding.data(),               // LHS indirection, offset and padding
+            &lhs_scale, &lhs_zero_point,                                  // LHS, scaling factor and zero point
+            shape.m, shape.k,                                             // LHS quantization window shape
+            rhs_ref_quant_t.data(), rhs_qoutputs.scales.data(), nullptr,  // RHS scaling factors
+            1, shape.k,                                                   // RHS quantization window shape
+            bias_qsi32.data(), bias_scales.data(), nullptr,               // Bias, scaling and zero points
+            1                                                             // Bias quantization window shape
         );
 
     // Computes the output quantization information and clamping limits.
@@ -634,10 +642,10 @@ const TestReference& get_test_reference(const TestDataId& test_data_id) {
     // The reference packing micro-kernels cannot be executed earlier
     // because we need the reference floating-point output first to have
     // the quantization information.
-    auto packed_lhs = reorder_block<int8_t>(lhs_qai8.data(), shape.m, shape.k, pack_shape.m, pack_shape.k);
+    auto packed_lhs = reorder_block<int8_t>(lhs_ref_quant.data(), shape.m, shape.k, pack_shape.m, pack_shape.k);
     auto packed_rhs = matmul_pack_rhs_nxk_static_quantized<int8_t, float, int32_t>(
-        rhs_qsi8_t.data(), rhs_scales.data(), lhs_scale, dst_scale, bias_qsi32.data(), lhs_zero_point, shape.n, shape.k,
-        pack_shape.n, pack_shape.k);
+        rhs_ref_quant_t.data(), rhs_qoutputs.scales.data(), lhs_scale, dst_scale, bias_qsi32.data(), lhs_zero_point,
+        shape.n, shape.k, pack_shape.n, pack_shape.k);
 
     TestReference& reference = g_data[test_data_id];
     reference.clamp.min = dst_qai8_clamp_min;
@@ -646,15 +654,15 @@ const TestReference& get_test_reference(const TestDataId& test_data_id) {
     reference.qa_lhs.zero_point = lhs_zero_point;
     reference.qa_dst.scale = dst_scale;
     reference.qa_dst.zero_point = dst_zero_point;
-    reference.lhs_qai8 = std::move(lhs_qai8);
-    reference.lhs_qai8_scales = std::move(lhs_qai8_scales);
-    reference.lhs_qai8_zero_points = std::move(lhs_qai8_zero_points);
+    reference.lhs_qai8 = std::move(lhs_ref_quant);
+    reference.lhs_qai8_scales = std::move(lhs_qoutputs.scales);
+    reference.lhs_qai8_zero_points = std::move(lhs_qoutputs.zero_points);
     reference.lhs_qai8_indirect = std::move(lhs_qai8_indirect);
     reference.lhs_qai8_indirect_packed = std::move(lhs_qai8_indirect_packed);
     reference.lhs_qai8_indirect_padding = std::move(lhs_padding);
     reference.lhs_qai8_indirect_offset = indirection_base;
     reference.rhs_qsi8 = std::move(rhs_qsi8);
-    reference.rhs_scales = std::move(rhs_scales);
+    reference.rhs_scales = std::move(rhs_qoutputs.scales);
     reference.bias_qsi32 = std::move(bias_qsi32);
     reference.dst_qsi8_clamped = std::move(ref_dst_qsi8_clamped);
     reference.packed_lhs = std::move(packed_lhs);

@@ -300,15 +300,23 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsi4cx) {
     //   * Quantizes the LHS matrix using 8-bit asymmetric quantization.
     //   * Quantizes the RHS matrix using 4-bit symmetric quantization.
     //   * Performs GEMM.
-    const auto [ref_lhs_qvalues, ref_lhs_scales, ref_lhs_zero_points] =
-        quantize_asymmetric_per_block_dynamic<float, int8_t, float, int32_t>(ref_lhs.data(), M, K, K);
-    const auto [ref_rhs_qsi4, ref_rhs_scales] =
-        quantize_symmetric_per_block_dynamic<float, Int4, float>(ref_rhs.data(), N, K, K);
+    QuantizationInfo lhs_qinfo{};
+    lhs_qinfo.quant_width = K;
+    lhs_qinfo.dst_type = DataType::QAI8;
+    lhs_qinfo.scale_type = DataType::FP32;
+    lhs_qinfo.zero_point_type = DataType::I32;
+    const auto [ref_lhs_quant, lhs_qoutputs] = quantize_dynamic(ref_lhs.data(), DataType::FP32, M, K, lhs_qinfo);
+
+    QuantizationInfo rhs_qinfo{};
+    rhs_qinfo.quant_width = K;
+    rhs_qinfo.dst_type = DataType::QSI4;
+    rhs_qinfo.scale_type = DataType::FP32;
+    const auto [ref_rhs_quant, rhs_qoutputs] = quantize_dynamic(ref_rhs.data(), DataType::FP32, N, K, rhs_qinfo);
 
     const auto ref_dst = matmul_clamp_nt_t<int8_t, float, int32_t, Int4, float, int32_t, float, int32_t, float>(
-        M, N, K, ref_lhs_qvalues.data(), ref_lhs_scales.data(), ref_lhs_zero_points.data(), K, ref_rhs_qsi4.data(),
-        ref_rhs_scales.data(), nullptr, K, ref_biases.data(), std::numeric_limits<float>::lowest(),
-        std::numeric_limits<float>::max());
+        M, N, K, ref_lhs_quant.data(), lhs_qoutputs.scales.data(), lhs_qoutputs.zero_points.data(), K,
+        ref_rhs_quant.data(), rhs_qoutputs.scales.data(), nullptr, K, ref_biases.data(),
+        std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max());
 
     auto m_step = ukernel_variant.interface.get_m_step();
     ASSERT_TRUE(m_step % mr == 0);
@@ -342,7 +350,7 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsi4cx) {
     //   * Generates the 4-bit unsigned symmetric quantized input for the micro-kernel.
     //   * Packs the RHS matrix.
     const auto ref_rhs_qsi4_padded = pad_row<Int4>(
-        ref_rhs_qsi4.data(), N, K, K, round_up_multiple(K, 2), round_up_division(N * round_up_multiple(K, 2), 2));
+        ref_rhs_quant.data(), N, K, K, round_up_multiple(K, 2), round_up_division(N * round_up_multiple(K, 2), 2));
 
     const auto imp_packed_rhs_size = ukernel_variant.get_rhs_packed_size(N, K, nr, kr, sr);
     const auto rhs_start_row = rect.start_col();
@@ -363,8 +371,8 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsi4cx) {
         ukernel_variant.run_rhs_pack, 1, rect.width() /* n */, K, nr, kr, sr,
         reinterpret_cast<const uint8_t*>(ref_rhs_qsi4_padded.data() + rhs_offset),
         reinterpret_cast<const float*>(ref_biases.data() + bias_offset),
-        reinterpret_cast<const float*>(ref_rhs_scales.data() + scale_offset), imp_packed_rhs.data() + rhs_packed_offset,
-        0, &params);
+        reinterpret_cast<const float*>(rhs_qoutputs.scales.data() + scale_offset),
+        imp_packed_rhs.data() + rhs_packed_offset, 0, &params);
 
     const auto dst_stride = N * sizeof(float);
     const auto dst_offset = ukernel_variant.interface.get_dst_offset(rect.start_row(), rect.start_col(), dst_stride);
@@ -432,15 +440,23 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsu4cx) {
     //   * Quantizes the LHS matrix using 8-bit asymmetric quantization.
     //   * Quantizes the RHS matrix using 4-bit symmetric quantization.
     //   * Performs GEMM.
-    const auto [ref_lhs_qvalues, ref_lhs_scales, ref_lhs_zero_points] =
-        quantize_asymmetric_per_block_dynamic<float, int8_t, float, int32_t>(ref_lhs.data(), M, K, K);
-    const auto [ref_rhs_qsi4, ref_rhs_scales] =
-        quantize_symmetric_per_block_dynamic<float, Int4, float>(ref_rhs.data(), N, K, K);
+    QuantizationInfo lhs_qinfo{};
+    lhs_qinfo.quant_width = K;
+    lhs_qinfo.dst_type = DataType::QAI8;
+    lhs_qinfo.scale_type = DataType::FP32;
+    lhs_qinfo.zero_point_type = DataType::I32;
+    const auto [ref_lhs_quant, lhs_qoutputs] = quantize_dynamic(ref_lhs.data(), DataType::FP32, M, K, lhs_qinfo);
+
+    QuantizationInfo rhs_qinfo{};
+    rhs_qinfo.quant_width = K;
+    rhs_qinfo.dst_type = DataType::QSI4;
+    rhs_qinfo.scale_type = DataType::FP32;
+    const auto [ref_rhs_quant, rhs_qoutputs] = quantize_dynamic(ref_rhs.data(), DataType::FP32, N, K, rhs_qinfo);
 
     const auto ref_dst = matmul_clamp_nt_t<int8_t, float, int32_t, Int4, float, int32_t, float, int32_t, float>(
-        M, N, K, ref_lhs_qvalues.data(), ref_lhs_scales.data(), ref_lhs_zero_points.data(), K, ref_rhs_qsi4.data(),
-        ref_rhs_scales.data(), nullptr, K, ref_biases.data(), std::numeric_limits<float>::lowest(),
-        std::numeric_limits<float>::max());
+        M, N, K, ref_lhs_quant.data(), lhs_qoutputs.scales.data(), lhs_qoutputs.zero_points.data(), K,
+        ref_rhs_quant.data(), rhs_qoutputs.scales.data(), nullptr, K, ref_biases.data(),
+        std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max());
 
     auto m_step = ukernel_variant.interface.get_m_step();
     ASSERT_TRUE(m_step % mr == 0);
@@ -470,7 +486,7 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsu4cx) {
         reinterpret_cast<const float*>(ref_lhs.data() + lhs_offset), lhs_stride,
         imp_packed_lhs.data() + lhs_packed_offset);
 
-    const auto ref_rhs_qsu4 = cast_qsu4_qsi4(ref_rhs_qsi4.data(), N * K);
+    const auto ref_rhs_qsu4 = cast_qsu4_qsi4(ref_rhs_quant.data(), N * K);
     // Runs the RHS packing micro-kernel.
     //   * Generates the 4-bit unsigned symmetric quantized input for the micro-kernel.
     //   * Packs the RHS matrix.
@@ -495,8 +511,8 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsu4cx) {
         ukernel_variant.run_rhs_pack, 1, rect.width() /* n */, K, nr, kr, sr,
         reinterpret_cast<const uint8_t*>(ref_rhs_qsu4_padded.data() + rhs_offset),
         reinterpret_cast<const float*>(ref_biases.data() + bias_offset),
-        reinterpret_cast<const float*>(ref_rhs_scales.data() + scale_offset), imp_packed_rhs.data() + rhs_packed_offset,
-        0, &params);
+        reinterpret_cast<const float*>(rhs_qoutputs.scales.data() + scale_offset),
+        imp_packed_rhs.data() + rhs_packed_offset, 0, &params);
 
     const auto dst_stride = N * sizeof(float);
     const auto dst_offset = ukernel_variant.interface.get_dst_offset(rect.start_row(), rect.start_col(), dst_stride);
@@ -570,19 +586,26 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsi4cx) {
     //   * Quantizes the LHS matrix using 8-bit asymmetric quantization.
     //   * Quantizes the RHS matrix using 4-bit symmetric quantization.
     //   * Performs GEMM.
-    const auto [ref_lhs_qvalues, ref_lhs_scales, ref_lhs_zero_points] =
-        quantize_asymmetric_per_block_dynamic<float, int8_t, float, int32_t>(ref_lhs.data(), M, K, K);
-    const auto [ref_rhs_qsi4_transposed, ref_rhs_scales] =
-        quantize_symmetric_per_block_dynamic<float, Int4, float>(ref_rhs.data(), N, K, K);
+    QuantizationInfo lhs_qinfo{};
+    lhs_qinfo.quant_width = K;
+    lhs_qinfo.dst_type = DataType::QAI8;
+    lhs_qinfo.scale_type = DataType::FP32;
+    lhs_qinfo.zero_point_type = DataType::I32;
+    const auto [ref_lhs_quant, lhs_qoutputs] = quantize_dynamic(ref_lhs.data(), DataType::FP32, M, K, lhs_qinfo);
+
+    QuantizationInfo rhs_qinfo{};
+    rhs_qinfo.quant_width = K;
+    rhs_qinfo.dst_type = DataType::QSI4;
+    rhs_qinfo.scale_type = DataType::FP32;
+    const auto [ref_rhs_quant, rhs_qoutputs] = quantize_dynamic(ref_rhs.data(), DataType::FP32, N, K, rhs_qinfo);
 
     const auto ref_rhs_qsi4 = transpose_with_padding<Int4>(
-        ref_rhs_qsi4_transposed.data(), N, K, ref_rhs_qsi4_nxk_stride, ref_rhs_qsi4_kxn_stride,
-        ref_rhs_qsi4_kxn_size_bytes);
+        ref_rhs_quant.data(), N, K, ref_rhs_qsi4_nxk_stride, ref_rhs_qsi4_kxn_stride, ref_rhs_qsi4_kxn_size_bytes);
 
     const auto ref_dst = matmul_clamp_nt_nt<int8_t, float, int32_t, Int4, float, int32_t, float, int32_t, float>(
-        M, N, K, ref_lhs_qvalues.data(), ref_lhs_scales.data(), ref_lhs_zero_points.data(), K, ref_rhs_qsi4.data(),
-        ref_rhs_scales.data(), nullptr, K, ref_biases.data(), std::numeric_limits<float>::lowest(),
-        std::numeric_limits<float>::max());
+        M, N, K, ref_lhs_quant.data(), lhs_qoutputs.scales.data(), lhs_qoutputs.zero_points.data(), K,
+        ref_rhs_qsi4.data(), rhs_qoutputs.scales.data(), nullptr, K, ref_biases.data(),
+        std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max());
 
     auto m_step = ukernel_variant.interface.get_m_step();
     ASSERT_TRUE(m_step % mr == 0);
@@ -629,7 +652,7 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsi4cx) {
     params.rhs_zero_point = 0;
     abi_check(
         ukernel_variant.run_rhs_pack, 1, N, K, nr, kr, sr, reinterpret_cast<const uint8_t*>(ref_rhs_qsi4_padded.data()),
-        reinterpret_cast<const float*>(ref_biases.data()), reinterpret_cast<const float*>(ref_rhs_scales.data()),
+        reinterpret_cast<const float*>(ref_biases.data()), reinterpret_cast<const float*>(rhs_qoutputs.scales.data()),
         imp_packed_rhs.data(), 0, &params);
 
     const auto dst_stride = N * sizeof(float);
@@ -706,19 +729,26 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsu4cx) {
     //   * Quantizes the LHS matrix using 8-bit asymmetric quantization.
     //   * Quantizes the RHS matrix using 4-bit symmetric quantization.
     //   * Performs GEMM.
-    const auto [ref_lhs_qvalues, ref_lhs_scales, ref_lhs_zero_points] =
-        quantize_asymmetric_per_block_dynamic<float, int8_t, float, int32_t>(ref_lhs.data(), M, K, K);
-    const auto [ref_rhs_qsi4_transposed, ref_rhs_scales] =
-        quantize_symmetric_per_block_dynamic<float, Int4, float>(ref_rhs.data(), N, K, K);
+    QuantizationInfo lhs_qinfo{};
+    lhs_qinfo.quant_width = K;
+    lhs_qinfo.dst_type = DataType::QAI8;
+    lhs_qinfo.scale_type = DataType::FP32;
+    lhs_qinfo.zero_point_type = DataType::I32;
+    const auto [ref_lhs_quant, lhs_qoutputs] = quantize_dynamic(ref_lhs.data(), DataType::FP32, M, K, lhs_qinfo);
+
+    QuantizationInfo rhs_qinfo{};
+    rhs_qinfo.quant_width = K;
+    rhs_qinfo.dst_type = DataType::QSI4;
+    rhs_qinfo.scale_type = DataType::FP32;
+    const auto [ref_rhs_quant, rhs_qoutputs] = quantize_dynamic(ref_rhs.data(), DataType::FP32, N, K, rhs_qinfo);
 
     const auto ref_rhs_qsi4 = transpose_with_padding<Int4>(
-        ref_rhs_qsi4_transposed.data(), N, K, ref_rhs_qsi4_nxk_stride, ref_rhs_qsi4_kxn_stride,
-        ref_rhs_qsi4_kxn_size_bytes);
+        ref_rhs_quant.data(), N, K, ref_rhs_qsi4_nxk_stride, ref_rhs_qsi4_kxn_stride, ref_rhs_qsi4_kxn_size_bytes);
 
     const auto ref_dst = matmul_clamp_nt_nt<int8_t, float, int32_t, Int4, float, int32_t, float, int32_t, float>(
-        M, N, K, ref_lhs_qvalues.data(), ref_lhs_scales.data(), ref_lhs_zero_points.data(), K, ref_rhs_qsi4.data(),
-        ref_rhs_scales.data(), nullptr, K, ref_biases.data(), std::numeric_limits<float>::lowest(),
-        std::numeric_limits<float>::max());
+        M, N, K, ref_lhs_quant.data(), lhs_qoutputs.scales.data(), lhs_qoutputs.zero_points.data(), K,
+        ref_rhs_qsi4.data(), rhs_qoutputs.scales.data(), nullptr, K, ref_biases.data(),
+        std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max());
 
     auto m_step = ukernel_variant.interface.get_m_step();
     ASSERT_TRUE(m_step % mr == 0);
@@ -767,7 +797,7 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsu4cx) {
     params.rhs_zero_point = 8;
     abi_check(
         ukernel_variant.run_rhs_pack, 1, N, K, nr, kr, sr, reinterpret_cast<const uint8_t*>(ref_rhs_qsu4_padded.data()),
-        reinterpret_cast<const float*>(ref_biases.data()), reinterpret_cast<const float*>(ref_rhs_scales.data()),
+        reinterpret_cast<const float*>(ref_biases.data()), reinterpret_cast<const float*>(rhs_qoutputs.scales.data()),
         imp_packed_rhs.data(), 0, &params);
 
     const auto dst_stride = N * sizeof(float);

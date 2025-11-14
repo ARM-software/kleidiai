@@ -107,16 +107,24 @@ TEST_P(MatMulTest_f16_qai8dxp_qsi8cxp, EndToEnd) {
     //   * Quantizes the LHS matrix using 8-bit symmetric quantization.
     //   * Quantizes the RHS matrix using 8-bit asymmetric quantization.
     //   * Performs GEMM.
-    const auto [ref_lhs_qvalues, ref_lhs_scales, ref_lhs_zero_points] =
-        quantize_asymmetric_per_block_dynamic<float, int8_t, float, int32_t>(ref_lhs.data(), M, K, K);
-    const auto [ref_rhs_qsi8, ref_rhs_scales] =
-        quantize_symmetric_per_block_dynamic<float, int8_t, float>(ref_rhs.data(), N, K, K);
+    QuantizationInfo lhs_qinfo{};
+    lhs_qinfo.quant_width = K;
+    lhs_qinfo.dst_type = DataType::QAI8;
+    lhs_qinfo.scale_type = DataType::FP32;
+    lhs_qinfo.zero_point_type = DataType::I32;
+    const auto [ref_lhs_quant, lhs_qoutputs] = quantize_dynamic(ref_lhs.data(), DataType::FP32, M, K, lhs_qinfo);
+
+    QuantizationInfo rhs_qinfo{};
+    rhs_qinfo.quant_width = K;
+    rhs_qinfo.dst_type = DataType::QSI8;
+    rhs_qinfo.scale_type = DataType::FP32;
+    const auto [ref_rhs_quant, rhs_qoutputs] = quantize_dynamic(ref_rhs.data(), DataType::FP32, N, K, rhs_qinfo);
 
     const auto ref_dst_no_clamp =
         matmul_nt_t_quantized<int8_t, float, int32_t, int8_t, float, int32_t, float, float, int32_t, float>(
-            M, N, K, ref_lhs_qvalues.data(), ref_lhs_scales.data(), ref_lhs_zero_points.data(), 1, K,
-            ref_rhs_qsi8.data(), ref_rhs_scales.data(), nullptr, 1, K, has_bias ? ref_biases.data() : nullptr, nullptr,
-            nullptr, 1);
+            M, N, K, ref_lhs_quant.data(), lhs_qoutputs.scales.data(), lhs_qoutputs.zero_points.data(), 1, K,
+            ref_rhs_quant.data(), rhs_qoutputs.scales.data(), nullptr, 1, K, has_bias ? ref_biases.data() : nullptr,
+            nullptr, nullptr, 1);
 
     // Clamps the reference output.
     const auto clamp_ratio = 0.8F;
@@ -152,9 +160,9 @@ TEST_P(MatMulTest_f16_qai8dxp_qsi8cxp, EndToEnd) {
     // Runs the RHS packirng micro-kernel.
     const kai_rhs_pack_qsi8cx_params params{.lhs_zero_point = 1, .scale_multiplier = 1.0f};
     kai_run_rhs_pack_nxk_qsi8cxp_qsi8cx_neon(
-        1, N, K, nr, kr, sr, reinterpret_cast<const int8_t*>(ref_rhs_qsi8.data()),
+        1, N, K, nr, kr, sr, reinterpret_cast<const int8_t*>(ref_rhs_quant.data()),
         has_bias ? reinterpret_cast<const float*>(ref_biases.data()) : nullptr,
-        reinterpret_cast<const float*>(ref_rhs_scales.data()), imp_packed_rhs.data(), 0, &params);
+        reinterpret_cast<const float*>(rhs_qoutputs.scales.data()), imp_packed_rhs.data(), 0, &params);
 
     const auto dst_stride_row = N * sizeof(uint16_t);
     const auto dst_stride_col = sizeof(uint16_t);
