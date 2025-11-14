@@ -71,6 +71,7 @@ struct MatMulMethod {
     DataFormat rhs_format{};         ///< Data format of the RHS matrix.
     DataFormat packed_rhs_format{};  ///< Data format of the packed RHS matrix.
     DataFormat bias_format{};        ///< Data format of the bias vector.
+    bool nb_support{};               ///< Does the kernel support null_bias.
 
     /// Check if CPU supports required features.
     ///
@@ -485,8 +486,14 @@ struct MatMulMethod {
 
 // NOLINTEND(misc-non-private-member-variables-in-classes)
 
+/// Describes bias handling
+enum class BiasMode {
+    INTERNAL,  // Zero bias internally generated in kernel
+    PROVIDED,  // Bias provided by kernel caller
+};
+
 /// Matrix multiplication test information.
-using MatMulTestParams = std::tuple<MatMulMethod, MatMulShape, MatrixPortion>;
+using MatMulTestParams = std::tuple<MatMulMethod, MatMulShape, MatrixPortion, BiasMode>;
 using MatMulTestPortionedParams = std::tuple<size_t, MatMulShape, MatrixPortion>;
 using MatMulTestPortionedParamsWithBias = std::tuple<size_t, MatMulShape, MatrixPortion, bool>;
 using MatMulTestPortionedParamsWithBias_WithBL = std::tuple<size_t, MatMulShape, size_t, MatrixPortion, bool>;
@@ -495,6 +502,7 @@ using MatMulTestPortionedParamsWithBias_WithBL = std::tuple<size_t, MatMulShape,
 void PrintTo(const MatMulTestParams& param, std::ostream* os);
 void PrintTo(const MatMulShape& shape, std::ostream* os);
 void PrintTo(const MatrixPortion& portion, std::ostream* os);
+void PrintTo(const BiasMode& bias_mode, std::ostream* os);
 
 /// Generate test information.
 std::string test_description(

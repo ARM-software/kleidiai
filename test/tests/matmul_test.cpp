@@ -70,7 +70,7 @@ namespace kai::test {
 
 static const auto& get_matmul_methods() {
     // List of supported matrix multiplication methods.
-    static std::array<MatMulMethod, 10> matmul_methods{};
+    static std::array<MatMulMethod, 8> matmul_methods{};
 
     matmul_methods[0].name = "matmul_clamp_f16_f16_f16p16x1biasf16_6x16x8_neon_mla";
     matmul_methods[0].m0 = 6;
@@ -370,64 +370,6 @@ static const auto& get_matmul_methods() {
     matmul_methods[7].fn_get_dst_size = kai_get_dst_size_matmul_clamp_f16_f16_f16p32x1b_6x32_neon_mla_cortexa55;
     matmul_methods[7].fn_matmul_f16_f16_f16p = kai_run_matmul_clamp_f16_f16_f16p32x1b_6x32_neon_mla_cortexa55;
 
-    matmul_methods[8].name = "matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla";
-    matmul_methods[8].m0 = 6;
-    matmul_methods[8].n0 = 16;
-    matmul_methods[8].dst_format = DataFormat(DataType::FP32);
-    matmul_methods[8].lhs_format = DataFormat(DataType::FP32);
-    matmul_methods[8].packed_lhs_format = DataFormat(DataType::UNKNOWN);
-    matmul_methods[8].rhs_format = DataFormat(DataType::FP32);
-    matmul_methods[8].packed_rhs_format = DataFormat(
-        DataType::FP32, 16, 0, DataFormat::PackFormat::BIAS_PER_ROW, DataType::FP32, DataType::UNKNOWN, 16, 1);
-    matmul_methods[8].bias_format = DataFormat(DataType::FP32);
-    matmul_methods[8].fn_is_supported = cpu_has_advsimd;
-    matmul_methods[8].fn_get_nr = kai_get_nr_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla;
-    matmul_methods[8].fn_get_kr = kai_get_kr_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla;
-    matmul_methods[8].fn_get_sr = kai_get_sr_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla;
-    matmul_methods[8].fn_get_main_m_step = kai_get_m_step_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla;
-    matmul_methods[8].fn_get_pack_rhs_n_step = kai_get_n_step_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
-    matmul_methods[8].fn_get_main_n_step = kai_get_n_step_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla;
-    matmul_methods[8].fn_get_lhs_offset = kai_get_lhs_offset_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla;
-    matmul_methods[8].fn_get_rhs_offset = kai_get_rhs_offset_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
-    matmul_methods[8].fn_get_packed_rhs_size = kai_get_rhs_packed_size_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
-    matmul_methods[8].fn_get_pack_rhs_packed_rhs_offset = kai_get_rhs_packed_offset_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
-    matmul_methods[8].fn_get_main_packed_rhs_offset =
-        kai_get_rhs_packed_offset_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla;
-    matmul_methods[8].fn_pack_rhs = kai_run_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
-    matmul_methods[8].fn_get_bias_offset = kai_get_bias_offset_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
-    matmul_methods[8].fn_get_dst_offset = kai_get_dst_offset_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla;
-    matmul_methods[8].fn_get_dst_size = kai_get_dst_size_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla;
-    matmul_methods[8].fn_matmul_f32_f32_f32p = kai_run_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla;
-
-    matmul_methods[9].name = "matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55";
-    matmul_methods[9].m0 = 6;
-    matmul_methods[9].n0 = 16;
-    matmul_methods[9].dst_format = DataFormat(DataType::FP32);
-    matmul_methods[9].lhs_format = DataFormat(DataType::FP32);
-    matmul_methods[9].packed_lhs_format = DataFormat(DataType::UNKNOWN);
-    matmul_methods[9].rhs_format = DataFormat(DataType::FP32);
-    matmul_methods[9].packed_rhs_format = DataFormat(
-        DataType::FP32, 16, 0, DataFormat::PackFormat::BIAS_PER_ROW, DataType::FP32, DataType::UNKNOWN, 16, 1);
-    matmul_methods[9].bias_format = DataFormat(DataType::FP32);
-    matmul_methods[9].fn_is_supported = cpu_has_advsimd;
-    matmul_methods[9].fn_get_nr = kai_get_nr_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55;
-    matmul_methods[9].fn_get_kr = kai_get_kr_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55;
-    matmul_methods[9].fn_get_sr = kai_get_sr_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55;
-    matmul_methods[9].fn_get_main_m_step = kai_get_m_step_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55;
-    matmul_methods[9].fn_get_pack_rhs_n_step = kai_get_n_step_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
-    matmul_methods[9].fn_get_main_n_step = kai_get_n_step_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55;
-    matmul_methods[9].fn_get_lhs_offset = kai_get_lhs_offset_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55;
-    matmul_methods[9].fn_get_rhs_offset = kai_get_rhs_offset_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
-    matmul_methods[9].fn_get_packed_rhs_size = kai_get_rhs_packed_size_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
-    matmul_methods[9].fn_get_pack_rhs_packed_rhs_offset = kai_get_rhs_packed_offset_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
-    matmul_methods[9].fn_get_main_packed_rhs_offset =
-        kai_get_rhs_packed_offset_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55;
-    matmul_methods[9].fn_pack_rhs = kai_run_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
-    matmul_methods[9].fn_get_bias_offset = kai_get_bias_offset_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
-    matmul_methods[9].fn_get_dst_offset = kai_get_dst_offset_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55;
-    matmul_methods[9].fn_get_dst_size = kai_get_dst_size_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55;
-    matmul_methods[9].fn_matmul_f32_f32_f32p = kai_run_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55;
-
     return matmul_methods;
 }
 
@@ -611,11 +553,83 @@ static const auto& get_vecmul_methods() {
     return vecmul_methods;
 }
 
+static const auto& get_nullbias_matmul_methods() {
+    // List of supported vector by matrix multiplication methods
+    static std::array<MatMulMethod, 2> nullbias_matmul_methods{};
+
+    nullbias_matmul_methods[0].name = "matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla";
+    nullbias_matmul_methods[0].m0 = 6;
+    nullbias_matmul_methods[0].n0 = 16;
+    nullbias_matmul_methods[0].dst_format = DataFormat(DataType::FP32);
+    nullbias_matmul_methods[0].lhs_format = DataFormat(DataType::FP32);
+    nullbias_matmul_methods[0].packed_lhs_format = DataFormat(DataType::UNKNOWN);
+    nullbias_matmul_methods[0].rhs_format = DataFormat(DataType::FP32);
+    nullbias_matmul_methods[0].packed_rhs_format = DataFormat(
+        DataType::FP32, 16, 0, DataFormat::PackFormat::BIAS_PER_ROW, DataType::FP32, DataType::UNKNOWN, 16, 1);
+    nullbias_matmul_methods[0].bias_format = DataFormat(DataType::FP32);
+    nullbias_matmul_methods[0].fn_is_supported = cpu_has_advsimd;
+    nullbias_matmul_methods[0].fn_get_nr = kai_get_nr_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla;
+    nullbias_matmul_methods[0].fn_get_kr = kai_get_kr_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla;
+    nullbias_matmul_methods[0].fn_get_sr = kai_get_sr_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla;
+    nullbias_matmul_methods[0].fn_get_main_m_step = kai_get_m_step_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla;
+    nullbias_matmul_methods[0].fn_get_pack_rhs_n_step = kai_get_n_step_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
+    nullbias_matmul_methods[0].fn_get_main_n_step = kai_get_n_step_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla;
+    nullbias_matmul_methods[0].fn_get_lhs_offset = kai_get_lhs_offset_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla;
+    nullbias_matmul_methods[0].fn_get_rhs_offset = kai_get_rhs_offset_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
+    nullbias_matmul_methods[0].fn_get_packed_rhs_size = kai_get_rhs_packed_size_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
+    nullbias_matmul_methods[0].fn_get_pack_rhs_packed_rhs_offset =
+        kai_get_rhs_packed_offset_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
+    nullbias_matmul_methods[0].fn_get_main_packed_rhs_offset =
+        kai_get_rhs_packed_offset_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla;
+    nullbias_matmul_methods[0].fn_pack_rhs = kai_run_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
+    nullbias_matmul_methods[0].fn_get_bias_offset = kai_get_bias_offset_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
+    nullbias_matmul_methods[0].fn_get_dst_offset = kai_get_dst_offset_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla;
+    nullbias_matmul_methods[0].fn_get_dst_size = kai_get_dst_size_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla;
+    nullbias_matmul_methods[0].fn_matmul_f32_f32_f32p = kai_run_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla;
+
+    nullbias_matmul_methods[1].name = "matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55";
+    nullbias_matmul_methods[1].m0 = 6;
+    nullbias_matmul_methods[1].n0 = 16;
+    nullbias_matmul_methods[1].dst_format = DataFormat(DataType::FP32);
+    nullbias_matmul_methods[1].lhs_format = DataFormat(DataType::FP32);
+    nullbias_matmul_methods[1].packed_lhs_format = DataFormat(DataType::UNKNOWN);
+    nullbias_matmul_methods[1].rhs_format = DataFormat(DataType::FP32);
+    nullbias_matmul_methods[1].packed_rhs_format = DataFormat(
+        DataType::FP32, 16, 0, DataFormat::PackFormat::BIAS_PER_ROW, DataType::FP32, DataType::UNKNOWN, 16, 1);
+    nullbias_matmul_methods[1].bias_format = DataFormat(DataType::FP32);
+    nullbias_matmul_methods[1].fn_is_supported = cpu_has_advsimd;
+    nullbias_matmul_methods[1].fn_get_nr = kai_get_nr_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55;
+    nullbias_matmul_methods[1].fn_get_kr = kai_get_kr_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55;
+    nullbias_matmul_methods[1].fn_get_sr = kai_get_sr_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55;
+    nullbias_matmul_methods[1].fn_get_main_m_step =
+        kai_get_m_step_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55;
+    nullbias_matmul_methods[1].fn_get_pack_rhs_n_step = kai_get_n_step_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
+    nullbias_matmul_methods[1].fn_get_main_n_step =
+        kai_get_n_step_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55;
+    nullbias_matmul_methods[1].fn_get_lhs_offset =
+        kai_get_lhs_offset_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55;
+    nullbias_matmul_methods[1].fn_get_rhs_offset = kai_get_rhs_offset_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
+    nullbias_matmul_methods[1].fn_get_packed_rhs_size = kai_get_rhs_packed_size_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
+    nullbias_matmul_methods[1].fn_get_pack_rhs_packed_rhs_offset =
+        kai_get_rhs_packed_offset_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
+    nullbias_matmul_methods[1].fn_get_main_packed_rhs_offset =
+        kai_get_rhs_packed_offset_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55;
+    nullbias_matmul_methods[1].fn_pack_rhs = kai_run_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
+    nullbias_matmul_methods[1].fn_get_bias_offset = kai_get_bias_offset_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
+    nullbias_matmul_methods[1].fn_get_dst_offset =
+        kai_get_dst_offset_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55;
+    nullbias_matmul_methods[1].fn_get_dst_size =
+        kai_get_dst_size_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55;
+    nullbias_matmul_methods[1].fn_matmul_f32_f32_f32p = kai_run_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55;
+
+    return nullbias_matmul_methods;
+}
+
 /// Matrix multiplication test fixture.
 class MatMulTest : public testing::TestWithParam<MatMulTestParams> {
 private:
     /// Unique ID: m, n, k, method_id.
-    using TestDataId = std::tuple<size_t, size_t, size_t, std::string_view>;
+    using TestDataId = std::tuple<size_t, size_t, size_t, std::string_view, BiasMode>;
 
 protected:
     /// Cached test data that is shared between multiple test case.
@@ -634,8 +648,8 @@ protected:
 
     /// Gets the test data for the current test case.
     static const TestData& test_data() {
-        const auto& [method, info, portion] = GetParam();
-        const TestDataId data_id{info.m, info.n, info.k, method.name};
+        const auto& [method, info, portion, bias_mode] = GetParam();
+        const TestDataId data_id{info.m, info.n, info.k, method.name, bias_mode};
 
         // If the test data is already available, returns it.
         const auto data_it = _data.find(data_id);
@@ -648,6 +662,7 @@ protected:
         const auto has_lhs_pack = method.packed_lhs_format.data_type() != DataType::UNKNOWN;
         const auto has_rhs_pack = method.packed_rhs_format.data_type() != DataType::UNKNOWN;
         const auto has_bias = method.bias_format.data_type() != DataType::UNKNOWN;
+        const auto null_bias_mode = bias_mode == BiasMode::INTERNAL;
 
         const auto lhs_h = info.m;
         const auto lhs_w = info.k;
@@ -676,7 +691,14 @@ protected:
         const auto bias_w = info.n;
         Buffer bias;
 
-        if (has_bias) {
+        if (null_bias_mode) {
+            if (method.rhs_format == DataType::FP16) {
+                bias = fill_matrix_raw<Float16>(
+                    bias_h, bias_w, [&](size_t, size_t) { return static_cast<Float16>(0.0F); });
+            } else {
+                bias = fill_matrix_raw<float>(bias_h, bias_w, [&](size_t, size_t) { return static_cast<float>(0.0F); });
+            }
+        } else if (has_bias) {
             bias = fill_matrix_random(bias_h, bias_w, method.bias_format, 3);
         }
 
@@ -729,7 +751,7 @@ std::map<MatMulTest::TestDataId, MatMulTest::TestData> MatMulTest::_data;
 
 /// Tests the LHS packing micro-kernel.
 TEST_P(MatMulTest, PackedLhs) {
-    const auto& [method, info, portion] = GetParam();
+    const auto& [method, info, portion, bias_mode] = GetParam();
 
     if (method.fn_is_supported && !method.fn_is_supported()) {
         GTEST_SKIP() << "Unsupported CPU feature";
@@ -781,7 +803,7 @@ TEST_P(MatMulTest, PackedLhs) {
 
 /// Tests the RHS packing micro-kernel.
 TEST_P(MatMulTest, PackedRhs) {
-    const auto& [method, info, portion] = GetParam();
+    const auto& [method, info, portion, bias_mode] = GetParam();
 
     if (method.fn_is_supported && !method.fn_is_supported()) {
         GTEST_SKIP() << "Unsupported CPU feature";
@@ -797,6 +819,8 @@ TEST_P(MatMulTest, PackedRhs) {
 
     const auto block_height = method.packed_rhs_format.scheduler_block_height(rhs_full_width);
     const auto block_width = method.packed_rhs_format.scheduler_block_width(rhs_full_height);
+
+    const auto null_bias_mode = bias_mode == BiasMode::INTERNAL;
 
     const Rect rect = portion.compute_portion(rhs_full_width, rhs_full_height, block_height, block_width);
 
@@ -833,14 +857,15 @@ TEST_P(MatMulTest, PackedRhs) {
     const auto ref_rhs_scales_offset = rhs_start_row * data_type_size_in_bits(scale_type) / 8;
 
     const auto bias_offset = method.fn_get_bias_offset(rhs_start_row);
-    const auto ref_bias_offset = method.bias_format.default_offset_in_bytes(0, rhs_start_row, rhs_full_height);
+    const auto ref_bias_offset =
+        !null_bias_mode ? method.bias_format.default_offset_in_bytes(0, rhs_start_row, rhs_full_height) : bias_offset;
     ASSERT_EQ(bias_offset, ref_bias_offset);
 
     /** Perform RHS packing, and compare with reference result **/
     Buffer packed_rhs(packed_rhs_size, 0);
     abi_check(
         &MatMulMethod::pack_rhs, method, height, width, data.rhs.data() + rhs_offset, rhs_row_stride,
-        data.bias.data() + bias_offset,
+        !null_bias_mode ? data.bias.data() + bias_offset : nullptr,
         data.rhs_scales.data() != nullptr ? data.rhs_scales.data() + ref_rhs_scales_offset : nullptr,
         packed_rhs.data() + packed_rhs_offset);
 
@@ -854,7 +879,7 @@ TEST_P(MatMulTest, PackedRhs) {
 
 /// Tests the transposed RHS packing micro-kernel.
 TEST_P(MatMulTest, PackedTransposedRhs) {
-    const auto& [method, info, portion] = GetParam();
+    const auto& [method, info, portion, bias_mode] = GetParam();
 
     if (method.fn_is_supported && !method.fn_is_supported()) {
         GTEST_SKIP() << "Unsupported CPU feature";
@@ -916,7 +941,7 @@ TEST_P(MatMulTest, PackedTransposedRhs) {
 
 /// Tests the output.
 TEST_P(MatMulTest, Output) {
-    const auto& [method, info, portion] = GetParam();
+    const auto& [method, info, portion, bias_mode] = GetParam();
 
     if (method.fn_is_supported && !method.fn_is_supported()) {
         GTEST_SKIP() << "Unsupported CPU feature";
@@ -1013,23 +1038,33 @@ TEST_P(MatMulTest, Output) {
     ASSERT_TRUE(success);
 }
 
+const std::vector<MatrixPortion> MatrixPortions = {
+    {0, 0, 1, 1},
+    {0, 0, 0.25, 0.25},
+    {0.75, 0.75, 1, 1},
+};
+const std::vector<MatMulShape> MatMulShapes = {
+    {1, 16, 16}, {20, 1, 20}, {6, 16, 32}, {12, 32, 17}, {13, 33, 23}, {87, 93, 56},
+};
+
 INSTANTIATE_TEST_SUITE_P(
     MatMul, MatMulTest,
     testing::Combine(
-        testing::ValuesIn(get_matmul_methods()),
-        testing::Values(
-            MatMulShape{1, 16, 16},   //
-            MatMulShape{20, 1, 20},   //
-            MatMulShape{6, 16, 32},   //
-            MatMulShape{12, 32, 17},  //
-            MatMulShape{13, 33, 23},  //
-            MatMulShape{87, 93, 56}   //
-            ),
-        testing::Values(
-            MatrixPortion(0, 0, 1, 1),        // Full matrix.
-            MatrixPortion(0, 0, 0.25, 0.25),  // Top-left corner.
-            MatrixPortion(0.75, 0.75, 1, 1)   // Bottom-right corner.
-            )),
+        testing::ValuesIn(get_matmul_methods()),  //
+        testing::ValuesIn(MatMulShapes),          //
+        testing::ValuesIn(MatrixPortions),        //
+        testing::Values(BiasMode::PROVIDED)       //
+        ),
+    testing::PrintToStringParamName());
+
+INSTANTIATE_TEST_SUITE_P(
+    NullBiasMatMul, MatMulTest,
+    testing::Combine(
+        testing::ValuesIn(get_nullbias_matmul_methods()),        //
+        testing::ValuesIn(MatMulShapes),                         //
+        testing::ValuesIn(MatrixPortions),                       //
+        testing::Values(BiasMode::INTERNAL, BiasMode::PROVIDED)  //
+        ),
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
@@ -1056,7 +1091,8 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0, 0, 1, 0.5),    // First half
             MatrixPortion(0, .4, 1, 0.3),   // mid row-section.
             MatrixPortion(0, 0.75, 1, .25)  // right row section
-            )),
+            ),
+        testing::Values(BiasMode::PROVIDED)),
     testing::PrintToStringParamName());
 
 }  // namespace kai::test

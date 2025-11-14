@@ -334,7 +334,7 @@ protected:
 
     /// Gets the test data for the current test case.
     static const TestData& test_data() {
-        const auto& [method, info, portion] = GetParam();
+        const auto& [method, info, portion, bias_mode] = GetParam();
         const TestDataId data_id{info.m, info.n, info.k, method.name};
 
         // If the test data is already available, returns it.
@@ -446,7 +446,7 @@ std::map<MatMulTestBf16::TestDataId, MatMulTestBf16::TestData> MatMulTestBf16::_
 
 /// Tests the output.
 TEST_P(MatMulTestBf16, Output) {
-    const auto& [method, info, portion] = GetParam();
+    const auto& [method, info, portion, bias_mode] = GetParam();
 
     if (method.fn_is_supported && !method.fn_is_supported()) {
         GTEST_SKIP() << "Unsupported CPU feature";
@@ -570,7 +570,8 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0.75, 0.75, 1, 1),   // Bottom-right corner.
             MatrixPortion(0.75, 0, 1, 1),      // Partial rows
             MatrixPortion(0.4, 0.5, 0.6, 0.8)  // Somewhere Middle
-            )),
+            ),
+        testing::Values(BiasMode::PROVIDED)),
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
@@ -596,6 +597,7 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0, 0, 1, 0.25),  // Leftmost portion.
             MatrixPortion(0, 0.75, 1, 1),  // Rightmost portion.
             MatrixPortion(0, 0.5, 1, 0.8)  // Somewhere Middle
-            )),
+            ),
+        testing::Values(BiasMode::PROVIDED)),
     testing::PrintToStringParamName());
 }  // namespace kai::test
