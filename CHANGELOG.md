@@ -10,6 +10,9 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+- Fixes
+  - Add Null Bias support for rhs_pack_kxn_x16p32x1b_x16_x16_neon.
+
 ## v1.17.0
 
 - Fixes

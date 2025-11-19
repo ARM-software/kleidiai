@@ -26,6 +26,7 @@ typedef struct {
     size_t height;
     size_t in_stride;
     size_t out_stride;
+    size_t bias_step;
     const void* in;
     void* out;
 } KernelArgs;
@@ -71,22 +72,33 @@ void kai_run_rhs_pack_kxn_x16p32x1b_x16_x16_neon(
     size_t num_groups, size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t rhs_stride_row, const void* rhs,
     const void* bias, const void* scale, void* rhs_packed, size_t extra_bytes, const void* params) {
     KAI_ASSUME(num_groups == 1);
-    KAI_ASSUME(nr == kai_get_n_step_rhs_pack_kxn_x16p32x1b_x16_x16_neon());
+    KAI_UNUSED(nr);
     KAI_ASSUME(kr == KR);
     KAI_ASSUME(sr == 1);
     KAI_ASSUME(rhs != NULL);
-    KAI_ASSUME(bias != NULL);
     KAI_ASSUME(scale == NULL);
     KAI_ASSUME(rhs_packed != NULL);
     KAI_ASSUME(extra_bytes == 0);
     KAI_ASSUME(params == NULL);
 
+    // Null bias is supported by adding a set of zero bias values when the bias pointer is NULL
+    size_t bias_step = NR * sizeof(uint16_t);
+    static const uint8_t zero_bias[NR * sizeof(uint16_t)] = {0};
+
+    const void* bias_ptr = bias;
+
+    if (bias == NULL) {
+        bias_step = 0;
+        bias_ptr = zero_bias;
+    }
+
     KernelArgs args;
-    args.bias_ptr = bias;
+    args.bias_ptr = bias_ptr;
     args.height = k;
     args.width = n;
     args.in = rhs;
     args.out = rhs_packed;
+    args.bias_step = bias_step;
     args.in_stride = rhs_stride_row;
     args.out_stride = kai_get_rhs_packed_stride_rhs_pack_kxn_x16p32x1b_x16_x16_neon(args.height);
 

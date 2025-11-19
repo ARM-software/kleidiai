@@ -49,13 +49,14 @@ KAI_ASM_FUNCTION_LABEL(kai_kernel_rhs_pack_kxn_x16p32x1b_x16_x16_neon)
     str x28, [sp, 64]
     ldr x11, [x0, #0x8]
     mov x24, x11
-    ldr x10, [x0, #0x30]
+    ldr x10, [x0, #0x38]
     cmp x24, #0x20
     ldr x23, [x0, #0x0]
     ldr x22, [x0, #0x10]
     ldr x9, [x0, #0x18]
     ldr x28, [x0, #0x20]
-    ldr x27, [x0, #0x28]
+    ldr x20, [x0, #0x28]
+    ldr x27, [x0, #0x30]
     mov x21, x10
     blt label_2
 KAI_ASM_LABEL(label_1)  // Bias: Full loop
@@ -65,7 +66,7 @@ KAI_ASM_LABEL(label_1)  // Bias: Full loop
     ldr q17, [x23, #0x20]
     ldr q16, [x23, #0x30]
     cmp x24, #0x20
-    add x23, x23, #0x40
+    add x23, x23, x20
     str q19, [x21, #0x0]
     str q18, [x21, #0x10]
     str q17, [x21, #0x20]

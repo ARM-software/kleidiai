@@ -85,10 +85,11 @@ void kai_run_rhs_pack_kxn_x32p16x1b_x32_x32_neon(
     size_t bias_step = NR * sizeof(uint32_t);
     static const uint8_t zero_bias[NR * sizeof(uint32_t)] = {0};
 
-    const void* bias_ptr = bias == NULL ? (const void*)zero_bias : bias;
+    const void* bias_ptr = bias;
 
     if (bias == NULL) {
         bias_step = 0;
+        bias_ptr = zero_bias;
     }
 
     KernelArgs args;
