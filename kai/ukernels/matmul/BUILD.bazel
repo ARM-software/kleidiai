@@ -181,6 +181,12 @@ SVE_I8MM_KERNELS_ASM = [
 ]
 
 # buildifier: keep sorted
+SVE_KERNELS_ASM = [
+    "matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla",
+    "pack/kai_rhs_pack_kxn_x32p4vlx1b_x32_x32_sve",
+]
+
+# buildifier: keep sorted
 SME_KERNELS = [
     "pack/kai_lhs_pack_bf16p2vlx2_f32_sme",
     "pack/kai_rhs_pack_kxn_bf16p2vlx2b_f32_x32_sme",
@@ -352,6 +358,12 @@ kai_c_library(
 )
 
 kai_c_library(
+    name = "sve_impl_asm",
+    cpu_uarch = kai_cpu_sve(),
+    kernels_asm = SVE_KERNELS_ASM,
+)
+
+kai_c_library(
     name = "sme_impl",
     cpu_uarch = kai_cpu_sme(),
     kernels = SME_KERNELS,
@@ -399,6 +411,7 @@ kai_c_library(
         ":sme2_impl_asm",
         ":sme_impl",
         ":sme_impl_asm",
+        ":sve_impl_asm",
         ":sve_impl_dotprod_asm",
         ":sve_impl_i8mm_asm",
     ],

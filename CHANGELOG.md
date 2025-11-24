@@ -13,6 +13,8 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 - Fixes
   - Add Null Bias support for rhs_pack_kxn_x16p32x1b_x16_x16_neon.
   - Updated description of matmul file name from m_step x n_step to m_block x n_block
+- New SVE micro-kernels
+  - Matrix Multiplication (MxN) Micro-Kernels with F32 input and output.
 
 ## v1.17.0
 

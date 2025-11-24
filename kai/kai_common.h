@@ -228,6 +228,16 @@ void kai_commit_za(void);
 /// Gets the SVE vector length for 8-bit elements.
 uint64_t kai_get_sve_vector_length_u8(void);
 
+/// Gets the SVE vector length for 16-bit elements.
+inline static uint64_t kai_get_sve_vector_length_u16(void) {
+    return kai_get_sve_vector_length_u8() / 2;
+}
+
+/// Gets the SVE vector length for 32-bit elements.
+inline static uint64_t kai_get_sve_vector_length_u32(void) {
+    return kai_get_sve_vector_length_u8() / 4;
+}
+
 /// Extends the sign bit of int 4-bit value (stored in int8_t variable)
 /// @param[in] value The 4-bit int value
 ///

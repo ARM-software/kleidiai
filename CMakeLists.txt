@@ -293,6 +293,10 @@ set(KLEIDIAI_FILES_NEON_I8MM
 
 set(KLEIDIAI_FILES_SVE_ASM
     kai/kai_common_sve_asm.S
+    kai/ukernels/matmul/matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla.c
+    kai/ukernels/matmul/matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla_asm.S
+    kai/ukernels/matmul/pack/kai_rhs_pack_kxn_x32p4vlx1b_x32_x32_sve.c
+    kai/ukernels/matmul/pack/kai_rhs_pack_kxn_x32p4vlx1b_x32_x32_sve_asm.S
 )
 
 set(KLEIDIAI_FILES_SVE_DOTPROD_ASM
@@ -560,6 +564,7 @@ if(KLEIDIAI_BUILD_TESTS)
         test/common/round.cpp
         test/common/round_asm.S
         $<$<NOT:$<BOOL:${MSVC}>>:test/common/sme.cpp>
+        test/common/sve.cpp
 
         test/reference/binary_elementwise.cpp
         test/reference/cast.cpp
