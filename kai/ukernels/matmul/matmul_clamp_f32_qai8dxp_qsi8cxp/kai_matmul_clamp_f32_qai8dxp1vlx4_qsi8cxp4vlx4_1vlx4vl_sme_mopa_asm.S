@@ -130,14 +130,6 @@ KAI_ASM_LABEL(label_4)
     scvtf z13.s, p2/m, z13.s
     scvtf z14.s, p2/m, z14.s
     scvtf z15.s, p2/m, z15.s
-    fmax z24.s, p2/M, z24.s, z30.s
-    fmin z24.s, p2/M, z24.s, z31.s
-    fmax z25.s, p2/M, z25.s, z30.s
-    fmin z25.s, p2/M, z25.s, z31.s
-    fmax z26.s, p2/M, z26.s, z30.s
-    fmin z26.s, p2/M, z26.s, z31.s
-    fmax z27.s, p2/M, z27.s, z30.s
-    fmin z27.s, p2/M, z27.s, z31.s
     fmul	z24.s, z20.s, z12.s
     fmul	z25.s, z21.s, z13.s
     fmul	z26.s, z22.s, z14.s
@@ -146,6 +138,14 @@ KAI_ASM_LABEL(label_4)
     fadd	z25.s, p2/m, z25.s, z9.s
     fadd	z26.s, p2/m, z26.s, z10.s
     fadd	z27.s, p2/m, z27.s, z11.s
+    fmax z24.s, p2/M, z24.s, z30.s
+    fmin z24.s, p2/M, z24.s, z31.s
+    fmax z25.s, p2/M, z25.s, z30.s
+    fmin z25.s, p2/M, z25.s, z31.s
+    fmax z26.s, p2/M, z26.s, z30.s
+    fmin z26.s, p2/M, z26.s, z31.s
+    fmax z27.s, p2/M, z27.s, z30.s
+    fmin z27.s, p2/M, z27.s, z31.s
     mov     x28, xzr
     whilelt p5.s, x28, x13
     st1w    z24.s, p5, [x17]
