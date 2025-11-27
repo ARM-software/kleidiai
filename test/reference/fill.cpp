@@ -7,7 +7,6 @@
 #include "test/reference/fill.hpp"
 
 #include <cstddef>
-#include <cstdint>
 #include <functional>
 #include <random>
 #include <type_traits>
@@ -19,7 +18,6 @@
 #include "test/common/data_type.hpp"
 #include "test/common/float16.hpp"
 #include "test/common/int4.hpp"
-#include "test/common/memory.hpp"
 
 namespace kai::test {
 
@@ -79,23 +77,6 @@ Buffer fill_matrix_random_raw<UInt4>(size_t height, size_t width, uint32_t seed)
 }
 
 }  // namespace
-
-template <typename T>
-Buffer fill_matrix_raw(size_t height, size_t width, std::function<T(size_t, size_t)> gen) {
-    const auto size = height * width * size_in_bits<T> / 8;
-    KAI_ASSUME_ALWAYS(width * size_in_bits<T> % 8 == 0);
-
-    Buffer data(size);
-    auto ptr = reinterpret_cast<T*>(data.data());
-
-    for (size_t y = 0; y < height; ++y) {
-        for (size_t x = 0; x < width; ++x) {
-            write_array<T>(ptr, y * width + x, gen(y, x));
-        }
-    }
-
-    return data;
-}
 
 Buffer fill_matrix_random(size_t height, size_t width, const DataFormat& format, uint32_t seed) {
     switch (format.pack_format()) {
