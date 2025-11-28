@@ -16,6 +16,7 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
   - Clamp after scaling in `matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa`.
 - New SVE micro-kernels
   - Matrix Multiplication (MxN) Micro-Kernels with F32 input and output.
+- Update the example matmul_clamp_f32_qsi8d32p_qsi4c32p to demonstrate how a micro-kernel can be used in a multithreaded environment.
 
 ## v1.17.0
 
