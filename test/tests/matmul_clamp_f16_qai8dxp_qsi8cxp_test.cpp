@@ -10,7 +10,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
-#include <limits>
 #include <sstream>
 #include <string>
 #include <tuple>
@@ -24,6 +23,7 @@
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_qsi8cxp_qsi8cx_neon.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon.h"
 #include "test/common/buffer.hpp"
+#include "test/common/cache.hpp"
 #include "test/common/compare.hpp"
 #include "test/common/cpu_info.hpp"
 #include "test/common/data_format.hpp"
@@ -42,6 +42,75 @@
 #include "test/reference/quantize.hpp"
 
 namespace kai::test {
+
+using F16Qai8Qsi8CacheDataId = std::tuple<
+    MatMulShape,  //
+    DataFormat,   // lhs format
+    DataFormat,   // rhs format
+    DataFormat,   // bias format
+    float         // clamp_ratio
+    >;
+
+struct F16Qai8Qsi8CacheData {
+    Buffer ref_dst;
+    Buffer ref_rhs_qsi8;
+    Buffer ref_rhs_scales;
+    Buffer ref_lhs_f16;
+    Buffer ref_biases;
+    Range<float> clamp;
+};
+
+template <>
+F16Qai8Qsi8CacheData ReferenceGenerator<F16Qai8Qsi8CacheDataId, F16Qai8Qsi8CacheData>::generate_reference(
+    const F16Qai8Qsi8CacheDataId& data_id) {
+    auto [shape, lhs_format, rhs_format, bias_format, clamp_ratio] = data_id;
+
+    const size_t M = shape.m;
+    const size_t N = shape.n;
+    const size_t K = shape.k;
+
+    static uint32_t seed = 1;
+
+    bool has_bias = bias_format.data_type() != DataType::UNKNOWN;
+    Buffer lhs = fill_matrix_random(shape.m, shape.k, lhs_format, seed++);
+    Buffer rhs = fill_matrix_random(shape.n, shape.k, rhs_format, seed++);
+    Buffer bias = has_bias ? fill_matrix_random(1, shape.n, bias_format, seed++) : Buffer();
+
+    const auto ref_lhs = cast<float, Float16>(lhs.data(), lhs.size() * 8 / size_in_bits<Float16>);
+
+    QuantizationInfo lhs_qinfo{};
+    lhs_qinfo.quant_width = K;
+    lhs_qinfo.dst_type = DataType::QAI8;
+    lhs_qinfo.scale_type = DataType::FP32;
+    lhs_qinfo.zero_point_type = DataType::I32;
+    const auto [ref_lhs_quant, lhs_qoutputs] = quantize_dynamic(ref_lhs.data(), DataType::FP32, M, K, lhs_qinfo);
+
+    QuantizationInfo rhs_qinfo{};
+    rhs_qinfo.quant_width = K;
+    rhs_qinfo.dst_type = DataType::QSI8;
+    rhs_qinfo.scale_type = DataType::FP32;
+    auto [ref_rhs_quant, rhs_qoutputs] = quantize_dynamic(rhs.data(), DataType::FP32, N, K, rhs_qinfo);
+
+    const auto ref_dst_no_clamp =
+        matmul_nt_t_quantized<int8_t, float, int32_t, int8_t, float, int32_t, float, float, int32_t, float>(
+            M, N, K, ref_lhs_quant.data(), lhs_qoutputs.scales.data(), lhs_qoutputs.zero_points.data(), 1, K,
+            ref_rhs_quant.data(), rhs_qoutputs.scales.data(), nullptr, 1, K, has_bias ? bias.data() : nullptr, nullptr,
+            nullptr, 1);
+
+    const auto [clamp_min, clamp_max] = find_clamp_range<float>(ref_dst_no_clamp.data(), M * N, clamp_ratio);
+    const auto ref_dst_float = clamp<float>(ref_dst_no_clamp.data(), M * N, clamp_min, clamp_max);
+    auto ref_dst = cast<Float16, float>(ref_dst_float.data(), ref_dst_float.size() * 8 / size_in_bits<float>);
+
+    F16Qai8Qsi8CacheData out;
+    out.ref_dst = std::move(ref_dst);
+    out.ref_rhs_qsi8 = std::move(ref_rhs_quant);
+    out.ref_rhs_scales = std::move(rhs_qoutputs.scales);
+    out.ref_lhs_f16 = std::move(lhs);
+    out.ref_biases = std::move(bias);
+    out.clamp = {clamp_min, clamp_max};
+
+    return out;
+}
 
 static const std::array<UkernelVariant<kai_matmul_clamp_f16_qai8dxp_qsi8cxp_ukernel>, 4>
     variants_kai_matmul_clamp_f16_qai8dxp_qsi8cxp = {{
@@ -64,8 +133,6 @@ TEST_P(MatMulTest_f16_qai8dxp_qsi8cxp, EndToEnd) {
     if (ukernel_variant.fn_is_supported && !ukernel_variant.fn_is_supported()) {
         GTEST_SKIP() << "Unsupported CPU feature";
     }
-
-    const std::uint32_t seed = 0;
 
     const size_t M = matmul_shape.m;
     const size_t N = matmul_shape.n;
@@ -91,48 +158,20 @@ TEST_P(MatMulTest_f16_qai8dxp_qsi8cxp, EndToEnd) {
         GTEST_SKIP() << "Empty dimension of matrix(" << rect.width() << "," << rect.height() << ")";
     }
 
-    // Generates input data.
-    const auto ref_lhs_f16 = fill_random<Float16>(M * K, seed + 0);
-    const auto ref_rhs = fill_random<float>(N * K, seed + 1);
-    Buffer ref_biases;
+    const auto lhs_format = DataFormat(DataType::FP16);
+    const auto rhs_format = DataFormat(DataType::FP32);
+    const auto bias_format = has_bias ? DataFormat(DataType::FP32) : DataFormat(DataType::UNKNOWN);
 
-    if (has_bias) {
-        ref_biases = fill_random<float>(N, seed + 2);
-    }
-    // For reference implementation, Casting FP16 input to FP32 type and FP32 output back to FP16 because the matmul
-    // implementation works with FP32 accumulation and casts the result to FP16
-    const auto ref_lhs = cast<float, Float16>(ref_lhs_f16.data(), ref_lhs_f16.size() * 8 / size_in_bits<Float16>);
+    float clamp_ratio = 0.8F;
 
-    // Runs the reference implementation.
-    //   * Quantizes the LHS matrix using 8-bit symmetric quantization.
-    //   * Quantizes the RHS matrix using 8-bit asymmetric quantization.
-    //   * Performs GEMM.
-    QuantizationInfo lhs_qinfo{};
-    lhs_qinfo.quant_width = K;
-    lhs_qinfo.dst_type = DataType::QAI8;
-    lhs_qinfo.scale_type = DataType::FP32;
-    lhs_qinfo.zero_point_type = DataType::I32;
-    const auto [ref_lhs_quant, lhs_qoutputs] = quantize_dynamic(ref_lhs.data(), DataType::FP32, M, K, lhs_qinfo);
-
-    QuantizationInfo rhs_qinfo{};
-    rhs_qinfo.quant_width = K;
-    rhs_qinfo.dst_type = DataType::QSI8;
-    rhs_qinfo.scale_type = DataType::FP32;
-    const auto [ref_rhs_quant, rhs_qoutputs] = quantize_dynamic(ref_rhs.data(), DataType::FP32, N, K, rhs_qinfo);
-
-    const auto ref_dst_no_clamp =
-        matmul_nt_t_quantized<int8_t, float, int32_t, int8_t, float, int32_t, float, float, int32_t, float>(
-            M, N, K, ref_lhs_quant.data(), lhs_qoutputs.scales.data(), lhs_qoutputs.zero_points.data(), 1, K,
-            ref_rhs_quant.data(), rhs_qoutputs.scales.data(), nullptr, 1, K, has_bias ? ref_biases.data() : nullptr,
-            nullptr, nullptr, 1);
-
-    // Clamps the reference output.
-    const auto clamp_ratio = 0.8F;
-    const auto [clamp_min, clamp_max] = find_clamp_range<float>(ref_dst_no_clamp.data(), M * N, clamp_ratio);
-    const auto ref_dst_float = clamp<float>(ref_dst_no_clamp.data(), M * N, clamp_min, clamp_max);
-
-    // Cast the reference output to F16
-    auto ref_dst = cast<Float16, float>(ref_dst_float.data(), ref_dst_float.size() * 8 / size_in_bits<float>);
+    const F16Qai8Qsi8CacheDataId testdata_id = {matmul_shape, lhs_format, rhs_format, bias_format, clamp_ratio};
+    const F16Qai8Qsi8CacheData& testdata = getV<F16Qai8Qsi8CacheDataId, F16Qai8Qsi8CacheData>(testdata_id);
+    const auto& ref_lhs_f16 = testdata.ref_lhs_f16;
+    const auto& ref_rhs_qsi8 = testdata.ref_rhs_qsi8;
+    const auto& ref_biases = testdata.ref_biases;
+    const auto& ref_rhs_scales = testdata.ref_rhs_scales;
+    const auto& ref_dst = testdata.ref_dst;
+    auto [clamp_min, clamp_max] = testdata.clamp;
 
     // Runs the LHS packing micro-kernel.
     const auto lhs_start_row = rect.start_row();
@@ -157,12 +196,12 @@ TEST_P(MatMulTest_f16_qai8dxp_qsi8cxp, EndToEnd) {
     auto rhs_matmul_offset = ukernel_variant.interface.get_rhs_packed_offset(rhs_start_row, K);
     ASSERT_EQ(rhs_packed_offset, rhs_matmul_offset);
 
-    // Runs the RHS packirng micro-kernel.
+    // Runs the RHS packing micro-kernel.
     const kai_rhs_pack_qsi8cx_params params{.lhs_zero_point = 1, .scale_multiplier = 1.0f};
     kai_run_rhs_pack_nxk_qsi8cxp_qsi8cx_neon(
-        1, N, K, nr, kr, sr, reinterpret_cast<const int8_t*>(ref_rhs_quant.data()),
+        1, N, K, nr, kr, sr, reinterpret_cast<const int8_t*>(ref_rhs_qsi8.data()),
         has_bias ? reinterpret_cast<const float*>(ref_biases.data()) : nullptr,
-        reinterpret_cast<const float*>(rhs_qoutputs.scales.data()), imp_packed_rhs.data(), 0, &params);
+        reinterpret_cast<const float*>(ref_rhs_scales.data()), imp_packed_rhs.data(), 0, &params);
 
     const auto dst_stride_row = N * sizeof(uint16_t);
     const auto dst_stride_col = sizeof(uint16_t);
