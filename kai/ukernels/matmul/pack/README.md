@@ -22,7 +22,7 @@ Packs RHS(weights) and bias into X blocks that are a combination of RHS and bias
 
 The pattern of the packed output is shown below
 
-![rhs_pack_pattern_1](../../../../docs/imgs/kai_rhs_packing_pattern_1.png)</br>
+![rhs_pack_pattern_1](../../../../docs/imgs/kai_rhs_packing_pattern_1.png)
 
 Each block has bias and weights arranged as expected by the micro-kernel to produce a mr x nr output matrix. There can be padding involved in the blocks depending on the combination of underlying instruction used for the optimization in the micro-kernel, the chosen values of mr and nr and input dimensions, M, N and K.
 
@@ -36,7 +36,7 @@ Pack RHS(weights), bias and scaling factor together into X number of blocks that
 
 The pattern of the packed output is shown below.
 
-![rhs_pack_pattern_2](../../../../docs/imgs/kai_rhs_packing_pattern_2.png)</br>
+![rhs_pack_pattern_2](../../../../docs/imgs/kai_rhs_packing_pattern_2.png)
 
 Padding may be involved in the blocks depending on the values of mr, nr and kr and the input dimensions, M, N and K.
 

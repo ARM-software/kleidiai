@@ -17,6 +17,10 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 - New SVE micro-kernels
   - Matrix Multiplication (MxN) Micro-Kernels with F32 input and output.
 - Update the example matmul_clamp_f32_qsi8d32p_qsi4c32p to demonstrate how a micro-kernel can be used in a multithreaded environment.
+- Documentation
+  - Update documentation to use markdown syntax
+  - Added FAQ
+  - Added a section that describes the directory structure and a section that describes the different example implementations
 
 ## v1.17.0
 
