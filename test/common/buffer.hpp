@@ -11,6 +11,8 @@
 #include <functional>
 #include <memory>
 
+#include "test/common/span.hpp"
+
 namespace kai::test {
 
 /// Buffer is a high-level abstraction for a block of memory.
@@ -45,6 +47,26 @@ public:
     /// @return Base memory address of the user buffer.
     [[nodiscard]] std::byte* data() const {
         return static_cast<std::byte*>(m_buffer.get()) + m_user_buffer_offset;
+    }
+
+    /// Gets a view of the data.
+    operator Span<const std::byte>() const {
+        return {data(), size()};
+    }
+
+    /// Gets a view of the data.
+    operator Span<std::byte>() {
+        return {data(), size()};
+    }
+
+    /// Gets a view of the data.
+    [[nodiscard]] Span<const std::byte> view() const {
+        return {data(), size()};
+    }
+
+    /// Gets a view of the data.
+    [[nodiscard]] Span<std::byte> view() {
+        return {data(), size()};
     }
 
     /// Gets the size of the user buffer.

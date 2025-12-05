@@ -43,6 +43,12 @@ enum class DataType : uint16_t {
     BF16 = 0b0'1'1'0'0000'00010000,  ///< Half-precision brain floating-point.
 
     I32 = 0b1'1'0'0'0000'00100000,  ///< 32-bit signed integer.
+    I8 = 0b1'1'0'0'0000'00001000,   ///< 8-bit signed integer.
+    I4 = 0b1'1'0'0'0000'00000100,   ///< 4-bit signed integer.
+
+    U32 = 0b1'0'0'0'0000'00100000,  ///< 32-bit unsigned integer.
+    U8 = 0b1'0'0'0'0000'00001000,   ///< 8-bit unsigned integer.
+    U4 = 0b1'0'0'0'0000'00000100,   ///< 4-bit unsigned integer.
 
     QAI8 = 0b1'1'1'1'0000'00001000,  ///< 8-bit signed asymmetric quantized.
     QSI8 = 0b1'1'1'0'0000'00001000,  ///< 8-bit signed symmetric quantized.

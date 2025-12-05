@@ -103,4 +103,17 @@ struct make_signed<Int4> {
 template <typename T>
 using make_signed_t = typename make_signed<T>::type;
 
+/// Gets the value in type suitable to write to the output stream.
+///
+/// 8-bit integer type by default is written out as character, so we need to convert them
+/// to other integer type so that the output stream treats them as number instead of character.
+template <typename T, std::enable_if_t<is_arithmetic<T>, bool> = true>
+inline auto displayable(T value) {
+    if constexpr (is_integral<T> && sizeof(T) == 1) {
+        return static_cast<int>(value);
+    } else {
+        return value;
+    }
+}
+
 }  // namespace kai::test

@@ -579,6 +579,31 @@ if(KLEIDIAI_BUILD_TESTS)
         test/reference/reduce.cpp
         test/reference/reorder.cpp
         test/reference/transpose.cpp
+
+        test/nextgen/common/test_registry.cpp
+        test/nextgen/reference/unary_elementwise.cpp
+        test/nextgen/reference/binary_elementwise.cpp
+        test/nextgen/reference/reduce.cpp
+        test/nextgen/reference/quantize.cpp
+        test/nextgen/reference/dequantize.cpp
+        test/nextgen/reference/clamp.cpp
+        test/nextgen/reference/matmul.cpp
+        test/nextgen/reference/print.cpp
+        test/nextgen/reference/pack.cpp
+        test/nextgen/reference/compare.cpp
+        test/nextgen/format/plain_format.cpp
+        test/nextgen/format/block2d_row_format.cpp
+        test/nextgen/quantization/asymm_linear_quantizer.cpp
+        test/nextgen/quantization/symm_linear_quantizer.cpp
+        test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_wrapper.cpp
+        test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_dq_wrapper.cpp
+        test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_wrapper.cpp
+        test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_quant_wrapper.cpp
+        test/nextgen/operators/matmul/matmul/matmul_wrapper.cpp
+        test/nextgen/operators/matmul/matmul/matmul_dq_wrapper.cpp
+        test/nextgen/operators/matmul/matmul_bias_mode.cpp
+        test/nextgen/operators/matmul/matmul_operator.cpp
+        test/nextgen/operators/matmul/matmul_tb.cpp
     )
 
     target_compile_options(kleidiai_test_framework
@@ -631,6 +656,8 @@ if(KLEIDIAI_BUILD_TESTS)
             test/tests/matmul_clamp_qai8_qai8p_qsi8cxp_test.cpp
             test/tests/matmul_clamp_qai8dxp_qsi4c32p_test.cpp
             test/tests/matmul_test.cpp
+
+            test/nextgen/tests/matmul_test_next.cpp
         )
 
         set_source_files_properties(
@@ -647,10 +674,13 @@ if(KLEIDIAI_BUILD_TESTS)
     message(STATUS "Building individual test executables:")
     foreach(KLEIDIAI_TEST_FILE IN LISTS KLEIDIAI_FILES_TESTS)
         get_filename_component(KLEIDIAI_TEST_NAME ${KLEIDIAI_TEST_FILE} NAME_WE)
-        add_executable(${KLEIDIAI_TEST_NAME} ${KLEIDIAI_TEST_FILE})
+        add_executable(${KLEIDIAI_TEST_NAME}
+            ${KLEIDIAI_TEST_FILE}
+            test/nextgen/main.cpp
+        )
         target_link_libraries(${KLEIDIAI_TEST_NAME}
             PRIVATE kleidiai_test_framework
-            PRIVATE GTest::gtest_main
+            PRIVATE GTest::gtest
         )
         gtest_discover_tests(${KLEIDIAI_TEST_NAME} DISCOVERY_MODE PRE_TEST)
         message(STATUS " ${KLEIDIAI_TEST_NAME}")
@@ -658,10 +688,13 @@ if(KLEIDIAI_BUILD_TESTS)
 
     # Build monolithic test binary containing all tests
     message(STATUS "Building monolithic test executable: kleidiai_test")
-    add_executable(kleidiai_test ${KLEIDIAI_FILES_TESTS})
+    add_executable(kleidiai_test
+        ${KLEIDIAI_FILES_TESTS}
+        test/nextgen/main.cpp
+    )
     target_link_libraries(kleidiai_test
         PRIVATE kleidiai_test_framework
-        PRIVATE GTest::gtest_main
+        PRIVATE GTest::gtest
     )
 
     # Cross-compiling is a common use case which creates a conflict if DISCOVERY_MODE is set to POST_BUILD (by default)
