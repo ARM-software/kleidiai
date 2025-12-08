@@ -10,6 +10,8 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+- Added new unit test framework
+
 ## v1.18.0
 
 - Fixes
