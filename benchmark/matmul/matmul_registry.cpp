@@ -60,6 +60,8 @@
 #include "kai/ukernels/matmul/matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa.h"
 
 // matmul_clamp_f32_qai8dxp_qsi4c32p
+#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4c32p/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4c32p/kai_matmul_clamp_f32_qai8dxp1x4_qsi4c32p4vlx4_1x4vl_sme2_dot.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4c32p/kai_matmul_clamp_f32_qai8dxp1x4_qsi4c32p4x4_1x4_neon_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4c32p/kai_matmul_clamp_f32_qai8dxp1x4_qsi4c32p8x4_1x8_neon_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4c32p/kai_matmul_clamp_f32_qai8dxp1x8_qsi4c32p4x8_1x4x32_neon_dotprod.h"
@@ -291,6 +293,16 @@ inline constexpr MatMulBlockwiseDynamicQuantInterface
 inline constexpr MatMulBlockwiseDynamicQuantInterface
     kai_matmul_clamp_f32_qai8dxp4x8_qsi4c32p8x8_4x8x32_neon_i8mm_interface{
         .run_matmul = kai_run_matmul_clamp_f32_qai8dxp4x8_qsi4c32p8x8_4x8x32_neon_i8mm,
+    };
+
+inline constexpr MatMulBlockwiseDynamicQuantInterface
+    kai_matmul_clamp_f32_qai8dxp1x4_qsi4c32p4vlx4_1x4vl_sme2_dot_interface{
+        .run_matmul = kai_run_matmul_clamp_f32_qai8dxp1x4_qsi4c32p4vlx4_1x4vl_sme2_dot,
+    };
+
+inline constexpr MatMulBlockwiseDynamicQuantInterface
+    kai_matmul_clamp_f32_qai8dxp1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa_interface{
+        .run_matmul = kai_run_matmul_clamp_f32_qai8dxp1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa,
     };
 
 // matmul_clamp_f32_qai8dxp_qsi4cxp
@@ -696,6 +708,16 @@ inline const std::array matmul_benchmarks{
         kai_benchmark_matmul<MatMulBlockwiseDynamicQuantInterface>,
         kai_matmul_clamp_f32_qai8dxp4x8_qsi4c32p8x8_4x8x32_neon_i8mm_interface, DataType::FP32, MatMulOp::GEMM,
         test::cpu_has_i8mm),
+    RegisterBenchmark(
+        "kai_matmul_clamp_f32_qai8dxp1x4_qsi4c32p4vlx4_1x4vl_sme2_dot",
+        kai_benchmark_matmul<MatMulBlockwiseDynamicQuantInterface>,
+        kai_matmul_clamp_f32_qai8dxp1x4_qsi4c32p4vlx4_1x4vl_sme2_dot_interface, DataType::FP32, MatMulOp::GEMV,
+        test::cpu_has_sme2),
+    RegisterBenchmark(
+        "kai_matmul_clamp_f32_qai8dxp1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa",
+        kai_benchmark_matmul<MatMulBlockwiseDynamicQuantInterface>,
+        kai_matmul_clamp_f32_qai8dxp1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa_interface, DataType::FP32, MatMulOp::GEMM,
+        test::cpu_has_sme2),
 
     // matmul_clamp_f32_qai8dxp_qsi4cxp
     RegisterBenchmark(

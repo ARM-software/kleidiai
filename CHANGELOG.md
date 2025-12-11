@@ -11,6 +11,9 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 ## Upcoming Release
 
 - Added new unit test framework
+- New SME2 micro-kernels
+  - Matrix Multiplication (1xN) Micro-Kernel of QAI8DXP LHS and QSI4C32P RHS with F32 input and output.
+  - Matrix Multiplication (MxN) Micro-Kernel of QAI8DXP LHS and QSI4C32P RHS with F32 input and output.
 
 ## v1.18.0
 
