@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !defined(__clang__)
 
 #define KAI_ASM_HEADER AREA |.text|, CODE, READONLY, ALIGN=4
 #define KAI_ASM_LABEL(label) |label|
@@ -12,6 +12,15 @@
 #define KAI_ASM_EXPORT(label) global label
 #define KAI_ASM_FOOTER end
 #define KAI_ASM_INST(num) dcd num
+
+#elif defined(_MSC_VER) && defined(__clang__)
+
+#define KAI_ASM_HEADER        .text
+#define KAI_ASM_LABEL(label)  label:
+#define KAI_ASM_FUNCTION(label) label:
+#define KAI_ASM_EXPORT(label) .globl label
+#define KAI_ASM_FOOTER
+#define KAI_ASM_INST(num)     .inst num
 
 #else  // _MSC_VER
 
