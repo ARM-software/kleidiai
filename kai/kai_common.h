@@ -125,7 +125,7 @@ extern "C" {
 ///
 /// @return Project version as a string literal.
 inline const char* kai_get_version(void) {
-    return "1.18.0";
+    return "1.19.0";
 }
 
 /// KleidiAI data types
