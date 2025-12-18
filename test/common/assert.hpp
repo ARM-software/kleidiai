@@ -8,10 +8,12 @@
 
 #include <stdexcept>
 
-#ifdef KAI_ERROR_TRAP
+#if defined(KAI_ERROR_TRAP)
 #define KAI_TEST_ERROR(msg) __builtin_trap()
-#else  // KAI_ERROR_TRAP
+#elif defined(__cpp_exceptions)
 #define KAI_TEST_ERROR(msg) throw std::runtime_error(msg)
+#else
+#define KAI_TEST_ERROR(msg) KAI_ERROR(msg)
 #endif  // KAI_ERROR_TRAP
 
 #define KAI_TEST_ASSERT_MSG(cond, msg) \
