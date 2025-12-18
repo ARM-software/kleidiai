@@ -48,7 +48,7 @@ using F16Qai8Qsi4CacheDataId = std::tuple<
     DataFormat,   // lhs format
     DataFormat,   // rhs format
     DataFormat,   // bias format
-    float         // clamp_ratio
+    float         // clamp_keep_ratio
     >;
 
 struct F16Qai8Qsi4CacheData {
@@ -63,7 +63,7 @@ struct F16Qai8Qsi4CacheData {
 template <>
 F16Qai8Qsi4CacheData ReferenceGenerator<F16Qai8Qsi4CacheDataId, F16Qai8Qsi4CacheData>::generate_reference(
     const F16Qai8Qsi4CacheDataId& data_id) {
-    auto [shape, lhs_format, rhs_format, bias_format, clamp_ratio] = data_id;
+    auto [shape, lhs_format, rhs_format, bias_format, clamp_keep_ratio] = data_id;
 
     const size_t M = shape.m;
     const size_t N = shape.n;
@@ -97,7 +97,7 @@ F16Qai8Qsi4CacheData ReferenceGenerator<F16Qai8Qsi4CacheDataId, F16Qai8Qsi4Cache
             ref_rhs_quant.data(), rhs_qoutputs.scales.data(), nullptr, 1, K, has_bias ? bias.data() : nullptr, nullptr,
             nullptr, 1);
 
-    const auto [clamp_min, clamp_max] = find_clamp_range<float>(ref_dst_no_clamp.data(), M * N, clamp_ratio);
+    const auto [clamp_min, clamp_max] = find_clamp_range<float>(ref_dst_no_clamp.data(), M * N, clamp_keep_ratio);
     const auto ref_dst_float = clamp<float>(ref_dst_no_clamp.data(), M * N, clamp_min, clamp_max);
     auto ref_dst = cast<Float16, float>(ref_dst_float.data(), ref_dst_float.size() * 8 / size_in_bits<float>);
 
@@ -124,10 +124,10 @@ static const std::array<UkernelVariant<kai_matmul_clamp_f16_qai8dxp_qsi4cxp_uker
          "kai_matmul_clamp_f16_qai8dxp4x8_qsi4cxp4x8_16x4_neon_i8mm", cpu_has_i8mm_and_fp16},
     }};
 
-class MatMulTest_f16_qai8dxp_qsi4cxp : public ::testing::TestWithParam<MatMulTestPortionedParamsWithBias> {};
+class MatMulTest_f16_qai8dxp_qsi4cxp : public ::testing::TestWithParam<MatMulClampTestPortionedParamsWithBias> {};
 
 TEST_P(MatMulTest_f16_qai8dxp_qsi4cxp, EndToEnd) {
-    const auto& [variant_index, matmul_shape, portion, has_bias] = GetParam();
+    const auto& [variant_index, matmul_shape, portion, clamp_keep_ratio, has_bias] = GetParam();
     const auto& ukernel_variant = variants_kai_matmul_clamp_f16_qai8dxp_qsi4cxp.at(variant_index);
 
     if (ukernel_variant.fn_is_supported && !ukernel_variant.fn_is_supported()) {
@@ -162,9 +162,7 @@ TEST_P(MatMulTest_f16_qai8dxp_qsi4cxp, EndToEnd) {
     const auto rhs_format = DataFormat(DataType::FP32);
     const auto bias_format = has_bias ? DataFormat(DataType::FP32) : DataFormat(DataType::UNKNOWN);
 
-    float clamp_ratio = 0.8F;
-
-    const F16Qai8Qsi4CacheDataId testdata_id = {matmul_shape, lhs_format, rhs_format, bias_format, clamp_ratio};
+    const F16Qai8Qsi4CacheDataId testdata_id = {matmul_shape, lhs_format, rhs_format, bias_format, clamp_keep_ratio};
     const F16Qai8Qsi4CacheData& testdata = getV<F16Qai8Qsi4CacheDataId, F16Qai8Qsi4CacheData>(testdata_id);
 
     const auto& ref_lhs_f16 = testdata.ref_lhs_f16;
@@ -262,15 +260,17 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0.75, 0, 1, 1),      // Partial rows
             MatrixPortion(0.4, 0.5, 0.6, 0.8)  // Somewhere Middle
             ),
+        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
         testing::Bool()),
     [](const auto& info) {
         const auto variant_idx = std::get<0>(info.param);
         const std::string name{variants_kai_matmul_clamp_f16_qai8dxp_qsi4cxp.at(variant_idx).name};
         const auto shape = std::get<MatMulShape>(info.param);
         const auto portion = std::get<2>(info.param);
-        const auto has_bias = std::get<3>(info.param);
+        const auto clamp_keep_ratio = std::get<3>(info.param);
+        const auto has_bias = std::get<4>(info.param);
 
-        return test_description(name, shape, portion, has_bias);
+        return test_description(name, shape, portion, has_bias, clamp_keep_ratio);
     });
 
 }  // namespace kai::test

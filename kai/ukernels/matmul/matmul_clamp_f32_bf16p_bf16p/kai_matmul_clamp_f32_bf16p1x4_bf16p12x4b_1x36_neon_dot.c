@@ -97,7 +97,8 @@ void kai_run_matmul_clamp_f32_bf16p1x4_bf16p12x4b_1x36_neon_dot(
     const void* B_ptr = rhs_packed;
     void* output_ptr = dst;
 
-    uint64_t flags = 0;
+    // Add clamping flag
+    uint64_t flags = 0x2;
 
     __asm__ __volatile__(
         "add x26, %x[K], #0x3\n"

@@ -714,11 +714,13 @@ static const auto& get_nullbias_matmul_methods() {
     return nullbias_matmul_methods;
 }
 
+using MatMulClampTestParams = std::tuple<MatMulMethod, MatMulShape, MatrixPortion, BiasMode, float>;
+
 /// Matrix multiplication test fixture.
-class MatMulTest : public testing::TestWithParam<MatMulTestParams> {
+class MatMulTest : public testing::TestWithParam<MatMulClampTestParams> {
 private:
     /// Unique ID: m, n, k, method_id.
-    using TestDataId = std::tuple<size_t, size_t, size_t, std::string_view, BiasMode>;
+    using TestDataId = std::tuple<size_t, size_t, size_t, std::string_view, BiasMode, float>;
 
 protected:
     /// Cached test data that is shared between multiple test case.
@@ -737,8 +739,8 @@ protected:
 
     /// Gets the test data for the current test case.
     static const TestData& test_data() {
-        const auto& [method, info, portion, bias_mode] = GetParam();
-        const TestDataId data_id{info.m, info.n, info.k, method.name, bias_mode};
+        const auto& [method, info, portion, bias_mode, clamp_keep_ratio] = GetParam();
+        const TestDataId data_id{info.m, info.n, info.k, method.name, bias_mode, clamp_keep_ratio};
 
         // If the test data is already available, returns it.
         const auto data_it = _data.find(data_id);
@@ -801,9 +803,8 @@ protected:
             method.dst_format.data_type(),                                          //
             info.m, info.n, info.k, false, false);
 
-        static constexpr float clamp_ratio = 0.8F;
         const auto [clamp_min, clamp_max] =
-            find_clamp_range(method.dst_format.data_type(), ref_dst.data(), info.m * info.n, clamp_ratio);
+            find_clamp_range(method.dst_format.data_type(), ref_dst.data(), info.m * info.n, clamp_keep_ratio);
         ref_dst = clamp(method.dst_format.data_type(), ref_dst.data(), info.m * info.n, clamp_min, clamp_max);
 
         auto& data = _data[data_id] = {};
@@ -833,7 +834,7 @@ std::map<MatMulTest::TestDataId, MatMulTest::TestData> MatMulTest::_data;
 
 /// Tests the LHS packing micro-kernel.
 TEST_P(MatMulTest, PackedLhs) {
-    const auto& [method, info, portion, bias_mode] = GetParam();
+    const auto& [method, info, portion, bias_mode, clamp_keep_ratio] = GetParam();
 
     if (method.fn_is_supported && !method.fn_is_supported()) {
         GTEST_SKIP() << "Unsupported CPU feature";
@@ -885,7 +886,7 @@ TEST_P(MatMulTest, PackedLhs) {
 
 /// Tests the RHS packing micro-kernel.
 TEST_P(MatMulTest, PackedRhs) {
-    const auto& [method, info, portion, bias_mode] = GetParam();
+    const auto& [method, info, portion, bias_mode, clamp_keep_ratio] = GetParam();
 
     if (method.fn_is_supported && !method.fn_is_supported()) {
         GTEST_SKIP() << "Unsupported CPU feature";
@@ -961,7 +962,7 @@ TEST_P(MatMulTest, PackedRhs) {
 
 /// Tests the transposed RHS packing micro-kernel.
 TEST_P(MatMulTest, PackedTransposedRhs) {
-    const auto& [method, info, portion, bias_mode] = GetParam();
+    const auto& [method, info, portion, bias_mode, clamp_keep_ratio] = GetParam();
 
     if (method.fn_is_supported && !method.fn_is_supported()) {
         GTEST_SKIP() << "Unsupported CPU feature";
@@ -1023,7 +1024,7 @@ TEST_P(MatMulTest, PackedTransposedRhs) {
 
 /// Tests the output.
 TEST_P(MatMulTest, Output) {
-    const auto& [method, info, portion, bias_mode] = GetParam();
+    const auto& [method, info, portion, bias_mode, clamp_keep_ratio] = GetParam();
 
     if (method.fn_is_supported && !method.fn_is_supported()) {
         GTEST_SKIP() << "Unsupported CPU feature";
@@ -1137,21 +1138,21 @@ const std::vector<MatMulShape> MatMulShapes = {
 INSTANTIATE_TEST_SUITE_P(
     MatMul, MatMulTest,
     testing::Combine(
-        testing::ValuesIn(get_matmul_methods()),  //
-        testing::ValuesIn(MatMulShapes),          //
-        testing::ValuesIn(MatrixPortions),        //
-        testing::Values(BiasMode::PROVIDED)       //
-        ),
+        testing::ValuesIn(get_matmul_methods()),                               //
+        testing::ValuesIn(MatMulShapes),                                       //
+        testing::ValuesIn(MatrixPortions),                                     //
+        testing::Values(BiasMode::PROVIDED),                                   //
+        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
     NullBiasMatMul, MatMulTest,
     testing::Combine(
-        testing::ValuesIn(get_nullbias_matmul_methods()),        //
-        testing::ValuesIn(MatMulShapes),                         //
-        testing::ValuesIn(MatrixPortions),                       //
-        testing::Values(BiasMode::INTERNAL, BiasMode::PROVIDED)  //
-        ),
+        testing::ValuesIn(get_nullbias_matmul_methods()),                      //
+        testing::ValuesIn(MatMulShapes),                                       //
+        testing::ValuesIn(MatrixPortions),                                     //
+        testing::Values(BiasMode::INTERNAL, BiasMode::PROVIDED),               //
+        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
@@ -1179,7 +1180,8 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0, .4, 1, 0.3),   // mid row-section.
             MatrixPortion(0, 0.75, 1, .25)  // right row section
             ),
-        testing::Values(BiasMode::PROVIDED)),
+        testing::Values(BiasMode::PROVIDED),                                   //
+        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
     testing::PrintToStringParamName());
 
 }  // namespace kai::test

@@ -145,13 +145,16 @@ static inline std::tuple<Buffer, size_t> pack_rhs_qai4c32p(
     return {std::move(imp_packed_rhs), rhs_packed_offset};
 }
 
-class MatMulTest_f32_qsi8d32p_qai4c32p : public ::testing::TestWithParam<MatMulTestPortionedParamsWithBias_WithBL> {};
+using MatMulTestClampPortionedParamsWithBias_WithBL =
+    std::tuple<size_t, MatMulShape, size_t, MatrixPortion, float, bool>;
+class MatMulTest_f32_qsi8d32p_qai4c32p
+    : public ::testing::TestWithParam<MatMulTestClampPortionedParamsWithBias_WithBL> {};
 
 TEST_P(MatMulTest_f32_qsi8d32p_qai4c32p, LhsPackedWithSameBlockdepth) {
     // Verify LHS quant and pack int8 kernel behaves same for int4 and int8 matmul kernels,
     // when the block-depth is same for different values of kr, sr.
 
-    const auto& [variant_index, matmul_shape, bl, portion, has_bias] = GetParam();
+    const auto& [variant_index, matmul_shape, bl, portion, clamp_keep_ratio, has_bias] = GetParam();
     const auto& ukernel_variant = variants_kai_matmul_clamp_f32_qsi8d32p_qai4c32p.at(variant_index);
 
     if (ukernel_variant.ukernel.fn_is_supported && !ukernel_variant.ukernel.fn_is_supported()) {
@@ -208,7 +211,7 @@ TEST_P(MatMulTest_f32_qsi8d32p_qai4c32p, LhsPackedWithSameBlockdepth) {
 }
 
 TEST_P(MatMulTest_f32_qsi8d32p_qai4c32p, EndToEnd) {
-    const auto& [variant_index, matmul_shape, bl, portion, has_bias] = GetParam();
+    const auto& [variant_index, matmul_shape, bl, portion, clamp_keep_ratio, has_bias] = GetParam();
     const auto& ukernel_variant = variants_kai_matmul_clamp_f32_qsi8d32p_qai4c32p.at(variant_index);
 
     if (ukernel_variant.ukernel.fn_is_supported && !ukernel_variant.ukernel.fn_is_supported()) {
@@ -277,8 +280,7 @@ TEST_P(MatMulTest_f32_qsi8d32p_qai4c32p, EndToEnd) {
             nullptr, nullptr, 1);
 
     // Clamps the reference output.
-    const auto clamp_ratio = 0.8F;
-    const auto [clamp_min, clamp_max] = find_clamp_range<float>(ref_dst_no_clamp.data(), M * N, clamp_ratio);
+    const auto [clamp_min, clamp_max] = find_clamp_range<float>(ref_dst_no_clamp.data(), M * N, clamp_keep_ratio);
     const auto ref_dst = clamp<float>(ref_dst_no_clamp.data(), M * N, clamp_min, clamp_max);
 
     // Runs the LHS packing micro-kernel.
@@ -372,6 +374,7 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0.75, 0, 1, 1),      // Partial rows
             MatrixPortion(0.4, 0.5, 0.6, 0.8)  // Somewhere Middle
             ),
+        testing::ValuesIn(std::initializer_list<float>{1.0f, 0.9f, 0.5f}),  //
         testing::Bool()),
     [](const auto& info) {
         const auto variant_idx = std::get<0>(info.param);
@@ -379,12 +382,15 @@ INSTANTIATE_TEST_SUITE_P(
         const auto shape = std::get<MatMulShape>(info.param);
         const auto bl = std::get<2>(info.param);
         const auto portion = std::get<3>(info.param);
-        const auto has_bias = std::get<4>(info.param);
+        const auto clamp_keep_ratio = std::get<4>(info.param);
+        const auto has_bias = std::get<5>(info.param);
 
         std::ostringstream sstream;
         sstream << name << "__";
         PrintTo(shape, &sstream);
         sstream << "__BL_" << bl << "_";
+        sstream << "__clamp_keep_ratio_" << static_cast<int>(clamp_keep_ratio * 100);
+
         if (has_bias) {
             sstream << "_withBias_";
         } else {

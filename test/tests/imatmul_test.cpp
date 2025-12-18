@@ -351,7 +351,7 @@ struct TestDataId {
     MatMulShape pack_shape;
     IndirectMatMul::Format format;
     size_t k_chunk_length;
-    float clamp_rate;
+    float clamp_keep_ratio;
 
     struct Hash {
         size_t operator()(const TestDataId& test_id) const {
@@ -360,7 +360,7 @@ struct TestDataId {
                 (MatMulShape::Hash{}(test_id.pack_shape) << 1) ^         //
                 (IndirectMatMul::Format::Hash{}(test_id.format) << 2) ^  //
                 (std::hash<size_t>{}(test_id.k_chunk_length) << 3) ^     //
-                (std::hash<float>{}(test_id.clamp_rate) << 4);           //
+                (std::hash<float>{}(test_id.clamp_keep_ratio) << 4);     //
         }
     };
 
@@ -371,7 +371,7 @@ private:
             lhs.pack_shape == rhs.pack_shape &&          //
             lhs.format == rhs.format &&                  //
             lhs.k_chunk_length == rhs.k_chunk_length &&  //
-            lhs.clamp_rate == rhs.clamp_rate;
+            lhs.clamp_keep_ratio == rhs.clamp_keep_ratio;
     }
 };
 
@@ -411,7 +411,7 @@ private:
     /// Generate reference data. Not intended to be called
     /// directly, as this would bypass caching mechanism.
     static TestData generate_reference(const TestDataId& test_id) {
-        const auto& [chunked_shape, pack_shape, format, k_chunk_length, clamp_rate] = test_id;
+        const auto& [chunked_shape, pack_shape, format, k_chunk_length, clamp_keep_ratio] = test_id;
 
         // The LHS matrix will be split into several chunks in the K dimension
         const size_t k_chunk_count = chunked_shape.k;
@@ -466,7 +466,7 @@ private:
             chunked_shape.m, chunked_shape.n, chunked_shape.k, k_chunk_length);
 
         // Calculate clamping range based on full range of values, and then clamp values
-        const auto [min, max] = find_clamp_range(out_dt, out.data(), shape.m * shape.n, 1.0F - clamp_rate);
+        const auto [min, max] = find_clamp_range(out_dt, out.data(), shape.m * shape.n, clamp_keep_ratio);
         Buffer out_clamped = clamp(out_dt, out.data(), shape.m * shape.n, min, max);
 
         // Populate reference data
@@ -566,7 +566,7 @@ Buffer imatmul(
 
 /// End-to-end test for indirection matmul kernels
 TEST_P(IndirectMatMulTest, Output) {
-    const auto& [method, shape, k_chunk_length, output_portion, clamp_rate] = GetParam();
+    const auto& [method, shape, k_chunk_length, output_portion, clamp_keep_ratio] = GetParam();
     if (not method.is_supported()) {
         GTEST_SKIP() << "Unsupported CPU feature";
     }
@@ -574,7 +574,7 @@ TEST_P(IndirectMatMulTest, Output) {
     const KChunk k_chunk{shape.k, k_chunk_length};
 
     // Retrieve reference data
-    const TestDataId test_id{shape, method.pack_shape, method.format, k_chunk_length, clamp_rate};
+    const TestDataId test_id{shape, method.pack_shape, method.format, k_chunk_length, clamp_keep_ratio};
     const TestData& test_data = ReferenceGenerator::get_test_reference(test_id);
     const Rect portion = output_portion.compute_portion(shape.m, shape.n, method.pack_shape.m, method.pack_shape.n);
 
@@ -598,11 +598,11 @@ TEST_P(IndirectMatMulTest, Output) {
 
 /// Name generator for test case
 [[maybe_unused]] static void PrintTo(const IndirectMatMulTestParams& param, std::ostream* os) {
-    const auto& [method, shape, k_chunk_length, portion, clamp_rate] = param;
+    const auto& [method, shape, k_chunk_length, portion, clamp_keep_ratio] = param;
     *os << method.name << "__";
     PrintTo(shape, os);
     *os << "__K_chunk_length_" << k_chunk_length;
-    *os << "__clamp_rate_" << static_cast<int>(clamp_rate * 100) << "__";
+    *os << "__clamp_keep_ratio_" << static_cast<int>(clamp_keep_ratio * 100) << "__";
     PrintTo(portion, os);
 }
 
@@ -726,7 +726,7 @@ INSTANTIATE_TEST_SUITE_P(
         testing::ValuesIn(get_indirect_matmul_shapes()),   //
         testing::Values(static_cast<size_t>(3)),           //
         testing::Values(MatrixPortion(0, 0, 1, 1)),        //
-        testing::Values(0.0F, 0.1F, 0.5F)),                //
+        testing::Values(1.0F, 0.9F, 0.5F)),                //
     testing::PrintToStringParamName());
 
 }  // namespace kai::test

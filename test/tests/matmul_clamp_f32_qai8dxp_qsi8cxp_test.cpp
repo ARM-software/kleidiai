@@ -35,6 +35,7 @@
 #include "test/common/memory.hpp"
 #include "test/common/printer.hpp"
 #include "test/common/test_suite.hpp"
+#include "test/reference/clamp.hpp"
 #include "test/reference/fill.hpp"
 #include "test/reference/matmul.hpp"
 #include "test/reference/quantize.hpp"
@@ -46,8 +47,8 @@ using F32Qai8Qsi8CacheDataId = std::tuple<
     MatMulShape,  //
     DataFormat,   // lhs format
     DataFormat,   // rhs format
-    DataFormat    // bias format
-    >;
+    DataFormat,   // bias format
+    float>;
 
 struct F32Qai8Qsi8CacheData {
     Buffer ref_dst_nt_t;
@@ -57,12 +58,13 @@ struct F32Qai8Qsi8CacheData {
     Buffer ref_rhs_scales;
     Buffer ref_lhs;
     Buffer ref_bias;
+    Range<float> clamp_range;
 };
 
 template <>
 F32Qai8Qsi8CacheData ReferenceGenerator<F32Qai8Qsi8CacheDataId, F32Qai8Qsi8CacheData>::generate_reference(
     const F32Qai8Qsi8CacheDataId& data_id) {
-    auto [shape, lhs_format, rhs_format, bias_format] = data_id;
+    auto [shape, lhs_format, rhs_format, bias_format, clamp_keep_ratio] = data_id;
 
     const size_t M = shape.m;
     const size_t N = shape.n;
@@ -108,13 +110,19 @@ F32Qai8Qsi8CacheData ReferenceGenerator<F32Qai8Qsi8CacheDataId, F32Qai8Qsi8Cache
         ref_rhs_quant_t.data(), rhs_qoutputs.scales.data(), nullptr, K, bias.data(),
         std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max());
 
+    // Only need to calculate range once for both, apply clamping
+    const auto [clamp_min, clamp_max] = find_clamp_range(DataType::FP32, ref_dst_nt_t.data(), M * N, clamp_keep_ratio);
+    auto ref_clamped_nt_t = clamp(DataType::FP32, ref_dst_nt_t.data(), M * N, clamp_min, clamp_max);
+    auto ref_clamped_nt_nt = clamp(DataType::FP32, ref_dst_nt_nt.data(), M * N, clamp_min, clamp_max);
+
     out.ref_rhs_qsi8_nt_nt = std::move(ref_rhs_qsi8);
     out.ref_rhs_qsi8_nt_t = std::move(ref_rhs_quant_t);
-    out.ref_dst_nt_nt = std::move(ref_dst_nt_nt);
-    out.ref_dst_nt_t = std::move(ref_dst_nt_t);
+    out.ref_dst_nt_nt = std::move(ref_clamped_nt_nt);
+    out.ref_dst_nt_t = std::move(ref_clamped_nt_t);
     out.ref_lhs = std::move(lhs);
     out.ref_bias = std::move(bias);
     out.ref_rhs_scales = std::move(rhs_qoutputs.scales);
+    out.clamp_range = {clamp_min, clamp_max};
 
     return out;
 }
@@ -139,10 +147,12 @@ static const std::array<UkernelVariant<kai_matmul_clamp_f32_qai8dxp_qsi8cxp_uker
          "kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa", cpu_has_sme2},
     }};
 
-class MatMulTest_f32_qai8dxp_qsi8cxp : public ::testing::TestWithParam<MatMulTestPortionedParams> {};
+using MatMulClampTestPortionedParams = std::tuple<size_t, MatMulShape, MatrixPortion, float>;
+
+class MatMulTest_f32_qai8dxp_qsi8cxp : public ::testing::TestWithParam<MatMulClampTestPortionedParams> {};
 
 TEST_P(MatMulTest_f32_qai8dxp_qsi8cxp, Offset_RHS) {
-    const auto& [variant_index, matmul_shape, portion] = GetParam();
+    const auto& [variant_index, matmul_shape, portion, clamp_keep_ratio] = GetParam();
     const auto& ukernel_variant = variants_kai_matmul_clamp_f32_qai8dxp_qsi8cxp.at(variant_index);
 
     if (ukernel_variant.fn_is_supported && !ukernel_variant.fn_is_supported()) {
@@ -166,7 +176,7 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi8cxp, Offset_RHS) {
 }
 
 TEST_P(MatMulTest_f32_qai8dxp_qsi8cxp, Offset_LHS) {
-    const auto& [variant_index, matmul_shape, portion] = GetParam();
+    const auto& [variant_index, matmul_shape, portion, clamp_keep_ratio] = GetParam();
     const auto& ukernel_variant = variants_kai_matmul_clamp_f32_qai8dxp_qsi8cxp.at(variant_index);
 
     if (ukernel_variant.fn_is_supported && !ukernel_variant.fn_is_supported()) {
@@ -187,7 +197,7 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi8cxp, Offset_LHS) {
 }
 
 TEST_P(MatMulTest_f32_qai8dxp_qsi8cxp, EndToEnd_RHS_nxk_qsi8cx) {
-    auto& [variant_index, matmul_shape, portion] = GetParam();
+    auto& [variant_index, matmul_shape, portion, clamp_keep_ratio] = GetParam();
     const auto& ukernel_variant = variants_kai_matmul_clamp_f32_qai8dxp_qsi8cxp.at(variant_index);
 
     if (ukernel_variant.fn_is_supported && !ukernel_variant.fn_is_supported()) {
@@ -207,7 +217,7 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi8cxp, EndToEnd_RHS_nxk_qsi8cx) {
         matmul_shape,                //
         DataFormat(DataType::FP32),  //
         DataFormat(DataType::FP32),  //
-        DataFormat(DataType::FP32)};
+        DataFormat(DataType::FP32), clamp_keep_ratio};
     const F32Qai8Qsi8CacheData& testdata = getV<F32Qai8Qsi8CacheDataId, F32Qai8Qsi8CacheData>(testdata_id);
 
     const auto& ref_rhs_qsi8 = testdata.ref_rhs_qsi8_nt_t;
@@ -274,7 +284,7 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi8cxp, EndToEnd_RHS_nxk_qsi8cx) {
         ukernel_variant.interface.run_matmul, rect.height(), rect.width(), K,
         imp_packed_lhs.data() + matmul_lhs_packed_offset, imp_packed_rhs.data() + matmul_rhs_packed_offset,
         reinterpret_cast<float*>(imp_dst.data() + dst_offset), N * sizeof(float), sizeof(float),
-        std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max());
+        testdata.clamp_range.min, testdata.clamp_range.max);
 
     // Compares the output of the micro-kernels against the output of the reference implementation.
     for (size_t y = 0; y < rect.height(); ++y) {
@@ -293,7 +303,7 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi8cxp, EndToEnd_RHS_nxk_qsi8cx) {
 }
 
 TEST_P(MatMulTest_f32_qai8dxp_qsi8cxp, EndToEnd_RHS_kxn_qsi8cx) {
-    auto& [variant_index, matmul_shape, portion] = GetParam();
+    auto& [variant_index, matmul_shape, portion, clamp_keep_ratio] = GetParam();
     const auto& ukernel_variant = variants_kai_matmul_clamp_f32_qai8dxp_qsi8cxp.at(variant_index);
 
     if (ukernel_variant.fn_is_supported && !ukernel_variant.fn_is_supported()) {
@@ -313,7 +323,7 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi8cxp, EndToEnd_RHS_kxn_qsi8cx) {
         matmul_shape,                //
         DataFormat(DataType::FP32),  //
         DataFormat(DataType::FP32),  //
-        DataFormat(DataType::FP32)};
+        DataFormat(DataType::FP32), clamp_keep_ratio};
     const F32Qai8Qsi8CacheData& testdata = getV<F32Qai8Qsi8CacheDataId, F32Qai8Qsi8CacheData>(testdata_id);
     const auto& ref_rhs_qsi8 = testdata.ref_rhs_qsi8_nt_nt;
     const auto& ref_rhs_scales = testdata.ref_rhs_scales;
@@ -379,7 +389,7 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi8cxp, EndToEnd_RHS_kxn_qsi8cx) {
         ukernel_variant.interface.run_matmul, rect.height(), rect.width(), K,
         imp_packed_lhs.data() + matmul_lhs_packed_offset, imp_packed_rhs.data() + matmul_rhs_packed_offset,
         reinterpret_cast<float*>(imp_dst.data() + dst_offset), N * sizeof(float), sizeof(float),
-        std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max());
+        testdata.clamp_range.min, testdata.clamp_range.max);
 
     // Compares the output of the micro-kernels against the output of the reference implementation.
     for (size_t y = 0; y < rect.height(); ++y) {
@@ -421,14 +431,16 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0.75, 0.75, 1, 1),   // Bottom-right corner.
             MatrixPortion(0.75, 0, 1, 1),      // Partial rows
             MatrixPortion(0.4, 0.5, 0.6, 0.8)  // Somewhere Middle
-            )),
+            ),
+        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
     [](const auto& info) {
         const auto variant_idx = std::get<0>(info.param);
         const std::string name{variants_kai_matmul_clamp_f32_qai8dxp_qsi8cxp.at(variant_idx).name};
         const auto shape = std::get<MatMulShape>(info.param);
         const auto portion = std::get<MatrixPortion>(info.param);
+        const auto clamp_keep_ratio = std::get<float>(info.param);
 
-        return test_description(name, shape, portion, true);
+        return test_description(name, shape, portion, true, clamp_keep_ratio);
     });
 
 }  // namespace kai::test

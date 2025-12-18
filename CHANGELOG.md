@@ -10,6 +10,9 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+- Fixes
+  - Fixed clamping not being applied in `matmul_clamp_f32_bf16p1x4_bf16p12x4b_1x36_neon_dot`
+
 ## v1.19.0
 
 - Added new unit test framework

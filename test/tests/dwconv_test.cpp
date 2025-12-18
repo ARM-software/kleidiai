@@ -106,7 +106,7 @@ struct TestDataId {
     Padding2D pad;
     DataType dt;
     DataType dt_acc;
-    float clamp_rate;
+    float clamp_keep_ratio;
 
     struct Hash {
         size_t operator()(const TestDataId& test_id) const {
@@ -116,19 +116,19 @@ struct TestDataId {
                 (Padding2D::Hash{}(test_id.pad) << 2) ^                    //
                 (std::hash<DT>{}(static_cast<DT>(test_id.dt)) << 3) ^      //
                 (std::hash<DT>{}(static_cast<DT>(test_id.dt_acc)) << 4) ^  //
-                (std::hash<float>{}(test_id.clamp_rate) << 5);             //
+                (std::hash<float>{}(test_id.clamp_keep_ratio) << 5);       //
         }
     };
 
 private:
     friend bool operator==(const TestDataId& lhs, const TestDataId& rhs) {
-        return                                 //
-            lhs.in_shape == rhs.in_shape &&    //
-            lhs.rhs_shape == rhs.rhs_shape &&  //
-            lhs.pad == rhs.pad &&              //
-            lhs.dt == rhs.dt &&                //
-            lhs.dt_acc == rhs.dt_acc &&        //
-            lhs.clamp_rate == rhs.clamp_rate;  //
+        return                                             //
+            lhs.in_shape == rhs.in_shape &&                //
+            lhs.rhs_shape == rhs.rhs_shape &&              //
+            lhs.pad == rhs.pad &&                          //
+            lhs.dt == rhs.dt &&                            //
+            lhs.dt_acc == rhs.dt_acc &&                    //
+            lhs.clamp_keep_ratio == rhs.clamp_keep_ratio;  //
     }
 };
 
@@ -164,7 +164,7 @@ private:
     /// Generate reference data.
     // NOTE : This block is currently FP32 specific - it is not datatype generic
     static TestData generate_reference(const TestDataId& test_id, const MatMulShape& out_shape) {
-        const auto& [in_shape, rhs_shape, pad, dt, acc_dt, clamp_rate] = test_id;
+        const auto& [in_shape, rhs_shape, pad, dt, acc_dt, clamp_keep_ratio] = test_id;
 
         // Generate random input data
         Buffer lhs = fill_matrix_random(in_shape.m, in_shape.n * in_shape.k, DataFormat(dt), get_seed());
@@ -176,7 +176,7 @@ private:
             1, in_shape.m, in_shape.n, in_shape.k, rhs_shape.m, rhs_shape.n, lhs.data(), rhs.data(), bias.data(), pad);
 
         const auto [min, max] =
-            find_clamp_range(dt, out.data(), out_shape.m * out_shape.n * out_shape.k, 1.0F - clamp_rate);
+            find_clamp_range(dt, out.data(), out_shape.m * out_shape.n * out_shape.k, clamp_keep_ratio);
         Buffer out_clamped = clamp(dt, out.data(), out_shape.m * out_shape.n * out_shape.k, min, max);
 
         // Populate reference data
@@ -236,7 +236,7 @@ Buffer dwconv(
 
 /// End-to-end test for depthwise kernels
 TEST_P(DepthwisePlanarTest, Output) {
-    const auto& [method, in_shape, padding, clamp_rate] = GetParam();
+    const auto& [method, in_shape, padding, clamp_keep_ratio] = GetParam();
     if (not method.is_supported()) {
         GTEST_SKIP() << "Unsupported CPU feature";
     }
@@ -252,7 +252,7 @@ TEST_P(DepthwisePlanarTest, Output) {
 
     // 1. Calculate reference.
     const TestData& test_data = ReferenceGenerator::get_test_reference(
-        {in_shape, rhs_shape, padding, method.data_type, method.acc_type, clamp_rate}, out_shape);
+        {in_shape, rhs_shape, padding, method.data_type, method.acc_type, clamp_keep_ratio}, out_shape);
 
     // 2. Pack RHS (Weights+Bias)
     Buffer rhs_packed = pack_rhs(method.rhs, rhs_shape, test_data);
@@ -274,13 +274,13 @@ TEST_P(DepthwisePlanarTest, Output) {
 
 /// Name generator for test case
 [[maybe_unused]] static void PrintTo(const DepthwiseParamsParams& param, std::ostream* os) {
-    const auto& [method, shape, padding, clamp_rate] = param;
+    const auto& [method, shape, padding, clamp_keep_ratio] = param;
     *os << method.name << "__";
     PrintTo(shape, os);
     *os << "__";
     PrintTo(padding, os);
     *os << "__";
-    *os << "__clamp_rate_" << static_cast<int>(clamp_rate * 100);
+    *os << "__clamp_keep_ratio_" << static_cast<int>(clamp_keep_ratio * 100);
 }
 
 ///  Test parameter listing
@@ -307,7 +307,7 @@ INSTANTIATE_TEST_SUITE_P(
             Padding2D{5, 11, 7, 3},
             // clang-format on
         }),
-        testing::ValuesIn(std::initializer_list<float>{0.0F, 0.1F, 0.5F})),  //
+        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
     testing::PrintToStringParamName());
 
 }  // namespace kai::test

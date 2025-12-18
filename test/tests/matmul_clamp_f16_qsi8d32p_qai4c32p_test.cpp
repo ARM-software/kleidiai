@@ -187,13 +187,14 @@ static inline Buffer pack_rhs_qai4c32p(
     return (imp_packed_rhs);
 }
 
-class MatMulTest_f16_qsi8d32p_qai4c32p : public ::testing::TestWithParam<MatMulTestPortionedParamsWithBias_WithBL> {};
+class MatMulTest_f16_qsi8d32p_qai4c32p
+    : public ::testing::TestWithParam<MatMulClampTestPortionedParamsWithBias_WithBL> {};
 
 TEST_P(MatMulTest_f16_qsi8d32p_qai4c32p, LhsPackedWithSameBlockdepth) {
     // Verify LHS quant and pack int8 kernel behaves same for int4 and int8 matmul kernels,
     // when the block-depth is same for different values of kr, sr.
 
-    const auto& [variant_index, matmul_shape, bl, portion, has_bias] = GetParam();
+    const auto& [variant_index, matmul_shape, bl, portion, clamp_keep_ratio, has_bias] = GetParam();
     const auto& ukernel_variant = variants_kai_matmul_clamp_f16_qsi8d32p_qai4c32p.at(variant_index);
 
     if (ukernel_variant.ukernel.fn_is_supported && !ukernel_variant.ukernel.fn_is_supported()) {
@@ -253,7 +254,7 @@ TEST_P(MatMulTest_f16_qsi8d32p_qai4c32p, LhsPackedWithSameBlockdepth) {
 }
 
 TEST_P(MatMulTest_f16_qsi8d32p_qai4c32p, EndToEnd) {
-    const auto& [variant_index, matmul_shape, bl, portion, has_bias] = GetParam();
+    const auto& [variant_index, matmul_shape, bl, portion, clamp_keep_ratio, has_bias] = GetParam();
     const auto& ukernel_variant = variants_kai_matmul_clamp_f16_qsi8d32p_qai4c32p.at(variant_index);
 
     if (ukernel_variant.ukernel.fn_is_supported && !ukernel_variant.ukernel.fn_is_supported()) {
@@ -325,8 +326,7 @@ TEST_P(MatMulTest_f16_qsi8d32p_qai4c32p, EndToEnd) {
             nullptr, nullptr, 1);
 
     // Clamps the reference output.
-    const auto clamp_ratio = 0.8F;
-    const auto [clamp_min, clamp_max] = find_clamp_range<float>(ref_dst_no_clamp.data(), M * N, clamp_ratio);
+    const auto [clamp_min, clamp_max] = find_clamp_range<float>(ref_dst_no_clamp.data(), M * N, clamp_keep_ratio);
     const auto ref_dst_float = clamp<float>(ref_dst_no_clamp.data(), M * N, clamp_min, clamp_max);
 
     // Cast the reference output to F16
@@ -389,14 +389,18 @@ INSTANTIATE_TEST_SUITE_P(
     MatMul, MatMulTest_f16_qsi8d32p_qai4c32p,
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f16_qsi8d32p_qai4c32p.size()), test_matmul_shapes,
-        test_block_lengths, test_portions, testing::Bool()),
+        test_block_lengths,                                                   //
+        test_portions,                                                        //
+        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
+        testing::Bool()),                                                     //
     [](const auto& info) {
         const auto variant_idx = std::get<0>(info.param);
         const std::string name{variants_kai_matmul_clamp_f16_qsi8d32p_qai4c32p.at(variant_idx).ukernel.name};
         const auto shape = std::get<MatMulShape>(info.param);
         const auto bl = std::get<2>(info.param);
         const auto portion = std::get<3>(info.param);
-        const auto has_bias = std::get<4>(info.param);
+        const auto clamp_keep_ratio = std::get<4>(info.param);
+        const auto has_bias = std::get<5>(info.param);
 
         std::ostringstream sstream;
         sstream << name << "__";
@@ -412,6 +416,7 @@ INSTANTIATE_TEST_SUITE_P(
         } else {
             sstream << "_RHS_s1s0__";
         }
+        sstream << "__clamp_keep_ratio_" << static_cast<int>(clamp_keep_ratio * 100);
         PrintTo(portion, &sstream);
 
         return sstream.str();

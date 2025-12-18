@@ -482,7 +482,7 @@ struct TestDataId {
     MatMulShape shape_pack;
     size_t chunk_len;
     bool pad_testing;
-    float clamp_ratio;
+    float clamp_keep_ratio;
 
     struct Hash {
         size_t operator()(const TestDataId& id) const {
@@ -491,7 +491,7 @@ struct TestDataId {
                 (MatMulShape::Hash{}(id.shape_pack) << 1) ^  //
                 (std::hash<size_t>{}(id.chunk_len) << 2) ^   //
                 (std::hash<bool>{}(id.pad_testing) << 3) ^   //
-                (std::hash<float>{}(id.clamp_ratio) << 4);
+                (std::hash<float>{}(id.clamp_keep_ratio) << 4);
         }
     };
 
@@ -502,7 +502,7 @@ private:
             lhs.shape_pack == rhs.shape_pack &&    //
             lhs.chunk_len == rhs.chunk_len &&      //
             lhs.pad_testing == rhs.pad_testing &&  //
-            lhs.clamp_ratio == rhs.clamp_ratio;
+            lhs.clamp_keep_ratio == rhs.clamp_keep_ratio;
     }
 };
 
@@ -522,7 +522,7 @@ const TestReference& get_test_reference(const TestDataId& test_data_id) {
         return data_it->second;
     }
 
-    const auto& [shape, pack_shape, k_chunk_len, pad_testing, clamp_ratio] = test_data_id;
+    const auto& [shape, pack_shape, k_chunk_len, pad_testing, clamp_keep_ratio] = test_data_id;
 
     // Generates the input data in floating-point.
     Buffer lhs_f32 = fill_random<float>(shape.m * shape.k, seed);
@@ -621,8 +621,8 @@ const TestReference& get_test_reference(const TestDataId& test_data_id) {
     const auto ref_dst_f32_max = reduce_max<float>(ref_dst_f32.data(), shape.m * shape.n);
     const auto ref_dst_f32_range = ref_dst_f32_max - ref_dst_f32_min;
 
-    const auto ref_dst_f32_clamp_min = ref_dst_f32_min + ref_dst_f32_range * clamp_ratio / 2;
-    const auto ref_dst_f32_clamp_max = ref_dst_f32_max - ref_dst_f32_range * clamp_ratio / 2;
+    const auto ref_dst_f32_clamp_min = ref_dst_f32_min + ref_dst_f32_range * (1.0F - clamp_keep_ratio) / 2;
+    const auto ref_dst_f32_clamp_max = ref_dst_f32_max - ref_dst_f32_range * (1.0F - clamp_keep_ratio) / 2;
     const auto dst_qai8_clamp_min =
         quantize_asymmetric<float, int8_t, int32_t>(ref_dst_f32_clamp_min, dst_scale, dst_zero_point);
     const auto dst_qai8_clamp_max =
@@ -824,33 +824,32 @@ using IndirectMatMulQuantizedTest = testing::TestWithParam<IndirectMatMulQuantiz
 static std::string test_description(
     const MatMulVariant& variant,  //
     const MatMulShape& shape,      //
-    const MatrixPortion& portion, float clamp_ratio) {
+    const MatrixPortion& portion, float clamp_keep_ratio) {
     std::ostringstream sstream;
 
-    sstream << test_description(variant.name, shape, portion, true)  //
-            << "__clamp_ratio_" << static_cast<int>(clamp_ratio * 100);
+    sstream << test_description(variant.name, shape, portion, true, clamp_keep_ratio);
 
     return sstream.str();
 };
 
 [[maybe_unused]] static void PrintTo(const IndirectMatMulQuantizedTestParams& param, std::ostream* os) {
-    const auto& [variant, shape, k_chunk_length, portion, clamp_rate] = param;
+    const auto& [variant, shape, k_chunk_length, portion, clamp_keep_ratio] = param;
 
     *os << variant.name << "__";
     PrintTo(shape, os);
     *os << "__K_chunk_length_" << k_chunk_length;
-    *os << "__clamp_rate_" << static_cast<int>(clamp_rate * 100) << "__";
+    *os << "__clamp_keep_ratio_" << static_cast<int>(clamp_keep_ratio * 100) << "__";
     PrintTo(portion, os);
 };
 
 TEST_P(MatMulQuantizedTest, EndToEnd) {
-    const auto& [variant, shape, output_portion, clamp_ratio] = GetParam();
+    const auto& [variant, shape, output_portion, clamp_keep_ratio] = GetParam();
 
     if (!variant.is_supported()) {
         GTEST_SKIP() << "Unsupported CPU feature";
     }
 
-    TestDataId test_data_id{shape, variant.acc_pack, shape.k, false, clamp_ratio};
+    TestDataId test_data_id{shape, variant.acc_pack, shape.k, false, clamp_keep_ratio};
     const TestReference& reference = get_test_reference(test_data_id);
 
     // Check scheduling parameters
@@ -979,7 +978,7 @@ TEST_P(IndirectMatMulQuantizedTest, EndToEnd) {
     /* This is a bit special, as shape.k must be k_chunk_len * k_chunk_count
      * so instead of inventing a new special kind of shape, simply multiply
      * with `k_chunk_len` here */
-    const auto& [variant, shape_k_chunk, k_chunk_len, output_portion, clamp_ratio] = GetParam();
+    const auto& [variant, shape_k_chunk, k_chunk_len, output_portion, clamp_keep_ratio] = GetParam();
     const KChunk k_chunk{shape_k_chunk.k, k_chunk_len};
     MatMulShape shape{shape_k_chunk.m, shape_k_chunk.n, k_chunk.count * k_chunk.length};
 
@@ -988,7 +987,7 @@ TEST_P(IndirectMatMulQuantizedTest, EndToEnd) {
     }
 
     // Toggle padding testst when LHS has more than one row
-    TestDataId test_data_id{shape, variant.acc_pack, k_chunk.length, shape.m > 1, clamp_ratio};
+    TestDataId test_data_id{shape, variant.acc_pack, k_chunk.length, shape.m > 1, clamp_keep_ratio};
     const TestReference& reference = get_test_reference(test_data_id);
     const Rect portion = output_portion.compute_portion(shape.m, shape.n, variant.acc_step.m, variant.acc_step.n);
 
@@ -1104,7 +1103,7 @@ INSTANTIATE_TEST_SUITE_P(
             // clang-format on
         }),
         // Clamp range
-        testing::ValuesIn(std::initializer_list<float>{0.0F, 0.1F, 0.5F})),
+        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
     [](const auto& info) -> std::string {
         return test_description(
             std::get<MatMulVariant>(info.param),  //
@@ -1146,7 +1145,7 @@ INSTANTIATE_TEST_SUITE_P(
         testing::ValuesIn(std::initializer_list<size_t>{1}),  //
         testing::Values(MatrixPortion(0, 0, 1, 1)),           //
         // Clamp range
-        testing::ValuesIn(std::initializer_list<float>{0.0F, 0.1F, 0.5F})),  //
+        testing::ValuesIn(std::initializer_list<float>{1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
     testing::PrintToStringParamName());
 
 }  // namespace kai::test

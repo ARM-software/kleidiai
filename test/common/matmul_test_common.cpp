@@ -14,14 +14,15 @@ std::ostream& operator<<(std::ostream& os, const MatMulShape& shape) {
     return os << "[m=" << shape.m << ", n=" << shape.n << ", k=" << shape.k << "]";
 }
 
-void PrintTo(const MatMulTestParams& param, std::ostream* os) {
-    const auto& [method, shape, portion, bias_mode] = param;
+void PrintTo(const MatMulClampTestParams& param, std::ostream* os) {
+    const auto& [method, shape, portion, bias_mode, clamp_keep_ratio] = param;
 
     *os << method.name << "__";
     PrintTo(shape, os);
     *os << "__";
     PrintTo(portion, os);
     PrintTo(bias_mode, os);
+    *os << "__clamp_keep_ratio_" << static_cast<int>(clamp_keep_ratio * 100);
 }
 
 void PrintTo(const MatMulShape& shape, std::ostream* os) {
@@ -43,7 +44,8 @@ void PrintTo(const MatrixPortion& portion, std::ostream* os) {
 }
 
 std::string test_description(
-    const std::string_view& name, const MatMulShape& shape, const MatrixPortion& portion, bool bias) {
+    const std::string_view& name, const MatMulShape& shape, const MatrixPortion& portion, bool bias,
+    float clamp_keep_ratio) {
     std::ostringstream os;
 
     os << name << "__";
@@ -53,6 +55,7 @@ std::string test_description(
     if (bias) {
         os << "__Bias";
     }
+    os << "__clamp_keep_ratio_" << static_cast<int>(clamp_keep_ratio * 100);
 
     return os.str();
 }

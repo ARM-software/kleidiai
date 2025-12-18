@@ -18,21 +18,21 @@ namespace kai::test {
 ///
 /// @param[in] src The data buffer.
 /// @param[in] len The number of values.
-/// @param[in] ratio The ratio between the output dynamic range and the input dynamic range.
+/// @param[in] keep_ratio The ratio of values that are unaffected by clamping.
 ///
 /// @return The minimum value and the maximum value.
 template <typename T>
-std::tuple<T, T> find_clamp_range(const void* src, size_t len, float ratio);
+std::tuple<T, T> find_clamp_range(const void* src, size_t len, float keep_ratio);
 
 /// Finds the clamping parameters to limit the dynamic range.
 ///
 /// @param[in] type Array element data type.
 /// @param[in] src The data buffer.
 /// @param[in] len The number of values.
-/// @param[in] ratio The ratio between the output dynamic range and the input dynamic range.
+/// @param[in] keep_ratio The ratio of values that are unaffected by clamping.
 ///
 /// @return The minimum value and the maximum value.
-std::tuple<float, float> find_clamp_range(DataType type, const void* src, size_t len, float ratio);
+std::tuple<float, float> find_clamp_range(DataType type, const void* src, size_t len, float keep_ratio);
 
 /// Clamps the matrix.
 ///

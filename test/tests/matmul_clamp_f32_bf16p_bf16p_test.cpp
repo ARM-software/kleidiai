@@ -28,6 +28,7 @@
 #include "test/common/printer.hpp"
 #include "test/common/sme.hpp"
 #include "test/reference/cast.hpp"
+#include "test/reference/clamp.hpp"
 #include "test/reference/fill.hpp"
 #include "test/reference/matmul.hpp"
 #include "test/reference/pack.hpp"
@@ -315,27 +316,29 @@ static const std::array<MatMulMethod, 2>& get_gemv_methods() {
 }  // namespace
 
 /// Matrix multiplication test fixture.
-class MatMulTestBf16 : public testing::TestWithParam<MatMulTestParams> {
+class MatMulTestBf16 : public testing::TestWithParam<MatMulClampTestParams> {
 private:
     /// Unique ID: m, n, k
-    using TestDataId = std::tuple<size_t, size_t, size_t, std::string_view>;
+    using TestDataId = std::tuple<size_t, size_t, size_t, float, std::string_view>;
 
 protected:
     /// Cached test data that is shared between multiple test case.
     struct TestData {
-        Buffer lhs{};             ///< LHS operand.
-        Buffer ref_packed_lhs{};  ///< Reference packed LHS.
-        Buffer rhs{};             ///< RHS operand.
-        Buffer rhs_scales{};      ///< RHS per-row quantization scales.
-        Buffer bias{};            ///< Bias.
-        Buffer ref_packed_rhs{};  ///< Reference packed RHS.
-        Buffer ref_dst{};         ///< Reference output.
+        Buffer lhs{};              ///< LHS operand.
+        Buffer ref_packed_lhs{};   ///< Reference packed LHS.
+        Buffer rhs{};              ///< RHS operand.
+        Buffer rhs_scales{};       ///< RHS per-row quantization scales.
+        Buffer bias{};             ///< Bias.
+        Buffer ref_packed_rhs{};   ///< Reference packed RHS.
+        Buffer ref_dst{};          ///< Reference output.
+        Buffer ref_clamped{};      ///< Reference clamped.
+        Range<float> clamp_range;  ///< Clamping Range.
     };
 
     /// Gets the test data for the current test case.
     static const TestData& test_data() {
-        const auto& [method, info, portion, bias_mode] = GetParam();
-        const TestDataId data_id{info.m, info.n, info.k, method.name};
+        const auto& [method, info, portion, bias_mode, clamp_keep_ratio] = GetParam();
+        const TestDataId data_id{info.m, info.n, info.k, clamp_keep_ratio, method.name};
 
         // If the test data is already available, returns it.
         const auto data_it = _data.find(data_id);
@@ -422,6 +425,11 @@ protected:
                 info.m, info.n, info.k, p_lhs_buff, nullptr, nullptr, 1, info.k, p_rhs_buff, nullptr, nullptr, 1,
                 info.k, bias.data(), nullptr, nullptr, info.k);
 
+        const auto [min, max] =
+            find_clamp_range(method.dst_format.data_type(), ref_dst.data(), info.m * info.n, clamp_keep_ratio);
+
+        auto ref_clamped = clamp(DataType::FP32, ref_dst.data(), info.m * info.n, min, max);
+
         auto& data = _data[data_id] = {};
         data.lhs = std::move(lhs);
         data.ref_packed_lhs = std::move(ref_packed_lhs);
@@ -430,6 +438,8 @@ protected:
         data.bias = std::move(bias);
         data.ref_packed_rhs = std::move(packed_rhs);
         data.ref_dst = std::move(ref_dst);
+        data.ref_clamped = std::move(ref_clamped);
+        data.clamp_range = {min, max};
 
         return data;
     }
@@ -446,7 +456,7 @@ std::map<MatMulTestBf16::TestDataId, MatMulTestBf16::TestData> MatMulTestBf16::_
 
 /// Tests the output.
 TEST_P(MatMulTestBf16, Output) {
-    const auto& [method, info, portion, bias_mode] = GetParam();
+    const auto& [method, info, portion, clamp_keep_ratio, bias_mode] = GetParam();
 
     if (method.fn_is_supported && !method.fn_is_supported()) {
         GTEST_SKIP() << "Unsupported CPU feature";
@@ -540,10 +550,10 @@ TEST_P(MatMulTestBf16, Output) {
     abi_check(
         &MatMulMethod::main_kernel, method, rect.height(), rect.width(), info.k, lhs_data.data() + lhs_packed_offset,
         rhs_data.data() + rhs_packed_offset, nullptr, dst.data() + dst_offset, lhs_stride, rhs_stride, dst_stride,
-        -std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
+        data.clamp_range.min, data.clamp_range.max);
 
     DefaultMismatchHandler handler(0, 0.02, 0, 0.05);
-    const auto success = compare(dst.data(), data.ref_dst.data(), method.dst_format, info.m, info.n, rect, handler);
+    const auto success = compare(dst.data(), data.ref_clamped.data(), method.dst_format, info.m, info.n, rect, handler);
 
     ASSERT_TRUE(success);
 }
@@ -571,7 +581,8 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0.75, 0, 1, 1),      // Partial rows
             MatrixPortion(0.4, 0.5, 0.6, 0.8)  // Somewhere Middle
             ),
-        testing::Values(BiasMode::PROVIDED)),
+        testing::Values(BiasMode::PROVIDED),                                   //
+        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
@@ -598,6 +609,7 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0, 0.75, 1, 1),  // Rightmost portion.
             MatrixPortion(0, 0.5, 1, 0.8)  // Somewhere Middle
             ),
-        testing::Values(BiasMode::PROVIDED)),
+        testing::Values(BiasMode::PROVIDED),                                   //
+        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
     testing::PrintToStringParamName());
 }  // namespace kai::test

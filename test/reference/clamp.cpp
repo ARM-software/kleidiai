@@ -19,9 +19,9 @@
 namespace kai::test {
 
 template <typename T>
-std::tuple<T, T> find_clamp_range(const void* src, size_t len, float ratio) {
-    KAI_ASSUME_ALWAYS(ratio > 0.0F);
-    KAI_ASSUME_ALWAYS(ratio <= 1.0F);
+std::tuple<T, T> find_clamp_range(const void* src, size_t len, float keep_ratio) {
+    KAI_ASSUME_ALWAYS(keep_ratio > 0.0F);
+    KAI_ASSUME_ALWAYS(keep_ratio <= 1.0F);
 
     T min_value = numeric_highest<T>;
     T max_value = numeric_lowest<T>;
@@ -37,7 +37,7 @@ std::tuple<T, T> find_clamp_range(const void* src, size_t len, float ratio) {
     max_value = std::min(max_value, numeric_highest<T>);
 
     const T range = max_value - min_value;
-    const T reduction = static_cast<T>(static_cast<float>(range) * (1.0F - ratio) / 2);
+    const T reduction = static_cast<T>(static_cast<float>(range) * (1.0F - keep_ratio) / 2);
 
     const T clamp_min_value = min_value + reduction;
     const T clamp_max_value = max_value - reduction;
@@ -45,10 +45,11 @@ std::tuple<T, T> find_clamp_range(const void* src, size_t len, float ratio) {
     return {clamp_min_value, clamp_max_value};
 }
 
-template std::tuple<float, float> find_clamp_range(const void* src, size_t len, float ratio);
-template std::tuple<Float16, Float16> find_clamp_range(const void* src, size_t len, float ratio);
+template std::tuple<float, float> find_clamp_range(const void* src, size_t len, float keep_ratio);
+template std::tuple<Float16, Float16> find_clamp_range(const void* src, size_t len, float keep_ratio);
 
-std::tuple<float, float> find_clamp_range(DataType type, const void* src, size_t len, float ratio) {
+std::tuple<float, float> find_clamp_range(DataType type, const void* src, size_t len, float keep_ratio) {
+    KAI_ASSUME_ALWAYS(keep_ratio > 0.0F);  // Avoid total clamping.
     auto max = std::numeric_limits<float>::min();
     auto min = std::numeric_limits<float>::max();
 
@@ -58,7 +59,7 @@ std::tuple<float, float> find_clamp_range(DataType type, const void* src, size_t
         min = std::min(value, min);
     }
 
-    const float reduction = (max - min) * (1.0F - ratio) / 2.0F;
+    const float reduction = (max - min) * (1.0F - keep_ratio) / 2.0F;
     return {min + reduction, max - reduction};
 }
 

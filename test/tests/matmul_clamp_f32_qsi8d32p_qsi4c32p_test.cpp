@@ -129,23 +129,6 @@ static const std::array<UKernelVariants, 11>
 class MatMulTest_f32_qsi8d32p_qsi4c32p
     : public ::testing::TestWithParam<std::tuple<size_t, MatMulShape, MatrixPortion, float>> {};
 
-static std::string test_description(
-    const std::string_view& name, const MatMulShape& shape, const MatrixPortion& portion, float clamp_ratio,
-    bool bias) {
-    std::ostringstream os;
-
-    os << name << "__";
-    PrintTo(shape, &os);
-    os << "__";
-    PrintTo(portion, &os);
-    os << "__clamp_ratio_" << static_cast<int>(clamp_ratio * 100);
-    if (bias) {
-        os << "__Bias";
-    }
-
-    return os.str();
-}
-
 // Ensure non-clamping tests are marked correctly.
 TEST(KernelClampingCheck, SanityCheck) {
     for (size_t i = 0; i < variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p.size(); i++) {
@@ -154,7 +137,7 @@ TEST(KernelClampingCheck, SanityCheck) {
 }
 
 TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, Offset_RHS) {
-    const auto& [variant_index, matmul_shape, portion, clamp_rate] = GetParam();
+    const auto& [variant_index, matmul_shape, portion, clamp_keep_ratio] = GetParam();
     const auto& ukernel_variant = variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p.at(variant_index).variant;
 
     if (ukernel_variant.ukernel.fn_is_supported && !ukernel_variant.ukernel.fn_is_supported()) {
@@ -184,7 +167,7 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, Offset_RHS) {
 }
 
 TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, Offset_LHS) {
-    const auto& [variant_index, matmul_shape, portion, clamp_rate] = GetParam();
+    const auto& [variant_index, matmul_shape, portion, clamp_keep_ratio] = GetParam();
     const auto& ukernel_variant = variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p.at(variant_index).variant;
 
     if (ukernel_variant.ukernel.fn_is_supported && !ukernel_variant.ukernel.fn_is_supported()) {
@@ -216,7 +199,7 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, Offset_LHS) {
 }
 
 TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, EndToEnd) {
-    const auto& [variant_index, matmul_shape, portion, clamp_rate] = GetParam();
+    const auto& [variant_index, matmul_shape, portion, clamp_keep_ratio] = GetParam();
     const auto& ukernel_variant = variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p.at(variant_index).variant;
 
     if (ukernel_variant.ukernel.fn_is_supported && !ukernel_variant.ukernel.fn_is_supported()) {
@@ -238,7 +221,7 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, EndToEnd) {
     const auto sr = ukernel_variant.ukernel.interface.get_sr();
 
     // Skip tests on clamping when kernel does not support it.
-    KAI_ASSERT_ALWAYS_IF(clamp_rate != 0.0F, clamp_support);
+    KAI_ASSERT_ALWAYS_IF_MSG(clamp_keep_ratio != 1.0F, clamp_support, "Clamping not supported by this kernel");
 
     if (mr == 1 && M > 1) {
         GTEST_SKIP() << "Kernel does not support M != 1";
@@ -277,8 +260,8 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, EndToEnd) {
         std::numeric_limits<float>::max());
 
     // Clamp reference output
-    const auto [min, max] = find_clamp_range(DataType::FP32, ref_dst.data(), M * N, 1.0F - clamp_rate);
-    const auto out_clamped = clamp(DataType::FP32, ref_dst.data(), M * N, min, max);
+    const auto [min, max] = find_clamp_range<float>(ref_dst.data(), M * N, clamp_keep_ratio);
+    const auto out_clamped = clamp<float>(ref_dst.data(), M * N, min, max);
 
     // Runs the LHS packing micro-kernel.
     const auto lhs_start_row = rect.start_row();
@@ -357,15 +340,15 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0, 0.75, 1, 1),  // Rightmost portion.
             MatrixPortion(0, 0.5, 1, 0.8)  // Somewhere Middle
             ),
-        testing::ValuesIn(std::initializer_list<float>{0.0F})),
+        testing::ValuesIn(std::initializer_list<float>{1.0F})),  // We keep 100% of values - no clamping
     [](const auto& info) {
         const auto variant_idx = std::get<0>(info.param);
         const std::string name{variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p.at(variant_idx).variant.ukernel.name};
         const auto shape = std::get<MatMulShape>(info.param);
         const auto portion = std::get<2>(info.param);
-        const auto clamp_rate = std::get<3>(info.param);
+        const auto clamp_keep_ratio = std::get<3>(info.param);
 
-        return test_description(name, shape, portion, clamp_rate, true);
+        return test_description(name, shape, portion, true, clamp_keep_ratio);
     });
 
 // Test supported matmul kernels with clamping support.
@@ -385,15 +368,15 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0, 0.75, 1, 1),  // Rightmost portion.
             MatrixPortion(0, 0.5, 1, 0.8)  // Somewhere Middle
             ),
-        testing::ValuesIn(std::initializer_list<float>{0.1F, 0.5F})),
+        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
     [](const auto& info) {
         const auto variant_idx = std::get<0>(info.param);
         const std::string name{variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p.at(variant_idx).variant.ukernel.name};
         const auto shape = std::get<MatMulShape>(info.param);
         const auto portion = std::get<2>(info.param);
-        const auto clamp_rate = std::get<3>(info.param);
+        const auto clamp_keep_ratio = std::get<3>(info.param);
 
-        return test_description(name, shape, portion, clamp_rate, true);
+        return test_description(name, shape, portion, true, clamp_keep_ratio);
     });
 
 }  // namespace kai::test
