@@ -733,9 +733,10 @@ if(KLEIDIAI_BUILD_BENCHMARK)
 
     include(FetchGBench)
 
-    # Single benchmark binary combining matmul and imatmul
+    # Single benchmark binary combining matmul, imatmul and dwconv
     add_executable(kleidiai_benchmark
         benchmark/main.cpp
+        benchmark/dwconv/dwconv_registry.cpp
         benchmark/matmul/matmul_registry.cpp
         benchmark/imatmul/imatmul_registry.cpp
     )

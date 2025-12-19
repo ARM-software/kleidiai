@@ -565,18 +565,28 @@ test-examples-sme-fvp:
     - cmake --build ${CI_JOB_NAME_SLUG} -j${PARALLEL_JOBS} --verbose
     # Run kleidiai_test to generate coverage report for unit tests
     - ./${CI_JOB_NAME_SLUG}/kleidiai_test --gtest_brief=1
-    # Run combined benchmark three times (backwards compatibility, matmul and imatmul)
-    - ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark --benchmark_dry_run=true -m 1 -n 30 -k 64
-    - ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark matmul  --benchmark_dry_run=true -m 1 -n 30 -k 64
-    - ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark imatmul --benchmark_dry_run=true -m 1 -n 30 -c 4 -l 15
-    # List benchmarks to generate coverage
-    - ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark --benchmark_list_tests
-    - ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark matmul --benchmark_list_tests
-    - ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark imatmul --benchmark_list_tests
-    # Run info message with no subcommand to hit print_global_usage, but don't fail the job
-    - ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark || true
-    - ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark matmul || true
-    - ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark imatmul || true
+    # Run combined benchmark for all subcommands (backwards compatibility, matmul, imatmul, dwconv)
+    - |
+      declare -a BENCHMARKS=(
+        ""        "--benchmark_dry_run=true -m 1 -n 30 -k 64"
+        "matmul"  "--benchmark_dry_run=true -m 1 -n 30 -k 64"
+        "imatmul" "--benchmark_dry_run=true -m 1 -n 30 -c 4 -l 15"
+        "dwconv"  "--benchmark_dry_run=true --input_height 32 --input_width 32 --channels 64 --padding 1,1,1,1"
+      )
+      for ((i=0; i<${#BENCHMARKS[@]}; i+=2)); do
+        KT="${BENCHMARKS[i]}"
+        ARGS="${BENCHMARKS[i+1]}"
+        # Run benchmark
+        if [ -z "$KT" ]; then
+          ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark $ARGS
+          ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark --benchmark_list_tests
+          ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark || true
+        else
+          ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark $KT $ARGS
+          ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark $KT --benchmark_list_tests
+          ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark $KT || true
+        fi
+      done
     # Generate gcovr configuration tuned to exclude build dir, unreachable branches, and assertion macros.
     - mkdir -p build/coverage
     - |

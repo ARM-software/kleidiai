@@ -52,6 +52,7 @@ void kai_benchmark_matmul(
     const MatMulOp matmul_op, const CpuRequirement& is_cpu_supported) {
     if (!is_cpu_supported()) {
         state.SkipWithMessage("Unsupported CPU feature");
+        return;
     }
 
     const size_t m = state.range(0);
@@ -61,6 +62,7 @@ void kai_benchmark_matmul(
 
     if (m > 1 && matmul_op == MatMulOp::GEMV) {
         state.SkipWithMessage("GEMV optimized for m=1 only");
+        return;
     }
 
     if constexpr (
@@ -68,6 +70,7 @@ void kai_benchmark_matmul(
         std::is_same_v<MatMulInterface, MatMulBlockwiseDynamicQuantGenericDstInterface>) {
         if (k % bl != 0) {
             state.SkipWithMessage("K must be a multiple of block size");
+            return;
         }
     }
 

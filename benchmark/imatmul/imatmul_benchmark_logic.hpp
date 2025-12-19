@@ -44,6 +44,7 @@ void kai_benchmark_imatmul(
     const CpuRequirement& is_cpu_supported) {
     if (!is_cpu_supported()) {
         state.SkipWithMessage("Unsupported CPU feature");
+        return;
     }
 
     const size_t m = state.range(0);

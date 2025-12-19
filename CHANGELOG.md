@@ -10,6 +10,8 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+- Extended the benchmarking suite to support depthwise convolution benchmarking
+  - Added kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla to benchmarking
 - Fixes
   - Fixed clamping not being applied in `matmul_clamp_f32_bf16p1x4_bf16p12x4b_1x36_neon_dot`
 
