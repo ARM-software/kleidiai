@@ -8,6 +8,8 @@
 
 #include <stdexcept>
 
+#include "kai/kai_common.h"
+
 #if defined(KAI_ERROR_TRAP)
 #define KAI_TEST_ERROR(msg) __builtin_trap()
 #elif defined(__cpp_exceptions)
