@@ -1,12 +1,12 @@
 #
-# SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 #
 # SPDX-License-Identifier: Apache-2.0
 #
 cmake_minimum_required(VERSION 3.16)
 
 project(KleidiAI
-    VERSION 1.19.0
+    VERSION 1.20.0
     LANGUAGES C CXX
 )
 

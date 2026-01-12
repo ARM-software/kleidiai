@@ -1,5 +1,5 @@
 <!--
-    SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+    SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 
     SPDX-License-Identifier: Apache-2.0
 -->
@@ -10,6 +10,9 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+## v1.20.0
+
+- Added code to cater for no exception compilation
 - Extended the benchmarking suite to support depthwise convolution benchmarking
   - Added kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla to benchmarking
 - Fixes
