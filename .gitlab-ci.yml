@@ -254,6 +254,15 @@ test-clang-tidy:
     # Only test the main library with C/C++ files.
     - clang-tidy --header-filter ".*" --warnings-as-errors "*" -p build/${CI_JOB_NAME_SLUG} $(find kai -type f \( -name \*.c -o -name \*.cpp \))
 
+# Purpose: Verify that all micro-kernels are registered for benchmarking.
+test-verify-benchmark-registration:
+  extends:
+    - .standard-rules
+  stage: test
+  needs: []
+  script:
+    - python3 tools/check_benchmark_microkernels.py
+
 # Purpose: Run pre-commit hooks (formatting, linting) with cached tool downloads.
 pre-commit-hooks:
   variables:
