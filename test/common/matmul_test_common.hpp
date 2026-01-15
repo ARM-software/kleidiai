@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -94,9 +94,10 @@ struct MatMulMethod {
     ///
     /// @param[in] n Number of rows in the bias.
     /// @param[in] k Number of columns in the bias.
+    /// @param[in] null_bias_mode Whether to generate null bias (true) or real bias (false).
     ///
     /// @return Bias data buffer.
-    std::function<Buffer(size_t, size_t)> fn_generate_bias{nullptr};
+    std::function<Buffer(size_t, size_t, bool)> fn_generate_bias{nullptr};
 
     /// Check if CPU supports required features.
     ///
