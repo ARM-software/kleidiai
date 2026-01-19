@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -26,6 +26,7 @@
 #include "test/common/matmul_test_common.hpp"
 #include "test/common/matrix_portion.hpp"
 #include "test/common/printer.hpp"
+#include "test/common/seed.hpp"
 #include "test/common/sme.hpp"
 #include "test/reference/cast.hpp"
 #include "test/reference/clamp.hpp"
@@ -340,6 +341,12 @@ protected:
         const auto& [method, info, portion, bias_mode, clamp_keep_ratio] = GetParam();
         const TestDataId data_id{info.m, info.n, info.k, clamp_keep_ratio, method.name};
 
+        // Creates a unique seed for the test data.
+        const auto key = std::string(method.name) + "_" + std::to_string(info.m) + "x" + std::to_string(info.n) + "x" +
+            std::to_string(info.k) + "_" + (bias_mode == BiasMode::INTERNAL ? "internal" : "provided") + ":" +
+            std::to_string(clamp_keep_ratio);
+        auto& feed = seed_stream(key);
+
         // If the test data is already available, returns it.
         const auto data_it = _data.find(data_id);
 
@@ -354,7 +361,7 @@ protected:
 
         const auto lhs_h = info.m;
         const auto lhs_w = info.k;
-        auto lhs = fill_matrix_random(lhs_h, lhs_w, method.lhs_format, 0);
+        auto lhs = fill_matrix_random(lhs_h, lhs_w, method.lhs_format, feed());
         Buffer ref_packed_lhs;
 
         if (has_lhs_pack) {
@@ -364,12 +371,12 @@ protected:
 
         const auto rhs_h = info.k;
         const auto rhs_w = info.n;
-        auto rhs = fill_matrix_random(rhs_h, rhs_w, method.rhs_format, 1);
+        auto rhs = fill_matrix_random(rhs_h, rhs_w, method.rhs_format, feed());
 
         Buffer rhs_scales;
         if (data_type_is_quantized(method.rhs_format.data_type()) &&
             method.rhs_format.pack_format() == DataFormat::PackFormat::NONE) {
-            rhs_scales = fill_matrix_random(rhs_h, 1, DataFormat(DataType::FP32), 2);
+            rhs_scales = fill_matrix_random(rhs_h, 1, DataFormat(DataType::FP32), feed());
         }
 
         const auto bias_h = 1;
@@ -377,7 +384,7 @@ protected:
         Buffer bias;
 
         if (has_bias) {
-            bias = fill_matrix_random(bias_h, bias_w, method.bias_format, 3);
+            bias = fill_matrix_random(bias_h, bias_w, method.bias_format, feed());
         }
 
         constexpr size_t nr = 12;

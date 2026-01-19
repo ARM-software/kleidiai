@@ -31,6 +31,7 @@
 #include "test/common/matrix_portion.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/round.hpp"
+#include "test/common/seed.hpp"
 #include "test/common/sme.hpp"
 #include "test/reference/clamp.hpp"
 #include "test/reference/fill.hpp"
@@ -402,12 +403,6 @@ struct ReferenceGenerator {
     }
 
 private:
-    /// Return incremented seed value
-    static size_t get_seed() {
-        static size_t seed = 0;
-        return seed++;
-    }
-
     /// Generate reference data. Not intended to be called
     /// directly, as this would bypass caching mechanism.
     static TestData generate_reference(const TestDataId& test_id) {
@@ -417,10 +412,15 @@ private:
         const size_t k_chunk_count = chunked_shape.k;
         MatMulShape shape = {chunked_shape.m, chunked_shape.n, k_chunk_count * k_chunk_length};
 
+        // Stable key derived from the cache identifier.
+        const auto key_hash = static_cast<std::uint32_t>(TestDataId::Hash{}(test_id));
+        const auto key = std::string("imatmul_cache:") + std::to_string(key_hash);
+        auto& feed = seed_stream(key);
+
         // Generate random input data
-        Buffer lhs = fill_matrix_random(shape.m, shape.k, format.lhs, get_seed());
-        Buffer rhs = fill_matrix_random(shape.k, shape.n, format.rhs, get_seed());
-        Buffer bias = fill_matrix_random(1, shape.n, format.bias, get_seed());
+        Buffer lhs = fill_matrix_random(shape.m, shape.k, format.lhs, feed());
+        Buffer rhs = fill_matrix_random(shape.k, shape.n, format.rhs, feed());
+        Buffer bias = fill_matrix_random(1, shape.n, format.bias, feed());
 
         // Data types used
         const DataType lhs_dt = format.lhs.data_type();

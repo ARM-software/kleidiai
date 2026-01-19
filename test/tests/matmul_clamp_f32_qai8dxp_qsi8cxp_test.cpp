@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -34,6 +34,7 @@
 #include "test/common/matrix_portion.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/printer.hpp"
+#include "test/common/seed.hpp"
 #include "test/common/test_suite.hpp"
 #include "test/reference/clamp.hpp"
 #include "test/reference/fill.hpp"
@@ -70,10 +71,16 @@ F32Qai8Qsi8CacheData ReferenceGenerator<F32Qai8Qsi8CacheDataId, F32Qai8Qsi8Cache
     const size_t N = shape.n;
     const size_t K = shape.k;
 
-    static size_t seed = 1;
-    Buffer lhs = fill_matrix_random(shape.m, shape.k, lhs_format, seed++);
-    Buffer rhs = fill_matrix_random(shape.k, shape.n, rhs_format, seed++);
-    Buffer bias = fill_matrix_random(1, shape.n, bias_format, seed++);
+    // Seed the random generator.
+    const auto key = std::string("F32Qai8Qsi8_cache:") + std::to_string(M) + "x" + std::to_string(N) + "x" +
+        std::to_string(K) + ":" + std::to_string(static_cast<uint32_t>(lhs_format.data_type())) + ":" +
+        std::to_string(static_cast<uint32_t>(rhs_format.data_type())) + ":" +
+        std::to_string(static_cast<uint32_t>(bias_format.data_type())) + ":" + std::to_string(clamp_keep_ratio);
+    auto& feed = seed_stream(key);
+
+    Buffer lhs = fill_matrix_random(shape.m, shape.k, lhs_format, feed());
+    Buffer rhs = fill_matrix_random(shape.k, shape.n, rhs_format, feed());
+    Buffer bias = fill_matrix_random(1, shape.n, bias_format, feed());
 
     QuantizationInfo lhs_qinfo{};
     lhs_qinfo.quant_width = K;

@@ -577,6 +577,7 @@ if(KLEIDIAI_BUILD_TESTS)
         test/common/rect.cpp
         test/common/round.cpp
         test/common/round_asm.S
+        test/common/seed.cpp
         $<$<NOT:$<BOOL:${MSVC}>>:test/common/sme.cpp>
         test/common/sve.cpp
 
@@ -640,6 +641,7 @@ if(KLEIDIAI_BUILD_TESTS)
 
     target_link_libraries(kleidiai_test_framework
         PUBLIC  kleidiai
+        PRIVATE GTest::gtest
     )
 
     if(MSVC)

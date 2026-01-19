@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -53,6 +53,7 @@
 #include "test/common/matrix_portion.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/round.hpp"
+#include "test/common/seed.hpp"
 #include "test/common/test_suite.hpp"
 #include "test/reference/cast.hpp"
 #include "test/reference/clamp.hpp"
@@ -471,8 +472,6 @@ std::string test_description(
     return sstream.str();
 }
 
-constexpr uint32_t seed = 0;  ///< Random seed used for tests
-
 struct TestData {
     size_t M{}, N{}, K{}, bl{};
 
@@ -677,9 +676,15 @@ TestData ReferenceGenerator<F32QMatMulRefKey, TestData>::generate_reference(cons
     ref.bl = bl;
     ref.rect = rect;
 
-    ref.lhs = fill_random<float>(ref.M * ref.K, seed + 0);
-    ref.rhs = fill_random<float>(ref.N * ref.K, seed + 1);
-    ref.bias = fill_random<float>(ref.N, seed + 2);
+    // Creates a unique seed for the test data.
+    const auto key = std::string("F32QMatMulRefKey:") + std::to_string(ref.M) + "x" + std::to_string(ref.N) + "x" +
+        std::to_string(ref.K) + "_" + std::to_string(bl) + "_" + ((rhs_pack_type == RhsPackType::NxK) ? "NxK" : "KxN") +
+        "_" + std::to_string(clamp_keep_ratio);
+    auto& feed = seed_stream(key);
+
+    ref.lhs = fill_random<float>(ref.M * ref.K, feed());
+    ref.rhs = fill_random<float>(ref.N * ref.K, feed());
+    ref.bias = fill_random<float>(ref.N, feed());
 
     // Dynamic LHS quantization (reference only).
     QuantizationInfo lhs_qinfo{};
@@ -833,10 +838,16 @@ BF16TestData ReferenceGenerator<BF16QMatMulRefKey, BF16TestData>::generate_refer
     ref.bl = bl;
     ref.rect = Rect(rect_start_row, rect_start_col, rect_height, rect_width);
 
+    // Creates a unique seed for the test data.
+    const auto key = std::string("BF16QMatMulRefKey:") + std::to_string(ref.M) + "x" + std::to_string(ref.N) + "x" +
+        std::to_string(ref.K) + "_" + std::to_string(bl) + "_" + ((rhs_pack_type == RhsPackType::NxK) ? "NxK" : "KxN") +
+        "_" + std::to_string(clamp_keep_ratio);
+    auto& feed = seed_stream(key);
+
     // Inputs
-    ref.lhs_bf16 = fill_random<BFloat16<false>>(ref.M * ref.K, seed + 0);
-    Buffer const ref_rhs = fill_random<float>(ref.N * ref.K, seed + 1);
-    ref.bias = fill_random<float>(ref.N, seed + 2);
+    ref.lhs_bf16 = fill_random<BFloat16<false>>(ref.M * ref.K, feed());
+    Buffer const ref_rhs = fill_random<float>(ref.N * ref.K, feed());
+    ref.bias = fill_random<float>(ref.N, feed());
 
     // Cast BF16 LHS to FP32 for reference quantization
     const Buffer ref_lhs =
@@ -1089,7 +1100,7 @@ TEST_P(QMatMulClampF32Test, LhsPackBufferMatchesReference) {
     constexpr size_t rect_start_row = 0;
     constexpr size_t rect_height = 1;
 
-    const auto ref_lhs = fill_random<float>(M * K, seed);
+    const auto ref_lhs = fill_random<float>(M * K, seed_stream(current_test_key())());
 
     const size_t lhs_stride = K * sizeof(float);
     std::tuple<Buffer, size_t> pack_pair = pack_lhs_qai8dxp(

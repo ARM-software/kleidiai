@@ -75,6 +75,9 @@ variables:
   # Default cache policy is to pull only
   CACHE_POLICY: pull
 
+  # Fixed seed for test reproducibility
+  GLOBAL_TEST_SEED: 42
+
 default:
   image: registry.gitlab.arm.com/kleidi/kleidiai/image:latest
   tags:
@@ -325,7 +328,7 @@ test-remote:
       # Export index variable to child process
       export GTEST_SHARD_INDEX
       echo "Running iteration $GTEST_SHARD_INDEX of $GTEST_TOTAL_SHARDS"
-      ${UT_BINARY_PATH:-./build-${UT_VARIANT_NAME}}/kleidiai_test --gtest_brief=1 --gtest_output=xml:${UT_REPORT_PATH:-kleidiai_results-${UT_VARIANT_NAME}}${GTEST_SHARD_INDEX}.xml ${UT_EXTRA_ARGS:-}
+      ${UT_BINARY_PATH:-./build-${UT_VARIANT_NAME}}/kleidiai_test --gtest_brief=1 --gtest_output=xml:${UT_REPORT_PATH:-kleidiai_results-${UT_VARIANT_NAME}}${GTEST_SHARD_INDEX}.xml --gtest_random_seed=${GLOBAL_TEST_SEED:-42} ${UT_EXTRA_ARGS:-}
     done
 
 # Purpose: Sharded unit tests for each build provider.
@@ -417,7 +420,7 @@ test-linux-aarch64-sve256:
     KUBERNETES_NODE_SELECTOR_TYPE: "karpenter.sh/capacity-type=on-demand"
     # Disable SVE/SVE2, but keep SME/SME2
     FVP_MODEL_EXTRA: "-C cluster0.sve.has_sve2=0 -C cluster0.sve.sme_only=1"
-    FVP_TEST_EXECUTABLE: "./build-${BUILD_JOB_PROVIDER}/kleidiai_test --gtest_output=xml:kleidiai_test_results-${BUILD_JOB_PROVIDER}.xml"
+    FVP_TEST_EXECUTABLE: "./build-${BUILD_JOB_PROVIDER}/kleidiai_test --gtest_output=xml:kleidiai_test_results-${BUILD_JOB_PROVIDER}.xml --gtest_random_seed=${GLOBAL_TEST_SEED:-42}"
   script:
     - ./tools/fvp.sh ${FVP_TEST_EXECUTABLE}
   artifacts:
@@ -467,7 +470,7 @@ test-linux-aarch64-v8only-fvp:
         echo -e "./'${EXAMPLE}' || true"                             >> run_tests.sh  # Allow failure (expected crash).
       done
       echo "echo Perform a positive test with CPU feature detection" >> run_tests.sh
-      echo "./build-clang/kleidiai_test --gtest_brief=1 || exit 1"   >> run_tests.sh  # Must succeed.
+      echo "./build-clang/kleidiai_test --gtest_brief=1 --gtest_random_seed=\${GLOBAL_TEST_SEED:-42} || exit 1"   >> run_tests.sh  # Must succeed.
     # Dump content for debugging purposes
     - |
       echo "Test script content:"
@@ -508,7 +511,7 @@ test-linux-aarch64-sme1only-fvp:
       echo "echo Perform a positive test with CPU feature detection"     >> run_tests.sh
       echo "export GTEST_OUTPUT=xml:kleidiai-${CI_JOB_NAME_SLUG}.xml"    >> run_tests.sh
       echo "export GTEST_BRIEF=1"                                        >> run_tests.sh
-      echo "./build-clang/kleidiai_test --gtest_filter=*sme_* || exit 1" >> run_tests.sh
+      echo "./build-clang/kleidiai_test --gtest_filter=*sme_* --gtest_random_seed=\${GLOBAL_TEST_SEED:-42} || exit 1" >> run_tests.sh
     # Dump content for debugging purposes
     - |
       echo "Test script content:"
@@ -573,7 +576,7 @@ test-examples-sme-fvp:
       -S . -B ${CI_JOB_NAME_SLUG}
     - cmake --build ${CI_JOB_NAME_SLUG} -j${PARALLEL_JOBS} --verbose
     # Run kleidiai_test to generate coverage report for unit tests
-    - ./${CI_JOB_NAME_SLUG}/kleidiai_test --gtest_brief=1
+    - ./${CI_JOB_NAME_SLUG}/kleidiai_test --gtest_brief=1 --gtest_random_seed=${GLOBAL_TEST_SEED:-42}
     # Run combined benchmark for all subcommands (backwards compatibility, matmul, imatmul, dwconv)
     - |
       declare -a BENCHMARKS=(

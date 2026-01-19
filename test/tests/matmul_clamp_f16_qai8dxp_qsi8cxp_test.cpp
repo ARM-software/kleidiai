@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -32,6 +32,7 @@
 #include "test/common/matrix_portion.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/round.hpp"
+#include "test/common/seed.hpp"
 #include "test/common/test_suite.hpp"
 #include "test/reference/cast.hpp"
 #include "test/reference/clamp.hpp"
@@ -69,12 +70,17 @@ F16Qai8Qsi8CacheData ReferenceGenerator<F16Qai8Qsi8CacheDataId, F16Qai8Qsi8Cache
     const size_t N = shape.n;
     const size_t K = shape.k;
 
-    static uint32_t seed = 1;
+    // Seed the random generator.
+    const auto key = std::string("F16Qai8Qsi8_cache:") + std::to_string(M) + "x" + std::to_string(N) + "x" +
+        std::to_string(K) + ":" + std::to_string(static_cast<uint32_t>(lhs_format.data_type())) + ":" +
+        std::to_string(static_cast<uint32_t>(rhs_format.data_type())) + ":" +
+        std::to_string(static_cast<uint32_t>(bias_format.data_type())) + ":" + std::to_string(clamp_keep_ratio);
+    auto& feed = seed_stream(key);
 
     bool has_bias = bias_format.data_type() != DataType::UNKNOWN;
-    Buffer lhs = fill_matrix_random(shape.m, shape.k, lhs_format, seed++);
-    Buffer rhs = fill_matrix_random(shape.n, shape.k, rhs_format, seed++);
-    Buffer bias = has_bias ? fill_matrix_random(1, shape.n, bias_format, seed++) : Buffer();
+    Buffer lhs = fill_matrix_random(shape.m, shape.k, lhs_format, feed());
+    Buffer rhs = fill_matrix_random(shape.n, shape.k, rhs_format, feed());
+    Buffer bias = has_bias ? fill_matrix_random(1, shape.n, bias_format, feed()) : Buffer();
 
     const auto ref_lhs = cast<float, Float16>(lhs.data(), lhs.size() * 8 / size_in_bits<Float16>);
 

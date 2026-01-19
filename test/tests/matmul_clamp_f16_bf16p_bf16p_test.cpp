@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -26,6 +26,7 @@
 #include "test/common/matmul_test_common.hpp"
 #include "test/common/matrix_portion.hpp"
 #include "test/common/printer.hpp"
+#include "test/common/seed.hpp"
 #include "test/reference/clamp.hpp"
 #include "test/reference/fill.hpp"
 #include "test/reference/matmul.hpp"
@@ -35,6 +36,7 @@
 #include "kai/ukernels/matmul/matmul_clamp_f16_bf16p_bf16p/kai_matmul_clamp_f16_bf16p8x4_bf16p12x4b_8x12_neon_mmla.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_pack_bf16p8x4_f16_neon.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_bf16p12x4biasf16_f16_neon.h"
+
 namespace kai::test {
 
 /// List of supported matrix multiplication methods.
@@ -154,9 +156,15 @@ protected:
         const auto has_rhs_pack = method.packed_rhs_format.data_type() != DataType::UNKNOWN;
         const auto has_bias = method.bias_format.data_type() != DataType::UNKNOWN;
 
+        // Seed the random generator.
+        const auto key = std::string(method.name) + "_" + std::to_string(info.m) + "x" + std::to_string(info.n) + "x" +
+            std::to_string(info.k) + "_" + (bias_mode == BiasMode::INTERNAL ? "internal" : "provided") + ":" +
+            std::to_string(clamp_keep_ratio);
+        auto& feed = seed_stream(key);
+
         const auto lhs_h = info.m;
         const auto lhs_w = info.k;
-        auto lhs = fill_matrix_random(lhs_h, lhs_w, method.lhs_format, 0);
+        auto lhs = fill_matrix_random(lhs_h, lhs_w, method.lhs_format, feed());
         Buffer ref_packed_lhs;
 
         if (has_lhs_pack) {
@@ -166,12 +174,12 @@ protected:
 
         const auto rhs_h = info.k;
         const auto rhs_w = info.n;
-        auto rhs = fill_matrix_random(rhs_h, rhs_w, method.rhs_format, 1);
+        auto rhs = fill_matrix_random(rhs_h, rhs_w, method.rhs_format, feed());
 
         Buffer rhs_scales;
         if (data_type_is_quantized(method.rhs_format.data_type()) &&
             method.rhs_format.pack_format() == DataFormat::PackFormat::NONE) {
-            rhs_scales = fill_matrix_random(rhs_h, 1, DataFormat(DataType::FP32), 2);
+            rhs_scales = fill_matrix_random(rhs_h, 1, DataFormat(DataType::FP32), feed());
         }
 
         const auto bias_h = 1;
@@ -179,7 +187,7 @@ protected:
         Buffer bias;
 
         if (has_bias) {
-            bias = fill_matrix_random(bias_h, bias_w, method.bias_format, 3);
+            bias = fill_matrix_random(bias_h, bias_w, method.bias_format, feed());
         }
 
         Buffer packed_rhs(method.fn_get_packed_rhs_size(rhs_w, rhs_h));

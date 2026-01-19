@@ -70,8 +70,11 @@ Buffer cast(const void* src, kai::test::DataType src_dt, DataType dst_dt, size_t
         return cast<BFloat16<>, Float16>(src, length);
     } else if (src_dt == DataType::FP32 && dst_dt == DataType::BF16) {
         return cast<BFloat16<>, float>(src, length);
+    } else if (src_dt == DataType::FP32 && dst_dt == DataType::FP16) {
+        return cast<Float16, float>(src, length);
+    } else if (src_dt == DataType::FP16 && dst_dt == DataType::FP32) {
+        return cast<float, Float16>(src, length);
     }
-
     KAI_ERROR("Unsupported cast data type!");
 }
 

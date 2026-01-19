@@ -18,6 +18,8 @@
 #include <random>
 #include <string>
 
+#include "test/common/seed.hpp"
+
 namespace kai::test {
 
 namespace {
@@ -25,8 +27,7 @@ constexpr size_t g_num_runs = 100;
 }  // namespace
 
 TEST(BufferTest, NonePolicy) {
-    std::random_device rd;
-    std::mt19937 rng(rd());
+    std::mt19937 rng(seed_stream(current_test_key())());
     std::uniform_int_distribution<size_t> dist(1, std::numeric_limits<uint16_t>::max());
 
     // Store the current buffer policy
@@ -57,8 +58,7 @@ TEST(BufferTest, NonePolicy) {
 }
 
 TEST(BufferDeathTest, InvalidPolicy) {
-    std::random_device rd;
-    std::mt19937 rng(rd());
+    std::mt19937 rng(seed_stream(current_test_key())());
     std::uniform_int_distribution<size_t> dist(1, std::numeric_limits<uint16_t>::max());
 
     // Store the current buffer policy
@@ -91,8 +91,7 @@ TEST(BufferDeathTest, InvalidPolicy) {
 
 #if defined(__linux__) || defined(__APPLE__)
 TEST(BufferDeathTest, ProtectUnderflowPolicy) {
-    std::random_device rd;
-    std::mt19937 rng(rd());
+    std::mt19937 rng(seed_stream(current_test_key())());
     std::uniform_int_distribution<size_t> dist(1, std::numeric_limits<uint16_t>::max());
 
     // Store the current buffer policy
@@ -138,8 +137,7 @@ TEST(BufferDeathTest, ProtectUnderflowPolicy) {
 }
 
 TEST(BufferDeathTest, ProtectOverflowPolicy) {
-    std::random_device rd;
-    std::mt19937 rng(rd());
+    std::mt19937 rng(seed_stream(current_test_key())());
     std::uniform_int_distribution<size_t> dist(1, std::numeric_limits<uint16_t>::max());
 
     // Store the current buffer policy

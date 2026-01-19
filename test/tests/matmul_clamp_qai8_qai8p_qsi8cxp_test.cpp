@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -38,6 +38,7 @@
 #include "test/common/matrix_portion.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/rect.hpp"
+#include "test/common/seed.hpp"
 #include "test/common/sme.hpp"
 #include "test/reference/binary_elementwise.hpp"
 #include "test/reference/clamp.hpp"
@@ -438,8 +439,6 @@ const auto& get_gemv_variants() {
     return variants;
 }
 
-constexpr uint32_t seed = 0;  ///< Random seed used for tests
-
 /// Quantization parameters
 struct Quant {
     float scale;
@@ -524,10 +523,15 @@ const TestReference& get_test_reference(const TestDataId& test_data_id) {
 
     const auto& [shape, pack_shape, k_chunk_len, pad_testing, clamp_keep_ratio] = test_data_id;
 
+    // Seed the random generator.
+    const auto key = std::string("Qai8Qai8Qsi8_cache:") + std::to_string(shape.m) + "x" + std::to_string(shape.n) +
+        "x" + std::to_string(shape.k) + ":" + std::to_string(clamp_keep_ratio);
+    auto& feed = seed_stream(key);
+
     // Generates the input data in floating-point.
-    Buffer lhs_f32 = fill_random<float>(shape.m * shape.k, seed);
-    const Buffer rhs_f32 = fill_random<float>(shape.k * shape.n, seed);
-    const Buffer bias_f32 = fill_random<float>(shape.n, seed);
+    Buffer lhs_f32 = fill_random<float>(shape.m * shape.k, feed());
+    const Buffer rhs_f32 = fill_random<float>(shape.k * shape.n, feed());
+    const Buffer bias_f32 = fill_random<float>(shape.n, feed());
 
     // Quantizes the input data.
     //   * LHS: 8-bit asymmetric per-matrix quantization.

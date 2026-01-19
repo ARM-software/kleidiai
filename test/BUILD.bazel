@@ -1,5 +1,5 @@
 #
-# SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -34,6 +34,7 @@ kai_cxx_library(
     textual_hdrs = [
         "common/assembly.h",
     ],
+    deps = ["@com_google_googletest//:gtest"],
 )
 
 kai_cxx_library(

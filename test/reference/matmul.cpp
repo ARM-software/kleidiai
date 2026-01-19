@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <type_traits>
 
 #include "kai/kai_common.h"
 #include "test/common/buffer.hpp"
@@ -41,7 +42,7 @@ namespace {
 /// @param[in] rhs_transposed `true` if RHS operand is transposed.
 ///
 /// @return The result data buffer.
-template <typename T>
+template <typename In, typename Acc>
 Buffer matmul_any_type(
     const void* lhs, const void* rhs,  //
     size_t m, size_t n, size_t k,      //
@@ -52,20 +53,20 @@ Buffer matmul_any_type(
     const auto rhs_n_stride = rhs_transposed ? k : 1;
     const auto rhs_k_stride = rhs_transposed ? 1 : n;
 
-    Buffer dst(m * n * size_in_bits<T> / 8);
-    KAI_ASSUME_ALWAYS(n * size_in_bits<T> % 8 == 0);
+    Buffer dst(m * n * size_in_bits<In> / 8);
+    KAI_ASSUME_ALWAYS(n * size_in_bits<In> % 8 == 0);
 
     for (size_t im = 0; im < m; ++im) {
         for (size_t in = 0; in < n; ++in) {
-            T acc{0};
+            Acc acc = Acc(0);
 
             for (size_t ik = 0; ik < k; ++ik) {
-                const auto lhs_value = read_array<T>(lhs, im * lhs_m_stride + ik * lhs_k_stride);
-                const auto rhs_value = read_array<T>(rhs, in * rhs_n_stride + ik * rhs_k_stride);
-                acc += lhs_value * rhs_value;
+                const auto lhs_value = read_array<In>(lhs, im * lhs_m_stride + ik * lhs_k_stride);
+                const auto rhs_value = read_array<In>(rhs, in * rhs_n_stride + ik * rhs_k_stride);
+                acc += static_cast<Acc>(lhs_value) * static_cast<Acc>(rhs_value);
             }
 
-            write_array<T>(dst.data(), im * n + in, acc);
+            write_array<In>(dst.data(), im * n + in, static_cast<In>(acc));
         }
     }
 
@@ -156,11 +157,11 @@ Buffer matmul(
 
     switch (dst_dt) {
         case DataType::FP32:
-            tmp_dst = matmul_any_type<float>(lhs, rhs, m, n, k, lhs_transposed, rhs_transposed);
+            tmp_dst = matmul_any_type<float, float>(lhs, rhs, m, n, k, lhs_transposed, rhs_transposed);
             break;
 
         case DataType::FP16:
-            tmp_dst = matmul_any_type<Float16>(lhs, rhs, m, n, k, lhs_transposed, rhs_transposed);
+            tmp_dst = matmul_any_type<Float16, float>(lhs, rhs, m, n, k, lhs_transposed, rhs_transposed);
             break;
 
         default:
@@ -168,16 +169,22 @@ Buffer matmul(
     }
 
     if (bias != nullptr) {
-        if (bias_dt != dst_dt) {
-            tmp_bias = cast(bias, bias_dt, dst_dt, 1, n);
-            bias = tmp_bias.data();
-        }
-
         KAI_ASSUME_ALWAYS(!data_type_is_quantized(bias_dt));
         KAI_ASSUME_ALWAYS(bias_scales == nullptr);
         KAI_ASSUME_ALWAYS(bias_zero_points == nullptr);
 
-        tmp_dst = add(tmp_dst.data(), dst_dt, m, n, bias, bias_dt, 1, n);
+        // Add bias in f32 to reduce precision loss.
+        if (dst_dt != DataType::FP32) {
+            tmp_dst = cast(tmp_dst.data(), dst_dt, DataType::FP32, m, n);
+        }
+        if (bias_dt != DataType::FP32) {
+            tmp_bias = cast(bias, bias_dt, DataType::FP32, 1, n);
+            bias = tmp_bias.data();
+        }
+        tmp_dst = add(tmp_dst.data(), DataType::FP32, m, n, bias, DataType::FP32, 1, n);
+        if (dst_dt != DataType::FP32) {
+            tmp_dst = cast(tmp_dst.data(), DataType::FP32, dst_dt, m, n);
+        }
     }
 
     return tmp_dst;

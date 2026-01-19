@@ -34,6 +34,7 @@
 #include "test/common/matrix_portion.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/round.hpp"
+#include "test/common/seed.hpp"
 #include "test/common/test_suite.hpp"
 #include "test/reference/cast.hpp"
 #include "test/reference/clamp.hpp"
@@ -161,8 +162,6 @@ TEST_P(MatMulTest_f32_qsi8d32p_qai4c32p, LhsPackedWithSameBlockdepth) {
         GTEST_SKIP() << "Unsupported CPU feature";
     }
 
-    const std::uint32_t seed = 0;
-
     const size_t M = matmul_shape.m;
     const size_t N = matmul_shape.n;
     const size_t K = matmul_shape.k;
@@ -185,7 +184,7 @@ TEST_P(MatMulTest_f32_qsi8d32p_qai4c32p, LhsPackedWithSameBlockdepth) {
     const auto rect = portion.compute_portion(M, N, m_step, n_step);
 
     // Generates input data.
-    const auto ref_lhs = fill_random<float>(M * K, seed + 0);
+    const auto ref_lhs = fill_random<float>(M * K, seed_stream(current_test_key())());
 
     // Runs the LHS packing micro-kernel.
     const auto lhs_start_row = rect.start_row();
@@ -218,8 +217,6 @@ TEST_P(MatMulTest_f32_qsi8d32p_qai4c32p, EndToEnd) {
         GTEST_SKIP() << "Unsupported CPU feature";
     }
 
-    const std::uint32_t seed = 0;
-
     const size_t M = matmul_shape.m;
     const size_t N = matmul_shape.n;
     const size_t K = matmul_shape.k;
@@ -248,13 +245,16 @@ TEST_P(MatMulTest_f32_qsi8d32p_qai4c32p, EndToEnd) {
         GTEST_SKIP() << "Empty dimension of matrix(" << rect.width() << "," << rect.height() << ")";
     }
 
+    // Seed the random generator.
+    auto& feed = seed_stream(current_test_key());
+
     // Generates input data.
-    const auto ref_lhs = fill_random<float>(M * K, seed + 0);
-    const auto ref_rhs = fill_random<float>(N * K, seed + 1);
+    const auto ref_lhs = fill_random<float>(M * K, feed());
+    const auto ref_rhs = fill_random<float>(N * K, feed());
     Buffer ref_biases;
 
     if (has_bias) {
-        ref_biases = fill_random<float>(N, seed + 2);
+        ref_biases = fill_random<float>(N, feed());
     }
     // Runs the reference implementation.
     //   * Quantizes the LHS matrix using 8-bit symmetric quantization.

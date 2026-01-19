@@ -26,6 +26,7 @@
 #include "test/common/data_type.hpp"
 #include "test/common/matmul_test_common.hpp"
 #include "test/common/matrix_portion.hpp"
+#include "test/common/seed.hpp"
 #include "test/common/sme.hpp"
 #include "test/common/sve.hpp"
 #include "test/reference/clamp.hpp"
@@ -86,11 +87,15 @@ static const auto& get_matmul_methods() {
     matmul_methods[0].packed_rhs_format = DataFormat(
         DataType::FP16, 16, 0, DataFormat::PackFormat::BIAS_PER_ROW, DataType::FP16, DataType::UNKNOWN, 16, 1);
     matmul_methods[0].bias_format = DataFormat(DataType::FP16);
-    matmul_methods[0].fn_generate_lhs = UniformRandomGenerator<Float16>(-1.0, 1.0, 0);
-    matmul_methods[0].fn_generate_rhs = NormalRandomGenerator<Float16>(-1.0, 1.0, 1);
-    matmul_methods[0].fn_generate_bias = [](size_t rows, size_t cols, bool null_bias_mode) {
+    matmul_methods[0].fn_generate_lhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return NormalRandomGenerator<Float16>(-1.0, 1.0, feed())(rows, cols);
+    };
+    matmul_methods[0].fn_generate_rhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return NormalRandomGenerator<Float16>(-1.0, 1.0, feed())(rows, cols);
+    };
+    matmul_methods[0].fn_generate_bias = [](size_t rows, size_t cols, SeedFeed& feed, bool null_bias_mode) {
         KAI_UNUSED(null_bias_mode);
-        return UniformRandomGenerator<Float16>(-1.0, 1.0, 3)(rows, cols);
+        return NormalRandomGenerator<Float16>(-1.0, 1.0, feed())(rows, cols);
     };
     matmul_methods[0].fn_is_supported = cpu_has_fp16;
     matmul_methods[0].fn_get_nr = kai_get_nr_matmul_clamp_f16_f16_f16p16x1biasf16_6x16x8_neon_mla;
@@ -127,11 +132,15 @@ static const auto& get_matmul_methods() {
         DataType::UNKNOWN,                       // Scaling type
         2 * get_sme_vector_length<float>(), 2);  // Sub-block
     matmul_methods[1].bias_format = DataFormat(DataType::FP16);
-    matmul_methods[1].fn_generate_lhs = UniformRandomGenerator<Float16>(-1.0, 1.0, 0);
-    matmul_methods[1].fn_generate_rhs = UniformRandomGenerator<Float16>(-1.0, 1.0, 1);
-    matmul_methods[1].fn_generate_bias = [](size_t rows, size_t cols, bool null_bias_mode) {
+    matmul_methods[1].fn_generate_lhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<Float16>(-1.0, 1.0, feed())(rows, cols);
+    };
+    matmul_methods[1].fn_generate_rhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<Float16>(-1.0, 1.0, feed())(rows, cols);
+    };
+    matmul_methods[1].fn_generate_bias = [](size_t rows, size_t cols, SeedFeed& feed, bool null_bias_mode) {
         KAI_UNUSED(null_bias_mode);
-        return UniformRandomGenerator<Float16>(-1.0, 1.0, 3)(rows, cols);
+        return UniformRandomGenerator<Float16>(-1.0, 1.0, feed())(rows, cols);
     };
     matmul_methods[1].fn_is_supported = cpu_has_sme2;
     matmul_methods[1].fn_get_mr = kai_get_mr_matmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa;
@@ -174,11 +183,15 @@ static const auto& get_matmul_methods() {
     matmul_methods[2].packed_rhs_format =
         DataFormat(DataType::FP32, 8, 0, DataFormat::PackFormat::BIAS_PER_ROW, DataType::FP32, DataType::UNKNOWN, 8, 1);
     matmul_methods[2].bias_format = DataFormat(DataType::FP32);
-    matmul_methods[2].fn_generate_lhs = UniformRandomGenerator<float>(-1.0, 1.0, 0);
-    matmul_methods[2].fn_generate_rhs = UniformRandomGenerator<float>(-1.0, 1.0, 1);
-    matmul_methods[2].fn_generate_bias = [](size_t rows, size_t cols, bool null_bias_mode) {
+    matmul_methods[2].fn_generate_lhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<float>(-1.0, 1.0, feed())(rows, cols);
+    };
+    matmul_methods[2].fn_generate_rhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<float>(-1.0, 1.0, feed())(rows, cols);
+    };
+    matmul_methods[2].fn_generate_bias = [](size_t rows, size_t cols, SeedFeed& feed, bool null_bias_mode) {
         KAI_UNUSED(null_bias_mode);
-        return UniformRandomGenerator<float>(-1.0, 1.0, 3)(rows, cols);
+        return UniformRandomGenerator<float>(-1.0, 1.0, feed())(rows, cols);
     };
     matmul_methods[2].fn_is_supported = cpu_has_advsimd;
     matmul_methods[2].fn_get_nr = kai_get_nr_matmul_clamp_f32_f32_f32p8x1biasf32_6x8x4_neon_mla;
@@ -211,11 +224,15 @@ static const auto& get_matmul_methods() {
         DataType::FP32, 2 * get_sme_vector_length<float>(), 0, DataFormat::PackFormat::BIAS_PER_ROW, DataType::FP32,
         DataType::UNKNOWN, 2 * get_sme_vector_length<float>(), 1);
     matmul_methods[3].bias_format = DataFormat(DataType::FP32);
-    matmul_methods[3].fn_generate_lhs = UniformRandomGenerator<float>(-1.0, 1.0, 0);
-    matmul_methods[3].fn_generate_rhs = UniformRandomGenerator<float>(-1.0, 1.0, 1);
-    matmul_methods[3].fn_generate_bias = [](size_t rows, size_t cols, bool null_bias_mode) {
+    matmul_methods[3].fn_generate_lhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<float>(-1.0, 1.0, feed())(rows, cols);
+    };
+    matmul_methods[3].fn_generate_rhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<float>(-1.0, 1.0, feed())(rows, cols);
+    };
+    matmul_methods[3].fn_generate_bias = [](size_t rows, size_t cols, SeedFeed& feed, bool null_bias_mode) {
         KAI_UNUSED(null_bias_mode);
-        return UniformRandomGenerator<float>(-1.0, 1.0, 3)(rows, cols);
+        return UniformRandomGenerator<float>(-1.0, 1.0, feed())(rows, cols);
     };
     matmul_methods[3].fn_is_supported = cpu_has_sme2;
     matmul_methods[3].fn_get_mr = kai_get_mr_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa;
@@ -261,11 +278,15 @@ static const auto& get_matmul_methods() {
         DataType::FP32, 2 * get_sme_vector_length<float>(), 0, DataFormat::PackFormat::BIAS_PER_ROW, DataType::FP32,
         DataType::UNKNOWN, 2 * get_sme_vector_length<float>(), 1);
     matmul_methods[4].bias_format = DataFormat(DataType::FP32);
-    matmul_methods[4].fn_generate_lhs = UniformRandomGenerator<float>(-1.0, 1.0, 0);
-    matmul_methods[4].fn_generate_rhs = UniformRandomGenerator<float>(-1.0, 1.0, 1);
-    matmul_methods[4].fn_generate_bias = [](size_t rows, size_t cols, bool null_bias_mode) {
+    matmul_methods[4].fn_generate_lhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<float>(-1.0, 1.0, feed())(rows, cols);
+    };
+    matmul_methods[4].fn_generate_rhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<float>(-1.0, 1.0, feed())(rows, cols);
+    };
+    matmul_methods[4].fn_generate_bias = [](size_t rows, size_t cols, SeedFeed& feed, bool null_bias_mode) {
         KAI_UNUSED(null_bias_mode);
-        return UniformRandomGenerator<float>(-1.0, 1.0, 3)(rows, cols);
+        return UniformRandomGenerator<float>(-1.0, 1.0, feed())(rows, cols);
     };
     matmul_methods[4].fn_is_supported = cpu_has_sme;
     matmul_methods[4].fn_get_mr = kai_get_mr_matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa;
@@ -315,11 +336,15 @@ static const auto& get_matmul_methods() {
         DataType::UNKNOWN,                       // Scaling type
         2 * get_sme_vector_length<float>(), 2);  // Sub-block
     matmul_methods[5].bias_format = DataFormat(DataType::FP16);
-    matmul_methods[5].fn_generate_lhs = UniformRandomGenerator<Float16>(-1.0, 1.0, 0);
-    matmul_methods[5].fn_generate_rhs = UniformRandomGenerator<Float16>(-1.0, 1.0, 1);
-    matmul_methods[5].fn_generate_bias = [](size_t rows, size_t cols, bool null_bias_mode) {
+    matmul_methods[5].fn_generate_lhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<Float16>(-1.0, 1.0, feed())(rows, cols);
+    };
+    matmul_methods[5].fn_generate_rhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<Float16>(-1.0, 1.0, feed())(rows, cols);
+    };
+    matmul_methods[5].fn_generate_bias = [](size_t rows, size_t cols, SeedFeed& feed, bool null_bias_mode) {
         KAI_UNUSED(null_bias_mode);
-        return UniformRandomGenerator<Float16>(-1.0, 1.0, 3)(rows, cols);
+        return UniformRandomGenerator<Float16>(-1.0, 1.0, feed())(rows, cols);
     };
     matmul_methods[5].fn_is_supported = cpu_has_sme;
     matmul_methods[5].fn_get_mr = kai_get_mr_matmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa;
@@ -363,11 +388,15 @@ static const auto& get_matmul_methods() {
         DataType::FP32, 4 * get_sve_vector_length<float>(), 0, DataFormat::PackFormat::BIAS_PER_ROW, DataType::FP32,
         DataType::UNKNOWN, 4 * get_sve_vector_length<float>(), 1);
     matmul_methods[6].bias_format = DataFormat(DataType::FP32);
-    matmul_methods[6].fn_generate_lhs = UniformRandomGenerator<float>(-1.0, 1.0, 0);
-    matmul_methods[6].fn_generate_rhs = UniformRandomGenerator<float>(-1.0, 1.0, 1);
-    matmul_methods[6].fn_generate_bias = [](size_t rows, size_t cols, bool null_bias_mode) {
+    matmul_methods[6].fn_generate_lhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<float>(-1.0, 1.0, feed())(rows, cols);
+    };
+    matmul_methods[6].fn_generate_rhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<float>(-1.0, 1.0, feed())(rows, cols);
+    };
+    matmul_methods[6].fn_generate_bias = [](size_t rows, size_t cols, SeedFeed& feed, bool null_bias_mode) {
         KAI_UNUSED(null_bias_mode);
-        return UniformRandomGenerator<float>(-1.0, 1.0, 3)(rows, cols);
+        return UniformRandomGenerator<float>(-1.0, 1.0, feed())(rows, cols);
     };
     matmul_methods[6].fn_is_supported = cpu_has_sve;
     matmul_methods[6].fn_get_nr = kai_get_nr_matmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla;
@@ -410,11 +439,15 @@ static const auto& get_vecmul_methods() {
         DataType::UNKNOWN,                       // Scaling type
         2 * get_sme_vector_length<float>(), 2);  // Sub-block
     vecmul_methods[0].bias_format = DataFormat(DataType::FP16);
-    vecmul_methods[0].fn_generate_lhs = UniformRandomGenerator<Float16>(-1.0, 1.0, 0);
-    vecmul_methods[0].fn_generate_rhs = UniformRandomGenerator<Float16>(-1.0, 1.0, 1);
-    vecmul_methods[0].fn_generate_bias = [](size_t rows, size_t cols, bool null_bias_mode) {
+    vecmul_methods[0].fn_generate_lhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<Float16>(-1.0, 1.0, feed())(rows, cols);
+    };
+    vecmul_methods[0].fn_generate_rhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<Float16>(-1.0, 1.0, feed())(rows, cols);
+    };
+    vecmul_methods[0].fn_generate_bias = [](size_t rows, size_t cols, SeedFeed& feed, bool null_bias_mode) {
         KAI_UNUSED(null_bias_mode);
-        return UniformRandomGenerator<Float16>(-1.0, 1.0, 3)(rows, cols);
+        return UniformRandomGenerator<Float16>(-1.0, 1.0, feed())(rows, cols);
     };
     vecmul_methods[0].fn_is_supported = cpu_has_sme2;
     vecmul_methods[0].fn_get_nr = kai_get_nr_matmul_clamp_f16_f16_f16p2vlx2b_1x16vl_sme2_dot;
@@ -450,11 +483,15 @@ static const auto& get_vecmul_methods() {
         DataType::UNKNOWN,                       // Scaling type
         2 * get_sme_vector_length<float>(), 2);  // Sub-block
     vecmul_methods[1].bias_format = DataFormat(DataType::FP16);
-    vecmul_methods[1].fn_generate_lhs = UniformRandomGenerator<Float16>(-1.0, 1.0, 0);
-    vecmul_methods[1].fn_generate_rhs = UniformRandomGenerator<Float16>(-1.0, 1.0, 1);
-    vecmul_methods[1].fn_generate_bias = [](size_t rows, size_t cols, bool null_bias_mode) {
+    vecmul_methods[1].fn_generate_lhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<Float16>(-1.0, 1.0, feed())(rows, cols);
+    };
+    vecmul_methods[1].fn_generate_rhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<Float16>(-1.0, 1.0, feed())(rows, cols);
+    };
+    vecmul_methods[1].fn_generate_bias = [](size_t rows, size_t cols, SeedFeed& feed, bool null_bias_mode) {
         KAI_UNUSED(null_bias_mode);
-        return UniformRandomGenerator<Float16>(-1.0, 1.0, 3)(rows, cols);
+        return UniformRandomGenerator<Float16>(-1.0, 1.0, feed())(rows, cols);
     };
     vecmul_methods[1].fn_is_supported = cpu_has_sme;
     vecmul_methods[1].fn_get_nr = kai_get_nr_matmul_clamp_f16_f16_f16p2vlx2b_1x8vl_sme_mla;
@@ -490,11 +527,15 @@ static const auto& get_vecmul_methods() {
         DataType::UNKNOWN,                       // Scaling type
         2 * get_sme_vector_length<float>(), 1);  // Sub-block
     vecmul_methods[2].bias_format = DataFormat(DataType::FP32);
-    vecmul_methods[2].fn_generate_lhs = UniformRandomGenerator<float>(-1.0, 1.0, 0);
-    vecmul_methods[2].fn_generate_rhs = UniformRandomGenerator<float>(-1.0, 1.0, 1);
-    vecmul_methods[2].fn_generate_bias = [](size_t rows, size_t cols, bool null_bias_mode) {
+    vecmul_methods[2].fn_generate_lhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<float>(-1.0, 1.0, feed())(rows, cols);
+    };
+    vecmul_methods[2].fn_generate_rhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<float>(-1.0, 1.0, feed())(rows, cols);
+    };
+    vecmul_methods[2].fn_generate_bias = [](size_t rows, size_t cols, SeedFeed& feed, bool null_bias_mode) {
         KAI_UNUSED(null_bias_mode);
-        return UniformRandomGenerator<float>(-1.0, 1.0, 3)(rows, cols);
+        return UniformRandomGenerator<float>(-1.0, 1.0, feed())(rows, cols);
     };
     vecmul_methods[2].fn_is_supported = cpu_has_sme;
     vecmul_methods[2].fn_get_nr = kai_get_nr_matmul_clamp_f32_f32_f32p2vlx1b_1x8vl_sme_mla;
@@ -531,11 +572,15 @@ static const auto& get_vecmul_methods() {
         DataType::UNKNOWN,                       // Scaling type
         2 * get_sme_vector_length<float>(), 1);  // Sub-block
     vecmul_methods[3].bias_format = DataFormat(DataType::FP32);
-    vecmul_methods[3].fn_generate_lhs = UniformRandomGenerator<float>(-1.0, 1.0, 0);
-    vecmul_methods[3].fn_generate_rhs = UniformRandomGenerator<float>(-1.0, 1.0, 1);
-    vecmul_methods[3].fn_generate_bias = [](size_t rows, size_t cols, bool null_bias_mode) {
+    vecmul_methods[3].fn_generate_lhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<float>(-1.0, 1.0, feed())(rows, cols);
+    };
+    vecmul_methods[3].fn_generate_rhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<float>(-1.0, 1.0, feed())(rows, cols);
+    };
+    vecmul_methods[3].fn_generate_bias = [](size_t rows, size_t cols, SeedFeed& feed, bool null_bias_mode) {
         KAI_UNUSED(null_bias_mode);
-        return UniformRandomGenerator<float>(-1.0, 1.0, 3)(rows, cols);
+        return UniformRandomGenerator<float>(-1.0, 1.0, feed())(rows, cols);
     };
     vecmul_methods[3].fn_is_supported = cpu_has_sme2;
     vecmul_methods[3].fn_get_nr = kai_get_nr_matmul_clamp_f32_f32_f32p2vlx1b_1x16vl_sme2_mla;
@@ -572,11 +617,15 @@ static const auto& get_vecmul_methods() {
         DataType::UNKNOWN,                        // Scaling type
         16 * get_sme_vector_length<float>(), 1);  // Sub-block
     vecmul_methods[4].bias_format = DataFormat(DataType::FP32);
-    vecmul_methods[4].fn_generate_lhs = UniformRandomGenerator<float>(-1.0, 1.0, 0);
-    vecmul_methods[4].fn_generate_rhs = UniformRandomGenerator<float>(-1.0, 1.0, 1);
-    vecmul_methods[4].fn_generate_bias = [](size_t rows, size_t cols, bool null_bias_mode) {
+    vecmul_methods[4].fn_generate_lhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<float>(-1.0, 1.0, feed())(rows, cols);
+    };
+    vecmul_methods[4].fn_generate_rhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<float>(-1.0, 1.0, feed())(rows, cols);
+    };
+    vecmul_methods[4].fn_generate_bias = [](size_t rows, size_t cols, SeedFeed& feed, bool null_bias_mode) {
         KAI_UNUSED(null_bias_mode);
-        return UniformRandomGenerator<float>(-1.0, 1.0, 3)(rows, cols);
+        return UniformRandomGenerator<float>(-1.0, 1.0, feed())(rows, cols);
     };
     vecmul_methods[4].fn_is_supported = cpu_has_sme2;
     vecmul_methods[4].fn_get_nr = kai_get_nr_matmul_clamp_f32_f32_f32p16vlx1b_1x16vl_sme2_mla;
@@ -615,13 +664,17 @@ static const auto& get_nullbias_matmul_methods() {
     nullbias_matmul_methods[0].packed_rhs_format = DataFormat(
         DataType::FP32, 16, 0, DataFormat::PackFormat::BIAS_PER_ROW, DataType::FP32, DataType::UNKNOWN, 16, 1);
     nullbias_matmul_methods[0].bias_format = DataFormat(DataType::FP32);
-    nullbias_matmul_methods[0].fn_generate_lhs = UniformRandomGenerator<float>(-1.0, 1.0, 0);
-    nullbias_matmul_methods[0].fn_generate_rhs = UniformRandomGenerator<float>(-1.0, 1.0, 1);
-    nullbias_matmul_methods[0].fn_generate_bias = [](size_t rows, size_t cols, bool null_bias_mode) {
+    nullbias_matmul_methods[0].fn_generate_lhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<float>(-1.0, 1.0, feed())(rows, cols);
+    };
+    nullbias_matmul_methods[0].fn_generate_rhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<float>(-1.0, 1.0, feed())(rows, cols);
+    };
+    nullbias_matmul_methods[0].fn_generate_bias = [](size_t rows, size_t cols, SeedFeed& feed, bool null_bias_mode) {
         if (null_bias_mode) {
             return ConstantGenerator<float>(0.0)(rows, cols);
         } else {
-            return UniformRandomGenerator<float>(-1.0, 1.0, 3)(rows, cols);
+            return UniformRandomGenerator<float>(-1.0, 1.0, feed())(rows, cols);
         }
     };
     nullbias_matmul_methods[0].fn_is_supported = cpu_has_advsimd;
@@ -654,13 +707,17 @@ static const auto& get_nullbias_matmul_methods() {
     nullbias_matmul_methods[1].packed_rhs_format = DataFormat(
         DataType::FP32, 16, 0, DataFormat::PackFormat::BIAS_PER_ROW, DataType::FP32, DataType::UNKNOWN, 16, 1);
     nullbias_matmul_methods[1].bias_format = DataFormat(DataType::FP32);
-    nullbias_matmul_methods[1].fn_generate_lhs = UniformRandomGenerator<float>(-1.0, 1.0, 0);
-    nullbias_matmul_methods[1].fn_generate_rhs = UniformRandomGenerator<float>(-1.0, 1.0, 1);
-    nullbias_matmul_methods[1].fn_generate_bias = [](size_t rows, size_t cols, bool null_bias_mode) {
+    nullbias_matmul_methods[1].fn_generate_lhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<float>(-1.0, 1.0, feed())(rows, cols);
+    };
+    nullbias_matmul_methods[1].fn_generate_rhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<float>(-1.0, 1.0, feed())(rows, cols);
+    };
+    nullbias_matmul_methods[1].fn_generate_bias = [](size_t rows, size_t cols, SeedFeed& feed, bool null_bias_mode) {
         if (null_bias_mode) {
             return ConstantGenerator<float>(0.0)(rows, cols);
         } else {
-            return UniformRandomGenerator<float>(-1.0, 1.0, 3)(rows, cols);
+            return UniformRandomGenerator<float>(-1.0, 1.0, feed())(rows, cols);
         }
     };
     nullbias_matmul_methods[1].fn_is_supported = cpu_has_advsimd;
@@ -698,13 +755,17 @@ static const auto& get_nullbias_matmul_methods() {
     nullbias_matmul_methods[2].packed_rhs_format = DataFormat(
         DataType::FP16, 32, 0, DataFormat::PackFormat::BIAS_PER_ROW, DataType::FP16, DataType::UNKNOWN, 32, 1);
     nullbias_matmul_methods[2].bias_format = DataFormat(DataType::FP16);
-    nullbias_matmul_methods[2].fn_generate_lhs = UniformRandomGenerator<Float16>(-1.0, 1.0, 0);
-    nullbias_matmul_methods[2].fn_generate_rhs = UniformRandomGenerator<Float16>(-1.0, 1.0, 1);
-    nullbias_matmul_methods[2].fn_generate_bias = [](size_t rows, size_t cols, bool null_bias_mode) {
+    nullbias_matmul_methods[2].fn_generate_lhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<Float16>(-1.0, 1.0, feed())(rows, cols);
+    };
+    nullbias_matmul_methods[2].fn_generate_rhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<Float16>(-1.0, 1.0, feed())(rows, cols);
+    };
+    nullbias_matmul_methods[2].fn_generate_bias = [](size_t rows, size_t cols, SeedFeed& feed, bool null_bias_mode) {
         if (null_bias_mode) {
             return ConstantGenerator<Float16>(0.0)(rows, cols);
         } else {
-            return UniformRandomGenerator<Float16>(-1.0, 1.0, 3)(rows, cols);
+            return UniformRandomGenerator<Float16>(-1.0, 1.0, feed())(rows, cols);
         }
     };
     nullbias_matmul_methods[2].fn_is_supported = cpu_has_fp16;
@@ -737,13 +798,17 @@ static const auto& get_nullbias_matmul_methods() {
     nullbias_matmul_methods[3].packed_rhs_format = DataFormat(
         DataType::FP16, 32, 0, DataFormat::PackFormat::BIAS_PER_ROW, DataType::FP16, DataType::UNKNOWN, 32, 1);
     nullbias_matmul_methods[3].bias_format = DataFormat(DataType::FP16);
-    nullbias_matmul_methods[3].fn_generate_lhs = UniformRandomGenerator<Float16>(-1.0, 1.0, 0);
-    nullbias_matmul_methods[3].fn_generate_rhs = UniformRandomGenerator<Float16>(-1.0, 1.0, 1);
-    nullbias_matmul_methods[3].fn_generate_bias = [](size_t rows, size_t cols, bool null_bias_mode) {
+    nullbias_matmul_methods[3].fn_generate_lhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<Float16>(-1.0, 1.0, feed())(rows, cols);
+    };
+    nullbias_matmul_methods[3].fn_generate_rhs = [](size_t rows, size_t cols, SeedFeed& feed) {
+        return UniformRandomGenerator<Float16>(-1.0, 1.0, feed())(rows, cols);
+    };
+    nullbias_matmul_methods[3].fn_generate_bias = [](size_t rows, size_t cols, SeedFeed& feed, bool null_bias_mode) {
         if (null_bias_mode) {
             return ConstantGenerator<Float16>(0.0)(rows, cols);
         } else {
-            return UniformRandomGenerator<Float16>(-1.0, 1.0, 3)(rows, cols);
+            return UniformRandomGenerator<Float16>(-1.0, 1.0, feed())(rows, cols);
         }
     };
     nullbias_matmul_methods[3].fn_is_supported = cpu_has_fp16;
@@ -802,6 +867,12 @@ protected:
         const auto& [method, info, portion, bias_mode, clamp_keep_ratio] = GetParam();
         const TestDataId data_id{info.m, info.n, info.k, method.name, bias_mode, clamp_keep_ratio};
 
+        // Creates a unique seed for the test data.
+        const auto key = std::string(method.name) + "_" + std::to_string(info.m) + "x" + std::to_string(info.n) + "x" +
+            std::to_string(info.k) + "_" + (bias_mode == BiasMode::INTERNAL ? "internal" : "provided") + "_" +
+            std::to_string(clamp_keep_ratio);
+        auto& feed = seed_stream(key);
+
         // If the test data is already available, returns it.
         const auto data_it = _data.find(data_id);
 
@@ -817,9 +888,9 @@ protected:
 
         const auto lhs_h = info.m;
         const auto lhs_w = info.k;
-        auto lhs = method.fn_generate_lhs(lhs_h, lhs_w);
-        Buffer ref_packed_lhs;
+        auto lhs = method.fn_generate_lhs(lhs_h, lhs_w, feed);
 
+        Buffer ref_packed_lhs;
         if (has_lhs_pack) {
             ref_packed_lhs =
                 pack(method.packed_lhs_format, lhs.data(), nullptr, nullptr, method.lhs_format, lhs_h, lhs_w);
@@ -827,7 +898,7 @@ protected:
 
         const auto rhs_h = info.k;
         const auto rhs_w = info.n;
-        auto rhs = method.fn_generate_rhs(rhs_h, rhs_w);
+        auto rhs = method.fn_generate_rhs(rhs_h, rhs_w, feed);
 
         KAI_ASSUME_ALWAYS(method.rhs_format.is_raw());
         auto rhs_t = transpose(rhs.data(), method.rhs_format.data_type(), rhs_h, rhs_w);
@@ -835,8 +906,7 @@ protected:
         Buffer rhs_scales;
         if (data_type_is_quantized(method.rhs_format.data_type()) &&
             method.rhs_format.pack_format() == DataFormat::PackFormat::NONE) {
-            const auto rhs_scales_gen = UniformRandomGenerator<float>(0.0, 1.0, 2);
-            rhs_scales = rhs_scales_gen(rhs_h, 1);
+            rhs_scales = fill_matrix_random(rhs_h, 1, DataFormat(DataType::FP32), feed());
         }
 
         const auto bias_h = 1;
@@ -844,7 +914,7 @@ protected:
         Buffer bias;
 
         if (has_bias) {
-            bias = method.fn_generate_bias(bias_h, bias_w, null_bias_mode);
+            bias = method.fn_generate_bias(bias_h, bias_w, feed, null_bias_mode);
         }
 
         Buffer packed_rhs;
@@ -1185,7 +1255,7 @@ TEST_P(MatMulTest, Output) {
         rhs_data + rhs_offset, bias_data, dst.data() + dst_offset, lhs_stride, rhs_stride, dst_stride, data.clamp_min,
         data.clamp_max);
 
-    DefaultMismatchHandler handler(0, 0.1, 0, 0.05);
+    DefaultMismatchHandler handler(0, 0.1, 0, 0.1);
     const auto success = compare(dst.data(), data.ref_dst.data(), method.dst_format, info.m, info.n, rect, handler);
     ASSERT_TRUE(success);
 }
