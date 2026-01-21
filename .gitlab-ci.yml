@@ -559,6 +559,79 @@ test-examples-sme-fvp:
     paths:
       - example.log
 
+# Purpose: Resolve and lock gcovr version for consistent coverage reporting.
+resolve-gcovr:
+  extends: .standard-rules
+  stage: analyze
+  needs: []
+  variables:
+    PIP_CACHE_DIR: ".cache/pip3"
+  cache:
+    - key: "cache-pip3"
+      paths:
+        - $PIP_CACHE_DIR
+      policy: $CACHE_POLICY
+  script:
+    # Install latest gcovr once, then record the exact version
+    - python3 -m pip install --cache-dir=$PIP_CACHE_DIR --user -U --break-system-packages gcovr
+    - export PATH="$(python3 -m site --user-base)/bin:${PATH}"
+    - GCOVR_VERSION=$(gcovr --version | awk 'NR==1 {print $2; exit}')
+    - echo "GCOVR_VERSION=${GCOVR_VERSION}" | tee gcovr.env
+  artifacts:
+    paths:
+      - gcovr.env
+
+# Base template: .gcovr-install
+# Purpose: Install cached gcovr version from resolve-gcovr job.
+.gcovr-install:
+  variables:
+    PIP_CACHE_DIR: ".cache/pip3"
+  cache:
+    - key: "cache-pip3"
+      paths:
+        - $PIP_CACHE_DIR
+      policy: $CACHE_POLICY
+  before_script:
+    - |
+      if [ "$(uname)" = "Darwin" ]; then
+        export PATH="/opt/homebrew/bin:/usr/local/bin:${PATH}"
+      fi
+
+    # Load the locked GCOVR_VERSION from resolve-gcovr
+    - |
+      if [ -f gcovr.env ]; then
+        set -a
+        . gcovr.env
+        set +a
+        echo "Using gcovr ${GCOVR_VERSION} from resolve-gcovr"
+      else
+        echo "gcovr.env not found; ensure resolve-gcovr is listed in needs." >&2
+        exit 1
+      fi
+
+    # Install pip + gcovr==$GCOVR_VERSION
+    - |
+      if python3 -m pip help install 2>&1 | grep -q -- "--break-system-packages"; then
+        PIP_BREAK_SYSTEM_PACKAGES_FLAG="--break-system-packages"
+      else
+        PIP_BREAK_SYSTEM_PACKAGES_FLAG=""
+      fi
+      python3 -m pip install --cache-dir=$PIP_CACHE_DIR --user -U ${PIP_BREAK_SYSTEM_PACKAGES_FLAG} pip
+      python3 -m pip install --cache-dir=$PIP_CACHE_DIR --user ${PIP_BREAK_SYSTEM_PACKAGES_FLAG} "gcovr==${GCOVR_VERSION}"
+    - export PATH="$(python3 -m site --user-base)/bin:${PATH}"
+
+    # Sanity check the installed gcovr version
+    - gcovr --version
+    - |
+      (
+        set -euo pipefail
+        INSTALLED_GCOVR_VERSION=$(gcovr --version | awk 'NR==1 {print $2; exit}')
+        if [ "${INSTALLED_GCOVR_VERSION}" != "${GCOVR_VERSION}" ]; then
+          echo "Expected gcovr ${GCOVR_VERSION} but found ${INSTALLED_GCOVR_VERSION}" >&2
+          exit 1
+        fi
+      )
+
 # Base template: .coverage-base
 # Purpose: Instrumented build & diversified benchmark/test execution producing per-job JSON coverage trace.
 .coverage-base:
@@ -621,18 +694,12 @@ test-examples-sme-fvp:
 coverage-linux:
   extends:
     - .coverage-base
+    - .gcovr-install
   stage: analyze
+  needs:
+    - resolve-gcovr
   variables:
     GCOV_EXECUTABLE: "llvm-cov gcov"
-    PIP_CACHE_DIR: ".cache/pip3"
-  cache:
-    - key: cache-pip3
-      paths:
-        - $PIP_CACHE_DIR
-      policy: $CACHE_POLICY
-  before_script:
-    # Install latest gcovr to keep it in sync with other systems
-    - pip3 install --cache-dir=$PIP_CACHE_DIR -U --break-system-packages --user gcovr
 
 # Purpose: SVE256 coverage variant (focus on *_sve_* tests) to extend line/function coverage set.
 coverage-linux-sve256:
@@ -647,7 +714,10 @@ coverage-linux-sve256:
 coverage-clang:
   extends:
     - .coverage-base
+    - .gcovr-install
   stage: analyze
+  needs:
+    - resolve-gcovr
   tags:
     - apple_silicon
   variables:
@@ -658,23 +728,15 @@ coverage-clang:
 coverage:
   extends:
     - .standard-rules
+    - .gcovr-install
   stage: deploy
   needs:
+    - resolve-gcovr
     - coverage-linux
     - coverage-linux-sve256
     - coverage-clang
   tags:
     - apple_silicon
-  variables:
-    PIP_CACHE_DIR: ".cache/pip3"
-  cache:
-    - key: cache-pip3
-      paths:
-        - $PIP_CACHE_DIR
-      policy: $CACHE_POLICY
-  before_script:
-    - python3 -m pip install --cache-dir=$PIP_CACHE_DIR --user -U gcovr --break-system-packages
-    - export PATH="$(python3 -m site --user-base)/bin:${PATH}"
   script:
     # Generage Cobertura and HTML reports merging coverage across variants,
     # where each variant artifact should be stored in JSON file at build/coverage/
