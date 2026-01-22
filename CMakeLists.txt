@@ -674,6 +674,7 @@ if(KLEIDIAI_BUILD_TESTS)
             test/tests/matmul_test.cpp
 
             test/nextgen/tests/matmul_test_next.cpp
+            test/nextgen/tests/poly_test.cpp
         )
 
         set_source_files_properties(
