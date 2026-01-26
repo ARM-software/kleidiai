@@ -1,5 +1,5 @@
 #
-# SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -11,6 +11,7 @@ load(
     "update_attrs",
     "workspace_and_buildfile",
 )
+load("@rules_cc//cc:defs.bzl", "cc_library")
 
 # Extra warnings for GCC/CLANG C/C++
 def kai_gcc_warn_copts():
@@ -169,7 +170,7 @@ def _kai_c_cxx_common(name, copts_def_func, **kwargs):
         kwargs["textual_hdrs"] = kwargs.get("textual_hdrs", []) + [ukernel + ".h" for ukernel in kwargs["kernels_asm"]]
         kwargs.pop("kernels_asm")
 
-    native.cc_library(
+    cc_library(
         name = name,
         **kwargs
     )

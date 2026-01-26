@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+load("@rules_cc//cc:defs.bzl", "cc_test")
 load(
     "//:kai_defs.bzl",
     "kai_cpu_bf16",
