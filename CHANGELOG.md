@@ -10,6 +10,8 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+## v1.21.0
+
 - Add Bazel 9 support
 - Fixes
   - Addressed undefined behavior affecting polymorphic handling in test framework
