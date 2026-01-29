@@ -169,7 +169,7 @@ const auto& get_bf16_gemm_variants() noexcept {
     return variants;
 }
 
-// NEON/i8mm only (exclude SME2)
+// Advanced SIMD / i8mm only (exclude SME2)
 const auto& get_f32_neon_gemm_variants_only() {
     static std::vector<UkernelMatmulPackVariant<
         kai_matmul_clamp_f32_qai8dxp_qsi4c32p_ukernel, kai_qai8dxp_pack_functions, kai_qsi4c32p_pack_functions>>
