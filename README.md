@@ -1,5 +1,5 @@
 <!--
-    SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+    SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 
     SPDX-License-Identifier: Apache-2.0
 -->
@@ -163,6 +163,10 @@ No, KleidiAI is a library of micro-kernels optimized for the Arm® architecture.
 ### What ML operators are supported?
 
 KleidiAI does not provide traditional ML operators; it implements a set of optimized micro-kernels which can be used as building blocks to implement ML operators. Please refer to the sections [What is a micro-kernel](#what-is-a-micro-kernel), [Supported micro-kernels](#supported-micro-kernels) and the [docs](/docs/README.md) for more information.
+
+### How do I use the KleidiAI micro-kernels?
+
+Please refer to the [Examples](docs/README.md#examples) section of the documentation and the sample applications in the [examples](/examples) sub-directory. These examples are standalone C++ applications that demonstrate end-to-end use of a selection of the micro-kernels.
 
 ### What CPUs does KleidiAI support?
 
