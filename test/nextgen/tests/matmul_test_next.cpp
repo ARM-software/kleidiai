@@ -15,6 +15,7 @@
 
 #include "test/common/assert.hpp"
 #include "test/common/matrix_portion.hpp"
+#include "test/common/seed.hpp"
 #include "test/common/span.hpp"
 #include "test/nextgen/common/random.hpp"
 #include "test/nextgen/common/test_registry.hpp"
@@ -78,7 +79,10 @@ protected:
             m_fixture_params.shape_m, m_fixture_params.shape_n, m_fixture_params.shape_k, m_fixture_params.bias_mode,
             m_fixture_params.clamp_ratio, m_fixture_params.op);
 
-        Rng rng(m_fixture_params.iteration_no);  // REVISIT: Derive the seed from the global seed.
+        const std::string seed_key = "MatMulNext::testbench:" + name;
+        auto& feed = seed_stream(seed_key);
+        Rng rng(feed());
+
         test.generate_test_data(rng);
 
         return test_benches[name] = std::move(test);
@@ -179,7 +183,9 @@ const auto matmul_tests_setup = TestRegistry::register_setup([]() {
     };
 
     const Span<const MatMulOperator> available_operators = get_available_matmul_operators();
-    Rng rng(0);  // REVISIT: Use the global seed to initialize this RNG.
+    auto& seed_feed = seed_stream("MatMulNext::setup");
+    Rng rng(seed_feed());
+
     std::uniform_int_distribution<size_t> shape_dist(1, 150);
     std::uniform_real_distribution<float> probability_dist(0.0F, 1.0F);
     std::uniform_real_distribution<float> dist_70_to_100(0.7F, 1.0F);

@@ -19,7 +19,11 @@ std::uint32_t global_test_seed() {
         return 0;
     }
 
-    return static_cast<std::uint32_t>(std::max(0, unit_test->random_seed()));
+    int seed = unit_test->random_seed();
+    if (seed == 0) {
+        seed = GTEST_FLAG_GET(random_seed);
+    }
+    return static_cast<std::uint32_t>(std::max(0, seed));
 }
 
 std::string current_test_key() {
