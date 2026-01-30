@@ -16,6 +16,8 @@
 #include "kai/ukernels/matmul/imatmul_clamp_f16_f16p_f16p/kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/imatmul_clamp_f16_f16p_f16p/kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa.h"
 #include "kai/ukernels/matmul/imatmul_clamp_f16_f16p_f16p/kai_imatmul_clamp_f16_f16p_f16p_interface.h"
+#include "kai/ukernels/matmul/imatmul_clamp_f32_f32_f32p/kai_imatmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla.h"
+#include "kai/ukernels/matmul/imatmul_clamp_f32_f32_f32p/kai_imatmul_clamp_f32_f32_f32p_interface.h"
 #include "kai/ukernels/matmul/imatmul_clamp_f32_f32p_f32p/kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/imatmul_clamp_f32_f32p_f32p/kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa.h"
 #include "kai/ukernels/matmul/imatmul_clamp_f32_f32p_f32p/kai_imatmul_clamp_f32_f32p_f32p_interface.h"
@@ -23,6 +25,7 @@
 #include "kai/ukernels/matmul/pack/kai_lhs_imatmul_pack_x32p2vlx1_x32p_sme.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_imatmul_pack_kxn_x16p2vlx2b_x16_x16_sme.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_imatmul_pack_kxn_x32p2vlx1b_x32_x32_sme.h"
+#include "kai/ukernels/matmul/pack/kai_rhs_imatmul_pack_kxn_x32p4vlx1b_x32_x32_sve.h"
 #include "test/common/abi_checker.hpp"
 #include "test/common/buffer.hpp"
 #include "test/common/compare.hpp"
@@ -33,6 +36,7 @@
 #include "test/common/round.hpp"
 #include "test/common/seed.hpp"
 #include "test/common/sme.hpp"
+#include "test/common/sve.hpp"
 #include "test/reference/clamp.hpp"
 #include "test/reference/fill.hpp"
 #include "test/reference/matmul.hpp"
@@ -57,7 +61,7 @@ struct LhsPackIndirectKernel {
     std::function<void(
         size_t m, size_t k_chunk_count, size_t k_chunk_length, const void* const* lhs_ptrs, size_t lhs_ptr_offset,
         const void* zero, void* lhs_packed)>
-        pack;
+        pack{nullptr};
 };
 
 /// Interface for indirect matmul RHS packing micro-kernel
@@ -84,10 +88,19 @@ struct MatMulIndirectKernel {
     std::function<size_t(size_t n_idx, size_t k_chunk_count, size_t k_chunk_length)> get_rhs_packed_offset;
     std::function<size_t(size_t m_idx, size_t n_idx, size_t dst_stride_row)> get_dst_offset;
     std::function<size_t(size_t m, size_t n)> get_dst_size;
+
+    // Matmul function when using lhs pack
     std::function<void(
         size_t m, size_t n, size_t k_chunk_count, size_t k_chunk_length, const void* lhs_packed, const void* rhs_packed,
         void* dst, size_t dst_stride_row, float clamp_min, float clamp_max)>
-        imatmul;
+        imatmul{nullptr};
+
+    // Matmul function when using indirection buffer (no lhs pack)
+    std::function<void(
+        size_t m, size_t n, size_t k_chunk_count, size_t k_chunk_length, const void* indirection_buffer,
+        const void* pad_ptr, size_t lhs_ptr_offset, const void* rhs_packed, void* dst, size_t dst_stride_row,
+        float clamp_min, float clamp_max)>
+        imatmul_no_lhs_pack{nullptr};
 };
 
 /// Description of a Indirect Matmul kernel set
@@ -125,6 +138,10 @@ struct IndirectMatMul {
     LhsPackIndirectKernel lhs;
     RhsPackIndirectKernel rhs;
     MatMulIndirectKernel imatmul;
+
+    bool is_lhs_pack_needed() const {
+        return lhs.pack != nullptr;
+    }
 };
 
 /// Test parameter bundle type
@@ -183,10 +200,22 @@ const kai_imatmul_clamp_f32_f32p_f32p_ukernel& get_imatmul_clamp_f32_f32p2vlx1_f
     return ukernel;
 }
 
+const kai_imatmul_clamp_f32_f32_f32p_ukernel& get_imatmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla() {
+    static kai_imatmul_clamp_f32_f32_f32p_ukernel ukernel;
+    ukernel.get_m_step = kai_get_m_step_imatmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla;
+    ukernel.get_n_step = kai_get_n_step_imatmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla;
+    ukernel.get_rhs_packed_offset = kai_get_rhs_packed_offset_imatmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla;
+    ukernel.get_dst_offset = kai_get_dst_offset_imatmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla;
+    ukernel.get_dst_size = kai_get_dst_size_imatmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla;
+    ukernel.run_imatmul = kai_run_imatmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla;
+    return ukernel;
+}
+
 /// Retreive the test list
 const auto& get_indirect_matmul_methods() {
-    static std::array<IndirectMatMul, 4> indirect_matmul_methods{};
-
+    static std::array<IndirectMatMul, 5> indirect_matmul_methods{};
+    //
+    // ----------------------------- SME -------------------------------------
     // F16 IMATMUL SME2 ///////////////////////////////////////////////////////
     indirect_matmul_methods[0].name = "imatmul_f16_f16p_f16p_2vlx2vl_sme2_mopa";
     indirect_matmul_methods[0].is_supported = cpu_has_sme2;
@@ -342,6 +371,40 @@ const auto& get_indirect_matmul_methods() {
     indirect_matmul_methods[3].imatmul.get_dst_offset = ukernel_f32_sme.get_dst_offset;
     indirect_matmul_methods[3].imatmul.get_dst_size = ukernel_f32_sme.get_dst_size;
     indirect_matmul_methods[3].imatmul.imatmul = ukernel_f32_sme.run_imatmul;
+
+    //
+    // ----------------------------- SVE -------------------------------------
+    // FP32 - No LHS Packing involved.
+    // F32 IMATMUL SVE
+    indirect_matmul_methods[4].name = "imatmul_f32_f32_f32p_6x4vl_sve_mla";
+    indirect_matmul_methods[4].is_supported = cpu_has_sve;
+    indirect_matmul_methods[4].pack_shape.m = 6;
+    indirect_matmul_methods[4].pack_shape.n = 4 * get_sve_vector_length<int32_t>();
+    indirect_matmul_methods[4].pack_shape.k = sizeof(int32_t);
+    indirect_matmul_methods[4].format.lhs = DataFormat(DataType::FP32);
+    indirect_matmul_methods[4].format.rhs = DataFormat(DataType::FP32);
+    indirect_matmul_methods[4].format.bias = DataFormat(DataType::FP32);
+    indirect_matmul_methods[4].format.out = DataFormat(DataType::FP32);
+
+    // RHS
+    indirect_matmul_methods[4].rhs.get_n_step = kai_get_n_step_rhs_imatmul_pack_kxn_x32p4vlx1b_x32_x32_sve;
+    indirect_matmul_methods[4].rhs.get_rhs_offset = kai_get_rhs_offset_rhs_imatmul_pack_kxn_x32p4vlx1b_x32_x32_sve;
+    indirect_matmul_methods[4].rhs.get_bias_offset = kai_get_bias_offset_rhs_imatmul_pack_kxn_x32p4vlx1b_x32_x32_sve;
+    indirect_matmul_methods[4].rhs.get_rhs_packed_offset =
+        kai_get_rhs_packed_offset_rhs_imatmul_pack_kxn_x32p4vlx1b_x32_x32_sve;
+    indirect_matmul_methods[4].rhs.get_rhs_packed_size =
+        kai_get_rhs_packed_size_rhs_imatmul_pack_kxn_x32p4vlx1b_x32_x32_sve;
+    indirect_matmul_methods[4].rhs.pack = kai_run_rhs_imatmul_pack_kxn_x32p4vlx1b_x32_x32_sve;
+
+    // IMATMUL
+    const kai_imatmul_clamp_f32_f32_f32p_ukernel& ukernel_f32_sve =
+        get_imatmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla();
+    indirect_matmul_methods[4].imatmul.get_m_step = ukernel_f32_sve.get_m_step;
+    indirect_matmul_methods[4].imatmul.get_n_step = ukernel_f32_sve.get_n_step;
+    indirect_matmul_methods[4].imatmul.get_rhs_packed_offset = ukernel_f32_sve.get_rhs_packed_offset;
+    indirect_matmul_methods[4].imatmul.get_dst_offset = ukernel_f32_sve.get_dst_offset;
+    indirect_matmul_methods[4].imatmul.get_dst_size = ukernel_f32_sve.get_dst_size;
+    indirect_matmul_methods[4].imatmul.imatmul_no_lhs_pack = ukernel_f32_sve.run_imatmul;
 
     return indirect_matmul_methods;
 }
@@ -533,11 +596,43 @@ Buffer pack_rhs(
     return dst;
 }
 
-/// Perform imatmul
+/// Perform imatmul using indirection buffer - without lhs pack
 ///
 /// Note, this should not be aware of reference result, as to make it clear that
 /// any produced result is strictly from the code under test
-Buffer imatmul(
+Buffer imatmul_without_lhs_pack(
+    const MatMulIndirectKernel& kernel, const Rect& portion, const MatMulShape& shape, const KChunk& k_chunk,
+    const TestData& reference, const Buffer& rhs_packed, DataType type) {
+    const auto clamp_range = reference.clamp_range;
+    const void* const* indirection_pointer = reinterpret_cast<const void* const*>(reference.indirection.data());
+
+    // Calculate size, and allocate buffer
+    const size_t dst_size = kernel.get_dst_size(shape.m, shape.n);
+    const size_t row_stride = round_up_division(shape.n * data_type_size_in_bits(type), 8);
+    Buffer dst(dst_size);
+
+    // Calculate portion offsets
+    const size_t lhs_offset = portion.start_row() * k_chunk.count;
+    const size_t rhs_offset = kernel.get_rhs_packed_offset(portion.start_col(), k_chunk.count, k_chunk.length);
+    const size_t dst_offset = kernel.get_dst_offset(portion.start_row(), portion.start_col(), row_stride);
+
+    // Call matmul kernel
+    abi_check(
+        kernel.imatmul_no_lhs_pack, portion.height(), portion.width(), k_chunk.count, k_chunk.length,  // Dimensions
+        indirection_pointer + lhs_offset,  // LHS - Indirection buffer
+        reference.padding.data(), reference.indirection_offset,
+        rhs_packed.data() + rhs_offset,  // RHS
+        dst.data() + dst_offset,         // DST
+        row_stride, clamp_range.min, clamp_range.max);
+
+    return dst;
+}
+
+/// Perform imatmul without LHS pack using indirection buffer directly.
+///
+/// Note, this should not be aware of reference result, as to make it clear that
+/// any produced result is strictly from the code under test
+Buffer imatmul_with_lhs_pack(
     const MatMulIndirectKernel& kernel, const Rect& portion, const MatMulShape& shape, const KChunk& k_chunk,
     const Buffer& lhs_packed, const Buffer& rhs_packed, Range<float> clamp_range, DataType type) {
     // Calculate size, and allocate buffer
@@ -583,11 +678,19 @@ TEST_P(IndirectMatMulTest, Output) {
     }
 
     // Call packing micro-kernels, and then imatmul kernel
-    Buffer lhs_packed = pack_lhs(method.lhs, portion, test_data, shape.m, k_chunk);
     Buffer rhs_packed = pack_rhs(method.rhs, portion, test_data, shape.n, k_chunk, method.format.rhs.data_type());
-    Buffer out = imatmul(
-        method.imatmul, portion, shape, k_chunk, lhs_packed, rhs_packed, test_data.clamp_range,
-        method.format.out.data_type());
+    const auto dst_size = method.imatmul.get_dst_size(shape.m, shape.n);
+
+    Buffer out(dst_size, 0);
+    if (method.is_lhs_pack_needed()) {
+        Buffer lhs_packed = pack_lhs(method.lhs, portion, test_data, shape.m, k_chunk);
+        out = imatmul_with_lhs_pack(
+            method.imatmul, portion, shape, k_chunk, lhs_packed, rhs_packed, test_data.clamp_range,
+            method.format.out.data_type());
+    } else {
+        out = imatmul_without_lhs_pack(
+            method.imatmul, portion, shape, k_chunk, test_data, rhs_packed, method.format.out.data_type());
+    }
 
     // Compare the actual result with the reference result
     DefaultMismatchHandler handler(0, 0.1, 0, 0.05);

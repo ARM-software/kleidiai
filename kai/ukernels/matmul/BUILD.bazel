@@ -184,7 +184,9 @@ SVE_I8MM_KERNELS_ASM = [
 
 # buildifier: keep sorted
 SVE_KERNELS_ASM = [
+    "imatmul_clamp_f32_f32_f32p/kai_imatmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla",
     "matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla",
+    "pack/kai_rhs_imatmul_pack_kxn_x32p4vlx1b_x32_x32_sve",
     "pack/kai_rhs_pack_kxn_x32p4vlx1b_x32_x32_sve",
 ]
 

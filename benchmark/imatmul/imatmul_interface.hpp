@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -14,6 +14,8 @@ namespace kai::benchmark {
 
 /// Abstraction for the unspecialized Indirect Matrix Multiplication micro-kernel interface
 struct ImatmulBaseInterface {
+    bool takes_indirection = false;
+    size_t (*get_m_step)(void);  //
     void (*run_imatmul)(
         size_t m, size_t n, size_t k_chunk_count, size_t k_chunk_length,  //
         const void* lhs_packed,                                           //
@@ -25,6 +27,8 @@ struct ImatmulBaseInterface {
 
 /// Abstraction for the unspecialized Indirect Matrix Multiplication micro-kernel interface with static quantization
 struct ImatmulStaticQuantInterface {
+    bool takes_indirection = false;
+    size_t (*get_m_step)(void);  //
     void (*run_imatmul)(
         size_t m, size_t n, size_t k_chunk_count, size_t k_chunk_length,  //
         const void* lhs_packed,                                           //
@@ -32,6 +36,16 @@ struct ImatmulStaticQuantInterface {
         void* dst,                                                        //
         size_t dst_stride_row,                                            //
         const kai_matmul_requantize32_params* params);
+};
+
+/// Abstraction for the unspecialized Indirect Matrix Multiplication micro-kernel interface without LHS Packing
+struct ImatmulNoLHSPackBaseInterface {
+    bool takes_indirection = true;
+    size_t (*get_m_step)(void);  //
+    void (*run_imatmul)(
+        size_t m, size_t n, size_t k_chunk_count, size_t k_chunk_length, const void* indirection_buffer,
+        const void* pad_ptr, size_t lhs_ptr_offset, const void* rhs_packed, void* dst, size_t dst_stride_row,
+        float clamp_min, float clamp_max);
 };
 
 }  // namespace kai::benchmark

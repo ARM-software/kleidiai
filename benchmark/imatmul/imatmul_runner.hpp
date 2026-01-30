@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -82,6 +82,13 @@ inline void ImatmulRunner<ImatmulStaticQuantInterface>::run(const void* lhs, con
     constexpr kai_matmul_requantize32_params params = {INT8_MIN, INT8_MAX, 0};
     m_imatmul_interface.run_imatmul(
         m_m, m_n, m_k_chunk_count, m_k_chunk_length, lhs, rhs, dst, m_dst_stride_row, &params);
+}
+
+/// Specialized run method for imatmul micro-kernels with indirection buffer (SVE/Advanced SIMD)
+template <>
+inline void ImatmulRunner<ImatmulNoLHSPackBaseInterface>::run(const void* lhs, const void* rhs, void* dst) {
+    m_imatmul_interface.run_imatmul(
+        m_m, m_n, m_k_chunk_count, m_k_chunk_length, lhs, nullptr, 0, rhs, dst, m_dst_stride_row, -FLT_MAX, FLT_MAX);
 }
 
 }  // namespace kai::benchmark
