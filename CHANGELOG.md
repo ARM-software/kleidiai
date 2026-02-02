@@ -10,15 +10,15 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+## v1.21.0
+
 - New SVE micro-kernels
   - Indirect matrix multiplication (MxN) Micro-Kernel of F32 input and output.
 - Added benchmarking for SVE indirect matrix multiplication (imatmul)
-
-## v1.21.0
-
 - Add Bazel 9 support
 - Fixes
   - Addressed undefined behavior affecting polymorphic handling in test framework
+  - Fixed GTest random seed to prevent flaky tests
 
 ## v1.20.0
 
