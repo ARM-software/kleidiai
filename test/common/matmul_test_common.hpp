@@ -12,6 +12,7 @@
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <type_traits>
 
 #include "kai/kai_common.h"
 #include "test/common/buffer.hpp"
@@ -52,8 +53,13 @@ struct Range {
     T min;
     T max;
 
-    [[nodiscard]] T range() const {
-        return max - min;
+    [[nodiscard]] std::size_t inclusive_count() const {
+        static_assert(std::is_integral_v<T>);
+        return max - min + 1;
+    }
+
+    [[nodiscard]] bool is_valid() const {
+        return min <= max;
     }
 };
 

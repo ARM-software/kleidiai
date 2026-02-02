@@ -24,6 +24,12 @@ class TestSummaryListener final : public ::testing::EmptyTestEventListener {
 int main(int argc, char** argv) {
     testing::InitGoogleTest(&argc, argv);
 
+    const int seed = GTEST_FLAG_GET(random_seed);
+    if (seed == 0) {
+        // Set a fixed seed for reproducibility.
+        GTEST_FLAG_SET(random_seed, 42);
+    }
+
     auto& listeners = ::testing::UnitTest::GetInstance()->listeners();
     auto summary_listener = std::make_unique<TestSummaryListener>();
     listeners.Append(summary_listener.release());

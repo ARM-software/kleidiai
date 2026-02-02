@@ -23,10 +23,12 @@
 #include "test/common/cpu_info.hpp"
 #include "test/common/data_format.hpp"
 #include "test/common/data_type.hpp"
+#include "test/common/matmul_shape_generator.hpp"
 #include "test/common/matmul_test_common.hpp"
 #include "test/common/matrix_portion.hpp"
 #include "test/common/printer.hpp"
 #include "test/common/seed.hpp"
+#include "test/nextgen/common/test_registry.hpp"
 #include "test/reference/clamp.hpp"
 #include "test/reference/fill.hpp"
 #include "test/reference/matmul.hpp"
@@ -117,12 +119,17 @@ static const std::array<MatMulMethod, 2>& get_matmul_methods() {
 
     return matmul_methods;
 }
-
 }  // namespace
 
 /// Matrix multiplication test fixture.
-class MatMulTestBf16OutFp16 : public testing::TestWithParam<MatMulClampTestParams> {
+class MatMulTestBf16OutFp16 : public testing::Test {
+public:
+    explicit MatMulTestBf16OutFp16(MatMulClampTestParams params) : m_params(std::move(params)) {
+    }
+    void TestBody() override;
+
 private:
+    MatMulClampTestParams m_params;
     /// Unique ID: m, n, k
     using TestDataId = std::tuple<size_t, size_t, size_t, float, std::string_view>;
 
@@ -140,8 +147,8 @@ protected:
     };
 
     /// Gets the test data for the current test case.
-    static const TestData& test_data() {
-        const auto& [method, info, portion, bias_mode, clamp_keep_ratio] = GetParam();
+    static const TestData& test_data(const MatMulClampTestParams& params) {
+        const auto& [method, info, portion, bias_mode, clamp_keep_ratio] = params;
         const TestDataId data_id{info.m, info.n, info.k, clamp_keep_ratio, method.name};
 
         // If the test data is already available, returns it.
@@ -239,8 +246,8 @@ std::map<MatMulTestBf16OutFp16::TestDataId, MatMulTestBf16OutFp16::TestData> Mat
 // NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
 /// Tests the output.
-TEST_P(MatMulTestBf16OutFp16, Output) {
-    const auto& [method, info, portion, bias_mode, clamp_keep_ratio] = GetParam();
+void MatMulTestBf16OutFp16::TestBody() {
+    const auto& [method, info, portion, bias_mode, clamp_keep_ratio] = m_params;
 
     if (method.fn_is_supported && !method.fn_is_supported()) {
         GTEST_SKIP() << "Unsupported CPU feature";
@@ -250,7 +257,7 @@ TEST_P(MatMulTestBf16OutFp16, Output) {
         GTEST_SKIP() << "No main kernel available";
     }
 
-    const auto& data = test_data();
+    const auto& data = test_data(m_params);
 
     const auto m_step = method.fn_get_main_m_step();
     ASSERT_EQ(m_step, method.m0);
@@ -333,30 +340,28 @@ TEST_P(MatMulTestBf16OutFp16, Output) {
     ASSERT_TRUE(success);
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    MatMul, MatMulTestBf16OutFp16,
-    testing::Combine(
-        testing::ValuesIn(get_matmul_methods()),
-        testing::Values(
-            MatMulShape{3, 7, 3},     // Smaller than block size
-            MatMulShape{12, 8, 4},    // Same block size
-            MatMulShape{1, 1, 73},    // Long K
-            MatMulShape{73, 1, 5},    // Long M
-            MatMulShape{2, 73, 6},    // Long N
-            MatMulShape{13, 33, 23},  //
-            MatMulShape{73, 57, 69},  //
-            MatMulShape{70, 70, 70},  // Square
-            MatMulShape{59, 67, 73}   // Prime numbers
-            ),
-        testing::Values(
-            MatrixPortion(0, 0, 1, 1),         // Full matrix.
-            MatrixPortion(0, 0, 0.25, 0.25),   // Top-left corner.
-            MatrixPortion(0.75, 0.75, 1, 1),   // Bottom-right corner.
-            MatrixPortion(0.75, 0, 1, 1),      // Partial rows
-            MatrixPortion(0.4, 0.5, 0.6, 0.8)  // Somewhere Middle
-            ),
-        testing::Values(BiasMode::PROVIDED),                               //
-        testing::ValuesIn(std::initializer_list<float>{1.0f, 0.9f, 0.5f})  // Clamping
-        ),
-    testing::PrintToStringParamName());
+namespace {
+const auto matmul_tests_setup = kai::test::TestRegistry::register_setup([]() {
+    auto& feed = seed_stream("MatMulTestBf16OutFp16::shapes");
+    MatMulShapeGenerator gen({1, 256}, {1, 256}, {1, 256}, feed);
+    const auto shapes = gen.generate(256);
+    const std::array portions = {
+        MatrixPortion(0, 0, 1, 1),          // Full matrix.
+        MatrixPortion(0, 0, 0.25, 0.25),    // Top-left corner.
+        MatrixPortion(0.75, 0.75, 1, 1),    // Bottom-right corner.
+        MatrixPortion(0.75, 0, 1, 1),       // Bottom-left corner.
+        MatrixPortion(0.4, 0.5, 0.6, 0.8),  // Middle portion.
+    };
+    const std::array clamp = {1.0f, 0.9f, 0.5f};
+    for (const auto& method : get_matmul_methods())
+        for (const auto& shape : shapes)
+            for (const auto& portion : portions)
+                for (float clamp_ratio : clamp) {
+                    MatMulClampTestParams params{method, shape, portion, BiasMode::PROVIDED, clamp_ratio};
+                    const std::string name = test_description(method.name, shape, portion, true, clamp_ratio);
+                    KAI_REGISTER_TEST(MatMulTestBf16OutFp16, MatMulTestBf16OutFp16, "MatMul", name.c_str(), params);
+                }
+});
+}  // namespace
+
 }  // namespace kai::test
