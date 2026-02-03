@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -44,5 +44,14 @@ Buffer cast(const void* src, DataType src_dt, DataType dst_dt, size_t height, si
 ///
 /// @return A new data buffer with converted values.
 Buffer cast_qsu4_qsi4(const void* src, size_t length);
+
+/// Converts each element of the source data from 2-bit signed quantized
+/// to 2-bit unsigned quantized.
+///
+/// @param[in] src The source data.
+/// @param[in] length The number of elements.
+///
+/// @return A new data buffer with converted values.
+Buffer cast_u2_i2(const void* src, size_t length);
 
 }  // namespace kai::test

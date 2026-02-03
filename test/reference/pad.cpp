@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -37,6 +37,10 @@ template Buffer pad_row<Int4>(
     const size_t dst_size, const uint8_t val);
 
 template Buffer pad_row<UInt4>(
+    const void* data, const size_t height, const size_t width, const size_t src_stride, const size_t dst_stride,
+    const size_t dst_size, const uint8_t val);
+
+template Buffer pad_row<UInt2>(
     const void* data, const size_t height, const size_t width, const size_t src_stride, const size_t dst_stride,
     const size_t dst_size, const uint8_t val);
 

@@ -16,6 +16,7 @@
 #include "test/common/data_format.hpp"
 #include "test/common/data_type.hpp"
 #include "test/common/float16.hpp"
+#include "test/common/int2.hpp"
 #include "test/common/int4.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/round.hpp"
@@ -392,6 +393,14 @@ template Buffer matmul_nt_t_quantized<int8_t, float, int32_t, Int4, float, int32
     size_t rhs_quant_width,  //
     const void* bias_data, const void* bias_scales, const void* bias_zero_points, size_t bias_quant_width);
 
+template Buffer matmul_nt_t_quantized<int8_t, float, int32_t, Int2, float, int32_t, float, float, int32_t, float>(
+    size_t m, size_t n, size_t k,  //
+    const void* lhs_data, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_height,
+    size_t lhs_quant_width,  //
+    const void* rhs_data, const void* rhs_scales, const void* rhs_zero_points, size_t rhs_quant_height,
+    size_t rhs_quant_width,  //
+    const void* bias_data, const void* bias_scales, const void* bias_zero_points, size_t bias_quant_width);
+
 template Buffer matmul_nt_t_quantized<int8_t, float, int32_t, int8_t, float, int32_t, float, float, int32_t, float>(
     size_t m, size_t n, size_t k,  //
     const void* lhs_data, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_height,
@@ -566,6 +575,13 @@ Buffer matmul_clamp_nt_t(
 }
 
 template Buffer matmul_clamp_nt_t<int8_t, float, int32_t, Int4, float, int32_t, float, int32_t, float>(
+    size_t m, size_t n, size_t k,                                                                       //
+    const void* lhs_data, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_width,  //
+    const void* rhs_data, const void* rhs_scales, const void* rhs_zero_points, size_t rhs_quant_width,  //
+    const void* biases,                                                                                 //
+    float min_value, float max_value);
+
+template Buffer matmul_clamp_nt_t<int8_t, float, int32_t, Int2, float, int32_t, float, int32_t, float>(
     size_t m, size_t n, size_t k,                                                                       //
     const void* lhs_data, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_width,  //
     const void* rhs_data, const void* rhs_scales, const void* rhs_zero_points, size_t rhs_quant_width,  //

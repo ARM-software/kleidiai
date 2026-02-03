@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -11,6 +11,7 @@
 #include <string_view>
 #include <type_traits>
 
+#include "test/common/int2.hpp"
 #include "test/common/int4.hpp"
 
 #define KAI_LOGE(...) kai::test::detail::log("ERROR", __VA_ARGS__)
@@ -33,6 +34,10 @@ void write_log_content(T&& value) {
     } else if constexpr (std::is_same_v<TT, UInt4>) {
         std::cerr << static_cast<int32_t>(value);
     } else if constexpr (std::is_same_v<TT, Int4>) {
+        std::cerr << static_cast<int32_t>(value);
+    } else if constexpr (std::is_same_v<TT, Int2>) {
+        std::cerr << static_cast<int32_t>(value);
+    } else if constexpr (std::is_same_v<TT, UInt2>) {
         std::cerr << static_cast<int32_t>(value);
     } else {
         std::cerr << value;

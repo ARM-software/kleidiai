@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -17,6 +17,7 @@
 #include "test/common/data_format.hpp"
 #include "test/common/data_type.hpp"
 #include "test/common/float16.hpp"
+#include "test/common/int2.hpp"
 #include "test/common/int4.hpp"
 
 namespace kai::test {
@@ -76,6 +77,14 @@ Buffer fill_matrix_random_raw<UInt4>(size_t height, size_t width, uint32_t seed)
     return fill_matrix_raw<UInt4>(height, width, [&](size_t, size_t) { return UInt4(static_cast<int8_t>(dist(rnd))); });
 }
 
+template <>
+Buffer fill_matrix_random_raw<Int2>(size_t height, size_t width, uint32_t seed) {
+    std::mt19937 rnd(seed);
+    std::uniform_int_distribution<int16_t> dist(-2, 1);
+
+    return fill_matrix_raw<Int2>(height, width, [&](size_t, size_t) { return Int2(static_cast<int8_t>(dist(rnd))); });
+}
+
 }  // namespace
 
 Buffer fill_matrix_random(size_t height, size_t width, const DataFormat& format, uint32_t seed) {
@@ -97,6 +106,9 @@ Buffer fill_matrix_random(size_t height, size_t width, const DataFormat& format,
                 case DataType::QAI4:
                 case DataType::QSI4:
                     return fill_matrix_random_raw<Int4>(height, width, seed);
+
+                case DataType::QSI2:
+                    return fill_matrix_random_raw<Int2>(height, width, seed);
 
                 default:
                     KAI_ERROR("Unsupported data type!");

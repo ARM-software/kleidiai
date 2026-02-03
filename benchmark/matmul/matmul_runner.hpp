@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -171,6 +171,22 @@ inline void MatMulRunner<MatMulBlockwiseDynamicQuantInterface>::run(const void* 
         dst_stride_row_, dst_stride_col_,    //
         -FLT_MAX, FLT_MAX                    //
     );
+}
+
+/// Runs the matrix multiplication micro-kernel. Specialized on the dynamic blockwise quantization interface with look
+/// up table.
+///
+/// @param lhs Buffer containing LHS matrix data.
+/// @param rhs Buffer containing RHS matrix data.
+/// @param dst Destination buffer to write to.
+template <>
+inline void MatMulRunner<MatMulBlockwiseDynamicQuantLutInterface>::run(const void* lhs, const void* rhs, void* dst) {
+    matmul_interface_.run_matmul(
+        m_, n_, k_,                          //
+        lhs, rhs, static_cast<float*>(dst),  //
+        dst_stride_row_, dst_stride_col_,    //
+        -FLT_MAX, FLT_MAX,                   //
+        nullptr);
 }
 
 }  // namespace kai::benchmark

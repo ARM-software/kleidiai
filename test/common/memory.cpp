@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -31,6 +31,8 @@ double read_array(DataType type, const void* array, size_t index) {
         case DataType::QSI4:
         case DataType::QAI4:
             return read_array<Int4>(array, index);
+        case DataType::QSI2:
+            return read_array<Int2>(array, index);
         case DataType::UNKNOWN:
         default:
             KAI_ERROR("Trying to read unknown data type");
@@ -68,6 +70,10 @@ void write_array(DataType type, void* array, size_t index, double value) {
         case DataType::QSI4:
         case DataType::QAI4: {
             write_array<Int4>(array, index, static_cast<Int4>(value));
+            return;
+        }
+        case DataType::QSI2: {
+            write_array<Int2>(array, index, static_cast<Int2>(value));
             return;
         }
         case DataType::UNKNOWN:

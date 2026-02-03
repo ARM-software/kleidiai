@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -14,6 +14,7 @@
 
 #include "test/common/bfloat16.hpp"
 #include "test/common/buffer.hpp"
+#include "test/common/int2.hpp"
 #include "test/common/int4.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/numeric_limits.hpp"
@@ -223,6 +224,18 @@ std::tuple<Buffer, Buffer> quantize_symmetric_per_block_dynamic(
     KAI_ASSUME_ALWAYS(src_type == DataType::FP32);
 
     switch (qinfo.dst_type) {
+        case DataType::QSI2:
+            switch (qinfo.scale_type) {
+                case DataType::FP16:
+                    return quantize_symmetric_per_block_dynamic<float, Int2, Float16>(
+                        src, height, width, qinfo.quant_width);
+                case DataType::FP32:
+                    return quantize_symmetric_per_block_dynamic<float, Int2, float>(
+                        src, height, width, qinfo.quant_width);
+                default:
+                    break;
+            }
+            break;
         case DataType::QSI4:
             switch (qinfo.scale_type) {
                 case DataType::FP16:
