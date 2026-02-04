@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <functional>
+#include <limits>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -448,6 +449,7 @@ struct Quant {
 /// Reference test data
 struct TestReference {
     Range<int8_t> clamp;
+    Range<int8_t> saturation;
 
     Quant qa_lhs;
     Quant qa_dst;
@@ -466,6 +468,7 @@ struct TestReference {
     Buffer bias_qsi32;
 
     Buffer dst_qsi8_clamped;
+    Buffer dst_qsi8_saturated;
 
     Buffer packed_lhs;
     Buffer packed_rhs;
@@ -482,26 +485,29 @@ struct TestDataId {
     size_t chunk_len;
     bool pad_testing;
     float clamp_keep_ratio;
+    float scale_ratio;
 
     struct Hash {
         size_t operator()(const TestDataId& id) const {
-            return                                           //
-                (MatMulShape::Hash{}(id.shape) << 0) ^       //
-                (MatMulShape::Hash{}(id.shape_pack) << 1) ^  //
-                (std::hash<size_t>{}(id.chunk_len) << 2) ^   //
-                (std::hash<bool>{}(id.pad_testing) << 3) ^   //
-                (std::hash<float>{}(id.clamp_keep_ratio) << 4);
+            return                                                //
+                (MatMulShape::Hash{}(id.shape) << 0) ^            //
+                (MatMulShape::Hash{}(id.shape_pack) << 1) ^       //
+                (std::hash<size_t>{}(id.chunk_len) << 2) ^        //
+                (std::hash<bool>{}(id.pad_testing) << 3) ^        //
+                (std::hash<float>{}(id.clamp_keep_ratio) << 4) ^  //
+                (std::hash<float>{}(id.scale_ratio) << 5);
         }
     };
 
 private:
     friend bool operator==(const TestDataId& lhs, const TestDataId& rhs) {
-        return                                     //
-            lhs.shape == rhs.shape &&              //
-            lhs.shape_pack == rhs.shape_pack &&    //
-            lhs.chunk_len == rhs.chunk_len &&      //
-            lhs.pad_testing == rhs.pad_testing &&  //
-            lhs.clamp_keep_ratio == rhs.clamp_keep_ratio;
+        return                                               //
+            lhs.shape == rhs.shape &&                        //
+            lhs.shape_pack == rhs.shape_pack &&              //
+            lhs.chunk_len == rhs.chunk_len &&                //
+            lhs.pad_testing == rhs.pad_testing &&            //
+            lhs.clamp_keep_ratio == rhs.clamp_keep_ratio &&  //
+            lhs.scale_ratio == rhs.scale_ratio;
     }
 };
 
@@ -521,11 +527,11 @@ const TestReference& get_test_reference(const TestDataId& test_data_id) {
         return data_it->second;
     }
 
-    const auto& [shape, pack_shape, k_chunk_len, pad_testing, clamp_keep_ratio] = test_data_id;
+    const auto& [shape, pack_shape, k_chunk_len, pad_testing, clamp_keep_ratio, scale_ratio] = test_data_id;
 
     // Seed the random generator.
     const auto key = std::string("Qai8Qai8Qsi8_cache:") + std::to_string(shape.m) + "x" + std::to_string(shape.n) +
-        "x" + std::to_string(shape.k) + ":" + std::to_string(clamp_keep_ratio);
+        "x" + std::to_string(shape.k) + ":" + std::to_string(clamp_keep_ratio) + ":" + std::to_string(scale_ratio);
     auto& feed = seed_stream(key);
 
     // Generates the input data in floating-point.
@@ -618,7 +624,7 @@ const TestReference& get_test_reference(const TestDataId& test_data_id) {
     const auto [dst_scales, dst_zero_points] =
         compute_asymmetric_per_block_quantization_info<float, int8_t, float, int32_t>(
             ref_dst_f32.data(), 1, shape.m * shape.n, shape.m * shape.n);
-    const auto dst_scale = read_array<float>(dst_scales.data(), 0);
+    const auto dst_scale = read_array<float>(dst_scales.data(), 0) * scale_ratio;
     const auto dst_zero_point = read_array<int32_t>(dst_zero_points.data(), 0);
 
     const auto ref_dst_f32_min = reduce_min<float>(ref_dst_f32.data(), shape.m * shape.n);
@@ -641,6 +647,12 @@ const TestReference& get_test_reference(const TestDataId& test_data_id) {
         shape.m * shape.n                                         // quantization window width
     );
 
+    auto ref_dst_qsi8_saturated = quantize_asymmetric_per_block<float, int8_t, float, int32_t>(
+        ref_dst_f32.data(), &dst_scale, &dst_zero_point,  // values, scales, zero point
+        1, shape.m * shape.n,                             // data shape
+        shape.m * shape.n                                 // quantization window width
+    );
+
     // Runs the reference implementation of the packing micro-kernels.
     //
     // The reference packing micro-kernels cannot be executed earlier
@@ -654,6 +666,8 @@ const TestReference& get_test_reference(const TestDataId& test_data_id) {
     TestReference& reference = g_data[test_data_id];
     reference.clamp.min = dst_qai8_clamp_min;
     reference.clamp.max = dst_qai8_clamp_max;
+    reference.saturation.min = std::numeric_limits<int8_t>::lowest();
+    reference.saturation.max = std::numeric_limits<int8_t>::max();
     reference.qa_lhs.scale = lhs_scale;
     reference.qa_lhs.zero_point = lhs_zero_point;
     reference.qa_dst.scale = dst_scale;
@@ -669,6 +683,7 @@ const TestReference& get_test_reference(const TestDataId& test_data_id) {
     reference.rhs_scales = std::move(rhs_qoutputs.scales);
     reference.bias_qsi32 = std::move(bias_qsi32);
     reference.dst_qsi8_clamped = std::move(ref_dst_qsi8_clamped);
+    reference.dst_qsi8_saturated = std::move(ref_dst_qsi8_saturated);
     reference.packed_lhs = std::move(packed_lhs);
     reference.packed_rhs = std::move(packed_rhs);
 
@@ -790,9 +805,13 @@ void compare_matmul_result(
 
 /// Test MatMul of GEMM/GEMV like kernel
 void test_matmul(
-    const MatMulShape& shape, const MatMulVariant& variant, const Rect& output_area, const TestReference& reference) {
+    const MatMulShape& shape, const MatMulVariant& variant, const Rect& output_area, const TestReference& reference,
+    bool saturated) {
     const auto imp_dst_size = variant.matmul.get_dst_size(shape.m, shape.n);
+    const auto& range = saturated ? reference.saturation : reference.clamp;
+    const auto& dst = saturated ? reference.dst_qsi8_saturated : reference.dst_qsi8_clamped;
     ASSERT_EQ(imp_dst_size, reference.dst_qsi8_clamped.size());
+    ASSERT_EQ(imp_dst_size, reference.dst_qsi8_saturated.size());
 
     Buffer imp_dst(imp_dst_size, 0);
     const auto [imp_lhs_offset, lhs_data] = [&]() -> std::tuple<size_t, const Buffer&> {
@@ -807,8 +826,8 @@ void test_matmul(
     ASSERT_EQ(imp_dst_offset, output_area.start_row() * shape.n + output_area.start_col());
 
     kai_matmul_requantize32_params imp_main_params{};
-    imp_main_params.min_value = reference.clamp.min;
-    imp_main_params.max_value = reference.clamp.max;
+    imp_main_params.min_value = range.min;
+    imp_main_params.max_value = range.max;
     imp_main_params.output_zero_point = reference.qa_dst.zero_point;
 
     abi_check(
@@ -816,45 +835,43 @@ void test_matmul(
         reference.packed_rhs.data() + imp_packed_rhs_offset, imp_dst.data() + imp_dst_offset, shape.n * sizeof(int8_t),
         sizeof(int8_t), &imp_main_params);
 
-    compare_matmul_result(shape, output_area, imp_dst, reference.dst_qsi8_clamped);
+    compare_matmul_result(shape, output_area, imp_dst, dst);
 }
 
 }  // namespace
 
-using MatMulQuantizedTest = testing::TestWithParam<std::tuple<MatMulVariant, MatMulShape, MatrixPortion, float>>;
-using IndirectMatMulQuantizedTestParams = std::tuple<IndirectMatMulVariant, MatMulShape, size_t, MatrixPortion, float>;
+using MatMulQuantizedTestParams = std::tuple<MatMulVariant, MatMulShape, MatrixPortion, float, float>;
+using MatMulQuantizedTest = testing::TestWithParam<MatMulQuantizedTestParams>;
+using IndirectMatMulQuantizedTestParams =
+    std::tuple<IndirectMatMulVariant, MatMulShape, size_t, MatrixPortion, float, float>;
 using IndirectMatMulQuantizedTest = testing::TestWithParam<IndirectMatMulQuantizedTestParams>;
 
-static std::string test_description(
-    const MatMulVariant& variant,  //
-    const MatMulShape& shape,      //
-    const MatrixPortion& portion, float clamp_keep_ratio) {
+static std::string test_description(const MatMulQuantizedTestParams& param) {
+    const auto& [variant, shape, portion, clamp_keep_ratio, scale_ratio] = param;
     std::ostringstream sstream;
 
     sstream << test_description(variant.name, shape, portion, true, clamp_keep_ratio);
-
+    sstream << "__scale_ratio_" << static_cast<int>(scale_ratio * 100);
     return sstream.str();
 };
 
 [[maybe_unused]] static void PrintTo(const IndirectMatMulQuantizedTestParams& param, std::ostream* os) {
-    const auto& [variant, shape, k_chunk_length, portion, clamp_keep_ratio] = param;
+    const auto& [variant, shape, k_chunk_length, portion, clamp_keep_ratio, scale_ratio] = param;
 
     *os << variant.name << "__";
     PrintTo(shape, os);
     *os << "__K_chunk_length_" << k_chunk_length;
-    *os << "__clamp_keep_ratio_" << static_cast<int>(clamp_keep_ratio * 100) << "__";
+    *os << "__clamp_keep_ratio_" << static_cast<int>(clamp_keep_ratio * 100);
+    *os << "__scale_ratio_" << static_cast<int>(scale_ratio * 100) << "__";
     PrintTo(portion, os);
 };
 
 TEST_P(MatMulQuantizedTest, EndToEnd) {
-    const auto& [variant, shape, output_portion, clamp_keep_ratio] = GetParam();
+    const auto& [variant, shape, output_portion, clamp_keep_ratio, scale_ratio] = GetParam();
 
     if (!variant.is_supported()) {
         GTEST_SKIP() << "Unsupported CPU feature";
     }
-
-    TestDataId test_data_id{shape, variant.acc_pack, shape.k, false, clamp_keep_ratio};
-    const TestReference& reference = get_test_reference(test_data_id);
 
     // Check scheduling parameters
     const auto imp_mr = variant.matmul.get_mr();
@@ -872,16 +889,28 @@ TEST_P(MatMulQuantizedTest, EndToEnd) {
     const auto imp_n_step = variant.matmul.get_n_step();
     ASSERT_EQ(imp_m_step, variant.acc_step.m);
     ASSERT_EQ(imp_n_step, variant.acc_step.n);
-
-    // Test kernels. Note that packing and actual stepping might not be the same
     const auto pack_portion = output_portion.compute_portion(shape.m, shape.n, variant.acc_pack.m, variant.acc_pack.n);
     const auto matmul_portion =
         output_portion.compute_portion(shape.m, shape.n, variant.acc_step.m, variant.acc_step.n);
-    if (variant.lhs_pack.has_value()) {
-        test_lhs_pack(shape, variant, pack_portion, reference);
-    }
-    test_rhs_pack(shape, variant, pack_portion, reference);
-    test_matmul(shape, variant, matmul_portion, reference);
+
+    auto test_kernel = [pack_portion, matmul_portion](
+                           MatMulShape shape, MatMulVariant variant, float clamp_ratio, float scale_ratio,
+                           bool saturated) -> void {
+        const TestDataId test_data_id{shape, variant.acc_pack, shape.k, false, clamp_ratio, scale_ratio};
+        const TestReference& reference = get_test_reference(test_data_id);
+
+        if (variant.lhs_pack.has_value()) {
+            test_lhs_pack(shape, variant, pack_portion, reference);
+        }
+        test_rhs_pack(shape, variant, pack_portion, reference);
+        test_matmul(shape, variant, matmul_portion, reference, saturated);
+    };
+
+    // Clamped
+    test_kernel(shape, variant, clamp_keep_ratio, 1.0F, false);
+
+    // Saturated
+    test_kernel(shape, variant, 1.0F, scale_ratio, true);
 }
 
 namespace imatmul {
@@ -949,7 +978,7 @@ static Buffer rhs_pack(
 /// Calculate the matmul result from IMATMUL kernels
 static Buffer matmul(
     const MatMulIndirectKernel& variant, const Rect& portion, const TestReference& reference, const Buffer& packed_lhs,
-    const Buffer& packed_rhs, const MatMulShape& shape, const KChunk& k_chunk) {
+    const Buffer& packed_rhs, const MatMulShape& shape, const KChunk& k_chunk, bool saturated) {
     // Calculate portion offsets.
     size_t dst_offset = variant.get_dst_offset(portion.start_row(), portion.start_col(), shape.n);
     size_t lhs_offset = variant.get_lhs_packed_offset(portion.start_row(), k_chunk.count, k_chunk.length);
@@ -959,10 +988,11 @@ static Buffer matmul(
     const size_t dst_size = variant.get_dst_size(shape.m, shape.n);
     Buffer dst(dst_size, 0);
 
-    // Calculate geffective uantization parameters
+    // Calculate effective quantization parameters
     kai_matmul_requantize32_params requantization{};
-    requantization.min_value = reference.clamp.min;
-    requantization.max_value = reference.clamp.max;
+    const auto& range = saturated ? reference.saturation : reference.clamp;
+    requantization.min_value = range.min;
+    requantization.max_value = range.max;
     requantization.output_zero_point = reference.qa_dst.zero_point;
 
     // Call matmul kernel
@@ -982,23 +1012,35 @@ TEST_P(IndirectMatMulQuantizedTest, EndToEnd) {
     /* This is a bit special, as shape.k must be k_chunk_len * k_chunk_count
      * so instead of inventing a new special kind of shape, simply multiply
      * with `k_chunk_len` here */
-    const auto& [variant, shape_k_chunk, k_chunk_len, output_portion, clamp_keep_ratio] = GetParam();
+    const auto& [variant, shape_k_chunk, k_chunk_len, output_portion, clamp_keep_ratio, scale_ratio] = GetParam();
     const KChunk k_chunk{shape_k_chunk.k, k_chunk_len};
     MatMulShape shape{shape_k_chunk.m, shape_k_chunk.n, k_chunk.count * k_chunk.length};
 
     if (!variant.is_supported()) {
         GTEST_SKIP() << "Unsupported CPU feature";
     }
+    const Rect pack_portion = output_portion.compute_portion(shape.m, shape.n, variant.acc_step.m, variant.acc_step.n);
 
     // Toggle padding testst when LHS has more than one row
-    TestDataId test_data_id{shape, variant.acc_pack, k_chunk.length, shape.m > 1, clamp_keep_ratio};
-    const TestReference& reference = get_test_reference(test_data_id);
-    const Rect portion = output_portion.compute_portion(shape.m, shape.n, variant.acc_step.m, variant.acc_step.n);
+    auto test_kernel = [pack_portion, k_chunk, shape](
+                           IndirectMatMulVariant variant, float clamp_keep_ratio, float scale_ratio,
+                           bool saturated) -> void {
+        TestDataId test_data_id{shape, variant.acc_pack, k_chunk.length, shape.m > 1, clamp_keep_ratio, scale_ratio};
+        const TestReference& reference = get_test_reference(test_data_id);
 
-    Buffer packed_lhs = imatmul::lhs_pack(variant.lhs_pack, portion, reference, shape.m, k_chunk);
-    Buffer packed_rhs = imatmul::rhs_pack(variant.rhs_pack, portion, reference, shape.n, k_chunk);
-    Buffer impl_result = imatmul::matmul(variant.matmul, portion, reference, packed_lhs, packed_rhs, shape, k_chunk);
-    compare_matmul_result(shape, portion, impl_result, reference.dst_qsi8_clamped);
+        Buffer packed_lhs = imatmul::lhs_pack(variant.lhs_pack, pack_portion, reference, shape.m, k_chunk);
+        Buffer packed_rhs = imatmul::rhs_pack(variant.rhs_pack, pack_portion, reference, shape.n, k_chunk);
+        Buffer impl_result =
+            imatmul::matmul(variant.matmul, pack_portion, reference, packed_lhs, packed_rhs, shape, k_chunk, saturated);
+        auto& ref_dst = saturated ? reference.dst_qsi8_saturated : reference.dst_qsi8_clamped;
+        compare_matmul_result(shape, pack_portion, impl_result, ref_dst);
+    };
+
+    // Clamped
+    test_kernel(variant, clamp_keep_ratio, 1.0F, false);
+
+    // Saturated
+    test_kernel(variant, 1.0F, scale_ratio, true);
 }
 
 static constexpr std::array shapes{
@@ -1067,14 +1109,9 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0.75, 0.75,    1,    1), // Bottom-right corner.
             // clang-format on
         }),
-        testing::ValuesIn(std::initializer_list<float>{0.0F, 0.1F, 0.5F})),
-    [](const auto& info) -> std::string {
-        return test_description(
-            std::get<MatMulVariant>(info.param),  //
-            std::get<MatMulShape>(info.param),    //
-            std::get<MatrixPortion>(info.param),  //
-            std::get<float>(info.param));
-    });
+        testing::ValuesIn(std::initializer_list<float>{0.0F, 0.1F, 0.5F}),
+        testing::ValuesIn(std::initializer_list<float>{0.9F})),
+    [](const auto& info) -> std::string { return test_description(info.param); });
 
 INSTANTIATE_TEST_SUITE_P(
     matmul_clamp_qai8_qai8_qsi8cxp, MatMulQuantizedTest,
@@ -1107,14 +1144,10 @@ INSTANTIATE_TEST_SUITE_P(
             // clang-format on
         }),
         // Clamp range
-        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
-    [](const auto& info) -> std::string {
-        return test_description(
-            std::get<MatMulVariant>(info.param),  //
-            std::get<MatMulShape>(info.param),    //
-            std::get<MatrixPortion>(info.param),  //
-            std::get<float>(info.param));
-    });
+        testing::ValuesIn(std::initializer_list<float>{1.0f, 0.9f, 0.5f}),
+        // Scale range
+        testing::ValuesIn(std::initializer_list<float>{0.9F})),
+    [](const auto& info) -> std::string { return test_description(info.param); });
 
 INSTANTIATE_TEST_SUITE_P(
     ShapesSmallKC, IndirectMatMulQuantizedTest,
@@ -1125,7 +1158,9 @@ INSTANTIATE_TEST_SUITE_P(
         testing::ValuesIn(std::initializer_list<size_t>{1, 2, 3, 4, 8, 11}),  //
         testing::ValuesIn(portions),                                          //
         // Clamp range
-        testing::Values(0.1F)),
+        testing::Values(0.1F),
+        // Scale ratio
+        testing::Values(0.9F)),
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
@@ -1137,7 +1172,9 @@ INSTANTIATE_TEST_SUITE_P(
         testing::ValuesIn(std::initializer_list<size_t>{32}),  //
         testing::ValuesIn(portions),                           //
         // Clamp range
-        testing::Values(0.1F)),
+        testing::Values(0.1F),
+        // Scale ratio
+        testing::Values(0.9F)),
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
@@ -1149,7 +1186,8 @@ INSTANTIATE_TEST_SUITE_P(
         testing::ValuesIn(std::initializer_list<size_t>{1}),  //
         testing::Values(MatrixPortion(0, 0, 1, 1)),           //
         // Clamp range
-        testing::ValuesIn(std::initializer_list<float>{1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
+        testing::ValuesIn(std::initializer_list<float>{0.0F, 0.1F, 0.5F}),  // clamp_keep_ratio
+        testing::ValuesIn(std::initializer_list<float>{0.9F})),             // Scale ratio
     testing::PrintToStringParamName());
 
 }  // namespace kai::test
