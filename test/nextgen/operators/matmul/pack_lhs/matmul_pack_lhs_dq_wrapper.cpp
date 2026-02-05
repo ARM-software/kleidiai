@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -26,24 +26,23 @@ std::string_view MatMulPackLhsDqWrapper::name() const {
     return m_name;
 }
 
-size_t MatMulPackLhsDqWrapper::src_tensor_id() const {
-    const size_t tensor_id = *m_src_format == PlainFormat(DataType::FP32) ? MATMUL_SLOT_LHS_RAW : MATMUL_SLOT_LHS_DATA;
-    return tensor_id;
+MatMulSlot MatMulPackLhsDqWrapper::src_tensor_id() const {
+    return *m_src_format == PlainFormat(DataType::FP32) ? MatMulSlot::LHS_RAW : MatMulSlot::LHS_DATA;
 }
 
-std::vector<size_t> MatMulPackLhsDqWrapper::run_inputs([[maybe_unused]] Span<const Tensor> tensors) const {
-    const size_t src_id = src_tensor_id();
+std::vector<MatMulSlot> MatMulPackLhsDqWrapper::run_inputs([[maybe_unused]] ConstTensorSet tensors) const {
+    const MatMulSlot src_id = src_tensor_id();
     return {src_id};
 }
 
-std::vector<size_t> MatMulPackLhsDqWrapper::ref_inputs([[maybe_unused]] Span<const Tensor> tensors) const {
-    return {MATMUL_SLOT_LHS_QDATA, MATMUL_SLOT_LHS_QSCALE, MATMUL_SLOT_LHS_QZP_NEG};
+std::vector<MatMulSlot> MatMulPackLhsDqWrapper::ref_inputs([[maybe_unused]] ConstTensorSet tensors) const {
+    return {MatMulSlot::LHS_QDATA, MatMulSlot::LHS_QSCALE, MatMulSlot::LHS_QZP_NEG};
 }
 
-std::vector<size_t> MatMulPackLhsDqWrapper::steps(Span<const size_t> shape, Span<const Tensor> tensors) const {
+std::vector<size_t> MatMulPackLhsDqWrapper::steps(Span<const size_t> shape, ConstTensorSet tensors) const {
     KAI_TEST_ASSERT_MSG(shape.size() == 2, "Only M and K dimensions are expected.");
 
-    const auto& pack_args = tensors.at(MATMUL_SLOT_PACK_ARGS).value<MatMulPackArgs>();
+    const auto& pack_args = tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
 
     const size_t m_step = m_kernel.get_m_step(pack_args.mr);
     const size_t shape_k = shape.at(1);
@@ -51,9 +50,9 @@ std::vector<size_t> MatMulPackLhsDqWrapper::steps(Span<const size_t> shape, Span
     return {m_step, shape_k};
 }
 
-void MatMulPackLhsDqWrapper::populate_constant_info(Span<Tensor> tensors) const {
-    Tensor& lhs_raw = tensors.at(MATMUL_SLOT_LHS_RAW);
-    Tensor& packed_lhs = tensors.at(MATMUL_SLOT_IMP_LHS_PACKED);
+void MatMulPackLhsDqWrapper::populate_constant_info(TensorSet tensors) const {
+    Tensor& lhs_raw = tensors.at(MatMulSlot::LHS_RAW);
+    Tensor& packed_lhs = tensors.at(MatMulSlot::IMP_LHS_PACKED);
 
     lhs_raw.set_format(m_src_format);
     packed_lhs.set_format(m_dst_format);
@@ -61,7 +60,7 @@ void MatMulPackLhsDqWrapper::populate_constant_info(Span<Tensor> tensors) const 
 
 void MatMulPackLhsDqWrapper::run(
     Span<const size_t> full_shape, Span<const size_t> tile_coords, Span<const size_t> tile_shape,
-    Span<Tensor> tensors) const {
+    TensorSet tensors) const {
     KAI_TEST_ASSERT_MSG(full_shape.size() == 2, "Only M and K dimensions are expected.");
     KAI_TEST_ASSERT_MSG(tile_coords.size() == 2, "Only M and K dimensions are expected.");
     KAI_TEST_ASSERT_MSG(tile_shape.size() == 2, "Only M and K dimensions are expected.");
@@ -78,11 +77,11 @@ void MatMulPackLhsDqWrapper::run(
     KAI_TEST_ASSERT(start_k == 0);
     KAI_TEST_ASSERT(size_k == full_k);
 
-    const size_t lhs_tensor_id = src_tensor_id();
+    const MatMulSlot lhs_tensor_id = src_tensor_id();
     const Tensor& lhs_data = tensors.at(lhs_tensor_id);
-    Tensor& packed_lhs = tensors.at(MATMUL_SLOT_IMP_LHS_PACKED);
+    Tensor& packed_lhs = tensors.at(MatMulSlot::IMP_LHS_PACKED);
 
-    const auto& pack_args = tensors.at(MATMUL_SLOT_PACK_ARGS).value<MatMulPackArgs>();
+    const auto& pack_args = tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
 
     packed_lhs.set_shape({full_m, full_k}).allocate();
 
@@ -112,11 +111,11 @@ void MatMulPackLhsDqWrapper::run(
     });
 }
 
-void MatMulPackLhsDqWrapper::compute_reference(Span<const size_t> shape, Span<Tensor> tensors) const {
-    const Tensor& lhs_qdata = tensors.at(MATMUL_SLOT_LHS_QDATA);
-    const Tensor& lhs_qscale = tensors.at(MATMUL_SLOT_LHS_QSCALE);
-    const Tensor& lhs_qzp_neg = tensors.at(MATMUL_SLOT_LHS_QZP_NEG);
-    Tensor& ref_packed_lhs = tensors.at(MATMUL_SLOT_REF_LHS_PACKED);
+void MatMulPackLhsDqWrapper::compute_reference(Span<const size_t> shape, TensorSet tensors) const {
+    const Tensor& lhs_qdata = tensors.at(MatMulSlot::LHS_QDATA);
+    const Tensor& lhs_qscale = tensors.at(MatMulSlot::LHS_QSCALE);
+    const Tensor& lhs_qzp_neg = tensors.at(MatMulSlot::LHS_QZP_NEG);
+    Tensor& ref_packed_lhs = tensors.at(MatMulSlot::REF_LHS_PACKED);
 
     ref_packed_lhs.set_shape(shape)
         .set_format(m_dst_format)

@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -111,6 +111,10 @@ private:
     void compute_ref_packed_rhs();  ///< Computes the reference packed RHS.
     void compute_ref_matmul();      ///< Computes the reference matrix multiplication.
 
+    void set_tensor_required(MatMulSlot slot);  ///< Mark tensor as required
+    bool is_tensor_required(MatMulSlot slot);   ///< Check if tensor is required
+    Tensor& get_tensor(MatMulSlot slot);        ///< retrieve tensor
+
     size_t m_shape_m;
     size_t m_shape_n;
     size_t m_shape_k;
@@ -118,8 +122,8 @@ private:
     float m_clamp_ratio;
 
     const MatMulOperator* m_op;
-    std::array<Tensor, NUM_MATMUL_SLOTS> m_tensors;
-    std::array<bool, NUM_MATMUL_SLOTS> m_tensors_required;
+    std::array<Tensor, n_entries<MatMulSlot>()> m_tensors;
+    std::array<bool, n_entries<MatMulSlot>()> m_tensors_required;
 };
 
 }  // namespace kai::test

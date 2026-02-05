@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -31,17 +31,16 @@ std::string_view MatMulDqWrapper::name() const {
     return m_name;
 }
 
-std::vector<size_t> MatMulDqWrapper::run_inputs([[maybe_unused]] Span<const Tensor> tensors) const {
-    return {MATMUL_SLOT_REF_LHS_PACKED, MATMUL_SLOT_REF_RHS_PACKED, MATMUL_SLOT_MATMUL_ARGS};
+std::vector<MatMulSlot> MatMulDqWrapper::run_inputs([[maybe_unused]] ConstTensorSet tensors) const {
+    return {MatMulSlot::REF_LHS_PACKED, MatMulSlot::REF_RHS_PACKED, MatMulSlot::MATMUL_ARGS};
 }
 
-std::vector<size_t> MatMulDqWrapper::ref_inputs([[maybe_unused]] Span<const Tensor> tensors) const {
-    return {MATMUL_SLOT_LHS_QDATA,   MATMUL_SLOT_LHS_QSCALE,   MATMUL_SLOT_LHS_QZP,
-            MATMUL_SLOT_RHS_T_QDATA, MATMUL_SLOT_RHS_T_QSCALE, MATMUL_SLOT_BIAS_RAW};
+std::vector<MatMulSlot> MatMulDqWrapper::ref_inputs([[maybe_unused]] ConstTensorSet tensors) const {
+    return {MatMulSlot::LHS_QDATA,   MatMulSlot::LHS_QSCALE,   MatMulSlot::LHS_QZP,
+            MatMulSlot::RHS_T_QDATA, MatMulSlot::RHS_T_QSCALE, MatMulSlot::BIAS_RAW};
 }
 
-std::vector<size_t> MatMulDqWrapper::steps(
-    Span<const size_t> shape, [[maybe_unused]] Span<const Tensor> tensorsf) const {
+std::vector<size_t> MatMulDqWrapper::steps(Span<const size_t> shape, [[maybe_unused]] ConstTensorSet tensorsf) const {
     const size_t step_m = m_kernel.get_m_step();
     const size_t step_n = m_kernel.get_n_step();
     const size_t shape_k = shape.at(2);
@@ -49,9 +48,9 @@ std::vector<size_t> MatMulDqWrapper::steps(
     return {step_m, step_n, shape_k};
 }
 
-void MatMulDqWrapper::populate_constant_info(Span<Tensor> tensors) const {
+void MatMulDqWrapper::populate_constant_info(TensorSet tensors) const {
     // Populates the packing arguments.
-    Tensor& pack_args_tensor = tensors.at(MATMUL_SLOT_PACK_ARGS);
+    Tensor& pack_args_tensor = tensors.at(MatMulSlot::PACK_ARGS);
     pack_args_tensor.set_shape({sizeof(MatMulPackArgs)}).allocate();
     auto& pack_args = pack_args_tensor.value<MatMulPackArgs>();
 
@@ -66,7 +65,7 @@ void MatMulDqWrapper::populate_constant_info(Span<Tensor> tensors) const {
 
 void MatMulDqWrapper::run(
     Span<const size_t> full_shape, Span<const size_t> tile_coords, Span<const size_t> tile_shape,
-    Span<Tensor> tensors) const {
+    TensorSet tensors) const {
     KAI_TEST_ASSERT(tile_coords.size() == full_shape.size());
     KAI_TEST_ASSERT(tile_shape.size() == full_shape.size());
 
@@ -87,10 +86,10 @@ void MatMulDqWrapper::run(
     KAI_TEST_ASSERT_MSG(start_k == 0, "Only full K is supported.");
     KAI_TEST_ASSERT_MSG(size_k == full_k, "Only full K is supported.");
 
-    const Tensor& ref_packed_lhs = tensors.at(MATMUL_SLOT_REF_LHS_PACKED);
-    const Tensor& ref_packed_rhs = tensors.at(MATMUL_SLOT_REF_RHS_PACKED);
-    const Tensor& kernel_args = tensors.at(MATMUL_SLOT_MATMUL_ARGS);
-    Tensor& imp_dst_data = tensors.at(MATMUL_SLOT_IMP_DST_DATA);
+    const Tensor& ref_packed_lhs = tensors.at(MatMulSlot::REF_LHS_PACKED);
+    const Tensor& ref_packed_rhs = tensors.at(MatMulSlot::REF_RHS_PACKED);
+    const Tensor& kernel_args = tensors.at(MatMulSlot::MATMUL_ARGS);
+    Tensor& imp_dst_data = tensors.at(MatMulSlot::IMP_DST_DATA);
 
     const size_t ref_packed_lhs_offset = m_lhs_format->compute_offset({full_m, full_k}, {start_m, start_k});
     const size_t imp_packed_lhs_offset = m_kernel.get_lhs_packed_offset(start_m, full_k);
@@ -125,7 +124,7 @@ void MatMulDqWrapper::run(
 }
 
 void MatMulDqWrapper::compute_reference(
-    [[maybe_unused]] Span<const size_t> shape, [[maybe_unused]] Span<Tensor> tensors) const {
+    [[maybe_unused]] Span<const size_t> shape, [[maybe_unused]] TensorSet tensors) const {
 }
 
 }  // namespace kai::test
