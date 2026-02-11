@@ -64,12 +64,12 @@ void MatMulTb::generate_test_data(Rng& rng) {
         pack_rhs.populate_constant_info(m_tensors);
     }
 
-    // Generates the raw test data.
-    generate_lhs_raw(rng);
-    generate_rhs_raw(rng);
-    generate_bias_raw(rng);
+    // Generates the non-quantized inputs.
+    generate_lhs_data(rng);
+    generate_rhs_data(rng);
+    generate_bias_data(rng);
 
-    compute_rhs_t_raw();  // The transposed RHS data is always needed for reference packing.
+    compute_rhs_t_data();  // The transposed RHS data is always needed for reference packing.
 
     // Quantizes the input data.
     if (m_op->lhs_quant.has_value()) {
@@ -84,6 +84,7 @@ void MatMulTb::generate_test_data(Rng& rng) {
         quantize_bias();
     }
 
+    // Calculates additional data.
     if (is_tensor_required(MatMulSlot::LHS_QZP_NEG)) {
         compute_lhs_qzp_neg();
     }
@@ -139,61 +140,62 @@ void MatMulTb::determine_required_tensors() {
     }
 }
 
-void MatMulTb::generate_lhs_raw(Rng& rng) {
+void MatMulTb::generate_lhs_data(Rng& rng) {
     const std::array shape{m_shape_m, m_shape_k};
-    const Poly<Format> format(std::in_place_type<PlainFormat>, DataType::FP32);
-    Tensor& tensor = get_tensor(MatMulSlot::LHS_RAW);
+    const Poly<Format> format(std::in_place_type<PlainFormat>, m_op->lhs_dtype);
+    Tensor& tensor = get_tensor(MatMulSlot::LHS_DATA);
 
     tensor.set_shape(shape).set_format(format).set_data(format->generate_random(shape, rng));
 }
 
-void MatMulTb::generate_rhs_raw(Rng& rng) {
+void MatMulTb::generate_rhs_data(Rng& rng) {
     const std::array shape{m_shape_k, m_shape_n};
-    const Poly<Format> format(std::in_place_type<PlainFormat>, DataType::FP32);
-    Tensor& tensor = get_tensor(MatMulSlot::RHS_RAW);
+    const Poly<Format> format(std::in_place_type<PlainFormat>, m_op->rhs_dtype);
+    Tensor& tensor = get_tensor(MatMulSlot::RHS_DATA);
 
     tensor.set_shape(shape).set_format(format).set_data(format->generate_random(shape, rng));
 }
 
-void MatMulTb::generate_bias_raw(Rng& rng) {
+void MatMulTb::generate_bias_data(Rng& rng) {
     const std::array shape{m_shape_n};
-    const Poly<Format> format(std::in_place_type<PlainFormat>, DataType::FP32);
-    Tensor& tensor = get_tensor(MatMulSlot::BIAS_RAW);
+    const Poly<Format> format(std::in_place_type<PlainFormat>, m_op->bias_dtype);
+    Tensor& tensor = get_tensor(MatMulSlot::BIAS_DATA);
 
     tensor.set_shape(shape).set_format(format).set_data(format->generate_random(shape, rng));
 }
 
-void MatMulTb::compute_rhs_t_raw() {
+void MatMulTb::compute_rhs_t_data() {
     const std::array shape{m_shape_n, m_shape_k};
-    const Poly<Format> format(std::in_place_type<PlainFormat>, DataType::FP32);
-    Tensor& rhs_t_raw = get_tensor(MatMulSlot::RHS_T_RAW);
-    const Tensor& rhs_raw = get_tensor(MatMulSlot::RHS_RAW);
+    const Poly<Format> format(std::in_place_type<PlainFormat>, m_op->rhs_dtype);
+    Tensor& rhs_t_data = get_tensor(MatMulSlot::RHS_T_DATA);
+    const Tensor& rhs_data = get_tensor(MatMulSlot::RHS_DATA);
 
-    rhs_t_raw.set_shape(shape).set_format(format).set_data(transpose<float>(rhs_raw.data_ptr(), m_shape_k, m_shape_n));
+    rhs_t_data.set_shape(shape).set_format(format).set_data(
+        transpose(rhs_data.data_ptr(), m_op->rhs_dtype, m_shape_k, m_shape_n));
 }
 
 void MatMulTb::quantize_lhs() {
     const Quantizer& lhs_quant = *m_op->lhs_quant.value();
 
     const std::array lhs_shape{m_shape_m, m_shape_k};
-    const Tensor& lhs_raw = get_tensor(MatMulSlot::LHS_RAW);
+    const Tensor& lhs_data = get_tensor(MatMulSlot::LHS_DATA);
     Tensor& lhs_qdata = get_tensor(MatMulSlot::LHS_QDATA);
     Tensor& lhs_qscale = get_tensor(MatMulSlot::LHS_QSCALE);
     Tensor& lhs_qzp = get_tensor(MatMulSlot::LHS_QZP);
 
-    lhs_quant.dynamic_quantize(DataType::FP32, lhs_shape, lhs_raw.data(), lhs_qdata, lhs_qscale, lhs_qzp);
+    lhs_quant.dynamic_quantize(m_op->lhs_dtype, lhs_shape, lhs_data.data(), lhs_qdata, lhs_qscale, lhs_qzp);
 }
 
 void MatMulTb::quantize_rhs_t() {
     const Quantizer& rhs_quant = *m_op->rhs_quant.value();
 
     const std::array rhs_t_shape{m_shape_n, m_shape_k};
-    const Tensor& rhs_t_raw = get_tensor(MatMulSlot::RHS_T_RAW);
+    const Tensor& rhs_t_data = get_tensor(MatMulSlot::RHS_T_DATA);
     Tensor& rhs_t_qdata = get_tensor(MatMulSlot::RHS_T_QDATA);
     Tensor& rhs_t_qscale = get_tensor(MatMulSlot::RHS_T_QSCALE);
     Tensor& rhs_t_qzp = get_tensor(MatMulSlot::RHS_T_QZP);
 
-    rhs_quant.dynamic_quantize(DataType::FP32, rhs_t_shape, rhs_t_raw.data(), rhs_t_qdata, rhs_t_qscale, rhs_t_qzp);
+    rhs_quant.dynamic_quantize(m_op->rhs_dtype, rhs_t_shape, rhs_t_data.data(), rhs_t_qdata, rhs_t_qscale, rhs_t_qzp);
 }
 
 void MatMulTb::quantize_bias() {
@@ -260,9 +262,9 @@ void MatMulTb::compute_ref_matmul() {
     const Tensor& lhs_qzp = get_tensor(MatMulSlot::LHS_QZP);
     const Tensor& rhs_t_qdata = get_tensor(MatMulSlot::RHS_T_QDATA);
     const Tensor& rhs_t_qscale = get_tensor(MatMulSlot::RHS_T_QSCALE);
-    const Tensor& bias_raw = get_tensor(MatMulSlot::BIAS_RAW);
+    const Tensor& bias_data = get_tensor(MatMulSlot::BIAS_DATA);
     Tensor& kernel_args = get_tensor(MatMulSlot::MATMUL_ARGS);
-    Tensor& ref_dst_data = get_tensor(MatMulSlot::REF_DST_DATA);
+    Tensor& ref_dst_data = get_tensor(MatMulSlot::DST_DATA);
 
     ref_dst_data.set_shape({m_shape_m, m_shape_n}).set_format(make_poly<PlainFormat>(m_op->dst_dtype));
 
@@ -283,8 +285,10 @@ void MatMulTb::compute_ref_matmul() {
             break;
 
         case MatMulBiasMode::PER_N: {
+            KAI_TEST_ASSERT_MSG(
+                m_op->bias_dtype == m_op->acc_dtype, "Only support the accumulator and bias type being the same.");
             const BinaryElementwiseFn add_fn = make_add_2d(m_op->acc_dtype);
-            dst = add_fn(m_shape_m, m_shape_n, dst, 1, m_shape_n, bias_raw.data());
+            dst = add_fn(m_shape_m, m_shape_n, dst, 1, m_shape_n, bias_data.data());
             break;
         }
 
@@ -302,10 +306,6 @@ void MatMulTb::compute_ref_matmul() {
     ref_dst_data.set_data(std::move(clampped_dst));
 }
 
-bool MatMulTb::has_lhs_packing() const {
-    return m_op->pack_lhs != nullptr;
-}
-
 std::tuple<size_t, size_t> MatMulTb::lhs_packing_steps() const {
     const KernelWrapper& pack_lhs = *m_op->pack_lhs.value();
     const std::vector<size_t> steps = pack_lhs.steps({m_shape_m, m_shape_k}, m_tensors);
@@ -321,18 +321,14 @@ void MatMulTb::test_lhs_packing(size_t start_m, size_t start_k, size_t size_m, s
 
     pack_lhs.run(full_shape, tile_coords, tile_shape, m_tensors);
 
-    const Tensor& ref_packed_lhs = get_tensor(MatMulSlot::REF_LHS_PACKED);
-    const Tensor& imp_packed_lhs = get_tensor(MatMulSlot::IMP_LHS_PACKED);
+    const Tensor& ref_packed_lhs = get_tensor(MatMulSlot::LHS_PACKED);
+    const Tensor& imp_packed_lhs = get_tensor(MatMulSlot::LHS_PACKED_IMP);
     const Format& format = *ref_packed_lhs.format();
 
     DefaultMismatchHandler handler(0.0F, 0.0F, 0, 0.0F);
     const bool ok =
         format.compare(full_shape, tile_coords, tile_shape, imp_packed_lhs.data(), ref_packed_lhs.data(), handler);
     KAI_TEST_ASSERT(ok);
-}
-
-bool MatMulTb::has_rhs_packing() const {
-    return m_op->pack_rhs.has_value();
 }
 
 std::tuple<size_t, size_t> MatMulTb::rhs_packing_steps() const {
@@ -350,8 +346,8 @@ void MatMulTb::test_rhs_packing(size_t start_n, size_t start_k, size_t size_n, s
 
     pack_rhs.run(full_shape, tile_coords, tile_shape, m_tensors);
 
-    const Tensor& ref_packed_rhs = get_tensor(MatMulSlot::REF_RHS_PACKED);
-    const Tensor& imp_packed_rhs = get_tensor(MatMulSlot::IMP_RHS_PACKED);
+    const Tensor& ref_packed_rhs = get_tensor(MatMulSlot::RHS_PACKED);
+    const Tensor& imp_packed_rhs = get_tensor(MatMulSlot::RHS_PACKED_IMP);
     const Format& format = *ref_packed_rhs.format();
 
     DefaultMismatchHandler handler(0.0F, 0.0F, 0, 0.0F);
@@ -376,8 +372,8 @@ void MatMulTb::test_matmul(size_t start_m, size_t start_n, size_t size_m, size_t
 
     m_op->matmul->run(matmul_full_shape, matmul_tile_coords, matmul_tile_shape, m_tensors);
 
-    const Tensor& ref_dst_data = get_tensor(MatMulSlot::REF_DST_DATA);
-    const Tensor& imp_dst_data = get_tensor(MatMulSlot::IMP_DST_DATA);
+    const Tensor& ref_dst_data = get_tensor(MatMulSlot::DST_DATA);
+    const Tensor& imp_dst_data = get_tensor(MatMulSlot::DST_DATA_IMP);
     const Format& format = *ref_dst_data.format();
 
     DefaultMismatchHandler handler(1e-3, 1e-3, 0, 0.0F);

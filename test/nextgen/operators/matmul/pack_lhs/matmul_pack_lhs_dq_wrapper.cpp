@@ -13,9 +13,7 @@
 
 #include "test/common/abi_checker.hpp"
 #include "test/common/assert.hpp"
-#include "test/common/data_type.hpp"
 #include "test/common/span.hpp"
-#include "test/nextgen/format/plain_format.hpp"
 #include "test/nextgen/harness/tensor.hpp"
 #include "test/nextgen/operators/matmul/matmul_pack_args.hpp"
 #include "test/nextgen/operators/matmul/matmul_slots.hpp"
@@ -26,13 +24,8 @@ std::string_view MatMulPackLhsDqWrapper::name() const {
     return m_name;
 }
 
-MatMulSlot MatMulPackLhsDqWrapper::src_tensor_id() const {
-    return *m_src_format == PlainFormat(DataType::FP32) ? MatMulSlot::LHS_RAW : MatMulSlot::LHS_DATA;
-}
-
 std::vector<MatMulSlot> MatMulPackLhsDqWrapper::run_inputs([[maybe_unused]] ConstTensorSet tensors) const {
-    const MatMulSlot src_id = src_tensor_id();
-    return {src_id};
+    return {MatMulSlot::LHS_DATA};
 }
 
 std::vector<MatMulSlot> MatMulPackLhsDqWrapper::ref_inputs([[maybe_unused]] ConstTensorSet tensors) const {
@@ -51,10 +44,10 @@ std::vector<size_t> MatMulPackLhsDqWrapper::steps(Span<const size_t> shape, Cons
 }
 
 void MatMulPackLhsDqWrapper::populate_constant_info(TensorSet tensors) const {
-    Tensor& lhs_raw = tensors.at(MatMulSlot::LHS_RAW);
-    Tensor& packed_lhs = tensors.at(MatMulSlot::IMP_LHS_PACKED);
+    Tensor& lhs_data = tensors.at(MatMulSlot::LHS_DATA);
+    Tensor& packed_lhs = tensors.at(MatMulSlot::LHS_PACKED_IMP);
 
-    lhs_raw.set_format(m_src_format);
+    lhs_data.set_format(m_src_format);
     packed_lhs.set_format(m_dst_format);
 }
 
@@ -77,9 +70,8 @@ void MatMulPackLhsDqWrapper::run(
     KAI_TEST_ASSERT(start_k == 0);
     KAI_TEST_ASSERT(size_k == full_k);
 
-    const MatMulSlot lhs_tensor_id = src_tensor_id();
-    const Tensor& lhs_data = tensors.at(lhs_tensor_id);
-    Tensor& packed_lhs = tensors.at(MatMulSlot::IMP_LHS_PACKED);
+    const Tensor& lhs_data = tensors.at(MatMulSlot::LHS_DATA);
+    Tensor& packed_lhs = tensors.at(MatMulSlot::LHS_PACKED_IMP);
 
     const auto& pack_args = tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
 
@@ -115,7 +107,7 @@ void MatMulPackLhsDqWrapper::compute_reference(Span<const size_t> shape, TensorS
     const Tensor& lhs_qdata = tensors.at(MatMulSlot::LHS_QDATA);
     const Tensor& lhs_qscale = tensors.at(MatMulSlot::LHS_QSCALE);
     const Tensor& lhs_qzp_neg = tensors.at(MatMulSlot::LHS_QZP_NEG);
-    Tensor& ref_packed_lhs = tensors.at(MatMulSlot::REF_LHS_PACKED);
+    Tensor& ref_packed_lhs = tensors.at(MatMulSlot::LHS_PACKED);
 
     ref_packed_lhs.set_shape(shape)
         .set_format(m_dst_format)

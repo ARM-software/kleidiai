@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -33,6 +33,9 @@ struct MatMulOperator {
     std::optional<std::unique_ptr<Quantizer>> rhs_quant;
     std::optional<std::unique_ptr<Quantizer>> bias_quant;
 
+    DataType lhs_dtype;
+    DataType rhs_dtype;
+    DataType bias_dtype;
     DataType acc_dtype;
     DataType dst_dtype;
 

@@ -35,7 +35,7 @@ std::optional<MatMulSlot> determine_bias_tensor_id(ConstTensorSet tensors) {
             return std::nullopt;
 
         case MatMulBiasMode::PER_N:
-            return MatMulSlot::BIAS_RAW;
+            return MatMulSlot::BIAS_DATA;
 
         default:
             KAI_TEST_ERROR("Not supported.");
@@ -85,7 +85,7 @@ void MatMulPackRhsQuantWrapper::populate_constant_info(TensorSet tensors) const 
     Tensor& rhs_t_qdata = tensors.at(MatMulSlot::RHS_T_QDATA);
     Tensor& rhs_t_qdata_sign_sum = tensors.at(MatMulSlot::RHS_T_QDATA_SIGN_SUM);
     Tensor& rhs_t_qscale = tensors.at(MatMulSlot::RHS_T_QSCALE);
-    Tensor& packed_rhs = tensors.at(MatMulSlot::IMP_RHS_PACKED);
+    Tensor& packed_rhs = tensors.at(MatMulSlot::RHS_PACKED_IMP);
 
     rhs_t_qdata.set_format(m_src_data_format);
     rhs_t_qdata_sign_sum.set_format(m_src_sum_format);
@@ -94,8 +94,8 @@ void MatMulPackRhsQuantWrapper::populate_constant_info(TensorSet tensors) const 
 
     const std::optional<MatMulSlot> bias_tensor_id = determine_bias_tensor_id(tensors);
     if (bias_tensor_id.has_value()) {
-        Tensor& bias_raw = tensors.at(bias_tensor_id.value());
-        bias_raw.set_format(m_src_bias_format);
+        Tensor& bias_data = tensors.at(bias_tensor_id.value());
+        bias_data.set_format(m_src_bias_format);
     }
 }
 
@@ -123,8 +123,8 @@ void MatMulPackRhsQuantWrapper::run(
 
     const Tensor& rhs_t_qdata = tensors.at(MatMulSlot::RHS_T_QDATA);
     const Tensor& rhs_t_qscale = tensors.at(MatMulSlot::RHS_T_QSCALE);
-    const Tensor& bias_raw = tensors.at(bias_tensor_id.value_or(MatMulSlot::BIAS_RAW));
-    Tensor& packed_rhs = tensors.at(MatMulSlot::IMP_RHS_PACKED);
+    const Tensor& bias_data = tensors.at(bias_tensor_id.value_or(MatMulSlot::BIAS_DATA));
+    Tensor& packed_rhs = tensors.at(MatMulSlot::RHS_PACKED_IMP);
 
     const auto& pack_args = tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
 
@@ -151,7 +151,7 @@ void MatMulPackRhsQuantWrapper::run(
 
     const Span<const std::byte> rhs_tile = rhs_t_qdata.data().subspan(rhs_offset);
     const Span<const std::byte> scale_tile = rhs_t_qscale.data().subspan(scale_offset);
-    const Span<const std::byte> bias_tile = has_bias ? bias_raw.data().subspan(bias_offset) : Span<const std::byte>();
+    const Span<const std::byte> bias_tile = has_bias ? bias_data.data().subspan(bias_offset) : Span<const std::byte>();
     const Span<std::byte> packed_lhs_tile = packed_rhs.data().subspan(packed_rhs_offset);
 
     const kai_rhs_pack_qs4cxs1s0_param params{1, 8};
@@ -174,23 +174,24 @@ void MatMulPackRhsQuantWrapper::compute_reference(Span<const size_t> shape, Tens
     const Tensor& rhs_t_qdata_sign = tensors.at(MatMulSlot::RHS_T_QDATA_SIGN);
     const Tensor& rhs_t_qdata_sign_sum = tensors.at(MatMulSlot::RHS_T_QDATA_SIGN_SUM);
     const Tensor& rhs_t_qscale = tensors.at(MatMulSlot::RHS_T_QSCALE);
-    const Tensor& bias_raw = tensors.at(bias_tensor_id.value_or(MatMulSlot::BIAS_RAW));
-    Tensor& ref_packed_rhs = tensors.at(MatMulSlot::REF_RHS_PACKED);
+    const Tensor& bias_data = tensors.at(bias_tensor_id.value_or(MatMulSlot::BIAS_DATA));
+    Tensor& ref_packed_rhs = tensors.at(MatMulSlot::RHS_PACKED);
 
     Buffer empty_bias;
-    Span<const std::byte> bias_data;
+    Span<const std::byte> bias_data_view;
 
     if (has_bias) {
-        bias_data = bias_raw.data();
+        bias_data_view = bias_data.data();
     } else {
         empty_bias = Buffer(m_src_bias_format->compute_size({shape_n}));
-        bias_data = empty_bias.view();
+        bias_data_view = empty_bias.view();
     }
 
     ref_packed_rhs.set_shape(shape)
         .set_format(m_dst_format)
         .set_data(m_dst_format->pack(
-            shape, std::array{rhs_t_qdata_sign.data(), rhs_t_qdata_sign_sum.data(), rhs_t_qscale.data(), bias_data}));
+            shape,
+            std::array{rhs_t_qdata_sign.data(), rhs_t_qdata_sign_sum.data(), rhs_t_qscale.data(), bias_data_view}));
 }
 
 }  // namespace kai::test

@@ -48,8 +48,6 @@ public:
     void compute_reference(Span<const size_t> shape, TensorSet tensors) const override;
 
 private:
-    [[nodiscard]] MatMulSlot src_tensor_id() const;  ///< Determines the tensor ID containing the input data.
-
     std::string m_name;
     MatMulPackLhsDqInterface m_kernel;
     Poly<Format> m_src_format;

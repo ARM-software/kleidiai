@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -40,6 +40,9 @@ Span<const MatMulOperator> get_available_matmul_operators() {
         std::make_unique<SymmLinearQuantizer>(DataType::U4, DataType::FP32, RoundMode::CURRENT, 1, 0);
     operators[0].bias_quant = std::nullopt;
 
+    operators[0].lhs_dtype = DataType::FP32;
+    operators[0].rhs_dtype = DataType::FP32;
+    operators[0].bias_dtype = DataType::FP32;
     operators[0].acc_dtype = DataType::FP32;
     operators[0].dst_dtype = DataType::FP32;
 
@@ -61,6 +64,9 @@ Span<const MatMulOperator> get_available_matmul_operators() {
         std::make_unique<SymmLinearQuantizer>(DataType::U4, DataType::FP32, RoundMode::CURRENT, 1, 0);
     operators[1].bias_quant = std::nullopt;
 
+    operators[1].lhs_dtype = DataType::FP32;
+    operators[1].rhs_dtype = DataType::FP32;
+    operators[1].bias_dtype = DataType::FP32;
     operators[1].acc_dtype = DataType::FP32;
     operators[1].dst_dtype = DataType::FP32;
 

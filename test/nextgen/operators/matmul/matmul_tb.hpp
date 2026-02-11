@@ -41,9 +41,6 @@ public:
     /// @param[in, out] rng The random number generator.
     void generate_test_data(Rng& rng);
 
-    /// Determines whether LHS packing test is available.
-    [[nodiscard]] bool has_lhs_packing() const;
-
     /// Gets the scheduling step for LHS packing kernel.
     ///
     /// @return The step in M and K dimensions.
@@ -56,9 +53,6 @@ public:
     /// @param[in] size_m The size of the region under test in M dimension.
     /// @param[in] size_k The size of the region under test in K dimension.
     void test_lhs_packing(size_t start_m, size_t start_k, size_t size_m, size_t size_k);
-
-    /// Determines whether RHS packing test is available.
-    [[nodiscard]] bool has_rhs_packing() const;
 
     /// Gets the scheduling step for RHS packing kernel.
     ///
@@ -93,14 +87,14 @@ private:
     /// or reference implementation.
     void determine_required_tensors();
 
-    void generate_lhs_raw(Rng& rng);   ///< Generates the raw LHS data in F32.
-    void generate_rhs_raw(Rng& rng);   ///< Generates the raw RHS data in F32.
-    void generate_bias_raw(Rng& rng);  ///< Generates the raw bias data in F32.
+    void generate_lhs_data(Rng& rng);   ///< Generates the LHS data.
+    void generate_rhs_data(Rng& rng);   ///< Generates the RHS data.
+    void generate_bias_data(Rng& rng);  ///< Generates the bias data.
 
-    void compute_rhs_t_raw();  ///< Computes the raw transposed RHS data.
-    void quantize_lhs();       ///< Quantizes the LHS data.
-    void quantize_rhs_t();     ///< Quantizes the RHS data.
-    void quantize_bias();      ///< Quantizes the bias data.
+    void compute_rhs_t_data();  ///< Computes the transposed RHS data.
+    void quantize_lhs();        ///< Quantizes the LHS data.
+    void quantize_rhs_t();      ///< Quantizes the RHS data.
+    void quantize_bias();       ///< Quantizes the bias data.
 
     void compute_lhs_qzp_neg();  ///< Computes the negative LHS quantization zero-point.
 
