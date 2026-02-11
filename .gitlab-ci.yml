@@ -592,10 +592,30 @@ resolve-gcovr:
         - $PIP_CACHE_DIR
       policy: $CACHE_POLICY
   before_script:
+    # Prefer Homebrew python3.13 -> 3.10 on macOS, otherwise keep python3 on PATH
     - |
+      PYTHON_BIN="python3"
       if [ "$(uname)" = "Darwin" ]; then
         export PATH="/opt/homebrew/bin:/usr/local/bin:${PATH}"
+        for ver in 3.13 3.12 3.11 3.10; do
+          if [ -x "/opt/homebrew/bin/python${ver}" ]; then
+            PYTHON_BIN="/opt/homebrew/bin/python${ver}"
+            break
+          fi
+        done
       fi
+      # Ensure the selected python is present on PATH.
+      if ! command -v "${PYTHON_BIN}" >/dev/null 2>&1; then
+        echo "Missing ${PYTHON_BIN} on PATH" >&2
+        exit 1
+      fi
+      # Enforce minimum python version required by gcovr tooling.
+      if ! "$PYTHON_BIN" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)'; then
+        echo "Python ${PYTHON_BIN} is too old; need >= 3.10" >&2
+        exit 1
+      fi
+      echo "Using python: ${PYTHON_BIN}"
+      "$PYTHON_BIN" -V
 
     # Load the locked GCOVR_VERSION from resolve-gcovr
     - |
@@ -611,21 +631,21 @@ resolve-gcovr:
 
     # Install pip + gcovr==$GCOVR_VERSION
     - |
-      if python3 -m pip help install 2>&1 | grep -q -- "--break-system-packages"; then
+      if "$PYTHON_BIN" -m pip help install 2>&1 | grep -q -- "--break-system-packages"; then
         PIP_BREAK_SYSTEM_PACKAGES_FLAG="--break-system-packages"
       else
         PIP_BREAK_SYSTEM_PACKAGES_FLAG=""
       fi
-      python3 -m pip install --cache-dir=$PIP_CACHE_DIR --user -U ${PIP_BREAK_SYSTEM_PACKAGES_FLAG} pip
-      python3 -m pip install --cache-dir=$PIP_CACHE_DIR --user ${PIP_BREAK_SYSTEM_PACKAGES_FLAG} "gcovr==${GCOVR_VERSION}"
-    - export PATH="$(python3 -m site --user-base)/bin:${PATH}"
+      $PYTHON_BIN -m pip install --cache-dir=$PIP_CACHE_DIR --user -U ${PIP_BREAK_SYSTEM_PACKAGES_FLAG} pip
+      $PYTHON_BIN -m pip install --cache-dir=$PIP_CACHE_DIR --user ${PIP_BREAK_SYSTEM_PACKAGES_FLAG} "gcovr==${GCOVR_VERSION}"
+    - export PATH="$("$PYTHON_BIN" -m site --user-base)/bin:${PATH}"
 
     # Sanity check the installed gcovr version
-    - gcovr --version
     - |
       (
         set -euo pipefail
         INSTALLED_GCOVR_VERSION=$(gcovr --version | awk 'NR==1 {print $2; exit}')
+        echo "gcovr ${INSTALLED_GCOVR_VERSION}"
         if [ "${INSTALLED_GCOVR_VERSION}" != "${GCOVR_VERSION}" ]; then
           echo "Expected gcovr ${GCOVR_VERSION} but found ${INSTALLED_GCOVR_VERSION}" >&2
           exit 1
