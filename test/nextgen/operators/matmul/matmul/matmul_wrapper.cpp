@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -9,6 +9,7 @@
 #include <array>
 #include <memory>
 
+#include "kai/ukernels/matmul/matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot.h"
 #include "test/common/data_type.hpp"
@@ -18,6 +19,7 @@
 #include "test/nextgen/functions/round.hpp"
 #include "test/nextgen/harness/kernel_wrapper.hpp"
 #include "test/nextgen/operators/matmul/matmul/matmul_dq_wrapper.hpp"
+#include "test/nextgen/operators/matmul/matmul/matmul_fp_wrapper.hpp"
 #include "test/nextgen/operators/matmul/matmul/matmul_interface.hpp"
 #include "test/nextgen/quantization/asymm_linear_quantizer.hpp"
 #include "test/nextgen/quantization/symm_linear_quantizer.hpp"
@@ -76,6 +78,31 @@ std::unique_ptr<KernelWrapper> create_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1
         make_poly<Block2dRowFormat>(
             4 * get_sme_vector_length<float>(), 4, 32, false, DataType::I4, std::array<DataType, 0>{},
             std::array{DataType::I32, DataType::FP32, DataType::FP32}),
+        make_poly<PlainFormat>(DataType::FP32));
+}
+
+std::unique_ptr<KernelWrapper> create_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa() {
+    return std::make_unique<MatMulFpWrapper>(
+        "matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa",
+        MatMulFpInterface{
+            kai_get_m_step_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa,
+            kai_get_n_step_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa,
+            kai_get_mr_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa,
+            kai_get_nr_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa,
+            kai_get_kr_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa,
+            kai_get_sr_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa,
+            kai_get_lhs_packed_offset_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa,
+            kai_get_rhs_packed_offset_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa,
+            kai_get_dst_offset_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa,
+            kai_get_dst_size_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa,
+            kai_run_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa,
+        },
+        make_poly<Block2dRowFormat>(
+            1 * get_sme_vector_length<float>(), 1, 1, false, DataType::FP32, std::array<DataType, 0>{},
+            std::array<DataType, 0>{}),
+        make_poly<Block2dRowFormat>(
+            1 * get_sme_vector_length<float>(), 1, 1, false, DataType::FP32, std::array{DataType::FP32},
+            std::array<DataType, 0>{}),
         make_poly<PlainFormat>(DataType::FP32));
 }
 

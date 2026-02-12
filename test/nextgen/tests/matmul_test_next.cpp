@@ -1,17 +1,20 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
+#include <iterator>
 #include <random>
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "test/common/assert.hpp"
 #include "test/common/matrix_portion.hpp"
@@ -196,11 +199,29 @@ const auto matmul_tests_setup = TestRegistry::register_setup([]() {
             continue;
         }
 
-        const bool test_pack_lhs = op.pack_lhs != nullptr;
-        const bool test_pack_rhs = op.pack_rhs != nullptr;
+        const bool test_pack_lhs = op.pack_lhs.has_value();
+        const bool test_pack_rhs = op.pack_rhs.has_value();
         const bool test_matmul = op.matmul != nullptr;
 
         const char* test_suite_name = "MatMulNext";
+
+        // Separates no-bias mode from the list of supported bias modes.
+        //
+        // Reason: no-bias and with-bias cases are chosen by a distribution,
+        // and if the with-bias case is chosen, each with-bias modes will be chosen
+        // by another distribution.
+        const bool has_no_bias_mode =
+            std::find(op.supported_bias_modes.begin(), op.supported_bias_modes.end(), MatMulBiasMode::NO_BIAS) !=
+            op.supported_bias_modes.end();
+
+        std::vector<MatMulBiasMode> with_bias_modes;
+        std::copy_if(
+            op.supported_bias_modes.begin(), op.supported_bias_modes.end(), std::back_inserter(with_bias_modes),
+            [](MatMulBiasMode bias_mode) { return bias_mode != MatMulBiasMode::NO_BIAS; });
+        const bool has_with_bias_mode = !with_bias_modes.empty();
+        std::uniform_int_distribution<size_t> with_bias_dist(0, with_bias_modes.size() - 1);
+
+        KAI_TEST_ASSERT_MSG(has_no_bias_mode || has_with_bias_mode, "At least one bias mode is needed!");
 
         for (size_t shape_no = 0; shape_no < num_shapes_per_op; ++shape_no) {
             size_t shape_m = 0;
@@ -221,11 +242,16 @@ const auto matmul_tests_setup = TestRegistry::register_setup([]() {
                 // Bias mode:
                 //   * 70% of tests have bias.
                 //   * 30% of tests have no bias.
+                //
+                // If there is no bias mode, with bias mode is always chosen.
+                // If with bias mode is chosen, each bias modes (except no bias mode)
+                // with be chosen uniformly.
                 const float bias_prob = probability_dist(rng);
-                const bool with_bias = bias_prob < 0.7F;
+                const bool with_bias = !has_no_bias_mode || (has_with_bias_mode && bias_prob < 0.7F);
 
                 if (with_bias) {
-                    bias_mode = MatMulBiasMode::PER_N;
+                    const size_t bias_mode_idx = with_bias_dist(rng);
+                    bias_mode = with_bias_modes.at(bias_mode_idx);
                 } else {
                     bias_mode = MatMulBiasMode::NO_BIAS;
                 }

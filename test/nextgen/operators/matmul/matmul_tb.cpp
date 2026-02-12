@@ -257,9 +257,11 @@ void MatMulTb::compute_ref_packed_rhs() {
 
 void MatMulTb::compute_ref_matmul() {
     const MatMulConfig& config = get_tensor(MatMulSlot::CONFIG).value<MatMulConfig>();
+    const Tensor& lhs_data = get_tensor(MatMulSlot::LHS_DATA);
     const Tensor& lhs_qdata = get_tensor(MatMulSlot::LHS_QDATA);
     const Tensor& lhs_qscale = get_tensor(MatMulSlot::LHS_QSCALE);
     const Tensor& lhs_qzp = get_tensor(MatMulSlot::LHS_QZP);
+    const Tensor& rhs_t_data = get_tensor(MatMulSlot::RHS_T_DATA);
     const Tensor& rhs_t_qdata = get_tensor(MatMulSlot::RHS_T_QDATA);
     const Tensor& rhs_t_qscale = get_tensor(MatMulSlot::RHS_T_QSCALE);
     const Tensor& bias_data = get_tensor(MatMulSlot::BIAS_DATA);
@@ -268,17 +270,39 @@ void MatMulTb::compute_ref_matmul() {
 
     ref_dst_data.set_shape({m_shape_m, m_shape_n}).set_format(make_poly<PlainFormat>(m_op->dst_dtype));
 
-    // REVISIT: Assumes that the LHS and RHS are both quantized.
-    const Quantizer& lhs_quant = *m_op->lhs_quant.value();
-    const Quantizer& rhs_quant = *m_op->rhs_quant.value();
+    Buffer tmp_mm_lhs;
+    Span<const std::byte> mm_lhs_view;
+    Buffer tmp_mm_rhs_t;
+    Span<const std::byte> mm_rhs_t_view;
 
-    const Buffer lhs_data = lhs_quant.dequantize(
-        m_op->acc_dtype, {m_shape_m, m_shape_k}, lhs_qdata.data(), lhs_qscale.data(), lhs_qzp.data());
-    const Buffer rhs_t_data =
-        rhs_quant.dequantize(m_op->acc_dtype, {m_shape_n, m_shape_k}, rhs_t_qdata.data(), rhs_t_qscale.data(), {});
+    // Prepares the input data for the reference matrix multiplication.
+    //   * If the input data is floating-point, converts it to the accumulator type.
+    //   * If the input data is quantized, dequantizes it to the accumulator type.
+    if (m_op->lhs_quant.has_value()) {
+        const Quantizer& lhs_quant = *m_op->lhs_quant.value();
+        tmp_mm_lhs = lhs_quant.dequantize(
+            m_op->acc_dtype, {m_shape_m, m_shape_k}, lhs_qdata.data(), lhs_qscale.data(), lhs_qzp.data());
+        mm_lhs_view = tmp_mm_lhs.view();
+    } else {
+        KAI_TEST_ASSERT_MSG(
+            m_op->lhs_dtype == m_op->acc_dtype, "Having different LHS and accumulator types is not supported yet!");
+        mm_lhs_view = lhs_data.data();
+    }
 
+    if (m_op->rhs_quant.has_value()) {
+        const Quantizer& rhs_quant = *m_op->rhs_quant.value();
+        tmp_mm_rhs_t =
+            rhs_quant.dequantize(m_op->acc_dtype, {m_shape_n, m_shape_k}, rhs_t_qdata.data(), rhs_t_qscale.data(), {});
+        mm_rhs_t_view = tmp_mm_rhs_t.view();
+    } else {
+        KAI_TEST_ASSERT_MSG(
+            m_op->lhs_dtype == m_op->acc_dtype, "Having different LHS and accumulator types is not supported yet!");
+        mm_rhs_t_view = rhs_t_data.data();
+    }
+
+    // Runs the reference matrix multiplication.
     const MatMulFn matmul_fn = make_matmul_nt_t(m_op->acc_dtype);
-    Buffer dst = matmul_fn(m_shape_m, m_shape_n, m_shape_k, lhs_data, rhs_t_data);
+    Buffer dst = matmul_fn(m_shape_m, m_shape_n, m_shape_k, mm_lhs_view, mm_rhs_t_view);
 
     switch (config.bias_mode) {
         case MatMulBiasMode::NO_BIAS:

@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -11,6 +11,7 @@
 #include <string>
 #include <string_view>
 
+#include "kai/ukernels/matmul/pack/kai_lhs_pack_f32p2vlx1_f32_sme.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp_f32.h"
 #include "test/common/data_type.hpp"
 #include "test/common/sme.hpp"
@@ -19,6 +20,7 @@
 #include "test/nextgen/format/plain_format.hpp"
 #include "test/nextgen/harness/kernel_wrapper.hpp"
 #include "test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_dq_wrapper.hpp"
+#include "test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_fp_wrapper.hpp"
 #include "test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_interface.hpp"
 
 namespace kai::test {
@@ -50,6 +52,22 @@ std::unique_ptr<KernelWrapper> create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32() {
 
 std::unique_ptr<KernelWrapper> create_matmul_lhs_quant_pack_qai8dxp1x4_f32() {
     return create_matmul_lhs_quant_pack_qai8dxp_f32("1x4", 1, 4);
+}
+
+std::unique_ptr<KernelWrapper> create_matmul_lhs_pack_f32p2vlx1_f32_sme() {
+    return std::make_unique<MatMulPackLhsFpWrapper>(
+        "create_matmul_lhs_pack_f32p2vlx1_f32_sme",
+        MatMulPackLhsFpInterface{
+            kai_get_m_step_lhs_pack_f32p2vlx1_f32_sme,
+            kai_get_lhs_offset_lhs_pack_f32p2vlx1_f32_sme,
+            kai_get_lhs_packed_offset_lhs_pack_f32p2vlx1_f32_sme,
+            kai_get_lhs_packed_size_lhs_pack_f32p2vlx1_f32_sme,
+            kai_run_lhs_pack_f32p2vlx1_f32_sme,
+        },
+        make_poly<PlainFormat>(DataType::FP32),
+        make_poly<Block2dRowFormat>(
+            2 * get_sme_vector_length<float>(), 1, 1, false, DataType::FP32, std::array<DataType, 0>{},
+            std::array<DataType, 0>{}));
 }
 
 }  // namespace kai::test

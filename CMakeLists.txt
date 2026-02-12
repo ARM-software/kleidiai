@@ -622,10 +622,13 @@ if(KLEIDIAI_BUILD_TESTS)
         test/nextgen/quantization/symm_linear_quantizer.cpp
         test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_wrapper.cpp
         test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_dq_wrapper.cpp
+        test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_fp_wrapper.cpp
         test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_wrapper.cpp
         test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_quant_wrapper.cpp
+        test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_fp_nt_wrapper.cpp
         test/nextgen/operators/matmul/matmul/matmul_wrapper.cpp
         test/nextgen/operators/matmul/matmul/matmul_dq_wrapper.cpp
+        test/nextgen/operators/matmul/matmul/matmul_fp_wrapper.cpp
         test/nextgen/operators/matmul/matmul_bias_mode.cpp
         test/nextgen/operators/matmul/matmul_operator.cpp
         test/nextgen/operators/matmul/matmul_tb.cpp

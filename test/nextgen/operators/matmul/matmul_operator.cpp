@@ -24,7 +24,7 @@
 namespace kai::test {
 
 Span<const MatMulOperator> get_available_matmul_operators() {
-    static std::array<MatMulOperator, 2> operators;
+    static std::array<MatMulOperator, 3> operators;
 
     // matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa
     operators[0].name = "matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa";
@@ -73,6 +73,28 @@ Span<const MatMulOperator> get_available_matmul_operators() {
     operators[1].pack_lhs = create_matmul_lhs_quant_pack_qai8dxp1x4_f32();
     operators[1].pack_rhs = create_matmul_rhs_pack_nxk_qsi4cxp4vlx4s1s0_qsu4cxs1s0_neon();
     operators[1].matmul = create_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot();
+
+    // matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa
+    operators[2].name = "matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa";
+
+    operators[2].is_cpu_supported = []() { return cpu_has_sme2(); };
+    operators[2].is_shape_suitable = [](size_t, size_t, size_t) { return true; };
+
+    operators[2].supported_bias_modes = {MatMulBiasMode::PER_N};
+
+    operators[2].lhs_quant = std::nullopt;
+    operators[2].rhs_quant = std::nullopt;
+    operators[2].bias_quant = std::nullopt;
+
+    operators[2].lhs_dtype = DataType::FP32;
+    operators[2].rhs_dtype = DataType::FP32;
+    operators[2].bias_dtype = DataType::FP32;
+    operators[2].acc_dtype = DataType::FP32;
+    operators[2].dst_dtype = DataType::FP32;
+
+    operators[2].pack_lhs = create_matmul_lhs_pack_f32p2vlx1_f32_sme();
+    operators[2].pack_rhs = create_matmul_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme();
+    operators[2].matmul = create_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa();
 
     return operators;
 }
