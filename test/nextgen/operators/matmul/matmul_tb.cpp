@@ -19,6 +19,7 @@
 #include "test/common/data_type.hpp"
 #include "test/nextgen/common/poly.hpp"
 #include "test/nextgen/common/random.hpp"
+#include "test/nextgen/format/fill.hpp"
 #include "test/nextgen/format/format.hpp"
 #include "test/nextgen/format/plain_format.hpp"
 #include "test/nextgen/harness/kernel_wrapper.hpp"
@@ -145,7 +146,11 @@ void MatMulTb::generate_lhs_data(Rng& rng) {
     const Poly<Format> format(std::in_place_type<PlainFormat>, m_op->lhs_dtype);
     Tensor& tensor = get_tensor(MatMulSlot::LHS_DATA);
 
-    tensor.set_shape(shape).set_format(format).set_data(format->generate_random(shape, rng));
+    // For deterministic debug inputs call fill_sequential or fill_constant
+    tensor.set_shape(shape).set_format(format).set_data(
+        format->generate(shape, [&](Span<const size_t> gen_shape, DataType dtype, Span<std::byte> output) {
+            fill_random(gen_shape, dtype, output, rng);
+        }));
 }
 
 void MatMulTb::generate_rhs_data(Rng& rng) {
@@ -153,7 +158,11 @@ void MatMulTb::generate_rhs_data(Rng& rng) {
     const Poly<Format> format(std::in_place_type<PlainFormat>, m_op->rhs_dtype);
     Tensor& tensor = get_tensor(MatMulSlot::RHS_DATA);
 
-    tensor.set_shape(shape).set_format(format).set_data(format->generate_random(shape, rng));
+    // For deterministic debug inputs call fill_sequential or fill_constant
+    tensor.set_shape(shape).set_format(format).set_data(
+        format->generate(shape, [&](Span<const size_t> gen_shape, DataType dtype, Span<std::byte> output) {
+            fill_random(gen_shape, dtype, output, rng);
+        }));
 }
 
 void MatMulTb::generate_bias_data(Rng& rng) {
@@ -161,7 +170,11 @@ void MatMulTb::generate_bias_data(Rng& rng) {
     const Poly<Format> format(std::in_place_type<PlainFormat>, m_op->bias_dtype);
     Tensor& tensor = get_tensor(MatMulSlot::BIAS_DATA);
 
-    tensor.set_shape(shape).set_format(format).set_data(format->generate_random(shape, rng));
+    // For deterministic debug inputs call fill_sequential or fill_constant
+    tensor.set_shape(shape).set_format(format).set_data(
+        format->generate(shape, [&](Span<const size_t> gen_shape, DataType dtype, Span<std::byte> output) {
+            fill_random(gen_shape, dtype, output, rng);
+        }));
 }
 
 void MatMulTb::compute_rhs_t_data() {
@@ -220,9 +233,21 @@ void MatMulTb::compute_rhs_t_qdata_sign() {
     Tensor& rhs_t_qdata_sign = get_tensor(MatMulSlot::RHS_T_QDATA_SIGN);
 
     const Span<const size_t> shape = rhs_t_qdata.shape();
-    const Poly<Format>& format = rhs_t_qdata.format();
+    const DataType src_dtype = rhs_t_qdata.format()->dtype();
+    DataType signed_dtype = DataType::I4;
+    switch (src_dtype) {
+        case DataType::U4:
+        case DataType::I4:
+            signed_dtype = DataType::I4;
+            break;
+        default:
+            KAI_TEST_ERROR("Not supported.");
+    }
 
-    const UnaryElementwiseFn fn = make_change_signedness(format->dtype());
+    // Store the signed interpretation with the signed dtype so reducers can use it directly.
+    const Poly<Format> format(std::in_place_type<PlainFormat>, signed_dtype);
+
+    const UnaryElementwiseFn fn = make_change_signedness(src_dtype);
     Buffer data = fn(shape, rhs_t_qdata.data());
 
     rhs_t_qdata_sign.set_shape(shape).set_format(format).set_data(std::move(data));

@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -80,7 +80,8 @@ size_t Block2dRowFormat::compute_size(Span<const size_t> shape) const {
     return size;
 }
 
-Buffer Block2dRowFormat::generate_random([[maybe_unused]] Span<const size_t> shape, [[maybe_unused]] Rng& rng) const {
+Buffer Block2dRowFormat::generate(
+    [[maybe_unused]] Span<const size_t> shape, [[maybe_unused]] const GeneratorFn& generator) const {
     KAI_TEST_ERROR("Not supported!");
 }
 

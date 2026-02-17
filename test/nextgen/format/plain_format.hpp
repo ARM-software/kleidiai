@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -40,7 +40,7 @@ public:
 
     [[nodiscard]] size_t compute_offset(Span<const size_t> shape, Span<const size_t> indices) const override;
     [[nodiscard]] size_t compute_size(Span<const size_t> shape) const override;
-    [[nodiscard]] Buffer generate_random(Span<const size_t> shape, Rng& rng) const override;
+    [[nodiscard]] Buffer generate(Span<const size_t> shape, const GeneratorFn& generator) const override;
     [[nodiscard]] Buffer pack(Span<const size_t> shape, Span<const Span<const std::byte>> buffers) const override;
     [[nodiscard]] bool compare(
         Span<const size_t> shape, Span<const size_t> tile_coords, Span<const size_t> tile_shape,

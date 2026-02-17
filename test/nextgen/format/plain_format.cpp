@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -9,10 +9,8 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <functional>
 #include <numeric>
 #include <ostream>
-#include <random>
 
 #include "test/common/assert.hpp"
 #include "test/common/buffer.hpp"
@@ -20,11 +18,10 @@
 #include "test/common/data_type.hpp"
 #include "test/common/round.hpp"
 #include "test/common/span.hpp"
-#include "test/nextgen/common/random.hpp"
+#include "test/nextgen/format/fill.hpp"
 #include "test/nextgen/format/format.hpp"
 #include "test/nextgen/reference/compare.hpp"
 #include "test/nextgen/reference/print.hpp"
-#include "test/reference/fill.hpp"
 
 namespace kai::test {
 
@@ -67,19 +64,17 @@ size_t PlainFormat::compute_size(Span<const size_t> shape) const {
     return size;
 }
 
-Buffer PlainFormat::generate_random(Span<const size_t> shape, Rng& rng) const {
-    const size_t len = compute_size(shape) * 8 / data_type_size_in_bits(m_dtype);
-    const uint32_t seed =
-        std::uniform_int_distribution<uint32_t>()(rng);  // REVISIT: Use the random number generator directly.
+Buffer PlainFormat::generate(Span<const size_t> shape, const GeneratorFn& generator) const {
+    KAI_TEST_ASSERT_MSG(static_cast<bool>(generator), "Generator function must be provided.");
 
-    switch (m_dtype) {
-        case DataType::FP32:
-
-            return fill_random<float>(len, seed);
-
-        default:
-            KAI_TEST_ERROR("Not supported!");
+    const size_t size = compute_size(shape);
+    if (size == 0) {
+        return Buffer();
     }
+
+    Buffer buffer(size);
+    generator(shape, m_dtype, buffer.view());
+    return buffer;
 }
 
 Buffer PlainFormat::pack(Span<const size_t> shape, Span<const Span<const std::byte>> buffers) const {

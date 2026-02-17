@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -7,6 +7,7 @@
 #pragma once
 
 #include <cstddef>
+#include <functional>
 #include <ostream>
 
 #include "test/common/assert.hpp"
@@ -27,6 +28,9 @@ namespace kai::test {
 /// as well as the underlining meaning of the data (e.g. data, scale, bias, etc.).
 class Format {
 public:
+    /// Generator function for custom data creation.
+    using GeneratorFn = std::function<void(Span<const size_t> shape, DataType dtype, Span<std::byte> output)>;
+
     Format() = default;                          ///< Default constructor.
     virtual ~Format() = default;                 ///< Destructor.
     Format(const Format&) = default;             ///< Copy constructor.
@@ -56,13 +60,13 @@ public:
     /// @return The size in bytes.
     [[nodiscard]] virtual size_t compute_size(Span<const size_t> shape) const = 0;
 
-    /// Generates random data with this format.
+    /// Generates data with a custom generator for this format.
     ///
     /// @param[in] shape The size of the multidimensional data.
-    /// @param[in, out] rng The random number generator.
+    /// @param[in] generator Generator function that fills the output buffer.
     ///
     /// @return The data buffer.
-    [[nodiscard]] virtual Buffer generate_random(Span<const size_t> shape, Rng& rng) const = 0;
+    [[nodiscard]] virtual Buffer generate(Span<const size_t> shape, const GeneratorFn& generator) const = 0;
 
     /// Packs the data with this format.
     ///

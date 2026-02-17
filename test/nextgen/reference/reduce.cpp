@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -74,8 +74,8 @@ struct AddOp {
 ReduceFn make_reduce_add(DataType src_dtype, DataType dst_dtype) {
     const auto dtypes = std::make_tuple(src_dtype, dst_dtype);
 
-    if (dtypes == std::make_tuple(DataType::U4, DataType::I32)) {
-        return reduce<AddOp<UInt4, int32_t>>;
+    if (dtypes == std::make_tuple(DataType::I4, DataType::I32)) {
+        return reduce<AddOp<Int4, int32_t>>;
     }
 
     KAI_TEST_ERROR("Not implemented.");
