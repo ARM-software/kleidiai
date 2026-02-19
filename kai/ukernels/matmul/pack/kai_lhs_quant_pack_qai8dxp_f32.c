@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -152,8 +152,8 @@ void kai_run_lhs_quant_pack_qai8dxp_f32(
                 // Scale the values
                 float32x4_t v0_f32 = vmulq_n_f32(src_0, scale0);
                 float32x4_t v1_f32 = vmulq_n_f32(src_1, scale0);
-                int32x4_t v0_s32 = vcvtnq_s32_f32(v0_f32);
-                int32x4_t v1_s32 = vcvtnq_s32_f32(v1_f32);
+                int32x4_t v0_s32 = vcvtaq_s32_f32(v0_f32);
+                int32x4_t v1_s32 = vcvtaq_s32_f32(v1_f32);
 
                 int16x4_t v0_s16 = vqmovn_s32(v0_s32);
                 int16x4_t v1_s16 = vqmovn_s32(v1_s32);
@@ -170,6 +170,34 @@ void kai_run_lhs_quant_pack_qai8dxp_f32(
                 vst1_s8((int8_t*)(dst_ptr), v0_s8);
                 dst_ptr += 8 * sizeof(int8_t);
                 dst_ptr += (mr - 1) * k_block_len * sizeof(int8_t);
+            }
+        } else if (k_block_len == 4) {
+            for (; block_idx < num_blocks_k; ++block_idx) {
+                // Clamp at the last valid k-index
+                const int32_t k_idx_start = block_idx * k_block_len;
+
+                const float32x4_t src_0 = vld1q_f32(src_ptr + k_idx_start);
+
+                // Scale the values
+                float32x4_t v0_f32 = vmulq_n_f32(src_0, scale0);
+                int32x4_t v0_s32 = vcvtaq_s32_f32(v0_f32);
+                int16x4_t v0_s16 = vqmovn_s32(v0_s32);
+
+                // Add zero points
+                int16_t nzp_s16 = (int16_t)nudged_zero_point0;
+                int16x4_t vnzp_s16 = vdup_n_s16(nzp_s16);
+                int16x4_t v_s16 = vadd_s16(v0_s16, vnzp_s16);
+                v_s16 = vmax_s16(v_s16, vdup_n_s16(INT8_MIN));
+                v_s16 = vmin_s16(v_s16, vdup_n_s16(INT8_MAX));
+
+                int8x8_t v0_s8 = vqmovn_s16(vcombine_s16(v_s16, vdup_n_s16(0)));
+
+                *((int8_t*)(dst_ptr)) = vget_lane_s8(v0_s8, 0);
+                *((int8_t*)(dst_ptr + 1)) = vget_lane_s8(v0_s8, 1);
+                *((int8_t*)(dst_ptr + 2)) = vget_lane_s8(v0_s8, 2);
+                *((int8_t*)(dst_ptr + 3)) = vget_lane_s8(v0_s8, 3);
+
+                dst_ptr += mr * k_block_len * sizeof(int8_t);
             }
         } else
 #endif

@@ -9,6 +9,7 @@
 
 #include "kai_rhs_pack_nxk_qsu2cxp4vlx4_qsu2cx_neon.h"
 
+#include <arm_neon.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -87,17 +88,21 @@ void kai_run_rhs_pack_nxk_qsu2cxp4vlx4_qsu2cx_neon(
 
     const size_t rhs_stride = kai_roundup(k, 4) / 4;
     const size_t rhs_packed_stride = kai_get_rhs_packed_stride_rhs_pack_nxk_qsu2cxp4vlx4_qsu2cx_neon(k, nr, kr, sr);
-    const size_t block_length = kr / sr;
-    const size_t dst_nr_block_size = nr * block_length * sizeof(uint8_t) / 4;
     const int32_t* lut = lut_arg != NULL ? lut_arg : lut_i8_i2;
+    const size_t num_bytes_processed = 8;
 
+    // NOLINTBEGIN(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
+    const int8_t lut_s8[8] = {lut[0], lut[1], lut[2], lut[3], 0, 0, 0, 0};
+    // NOLINTEND(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
+
+    const int8x8_t vlut_s8 = vld1_s8(lut_s8);
+    const uint8x8_t mask_2b = vdup_n_u8(0x03);
     // Iterate over n src rows in blocks of nr rows
     for (size_t row_idx = 0; row_idx < n; row_idx += nr) {
-        int8_t* const dst_row = (int8_t*)rhs_packed + ((row_idx / nr) * rhs_packed_stride);
+        int8_t* dst_row = (int8_t*)rhs_packed + ((row_idx / nr) * rhs_packed_stride);
 
         int32_t* const sums = (int32_t*)(dst_row + (nr * (k_internal / 4)));
         float* const scaling_factors = (float*)((uint8_t*)sums + (nr * kai_num_bytes_sum_rhs));
-        // Update destination row pointer
         float* const biases = (float*)((uint8_t*)scaling_factors + (nr * kai_num_bytes_multiplier_rhs));
 
         // initialize sums to 0
@@ -128,53 +133,195 @@ void kai_run_rhs_pack_nxk_qsu2cxp4vlx4_qsu2cx_neon(
             }
         }
         // Iterate over rows in the nr row block
-        for (size_t nr_block_idx = 0; nr_block_idx < nr; ++nr_block_idx) {
-            const uint8_t* const src_row = rhs + ((row_idx + nr_block_idx) * rhs_stride);
-            // Go to the first kr block for this row in the nr block
-            uint8_t* dst_kr_block = (uint8_t*)dst_row + (nr_block_idx * block_length / 4);
+        for (size_t k_byte_idx = 0; k_byte_idx < rhs_stride; k_byte_idx += num_bytes_processed) {
+            for (size_t nr_block_idx = 0; nr_block_idx < nr; nr_block_idx += num_bytes_processed) {
+                // Clamp the indices to avoid out-of-bound reads
+                const size_t n0_idx = KAI_MIN(row_idx + nr_block_idx, n - 1);
+                const size_t n1_idx = KAI_MIN(n0_idx + 1, n - 1);
+                const size_t n2_idx = KAI_MIN(n0_idx + 2, n - 1);
+                const size_t n3_idx = KAI_MIN(n0_idx + 3, n - 1);
+                const size_t n4_idx = KAI_MIN(n0_idx + 4, n - 1);
+                const size_t n5_idx = KAI_MIN(n0_idx + 5, n - 1);
+                const size_t n6_idx = KAI_MIN(n0_idx + 6, n - 1);
+                const size_t n7_idx = KAI_MIN(n0_idx + 7, n - 1);
 
-            int32_t sum = 0;
+                // Initialize partial sum
+                int32_t partial_sum0 = 0;
+                int32_t partial_sum1 = 0;
+                int32_t partial_sum2 = 0;
+                int32_t partial_sum3 = 0;
+                int32_t partial_sum4 = 0;
+                int32_t partial_sum5 = 0;
+                int32_t partial_sum6 = 0;
+                int32_t partial_sum7 = 0;
 
-            // Iterate over k src columns in blocks of kr columns
-            for (size_t col_idx = 0; col_idx < k_internal; col_idx += block_length) {
-                // Iterate over columns in the kr block
-                for (size_t kr_block_idx = 0; kr_block_idx < block_length; kr_block_idx += 4) {
-                    // We pad dst with 0s if the rounded k or n values have been exceeded
-                    if (row_idx + nr_block_idx >= n || col_idx + kr_block_idx >= k) {
-                        dst_kr_block[kr_block_idx / 4] =
-                            170;  // Initialize with RHS ZP 2 in every 2-bit (Binary rep of this in 8-bit: 10101010)
-                        continue;
-                    }
+                const uint8_t* src_base = rhs + k_byte_idx;
+                const uint8x8_t vsrc0_0 = vld1_u8(src_base + n0_idx * rhs_stride);
+                const uint8x8_t vsrc1_0 = vld1_u8(src_base + n1_idx * rhs_stride);
+                const uint8x8_t vsrc2_0 = vld1_u8(src_base + n2_idx * rhs_stride);
+                const uint8x8_t vsrc3_0 = vld1_u8(src_base + n3_idx * rhs_stride);
+                const uint8x8_t vsrc4_0 = vld1_u8(src_base + n4_idx * rhs_stride);
+                const uint8x8_t vsrc5_0 = vld1_u8(src_base + n5_idx * rhs_stride);
+                const uint8x8_t vsrc6_0 = vld1_u8(src_base + n6_idx * rhs_stride);
+                const uint8x8_t vsrc7_0 = vld1_u8(src_base + n7_idx * rhs_stride);
 
-                    // Load the 4 int2 values from source
-                    const uint8_t rhs_byte = src_row[(col_idx + kr_block_idx) / 4];
+                // Extract 2-bit values from the byte.
+                const int8x8_t vsrc0_0_s0 = vreinterpret_s8_u8(vand_u8(vsrc0_0, mask_2b));
+                const int8x8_t vsrc0_0_s1 = vreinterpret_s8_u8(vand_u8(vshr_n_u8(vsrc0_0, 2), mask_2b));
+                const int8x8_t vsrc0_0_s2 = vreinterpret_s8_u8(vand_u8(vshr_n_u8(vsrc0_0, 4), mask_2b));
+                const int8x8_t vsrc0_0_s3 = vreinterpret_s8_u8(vand_u8(vshr_n_u8(vsrc0_0, 6), mask_2b));
 
-                    // NOLINTBEGIN(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
-                    // extract i8 values from the 4 int2 values
-                    int32_t partial_sum = 0;
-                    int8_t val[4] = {2, 2, 2, 2};
-                    for (size_t i = 0; i < 4; i++) {
-                        if (col_idx + kr_block_idx + i < k) {
-                            val[i] = ((int8_t)((rhs_byte >> (i * 2)) & 0x03));
-                            // Add the i2 values to the row sum
-                            partial_sum += lut[val[i]];
-                        }
-                    }
+                const int8x8_t vsrc0_0_s0_s8 = vtbl1_s8(vlut_s8, vsrc0_0_s0);
+                const int8x8_t vsrc0_0_s1_s8 = vtbl1_s8(vlut_s8, vsrc0_0_s1);
+                const int8x8_t vsrc0_0_s2_s8 = vtbl1_s8(vlut_s8, vsrc0_0_s2);
+                const int8x8_t vsrc0_0_s3_s8 = vtbl1_s8(vlut_s8, vsrc0_0_s3);
 
-                    sum += partial_sum;
+                // Extract 2-bit values from the byte.
+                const int8x8_t vsrc1_0_s0 = vreinterpret_s8_u8(vand_u8(vsrc1_0, mask_2b));
+                const int8x8_t vsrc1_0_s1 = vreinterpret_s8_u8(vand_u8(vshr_n_u8(vsrc1_0, 2), mask_2b));
+                const int8x8_t vsrc1_0_s2 = vreinterpret_s8_u8(vand_u8(vshr_n_u8(vsrc1_0, 4), mask_2b));
+                const int8x8_t vsrc1_0_s3 = vreinterpret_s8_u8(vand_u8(vshr_n_u8(vsrc1_0, 6), mask_2b));
 
-                    // Truncate i8 to i2 and write to dst
-                    const uint8_t dst_byte =
-                        (val[0] & 0x3) | ((val[1] << 2) & 0x0C) | ((val[2] << 4 & 0x30)) | ((val[3] << 6 & 0xC0));
-                    dst_kr_block[kr_block_idx / 4] = dst_byte;
-                    // NOLINTEND(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
-                }
+                const int8x8_t vsrc1_0_s0_s8 = vtbl1_s8(vlut_s8, vsrc1_0_s0);
+                const int8x8_t vsrc1_0_s1_s8 = vtbl1_s8(vlut_s8, vsrc1_0_s1);
+                const int8x8_t vsrc1_0_s2_s8 = vtbl1_s8(vlut_s8, vsrc1_0_s2);
+                const int8x8_t vsrc1_0_s3_s8 = vtbl1_s8(vlut_s8, vsrc1_0_s3);
 
-                // Go to the next kr block for this row in the nr rows
-                dst_kr_block += dst_nr_block_size;
+                // Extract 2-bit values from the byte.
+                const int8x8_t vsrc2_0_s0 = vreinterpret_s8_u8(vand_u8(vsrc2_0, mask_2b));
+                const int8x8_t vsrc2_0_s1 = vreinterpret_s8_u8(vand_u8(vshr_n_u8(vsrc2_0, 2), mask_2b));
+                const int8x8_t vsrc2_0_s2 = vreinterpret_s8_u8(vand_u8(vshr_n_u8(vsrc2_0, 4), mask_2b));
+                const int8x8_t vsrc2_0_s3 = vreinterpret_s8_u8(vand_u8(vshr_n_u8(vsrc2_0, 6), mask_2b));
+
+                const int8x8_t vsrc2_0_s0_s8 = vtbl1_s8(vlut_s8, vsrc2_0_s0);
+                const int8x8_t vsrc2_0_s1_s8 = vtbl1_s8(vlut_s8, vsrc2_0_s1);
+                const int8x8_t vsrc2_0_s2_s8 = vtbl1_s8(vlut_s8, vsrc2_0_s2);
+                const int8x8_t vsrc2_0_s3_s8 = vtbl1_s8(vlut_s8, vsrc2_0_s3);
+
+                // Extract 2-bit values from the byte.
+                const int8x8_t vsrc3_0_s0 = vreinterpret_s8_u8(vand_u8(vsrc3_0, mask_2b));
+                const int8x8_t vsrc3_0_s1 = vreinterpret_s8_u8(vand_u8(vshr_n_u8(vsrc3_0, 2), mask_2b));
+                const int8x8_t vsrc3_0_s2 = vreinterpret_s8_u8(vand_u8(vshr_n_u8(vsrc3_0, 4), mask_2b));
+                const int8x8_t vsrc3_0_s3 = vreinterpret_s8_u8(vand_u8(vshr_n_u8(vsrc3_0, 6), mask_2b));
+
+                const int8x8_t vsrc3_0_s0_s8 = vtbl1_s8(vlut_s8, vsrc3_0_s0);
+                const int8x8_t vsrc3_0_s1_s8 = vtbl1_s8(vlut_s8, vsrc3_0_s1);
+                const int8x8_t vsrc3_0_s2_s8 = vtbl1_s8(vlut_s8, vsrc3_0_s2);
+                const int8x8_t vsrc3_0_s3_s8 = vtbl1_s8(vlut_s8, vsrc3_0_s3);
+
+                // Extract 2-bit values from the byte.
+                const int8x8_t vsrc4_0_s0 = vreinterpret_s8_u8(vand_u8(vsrc4_0, mask_2b));
+                const int8x8_t vsrc4_0_s1 = vreinterpret_s8_u8(vand_u8(vshr_n_u8(vsrc4_0, 2), mask_2b));
+                const int8x8_t vsrc4_0_s2 = vreinterpret_s8_u8(vand_u8(vshr_n_u8(vsrc4_0, 4), mask_2b));
+                const int8x8_t vsrc4_0_s3 = vreinterpret_s8_u8(vand_u8(vshr_n_u8(vsrc4_0, 6), mask_2b));
+
+                const int8x8_t vsrc4_0_s0_s8 = vtbl1_s8(vlut_s8, vsrc4_0_s0);
+                const int8x8_t vsrc4_0_s1_s8 = vtbl1_s8(vlut_s8, vsrc4_0_s1);
+                const int8x8_t vsrc4_0_s2_s8 = vtbl1_s8(vlut_s8, vsrc4_0_s2);
+                const int8x8_t vsrc4_0_s3_s8 = vtbl1_s8(vlut_s8, vsrc4_0_s3);
+
+                // Extract 2-bit values from the byte.
+                const int8x8_t vsrc5_0_s0 = vreinterpret_s8_u8(vand_u8(vsrc5_0, mask_2b));
+                const int8x8_t vsrc5_0_s1 = vreinterpret_s8_u8(vand_u8(vshr_n_u8(vsrc5_0, 2), mask_2b));
+                const int8x8_t vsrc5_0_s2 = vreinterpret_s8_u8(vand_u8(vshr_n_u8(vsrc5_0, 4), mask_2b));
+                const int8x8_t vsrc5_0_s3 = vreinterpret_s8_u8(vand_u8(vshr_n_u8(vsrc5_0, 6), mask_2b));
+
+                const int8x8_t vsrc5_0_s0_s8 = vtbl1_s8(vlut_s8, vsrc5_0_s0);
+                const int8x8_t vsrc5_0_s1_s8 = vtbl1_s8(vlut_s8, vsrc5_0_s1);
+                const int8x8_t vsrc5_0_s2_s8 = vtbl1_s8(vlut_s8, vsrc5_0_s2);
+                const int8x8_t vsrc5_0_s3_s8 = vtbl1_s8(vlut_s8, vsrc5_0_s3);
+
+                // Extract 2-bit values from the byte.
+                const int8x8_t vsrc6_0_s0 = vreinterpret_s8_u8(vand_u8(vsrc6_0, mask_2b));
+                const int8x8_t vsrc6_0_s1 = vreinterpret_s8_u8(vand_u8(vshr_n_u8(vsrc6_0, 2), mask_2b));
+                const int8x8_t vsrc6_0_s2 = vreinterpret_s8_u8(vand_u8(vshr_n_u8(vsrc6_0, 4), mask_2b));
+                const int8x8_t vsrc6_0_s3 = vreinterpret_s8_u8(vand_u8(vshr_n_u8(vsrc6_0, 6), mask_2b));
+
+                const int8x8_t vsrc6_0_s0_s8 = vtbl1_s8(vlut_s8, vsrc6_0_s0);
+                const int8x8_t vsrc6_0_s1_s8 = vtbl1_s8(vlut_s8, vsrc6_0_s1);
+                const int8x8_t vsrc6_0_s2_s8 = vtbl1_s8(vlut_s8, vsrc6_0_s2);
+                const int8x8_t vsrc6_0_s3_s8 = vtbl1_s8(vlut_s8, vsrc6_0_s3);
+
+                // Extract 2-bit values from the byte.
+                const int8x8_t vsrc7_0_s0 = vreinterpret_s8_u8(vand_u8(vsrc7_0, mask_2b));
+                const int8x8_t vsrc7_0_s1 = vreinterpret_s8_u8(vand_u8(vshr_n_u8(vsrc7_0, 2), mask_2b));
+                const int8x8_t vsrc7_0_s2 = vreinterpret_s8_u8(vand_u8(vshr_n_u8(vsrc7_0, 4), mask_2b));
+                const int8x8_t vsrc7_0_s3 = vreinterpret_s8_u8(vand_u8(vshr_n_u8(vsrc7_0, 6), mask_2b));
+
+                const int8x8_t vsrc7_0_s0_s8 = vtbl1_s8(vlut_s8, vsrc7_0_s0);
+                const int8x8_t vsrc7_0_s1_s8 = vtbl1_s8(vlut_s8, vsrc7_0_s1);
+                const int8x8_t vsrc7_0_s2_s8 = vtbl1_s8(vlut_s8, vsrc7_0_s2);
+                const int8x8_t vsrc7_0_s3_s8 = vtbl1_s8(vlut_s8, vsrc7_0_s3);
+
+                // Calculate the partial sum
+                partial_sum0 +=
+                    vaddlvq_s16(vaddl_s8(vadd_s8(vsrc0_0_s0_s8, vsrc0_0_s1_s8), vadd_s8(vsrc0_0_s2_s8, vsrc0_0_s3_s8)));
+                partial_sum1 +=
+                    vaddlvq_s16(vaddl_s8(vadd_s8(vsrc1_0_s0_s8, vsrc1_0_s1_s8), vadd_s8(vsrc1_0_s2_s8, vsrc1_0_s3_s8)));
+                partial_sum2 +=
+                    vaddlvq_s16(vaddl_s8(vadd_s8(vsrc2_0_s0_s8, vsrc2_0_s1_s8), vadd_s8(vsrc2_0_s2_s8, vsrc2_0_s3_s8)));
+                partial_sum3 +=
+                    vaddlvq_s16(vaddl_s8(vadd_s8(vsrc3_0_s0_s8, vsrc3_0_s1_s8), vadd_s8(vsrc3_0_s2_s8, vsrc3_0_s3_s8)));
+                partial_sum4 +=
+                    vaddlvq_s16(vaddl_s8(vadd_s8(vsrc4_0_s0_s8, vsrc4_0_s1_s8), vadd_s8(vsrc4_0_s2_s8, vsrc4_0_s3_s8)));
+                partial_sum5 +=
+                    vaddlvq_s16(vaddl_s8(vadd_s8(vsrc5_0_s0_s8, vsrc5_0_s1_s8), vadd_s8(vsrc5_0_s2_s8, vsrc5_0_s3_s8)));
+                partial_sum6 +=
+                    vaddlvq_s16(vaddl_s8(vadd_s8(vsrc6_0_s0_s8, vsrc6_0_s1_s8), vadd_s8(vsrc6_0_s2_s8, vsrc6_0_s3_s8)));
+                partial_sum7 +=
+                    vaddlvq_s16(vaddl_s8(vadd_s8(vsrc7_0_s0_s8, vsrc7_0_s1_s8), vadd_s8(vsrc7_0_s2_s8, vsrc7_0_s3_s8)));
+
+                // Update the sum
+                sums[nr_block_idx + 0] += partial_sum0;
+                sums[nr_block_idx + 1] += partial_sum1;
+                sums[nr_block_idx + 2] += partial_sum2;
+                sums[nr_block_idx + 3] += partial_sum3;
+                sums[nr_block_idx + 4] += partial_sum4;
+                sums[nr_block_idx + 5] += partial_sum5;
+                sums[nr_block_idx + 6] += partial_sum6;
+                sums[nr_block_idx + 7] += partial_sum7;
+
+                // Rearrange to get the dst blocksn
+                const uint16x4_t vdst_u16_0 = vreinterpret_u16_u8(vzip1_u8(vsrc0_0, vsrc1_0));  // 00 11 22 33
+                const uint16x4_t vdst_u16_1 = vreinterpret_u16_u8(vzip2_u8(vsrc0_0, vsrc1_0));  // 44 55 66 77
+                const uint16x4_t vdst_u16_2 = vreinterpret_u16_u8(vzip1_u8(vsrc2_0, vsrc3_0));  // 00 11 22 33
+                const uint16x4_t vdst_u16_3 = vreinterpret_u16_u8(vzip2_u8(vsrc2_0, vsrc3_0));  // 44 55 66 77
+                const uint16x4_t vdst_u16_4 = vreinterpret_u16_u8(vzip1_u8(vsrc4_0, vsrc5_0));  // 00 11 22 33
+                const uint16x4_t vdst_u16_5 = vreinterpret_u16_u8(vzip2_u8(vsrc4_0, vsrc5_0));  // 44 55 66 77
+                const uint16x4_t vdst_u16_6 = vreinterpret_u16_u8(vzip1_u8(vsrc6_0, vsrc7_0));  // 00 11 22 33
+                const uint16x4_t vdst_u16_7 = vreinterpret_u16_u8(vzip2_u8(vsrc6_0, vsrc7_0));  // 44 55 66 77
+
+                const uint32x2_t vdst_u32_0 = vreinterpret_u32_u16(vzip1_u16(vdst_u16_0, vdst_u16_2));  // 0000 1111
+                const uint32x2_t vdst_u32_1 = vreinterpret_u32_u16(vzip1_u16(vdst_u16_4, vdst_u16_6));  // 0000 1111
+                const uint32x2_t vdst_u32_2 = vreinterpret_u32_u16(vzip2_u16(vdst_u16_0, vdst_u16_2));  // 2222 3333
+                const uint32x2_t vdst_u32_3 = vreinterpret_u32_u16(vzip2_u16(vdst_u16_4, vdst_u16_6));  // 2222 3333
+                const uint32x2_t vdst_u32_4 = vreinterpret_u32_u16(vzip1_u16(vdst_u16_1, vdst_u16_3));  // 4444 5555
+                const uint32x2_t vdst_u32_5 = vreinterpret_u32_u16(vzip1_u16(vdst_u16_5, vdst_u16_7));  // 4444 5555
+                const uint32x2_t vdst_u32_6 = vreinterpret_u32_u16(vzip2_u16(vdst_u16_1, vdst_u16_3));  // 6666 7777
+                const uint32x2_t vdst_u32_7 = vreinterpret_u32_u16(vzip2_u16(vdst_u16_5, vdst_u16_7));  // 6666 7777
+
+                const uint32x2_t vdst_0 = vzip1_u32(vdst_u32_0, vdst_u32_1);  // 00000000
+                const uint32x2_t vdst_1 = vzip2_u32(vdst_u32_0, vdst_u32_1);  // 11111111
+                const uint32x2_t vdst_2 = vzip1_u32(vdst_u32_2, vdst_u32_3);  // 22222222
+                const uint32x2_t vdst_3 = vzip2_u32(vdst_u32_2, vdst_u32_3);  // 33333333
+                const uint32x2_t vdst_4 = vzip1_u32(vdst_u32_4, vdst_u32_5);  // 44444444
+                const uint32x2_t vdst_5 = vzip2_u32(vdst_u32_4, vdst_u32_5);  // 55555555
+                const uint32x2_t vdst_6 = vzip1_u32(vdst_u32_6, vdst_u32_7);  // 66666666
+                const uint32x2_t vdst_7 = vzip2_u32(vdst_u32_6, vdst_u32_7);  // 77777777
+
+                // Store the packed values
+                vst1_u32((uint32_t*)dst_row, vdst_0);
+                vst1_u32((uint32_t*)(dst_row + nr), vdst_1);
+                vst1_u32((uint32_t*)(dst_row + nr * 2), vdst_2);
+                vst1_u32((uint32_t*)(dst_row + nr * 3), vdst_3);
+                vst1_u32((uint32_t*)(dst_row + nr * 4), vdst_4);
+                vst1_u32((uint32_t*)(dst_row + nr * 5), vdst_5);
+                vst1_u32((uint32_t*)(dst_row + nr * 6), vdst_6);
+                vst1_u32((uint32_t*)(dst_row + nr * 7), vdst_7);
+
+                dst_row += 8 * sizeof(uint8_t);
             }
-            // save sum
-            sums[nr_block_idx] = sum;
+            dst_row += 7 * nr * sizeof(uint8_t);
         }
     }
 }

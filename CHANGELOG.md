@@ -13,6 +13,11 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 - New SME2 micro-kernels
   - Matrix Multiplication (MxN) Micro-Kernels of F16 LHS and QSI4C32P RHS with F32 input and output.
 - New Advanced SIMD packing kernel for F16PMRX2 LHS
+- Optimizations
+  - Optimize kai_rhs_pack_nxk_qsu2cxp4vlx4_qsu2cx_neon and kai_lhs_quant_pack_qai8dxp_f32 further for the block depth (kr/sr = 4) with Advanced SIMD
+- Fixes
+  - Minor fix to the packing parameters(kr and sr) in matmul_clamp_f32_qai8dxp_qsu2cxp kernels.
+  - Fix the vectorized round off instruction in kai_lhs_quant_pack_qai8dxp_f32 for the block depth (kr/sr = 8) to be consistent with the scalar implementation.
 
 ## v1.21.0
 

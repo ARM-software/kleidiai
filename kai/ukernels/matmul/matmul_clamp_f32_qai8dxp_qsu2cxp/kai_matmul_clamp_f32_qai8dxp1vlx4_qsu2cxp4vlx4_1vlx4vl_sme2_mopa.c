@@ -43,8 +43,8 @@ static const size_t kai_n_step = 4;  // multiple of vector length
 // Packing args
 static const size_t kai_mr = 1;  // multiple of vector length
 static const size_t kai_nr = 4;  // multiple of vector length
-static const size_t kai_kr = 8;
-static const size_t kai_sr = 2;
+static const size_t kai_kr = 4;
+static const size_t kai_sr = 1;
 // LHS format args (num. bytes per value, multiplier, zero_point (if asymmetric))
 static const size_t kai_num_bytes_qvalue_lhs = sizeof(int8_t);
 static const size_t kai_num_bytes_multiplier_lhs = sizeof(float);
