@@ -95,16 +95,17 @@ inline static size_t kai_get_num_bytes_per_block_lhs(size_t bl) {
 }
 
 inline static size_t kai_get_num_bytes_per_block_rhs(size_t bl) {
-    KAI_ASSUME(bl == kai_bl);
+    KAI_ASSUME((bl % kai_bl) == 0);
     size_t num_bytes_per_block_rhs = (bl / kai_recip_num_bytes_qvalue_rhs) + kai_num_bytes_multiplier_rhs;
     return num_bytes_per_block_rhs;
 }
 
 inline static size_t kai_get_num_blocks_per_row(size_t k, size_t bl) {
-    KAI_ASSUME(bl == kai_bl);
+    KAI_ASSUME((bl % kai_bl) == 0);
     KAI_ASSUME((k % kai_bl) == 0);
+    KAI_ASSUME((k % bl) == 0);
 
-    return kai_roundup(k, bl) / bl;
+    return k / bl;
 }
 
 inline static size_t kai_get_lhs_packed_stride(size_t k, size_t bl) {
@@ -113,8 +114,9 @@ inline static size_t kai_get_lhs_packed_stride(size_t k, size_t bl) {
 }
 
 inline static size_t kai_get_rhs_packed_stride(size_t k, size_t bl) {
-    KAI_ASSUME(bl == kai_bl);
+    KAI_ASSUME((bl % kai_bl) == 0);
     KAI_ASSUME((k % kai_bl) == 0);
+    KAI_ASSUME((k % bl) == 0);
 
     const size_t num_blocks_per_row = kai_get_num_blocks_per_row(k, bl);
     const size_t num_bytes_per_block = kai_get_num_bytes_per_block_rhs(bl);
@@ -194,7 +196,7 @@ void kai_run_matmul_clamp_f32_f16p1vlx2_qsi4c32p4vlx2_1vlx4vl_sme2_mopa(
     size_t dst_stride_col,            //
     float scalar_min,                 //
     float scalar_max) {
-    KAI_ASSUME(bl == 32);
+    KAI_ASSUME((bl % kai_bl) == 0);
 
     KAI_UNUSED(dst_stride_col);
 

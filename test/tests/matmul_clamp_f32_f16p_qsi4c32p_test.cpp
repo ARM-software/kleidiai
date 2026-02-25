@@ -90,6 +90,24 @@ F32F16pQsi4c32pCacheData ReferenceGenerator<F32F16pQsi4c32pCacheDataId, F32F16pQ
     return test_reference;
 }
 
+using MatMulTestParams_f32_f16p_qsi4c32p = std::tuple<size_t, MatMulShape, MatrixPortion, float, size_t>;
+
+[[maybe_unused]] static void PrintTo(const MatMulTestParams_f32_f16p_qsi4c32p& param, std::ostream* os) {
+    const auto variant_idx = std::get<0>(param);
+    const auto shape = std::get<1>(param);
+    const auto portion = std::get<2>(param);
+    const auto clamp_ratio = std::get<3>(param);
+    const auto bl = std::get<4>(param);
+
+    *os << "variant_" << variant_idx << "__";
+    PrintTo(shape, os);
+    *os << "__";
+    PrintTo(portion, os);
+    *os << "__clamp_ratio_" << static_cast<int>(clamp_ratio * 100);
+    *os << "__Bias";
+    *os << "__bl_" << bl;
+}
+
 namespace {
 // Interface for the LHS and RHS packed size and packing functions
 using kai_get_lhs_packed_size_func_t = decltype(&kai_get_lhs_packed_size_lhs_pack_f16pmrx2_f32_neon);
@@ -128,24 +146,7 @@ const std::array<Variant, 1> variants_kai_matmul_clamp_f32_f16p_qsi4c32p = {
     },
 };
 
-class MatMulTest_f32_f16p_qsi4c32p
-    : public ::testing::TestWithParam<std::tuple<size_t, MatMulShape, MatrixPortion, float>> {};
-
-std::string test_description(
-    const std::string_view& name, const MatMulShape& shape, const MatrixPortion& portion, float clamp_ratio,
-    bool bias) {
-    std::ostringstream os;
-
-    os << name << "__";
-    PrintTo(shape, &os);
-    os << "__";
-    PrintTo(portion, &os);
-    os << "__clamp_ratio_" << static_cast<int>(clamp_ratio * 100);
-    if (bias) {
-        os << "__Bias";
-    }
-    return os.str();
-}
+class MatMulTest_f32_f16p_qsi4c32p : public ::testing::TestWithParam<MatMulTestParams_f32_f16p_qsi4c32p> {};
 
 Buffer pack_f16pmrx2_ref(const void* src, size_t nb_rows, size_t nb_cols, size_t offset_bytes = 0, size_t mr = 16) {
     // Source: raw FP16 (no packing)
@@ -180,17 +181,18 @@ Buffer pack_f16pmrx2_ref(const void* src, size_t nb_rows, size_t nb_cols, size_t
 }
 
 TEST_P(MatMulTest_f32_f16p_qsi4c32p, Offset_RHS_LHS) {
-    const auto& [variant_index, matmul_shape, portion, clamp_ratio] = GetParam();
+    const auto& [variant_index, matmul_shape, portion, clamp_ratio, bl] = GetParam();
     const auto& ukernel_variant = variants_kai_matmul_clamp_f32_f16p_qsi4c32p.at(variant_index);
 
     if (!ukernel_variant.ukernel.fn_is_supported()) {
         GTEST_SKIP() << "Unsupported CPU feature";
     }
 
-    const size_t bl = 32;
     const size_t M = matmul_shape.m;
     const size_t N = matmul_shape.n;
     const size_t K = matmul_shape.k;
+
+    ASSERT_TRUE(K % bl == 0);
 
     const auto nr = ukernel_variant.ukernel.interface.get_nr();
     const auto mr = ukernel_variant.ukernel.interface.get_mr();
@@ -215,7 +217,7 @@ TEST_P(MatMulTest_f32_f16p_qsi4c32p, Offset_RHS_LHS) {
 }
 
 TEST_P(MatMulTest_f32_f16p_qsi4c32p, LHS) {
-    const auto& [variant_index, matmul_shape, portion, clamp_ratio] = GetParam();
+    const auto& [variant_index, matmul_shape, portion, clamp_ratio, bl] = GetParam();
     const auto& ukernel_variant = variants_kai_matmul_clamp_f32_f16p_qsi4c32p.at(variant_index);
 
     if (!ukernel_variant.ukernel.fn_is_supported()) {
@@ -223,7 +225,9 @@ TEST_P(MatMulTest_f32_f16p_qsi4c32p, LHS) {
     }
     const size_t M = matmul_shape.m;
     const size_t K = matmul_shape.k;
-    const size_t bl = 32;
+
+    ASSERT_TRUE(K % bl == 0);
+
     const auto mr = ukernel_variant.ukernel.interface.get_mr();
     const auto kr = ukernel_variant.ukernel.interface.get_kr();
     const auto sr = ukernel_variant.ukernel.interface.get_sr();
@@ -261,7 +265,7 @@ TEST_P(MatMulTest_f32_f16p_qsi4c32p, LHS) {
 }
 
 TEST_P(MatMulTest_f32_f16p_qsi4c32p, EndToEnd) {
-    const auto& [variant_index, matmul_shape, portion, clamp_ratio] = GetParam();
+    const auto& [variant_index, matmul_shape, portion, clamp_ratio, bl] = GetParam();
     const auto& ukernel_variant = variants_kai_matmul_clamp_f32_f16p_qsi4c32p.at(variant_index);
 
     if (!ukernel_variant.ukernel.fn_is_supported()) {
@@ -271,7 +275,8 @@ TEST_P(MatMulTest_f32_f16p_qsi4c32p, EndToEnd) {
     const size_t M = matmul_shape.m;
     const size_t N = matmul_shape.n;
     const size_t K = matmul_shape.k;
-    const size_t bl = 32;
+
+    ASSERT_TRUE(K % bl == 0);
 
     const auto mr = ukernel_variant.ukernel.interface.get_mr();
     const auto nr = ukernel_variant.ukernel.interface.get_nr();
@@ -367,14 +372,11 @@ static constexpr std::array portions{
     MatrixPortion(0.75, 0, 1, 1),      // Partial rows
     MatrixPortion(0.4, 0.5, 0.6, 0.8)  // Somewhere Middle
 };
-static constexpr std::array shapes{
+static constexpr std::array shapes_k32{
     MatMulShape{1, 64, 32},    //
     MatMulShape{1, 63, 32},    //
     MatMulShape{1, 65, 32},    //
-    MatMulShape{1, 64, 64},    //
-    MatMulShape{1, 64, 128},   //
     MatMulShape{1, 128, 32},   //
-    MatMulShape{1, 128, 128},  //
     MatMulShape{1, 2, 32},     //
     MatMulShape{1, 3, 32},     //
     MatMulShape{1, 4, 32},     //
@@ -383,6 +385,17 @@ static constexpr std::array shapes{
     MatMulShape{4, 4, 32},     //
     MatMulShape{5, 5, 32},     //
     MatMulShape{32, 128, 32},  //
+    MatMulShape{15, 32, 32},   //
+    MatMulShape{1, 64, 64},    //
+    MatMulShape{16, 64, 64},   //
+    MatMulShape{32, 64, 64},   //
+    MatMulShape{1, 64, 128},   //
+    MatMulShape{32, 64, 128},  //
+    MatMulShape{32, 64, 256},  //
+    MatMulShape{77, 99, 256},
+};
+static constexpr std::array shapes_k64{
+    MatMulShape{1, 64, 64},    //
     MatMulShape{15, 64, 64},   //
     MatMulShape{17, 64, 64},   //
     MatMulShape{16, 63, 64},   //
@@ -391,25 +404,67 @@ static constexpr std::array shapes{
     MatMulShape{32, 64, 64},   //
     MatMulShape{16, 32, 64},   //
     MatMulShape{8, 32, 64},    //
-    MatMulShape{15, 32, 32},   //
-    MatMulShape{77, 99, 64}    //
+    MatMulShape{77, 99, 64},   //
+    MatMulShape{1, 64, 128},   //
+    MatMulShape{32, 64, 128},  //
+    MatMulShape{32, 64, 256},  //
+    MatMulShape{77, 99, 256},
+};
+static constexpr std::array shapes_k128{
+    MatMulShape{1, 64, 128},   //
+    MatMulShape{1, 128, 128},  //
+    MatMulShape{32, 64, 128},  //
+    MatMulShape{16, 32, 128},  //
+    MatMulShape{8, 32, 128},   //
+    MatMulShape{77, 99, 128},  //
+    MatMulShape{32, 64, 256},  //
+    MatMulShape{77, 99, 256},
+};
+static constexpr std::array shapes_k256{
+    MatMulShape{32, 64, 256},  //
+    MatMulShape{16, 32, 256},  //
+    MatMulShape{8, 32, 256},   //
+    MatMulShape{77, 99, 256},
 };
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMul, MatMulTest_f32_f16p_qsi4c32p,
+    MatMul_bl32, MatMulTest_f32_f16p_qsi4c32p,
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_f16p_qsi4c32p.size()),  //
-        testing::ValuesIn(shapes),                                                      //
+        testing::ValuesIn(shapes_k32),                                                  //
         testing::ValuesIn(portions),                                                    //
-        testing::ValuesIn(std::initializer_list<float>{0.0F, 0.1F, 0.5F})),             //
-    [](const auto& info) {
-        const auto variant_idx = std::get<0>(info.param);
-        const std::string name{variants_kai_matmul_clamp_f32_f16p_qsi4c32p.at(variant_idx).ukernel.name};
-        const auto shape = std::get<MatMulShape>(info.param);
-        const auto portion = std::get<2>(info.param);
-        const auto clamp_rate = std::get<3>(info.param);
+        testing::ValuesIn(std::initializer_list<float>{0.0F, 0.1F, 0.5F}),              //
+        testing::Values(32)),                                                           //
+    testing::PrintToStringParamName());
 
-        return test_description(name, shape, portion, clamp_rate, true);
-    });
+INSTANTIATE_TEST_SUITE_P(
+    MatMul_bl64, MatMulTest_f32_f16p_qsi4c32p,
+    testing::Combine(
+        testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_f16p_qsi4c32p.size()),  //
+        testing::ValuesIn(shapes_k64),                                                  //
+        testing::ValuesIn(portions),                                                    //
+        testing::ValuesIn(std::initializer_list<float>{0.0F, 0.1F, 0.5F}),              //
+        testing::Values(64)),                                                           //
+    testing::PrintToStringParamName());
+
+INSTANTIATE_TEST_SUITE_P(
+    MatMul_bl128, MatMulTest_f32_f16p_qsi4c32p,
+    testing::Combine(
+        testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_f16p_qsi4c32p.size()),  //
+        testing::ValuesIn(shapes_k128),                                                 //
+        testing::ValuesIn(portions),                                                    //
+        testing::ValuesIn(std::initializer_list<float>{0.0F, 0.1F, 0.5F}),              //
+        testing::Values(128)),                                                          //
+    testing::PrintToStringParamName());
+
+INSTANTIATE_TEST_SUITE_P(
+    MatMul_bl256, MatMulTest_f32_f16p_qsi4c32p,
+    testing::Combine(
+        testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_f16p_qsi4c32p.size()),  //
+        testing::ValuesIn(shapes_k256),                                                 //
+        testing::ValuesIn(portions),                                                    //
+        testing::ValuesIn(std::initializer_list<float>{0.0F, 0.1F, 0.5F}),              //
+        testing::Values(256)),                                                          //
+    testing::PrintToStringParamName());
 }  // namespace
 }  // namespace kai::test

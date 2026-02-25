@@ -13,6 +13,11 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 - New SME2 micro-kernels
   - Matrix Multiplication (1xN) Micro-Kernel of QAI8DXP LHS and QSI8CXP RHS with F16 output.
   - Matrix Multiplication (MxN) Micro-Kernel of QAI8DXP LHS and QSI8CXP RHS with F16 output.
+- Extended the following kernels to support variable block length
+  - kai_rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon
+  - kai_lhs_quant_pack_qsi8d32p_f32_neon
+  - kai_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa
+  - kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot
 
 ## v1.22.0
 

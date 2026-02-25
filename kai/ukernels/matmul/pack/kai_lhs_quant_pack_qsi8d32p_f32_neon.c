@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -75,7 +75,7 @@ void kai_run_lhs_quant_pack_qsi8d32p_f32_neon(
     KAI_ASSUME((bl % kr) == 0);
     KAI_ASSUME((k % bl) == 0);
     KAI_ASSUME(kr == 4);
-    KAI_ASSUME(bl == 32);
+    KAI_ASSUME((bl % 32) == 0);
     KAI_UNUSED(sr);
     KAI_UNUSED(m_idx_start);
     KAI_UNUSED(lhs_stride);
