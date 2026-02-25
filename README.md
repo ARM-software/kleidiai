@@ -94,7 +94,7 @@ All functions defined in the **.h** header file of the micro-kernel variant has 
 
 ## Supported micro-kernels
 
-For a list of supported micro-kernels refer to the [source](/kai/ukernels/) directory. The micro-kernels are grouped in separate directories based on the performed operation.
+For a list of supported micro-kernels refer to the [KleidiAI micro-kernel tables](docs/microkernel_tables.md#kleidiai-micro-kernel-tables) and the [source](/kai/ukernels/) directory. The micro-kernels are grouped in separate directories based on the performed operation.
 For example, all the matrix-multiplication micro-kernels are held in the `matmul/` subdirectory. In there, the micro-kernels are grouped into directories whose name syntax describes the micro-kernel from a data type point of view of inputs and outputs.
 
 ## How to build
