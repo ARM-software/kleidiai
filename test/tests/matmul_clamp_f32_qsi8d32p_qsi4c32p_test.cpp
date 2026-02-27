@@ -91,10 +91,10 @@ static const std::array<UKernelVariants, 9>
          // NOTE: The following kernels do not support clamping despite their names.
          {UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p4x4_qsi4c32p4x4_16x4_neon_dotprod, cpu_has_dotprod, lhs_quant_pack_qsi8d32p_f32,
-             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false), false},
+             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false), true},
          {UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod, cpu_has_dotprod, lhs_quant_pack_qsi8d32p_f32,
-             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false), false},
+             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false), true},
 
          // The kernels below this point will run clamping tests
          {UKERNEL_MATMUL_PACK_VARIANT(
@@ -161,8 +161,10 @@ static const UKernelVariants& get_variant_entry(size_t variant_index, bool varia
 
 // Ensure non-clamping tests are marked correctly.
 TEST(KernelClampingCheck, SanityCheck) {
-    for (size_t i = 0; i < variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p.size(); i++) {
-        ASSERT_EQ(variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p.at(i).clamp_support, !(i < num_non_clamping_kernels));
+    for (size_t i = 0; i < variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.size(); i++) {
+        ASSERT_EQ(
+            variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.at(i).clamp_support,
+            !(i < num_non_clamping_kernels));
     }
 }
 

@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -136,8 +136,7 @@ void kai_run_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod(
         return;
     }
     size_t num_blocks = kai_num_blocks_per_row(k, bl);
-    KAI_UNUSED(scalar_min);
-    KAI_UNUSED(scalar_max);
+    float clamp_vals[2] = {scalar_min, scalar_max};
 
     __asm__ __volatile__(
         "mov x26, #0x22\n"
@@ -189,7 +188,12 @@ void kai_run_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod(
         "scvtf v25.4s, v25.4s, #0x4\n"
         "fmla v29.4s, v25.4s, v20.4s\n"
         "cbnz x20, 3b\n"
+        "ld1r { v17.4s }, [%x[clamp_vals]]\n"
+        "add x20, %x[clamp_vals], #0x4\n"
         "cmp x23, #0x4\n"
+        "ld1r { v16.4s }, [x20]\n"
+        "fmax v29.4s, v29.4s, v17.4s\n"
+        "fmin v29.4s, v29.4s, v16.4s\n"
         "blt 4f\n"
         "str q29, [%x[dst], #0x0]\n"
         "b 7f\n"
@@ -212,8 +216,8 @@ void kai_run_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod(
         "mov %x[dst], x22\n"
         "bgt 1b\n"
         : [dst] "+&r"(dst), [lhs_packed] "+&r"(lhs_packed)
-        : [dst_stride_row] "r"(dst_stride_row), [m] "r"(m), [n] "r"(n), [num_blocks] "r"(num_blocks),
-          [rhs_packed] "r"(rhs_packed)
+        : [clamp_vals] "r"(clamp_vals), [dst_stride_row] "r"(dst_stride_row), [m] "r"(m), [n] "r"(n),
+          [num_blocks] "r"(num_blocks), [rhs_packed] "r"(rhs_packed)
         : "cc", "memory", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28",
           "v29", "v30", "x20", "x21", "x22", "x23", "x24", "x25", "x26");
 }

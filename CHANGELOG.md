@@ -22,6 +22,9 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
   - Added overview of micro-kernels
 - Fixes
   - Update the kai_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa kernel to multiply the zero-points and row-sums as integers instead of float to improve accuracy.
+  - Implement clamping in kernels where it was missing to match their naming
+    - kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod
+    - kai_matmul_clamp_f32_qsi8d32p4x4_qsi4c32p4x4_16x4_neon_dotprod
 
 ## v1.22.0
 
