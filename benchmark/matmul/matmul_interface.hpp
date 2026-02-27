@@ -10,6 +10,7 @@
 #include <cstddef>
 
 #include "kai/kai_common.h"
+#include "kai/ukernels/matmul/kai_matmul_types.h"
 
 namespace kai::benchmark {
 
@@ -93,6 +94,12 @@ struct MatMulBlockwiseDynamicQuantLutInterface {
         size_t dst_stride_row, size_t dst_stride_col,  //
         float clamp_min, float clamp_max,              //
         const int32_t* lut);
+};
+
+/// Abstraction for the Matrix Multiplication micro-kernel API wrapper.
+struct MatMulUkernelApiInterface {
+    kai_matmul_uker_config (*get_config)(void);
+    kai_matmul_uker_api (*get_api)(void);
 };
 
 }  // namespace kai::benchmark

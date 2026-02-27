@@ -20,6 +20,8 @@
 #include "test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_fp_nt_wrapper.hpp"
 #include "test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_interface.hpp"
 #include "test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_quant_wrapper.hpp"
+#include "test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_ukerapi_t_wrapper.hpp"
+#include "test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_ukerapi_wrapper.hpp"
 
 namespace kai::test {
 
@@ -56,6 +58,24 @@ std::unique_ptr<KernelWrapper> create_matmul_rhs_pack_kxn_f32p2vlx1biasf32_f32_f
         make_poly<PlainFormat>(DataType::FP32), make_poly<PlainFormat>(DataType::FP32),
         make_poly<Block2dRowFormat>(
             2 * get_sme_vector_length<float>(), 1, 1, false, DataType::FP32, std::array{DataType::FP32},
+            std::array<DataType, 0>{}));
+}
+
+std::unique_ptr<KernelWrapper> create_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme() {
+    return std::make_unique<MatMulPackRhsUkerApiWrapper>(
+        "create_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme", make_poly<PlainFormat>(DataType::FP32),
+        make_poly<PlainFormat>(DataType::FP32),
+        make_poly<Block2dRowFormat>(
+            1 * get_sme_vector_length<float>(), 1, 1, false, DataType::FP32, std::array{DataType::FP32},
+            std::array<DataType, 0>{}));
+}
+
+std::unique_ptr<KernelWrapper> create_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme() {
+    return std::make_unique<MatMulPackRhsUkerApiTWrapper>(
+        "create_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme", make_poly<PlainFormat>(DataType::FP32),
+        make_poly<PlainFormat>(DataType::FP32),
+        make_poly<Block2dRowFormat>(
+            1 * get_sme_vector_length<float>(), 1, 1, false, DataType::FP32, std::array{DataType::FP32},
             std::array<DataType, 0>{}));
 }
 

@@ -21,4 +21,7 @@ namespace kai::test {
 /// Creates a wrapper for kai_lhs_pack_f32p2vlx1_f32_sme micro-kernel.
 [[nodiscard]] std::unique_ptr<KernelWrapper> create_matmul_lhs_pack_f32p2vlx1_f32_sme();
 
+/// Creates a wrapper for kai_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme.
+[[nodiscard]] std::unique_ptr<KernelWrapper> create_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme();
+
 }  // namespace kai::test

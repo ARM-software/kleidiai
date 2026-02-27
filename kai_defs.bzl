@@ -149,6 +149,7 @@ def _kai_c_cxx_common(name, copts_def_func, **kwargs):
         cpu_uarch.extend(kai_cpu_sve2())
 
         extra_copts.append("-fno-tree-vectorize")
+        extra_copts.append("-fno-tree-slp-vectorize")
 
     kwargs["copts"] = kwargs.get("copts", []) + copts_def_func(cpu_uarch) + extra_copts
     kwargs["deps"] = ["//:common"] + kwargs.get("deps", [])
@@ -169,6 +170,34 @@ def _kai_c_cxx_common(name, copts_def_func, **kwargs):
         kwargs["srcs"] = kwargs.get("srcs", []) + [ukernel + "_asm.S" for ukernel in kwargs["kernels_asm"]] + [ukernel + ".c" for ukernel in kwargs["kernels_asm"]]
         kwargs["textual_hdrs"] = kwargs.get("textual_hdrs", []) + [ukernel + ".h" for ukernel in kwargs["kernels_asm"]]
         kwargs.pop("kernels_asm")
+
+    # Add kernels source files without per-kernel headers
+    if "kernels_nohdr" in kwargs:
+        kernels_nohdr = kwargs["kernels_nohdr"]
+        kwargs["srcs"] = (
+            kwargs.get("srcs", []) +
+            [ukernel + ".c" for ukernel in kernels_nohdr]
+        )
+        kwargs.pop("kernels_nohdr")
+
+    # Add assembly kernels source files without per-kernel headers
+    if "kernels_asm_nohdr" in kwargs:
+        kernels_asm_nohdr = kwargs["kernels_asm_nohdr"]
+        kwargs["srcs"] = (
+            kwargs.get("srcs", []) +
+            [ukernel + "_asm.S" for ukernel in kernels_asm_nohdr] +
+            [ukernel + ".c" for ukernel in kernels_asm_nohdr]
+        )
+        kwargs.pop("kernels_asm_nohdr")
+
+    # Add assembly-only kernels source files
+    if "kernels_asm_only" in kwargs:
+        kernels_asm_only = kwargs["kernels_asm_only"]
+        kwargs["srcs"] = (
+            kwargs.get("srcs", []) +
+            [ukernel + "_asm.S" for ukernel in kernels_asm_only]
+        )
+        kwargs.pop("kernels_asm_only")
 
     cc_library(
         name = name,

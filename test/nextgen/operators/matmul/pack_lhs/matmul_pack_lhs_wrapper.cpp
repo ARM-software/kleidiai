@@ -22,6 +22,7 @@
 #include "test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_dq_wrapper.hpp"
 #include "test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_fp_wrapper.hpp"
 #include "test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_interface.hpp"
+#include "test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_ukerapi_wrapper.hpp"
 
 namespace kai::test {
 
@@ -43,8 +44,15 @@ std::unique_ptr<KernelWrapper> create_matmul_lhs_quant_pack_qai8dxp_f32(
             block_height, block_width, 32, true, DataType::I8, std::array<DataType, 0>{},
             std::array{DataType::I32, DataType::FP32}));
 }
-
 }  // namespace
+
+std::unique_ptr<KernelWrapper> create_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme() {
+    return std::make_unique<MatMulPackLhsUkerApiWrapper>(
+        "create_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme", make_poly<PlainFormat>(DataType::FP32),
+        make_poly<Block2dRowFormat>(
+            1 * get_sme_vector_length<float>(), 1, 1, false, DataType::FP32, std::array<DataType, 0>{},
+            std::array<DataType, 0>{}));
+}
 
 std::unique_ptr<KernelWrapper> create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32() {
     return create_matmul_lhs_quant_pack_qai8dxp_f32("1vlx4", 1 * get_sme_vector_length<float>(), 4);

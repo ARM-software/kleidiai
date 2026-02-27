@@ -80,6 +80,19 @@ def gather_includes(
 
 
 def list_present(ukernels_dir: str, kernel_types: Set[str]) -> Set[str]:
+    # REVISIT: Use this list to extract the list of micro-kernels using the new API.
+    uker_apis = [
+        "matmul/kai_matmul",
+        "matmul/kai_matmul_pack_lhs",
+        "matmul/kai_matmul_pack_rhs",
+    ]
+
+    # These header files don't belong to any specific micro-kernel.
+    # They need to be ignored.
+    uker_api_headers = [
+        f"{name}{suffix}" for name in uker_apis for suffix in [".h", "_types.h"]
+    ]
+
     present: Set[str] = set()
     base = os.path.abspath(ukernels_dir)
     for dirpath, _, files in os.walk(base):
@@ -97,7 +110,7 @@ def list_present(ukernels_dir: str, kernel_types: Set[str]) -> Set[str]:
                 continue
             if rel_path.endswith("_interface.h"):
                 continue
-            if rel_path.endswith("pack_lhs.h") or rel_path.endswith("pack_rhs.h"):
+            if rel_path in uker_api_headers:
                 continue
             kernel_type = classify_kernel(rel_path)
             if kernel_type in kernel_types:

@@ -18,4 +18,10 @@ namespace kai::test {
 /// Creates a wrapper for kai_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme kernel.
 [[nodiscard]] std::unique_ptr<KernelWrapper> create_matmul_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme();
 
+/// Creates a wrapper for kai_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme kernel.
+[[nodiscard]] std::unique_ptr<KernelWrapper> create_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme();
+
+/// Creates a wrapper for kai_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme kernel.
+[[nodiscard]] std::unique_ptr<KernelWrapper> create_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme();
+
 }  // namespace kai::test

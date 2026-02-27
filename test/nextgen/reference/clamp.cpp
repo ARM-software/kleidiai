@@ -33,7 +33,7 @@ std::tuple<Buffer, Buffer> dynamic_clamp(float ratio, Span<const size_t> shape, 
 
     const size_t num_dims = shape.size();
     const size_t width = shape.at(num_dims - 1);
-    const size_t height = std::accumulate(shape.begin(), shape.end() - 1, 1, std::multiplies<>());
+    const size_t height = std::accumulate(shape.begin(), shape.end() - 1, size_t{1}, std::multiplies<>());
 
     // Finds the input range.
     T src_min = numeric_highest<T>;

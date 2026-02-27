@@ -30,7 +30,7 @@ template <typename Op>
 
     const size_t width = shape.at(shape.size() - 1);
     const size_t row_size = round_up_division(width * size_in_bits<Type>, 8);
-    const size_t num_rows = std::accumulate(shape.begin(), shape.end() - 1, 1, std::multiplies<>());
+    const size_t num_rows = std::accumulate(shape.begin(), shape.end() - 1, size_t{1}, std::multiplies<>());
     const size_t size = num_rows * row_size;
 
     Buffer output(size, 0);

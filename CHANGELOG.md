@@ -11,6 +11,12 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 ## Upcoming Release
 
 - New SME2 micro-kernels
+  - Add SME2 elastic GEMM micro-kernels.
+    - The micro-kernel consists of a primary micro-kernel with 8 vscale * 8 vscale (2VLx2VL)
+      output block and other micro-kernels with different output block to handle the edges.
+    - Data type: FP32.
+    - Instruction: SME2 MOPA.
+    - New naming rule and API design are introduced with the elastic GEMM micro-kernel.
   - Matrix Multiplication (1xN) Micro-Kernel of QAI8DXP LHS and QSI8CXP RHS with F16 output.
   - Matrix Multiplication (MxN) Micro-Kernel of QAI8DXP LHS and QSI8CXP RHS with F16 output.
 - Extended the following kernels to support variable block length

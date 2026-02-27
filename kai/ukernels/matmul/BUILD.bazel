@@ -230,11 +230,33 @@ SME_KERNELS_ASM = [
 ]
 
 # buildifier: keep sorted
+SME_KERNELS_ASM_NOHDR = [
+    "pack/kai_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme",
+    "pack/kai_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme",
+    "pack/kai_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme",
+]
+
+# buildifier: keep sorted
 SME2_KERNELS = [
     "matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa",
     "matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot",
     "matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa",
     "matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot",
+]
+
+# buildifier: keep sorted
+SME2_KERNELS_NOHDR = [
+    "matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8vs_sme2_mopa",
+]
+
+# buildifier: keep sorted
+SME2_KERNELS_ASM_ONLY = [
+    "matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_16vsx4vs_sme2_mopa",
+    "matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_4vsx16vs_sme2_mopa",
+    "matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_4vsx4vs_sme2_mopa",
+    "matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_4vsx8vs_sme2_mopa",
+    "matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx4vs_sme2_mopa",
+    "matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8vs_sme2_mopa",
 ]
 
 # buildifier: keep sorted
@@ -265,7 +287,14 @@ SME2_KERNELS_ASM = [
 
 kai_c_library(
     name = "interface",
-    textual_hdrs = glob(["**/*_interface.h"]),
+    textual_hdrs = glob(["**/*_interface.h"]) + [
+        "kai_matmul.h",
+        "kai_matmul_types.h",
+        "kai_matmul_pack_lhs.h",
+        "kai_matmul_pack_lhs_types.h",
+        "kai_matmul_pack_rhs.h",
+        "kai_matmul_pack_rhs_types.h",
+    ],
     visibility = ["//visibility:public"],
 )
 
@@ -386,18 +415,37 @@ kai_c_library(
     name = "sme_impl_asm",
     cpu_uarch = kai_cpu_sme(),
     kernels_asm = SME_KERNELS_ASM,
+    kernels_asm_nohdr = SME_KERNELS_ASM_NOHDR,
+    textual_hdrs = [
+        "kai_matmul.h",
+        "kai_matmul_types.h",
+        "kai_matmul_pack_lhs.h",
+        "kai_matmul_pack_lhs_types.h",
+        "kai_matmul_pack_rhs.h",
+        "kai_matmul_pack_rhs_types.h",
+    ],
 )
 
 kai_c_library(
     name = "sme2_impl",
     cpu_uarch = kai_cpu_sme2(),
     kernels = SME2_KERNELS,
+    kernels_nohdr = SME2_KERNELS_NOHDR,
+    textual_hdrs = [
+        "kai_matmul.h",
+        "kai_matmul_types.h",
+        "kai_matmul_pack_lhs.h",
+        "kai_matmul_pack_lhs_types.h",
+        "kai_matmul_pack_rhs.h",
+        "kai_matmul_pack_rhs_types.h",
+    ],
 )
 
 kai_c_library(
     name = "sme2_impl_asm",
     cpu_uarch = kai_cpu_sme2(),
     kernels_asm = SME2_KERNELS_ASM,
+    kernels_asm_only = SME2_KERNELS_ASM_ONLY,
 )
 
 kai_c_library(

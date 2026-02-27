@@ -21,4 +21,7 @@ namespace kai::test {
 /// Creates a wrapper for matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa kernel.
 [[nodiscard]] std::unique_ptr<KernelWrapper> create_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa();
 
+/// Creates a wrapper for matmul_clamp_f32_f32p4vsx1_f32p4vsx1b_8vsx8vs_elastic_sme2_mopa kernel.
+[[nodiscard]] std::unique_ptr<KernelWrapper> create_matmul_clamp_f32_f32p4vsx1_f32p4vsx1b_8vsx8vs_elastic_sme2_mopa();
+
 }  // namespace kai::test

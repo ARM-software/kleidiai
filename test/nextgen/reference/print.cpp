@@ -40,7 +40,7 @@ void print_impl(std::ostream& os, Span<const size_t> shape, Span<const std::byte
         os << "]";
     } else {
         const size_t row_size = round_up_division(shape.at(shape.size() - 1) * size_in_bits<T>, 8);
-        const size_t num_rows = std::accumulate(shape.begin() + 1, shape.end() - 1, 1, std::multiplies<>());
+        const size_t num_rows = std::accumulate(shape.begin() + 1, shape.end() - 1, size_t{1}, std::multiplies<>());
         const size_t stride = num_rows * row_size;
 
         os << indent << "[\n";
