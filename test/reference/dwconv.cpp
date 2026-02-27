@@ -41,17 +41,17 @@ Buffer depthwise_reference(
 
                 // Apply filter to feature map.
                 for (size_t ic = 0; ic < channels; ++ic) {
-                    float sum = 0.0f;
+                    float sum = static_cast<T>(read_array<T>(bias, ic));
 
-                    for (size_t kernel_h = 0; kernel_h < filter_height; ++kernel_h) {
-                        // Determine if input height bounds. If not, then this is padding.
-                        const int in_y = static_cast<int>(out_h + kernel_h) - static_cast<int>(pad.top);
-                        if (in_y < 0 || in_height <= static_cast<size_t>(in_y)) continue;
+                    for (size_t kernel_w = 0; kernel_w < filter_width; ++kernel_w) {
+                        // Determine if in input width bounds, if not this is padding.
+                        const int in_x = static_cast<int>(out_w + kernel_w) - static_cast<int>(pad.left);
+                        if (in_x < 0 || in_width <= static_cast<size_t>(in_x)) continue;
 
-                        for (size_t kernel_w = 0; kernel_w < filter_width; ++kernel_w) {
-                            // Determine if in input width bounds, if not this is padding.
-                            const int in_x = static_cast<int>(out_w + kernel_w) - static_cast<int>(pad.left);
-                            if (in_x < 0 || in_width <= static_cast<size_t>(in_x)) continue;
+                        for (size_t kernel_h = 0; kernel_h < filter_height; ++kernel_h) {
+                            // Determine if input height bounds. If not, then this is padding.
+                            const int in_y = static_cast<int>(out_h + kernel_h) - static_cast<int>(pad.top);
+                            if (in_y < 0 || in_height <= static_cast<size_t>(in_y)) continue;
 
                             auto in_idx = ((b * in_height + in_y) * in_width + in_x) * channels + ic;
                             auto weights_idx = ((kernel_h * filter_width) + kernel_w) * channels + ic;
@@ -65,7 +65,6 @@ Buffer depthwise_reference(
                     }
 
                     auto out_idx = out_base + ic;
-                    sum = sum + (T)read_array<T>(bias, ic);
                     write_array<T>(dst.data(), out_idx, sum);
                 }
             }
