@@ -1,11 +1,12 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
 
 #include "test/reference/dwconv.hpp"
 
+#include <cmath>
 #include <ostream>
 
 namespace kai::test {
@@ -59,7 +60,7 @@ Buffer depthwise_reference(
                             auto in_value = read_array<T>(feature_map, in_idx);
 
                             // Perform actual accumulation and store in output vector
-                            sum += in_value * wei_value;
+                            sum = std::fma(in_value, wei_value, sum);
                         }
                     }
 
