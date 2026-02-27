@@ -97,6 +97,8 @@ def list_present(ukernels_dir: str, kernel_types: Set[str]) -> Set[str]:
                 continue
             if rel_path.endswith("_interface.h"):
                 continue
+            if rel_path.endswith("pack_lhs.h") or rel_path.endswith("pack_rhs.h"):
+                continue
             kernel_type = classify_kernel(rel_path)
             if kernel_type in kernel_types:
                 present.add(rel_path)
