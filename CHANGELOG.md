@@ -18,6 +18,8 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
   - kai_lhs_quant_pack_qsi8d32p_f32_neon
   - kai_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa
   - kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot
+- Documentation
+  - Added overview of micro-kernels
 
 ## v1.22.0
 
