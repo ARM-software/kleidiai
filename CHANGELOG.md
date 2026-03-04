@@ -31,6 +31,8 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
   - Implement clamping in kernels where it was missing to match their naming
     - kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod
     - kai_matmul_clamp_f32_qsi8d32p4x4_qsi4c32p4x4_16x4_neon_dotprod
+    - kai_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa
+    - kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot
 
 ## v1.22.0
 

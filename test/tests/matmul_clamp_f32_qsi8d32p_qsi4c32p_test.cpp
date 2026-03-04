@@ -80,54 +80,58 @@ struct UKernelVariants {
     UkernelMatmulPackVariant<
         kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_ukernel, kai_qsi8d32p_pack_functions, kai_qsi4c32p_pack_functions>
         variant;
-    bool clamp_support;
 };
 
 // clang-format off
-static const int num_non_clamping_kernels = 2;
-static const std::array<UKernelVariants, 9>
+static const std::array<UKernelVariants, 11>
     variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p = {
         {
          // NOTE: The following kernels do not support clamping despite their names.
          {UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p4x4_qsi4c32p4x4_16x4_neon_dotprod, cpu_has_dotprod, lhs_quant_pack_qsi8d32p_f32,
-             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false), true},
+             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
          {UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod, cpu_has_dotprod, lhs_quant_pack_qsi8d32p_f32,
-             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false), true},
+             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
 
          // The kernels below this point will run clamping tests
          {UKERNEL_MATMUL_PACK_VARIANT(
+             clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa, cpu_has_sme2, lhs_quant_pack_qsi8d32p_f32_neon,
+             rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)},
+         {UKERNEL_MATMUL_PACK_VARIANT(
+             clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot, cpu_has_sme2, lhs_quant_pack_qsi8d32p_f32_neon,
+             rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)},
+         {UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p4x8_qsi4c32p4x8_8x4x32_neon_i8mm, cpu_has_i8mm, lhs_quant_pack_qsi8d32p_f32,
-             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false), true},
+             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
          {UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p4x8_qsi4c32p4x8_16x4_neon_i8mm, cpu_has_i8mm, lhs_quant_pack_qsi8d32p_f32,
-             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false), true},
+             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
          {UKERNEL_MATMUL_PACK_VARIANT(
              4x8sb_clamp_f32_qsi8d32p4x8_qsi4c32p4x8_16x4_neon_i8mm, clamp_f32_qsi8d32p4x8_qsi4c32p4x8_16x4_neon_i8mm,
-             cpu_has_i8mm, lhs_quant_pack_qsi8d32p4x8sb_f32_neon, rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false), true},
+             cpu_has_i8mm, lhs_quant_pack_qsi8d32p4x8sb_f32_neon, rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
          {UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p1x8_qsi4c32p4x8_1x4x32_neon_dotprod, cpu_has_dotprod, lhs_quant_pack_qsi8d32p_f32,
-             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false), true},
+             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
          {UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p1x4_qsi4c32p8x4_1x8_sve_dotprod, (cpu_check<cpu_has_sve_vl256, cpu_has_dotprod>), lhs_quant_pack_qsi8d32p_f32,
-             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false), true},
+             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
          {UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p1x8_qsi4c32p8x8_1x8_sve_dotprod, (cpu_check<cpu_has_sve_vl256, cpu_has_dotprod>), lhs_quant_pack_qsi8d32p_f32,
-             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false), true},
+             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
          {UKERNEL_MATMUL_PACK_VARIANT(
               clamp_f32_qsi8d32p4x8_qsi4c32p8x8_16x8_sve_i8mm, (cpu_check<cpu_has_sve_vl256, cpu_has_i8mm>), lhs_quant_pack_qsi8d32p_f32,
-              rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false), true}}};
+              rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)}}};
 
 static const std::array<UKernelVariants, 2>
     variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl = {
         {
          {UKERNEL_MATMUL_PACK_VARIANT(
             clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa, cpu_has_sme2, lhs_quant_pack_qsi8d32p_f32_neon,
-            rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false), false},
+            rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)},
          {UKERNEL_MATMUL_PACK_VARIANT(
             clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot, cpu_has_sme2, lhs_quant_pack_qsi8d32p_f32_neon,
-            rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false), false}}};
+            rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)}}};
 // clang-format on
 
 using MatMulTestParams_f32_qsi8d32p_qsi4c32p = std::tuple<size_t, MatMulShape, MatrixPortion, float, size_t, bool>;
@@ -157,15 +161,6 @@ static const UKernelVariants& get_variant_entry(size_t variant_index, bool varia
     }
 
     return variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.at(variant_index);
-}
-
-// Ensure non-clamping tests are marked correctly.
-TEST(KernelClampingCheck, SanityCheck) {
-    for (size_t i = 0; i < variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.size(); i++) {
-        ASSERT_EQ(
-            variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.at(i).clamp_support,
-            !(i < num_non_clamping_kernels));
-    }
 }
 
 TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, Offset_RHS) {
@@ -240,8 +235,6 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, EndToEnd) {
         GTEST_SKIP() << "Unsupported CPU feature";
     }
 
-    // NOTE: Workaround - some kernels despite being called matmul_clamp do not support clamping.
-    const bool clamp_support = get_variant_entry(variant_index, variable_bl).clamp_support;
     const std::uint32_t seed = 0;
 
     const size_t M = matmul_shape.m;
@@ -254,9 +247,6 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, EndToEnd) {
     const auto nr = ukernel_variant.ukernel.interface.get_nr();
     const auto kr = ukernel_variant.ukernel.interface.get_kr();
     const auto sr = ukernel_variant.ukernel.interface.get_sr();
-
-    // Skip tests on clamping when kernel does not support it.
-    KAI_ASSERT_ALWAYS_IF_MSG(clamp_keep_ratio != 1.0F, clamp_support, "Clamping not supported by this kernel");
 
     if (mr == 1 && M > 1) {
         GTEST_SKIP() << "Kernel does not support M != 1";
@@ -355,7 +345,6 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, EndToEnd) {
     ASSERT_TRUE(success);
 }
 
-// Test all kernels without clamping
 INSTANTIATE_TEST_SUITE_P(
     MatMul, MatMulTest_f32_qsi8d32p_qsi4c32p,
     testing::Combine(
@@ -375,7 +364,7 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0, 0.75, 1, 1),  // Rightmost portion.
             MatrixPortion(0, 0.5, 1, 0.8)  // Somewhere Middle
             ),
-        testing::ValuesIn(std::initializer_list<float>{1.0F}),  // We keep 100% of values - no clamping
+        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
         testing::Values(32), testing::Values(false)),
     [](const auto& info) {
         const auto variant_idx = std::get<0>(info.param);
@@ -387,27 +376,6 @@ INSTANTIATE_TEST_SUITE_P(
 
         return test_description(name, shape, portion, true, clamp_keep_ratio) + "_bl" + std::to_string(bl);
     });
-
-// Test supported matmul kernels with clamping support.
-INSTANTIATE_TEST_SUITE_P(
-    MatMulClamped, MatMulTest_f32_qsi8d32p_qsi4c32p,
-    testing::Combine(
-        testing::Range<size_t>(num_non_clamping_kernels, variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p.size()),
-        testing::Values(
-            MatMulShape{1, 2, 32},    //
-            MatMulShape{1, 33, 32},   //
-            MatMulShape{17, 32, 64},  //
-            MatMulShape{32, 64, 64},  //
-            MatMulShape{77, 99, 64}),
-        testing::Values(
-            MatrixPortion(0, 0, 1, 1),     // Full matrix.
-            MatrixPortion(0, 0, 1, 0.25),  // Leftmost portion.
-            MatrixPortion(0, 0.75, 1, 1),  // Rightmost portion.
-            MatrixPortion(0, 0.5, 1, 0.8)  // Somewhere Middle
-            ),
-        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
-        testing::Values(32), testing::Values(false)),
-    testing::PrintToStringParamName());
 
 // Test kernels with variable block length support
 static constexpr std::array shapes_k32{
@@ -456,7 +424,7 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.size()),
         testing::ValuesIn(shapes_k32), testing::ValuesIn(portions),
-        testing::ValuesIn(std::initializer_list<float>{1.0F}),  // We keep 100% of values - no clamping
+        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
         testing::Values(32), testing::Values(true)),
     testing::PrintToStringParamName());
 
@@ -465,7 +433,7 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.size()),
         testing::ValuesIn(shapes_k64), testing::ValuesIn(portions),
-        testing::ValuesIn(std::initializer_list<float>{1.0F}),  // We keep 100% of values - no clamping
+        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
         testing::Values(64), testing::Values(true)),
     testing::PrintToStringParamName());
 
@@ -474,7 +442,7 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.size()),
         testing::ValuesIn(shapes_k128), testing::ValuesIn(portions),
-        testing::ValuesIn(std::initializer_list<float>{1.0F}),  // We keep 100% of values - no clamping
+        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
         testing::Values(128), testing::Values(true)),
     testing::PrintToStringParamName());
 
@@ -483,7 +451,7 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.size()),
         testing::ValuesIn(shapes_k256), testing::ValuesIn(portions),
-        testing::ValuesIn(std::initializer_list<float>{1.0F}),  // We keep 100% of values - no clamping
+        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
         testing::Values(256), testing::Values(true)),
     testing::PrintToStringParamName());
 

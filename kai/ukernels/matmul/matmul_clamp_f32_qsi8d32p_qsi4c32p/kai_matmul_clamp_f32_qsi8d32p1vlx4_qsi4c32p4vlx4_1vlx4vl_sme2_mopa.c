@@ -10,6 +10,7 @@
 
 #include "kai_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa.h"
 
+#include <float.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -145,9 +146,6 @@ void kai_run_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa(
     KAI_ASSUME(dst_stride_col == sizeof(float));
     KAI_ASSUME((bl % kai_bl) == 0);
 
-    KAI_UNUSED(scalar_min);
-    KAI_UNUSED(scalar_max);
-
     if (m == 0) {
         return;
     }
@@ -157,6 +155,9 @@ void kai_run_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa(
         size_t rhs_packed_stride;
         size_t mr;
         size_t bl;
+        float scalar_min;
+        float scalar_max;
+        uint32_t is_clamp_valid;
     } KernelArgs;
 
     KernelArgs ka;
@@ -170,11 +171,15 @@ void kai_run_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa(
     ka.lhs_packed_stride = kai_get_lhs_packed_stride(k, bl);
     ka.rhs_packed_stride = kai_get_rhs_packed_stride(k, bl);
     ka.bl = bl;
+    ka.scalar_min = scalar_min;
+    ka.scalar_max = scalar_max;
 
     const uint16_t* lhs_scales = (const uint16_t*)((const int8_t*)lhs_packed + ka.lhs_packed_stride -
                                                    (mr * num_blocks) * kai_num_bytes_multiplier_lhs);
     const uint16_t* rhs_scales = (const uint16_t*)((const uint8_t*)rhs_packed + ka.rhs_packed_stride -
                                                    (nr * num_blocks) * kai_num_bytes_multiplier_rhs);
+
+    ka.is_clamp_valid = ((scalar_min > -FLT_MAX) && (scalar_max < FLT_MAX)) ? 1 : 0;
 
     kai_commit_za();
 
@@ -201,6 +206,10 @@ void kai_run_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa(
         // Initialize the RHS packes and scale pointers
         " mov x16, %[rhs_packed] \n"
         " mov x17, %[rhs_scales] \n"
+
+        // Load clamp min/max from KernelArgs
+        " ld1rw z15.s, p0/z, [%x[args_ptr], %[offset_min]] \n"  // min
+        " ld1rw z17.s, p0/z, [%x[args_ptr], %[offset_max]] \n"  // max
 
         // Iterate over n (x8)
         // e.g. for(n_idx = 0; n_idx < n; n_idx+=n_step)
@@ -358,7 +367,27 @@ void kai_run_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa(
         " 8: // .LOOP_K_END%=: \n"
 
         // === End of the K loop ===
+        " ldr x5, [%x[args_ptr], %[is_clamp_valid]]\n"
+        " cbz x5, 11f \n"
+        " mov x5, x24 \n"
+        " mov x12, 0 \n"
 
+        // Clamp loop
+        " 10: // .LOOP_CLAMP%=: \n"
+        " .inst 0xa040c718 // ld1w {z24.s-z27.s}, pn9/z, [x24] \n"
+        // Apply clamp
+        " .inst 0xc1b1c9f8 // fclamp  { z24.s - z27.s }, z15.s, z17.s \n"
+        // Store results into memory
+        " .inst 0xa060c718 // st1w {z24.s-z27.s}, pn9, [x24] \n"
+
+        " add x24, x24, %[stride] \n"
+        " add x12, x12, #4 \n"
+        " cmp x12, x15 \n"
+
+        " blt 10b // .LOOP_CLAMP%=: \n"
+
+        " mov x24, x5 \n"
+        " 11: // .LOOP_CLAMP_END%=: \n"
         " ldr x5, [%x[args_ptr], %[offset_stride_l]] \n"
 
         // Increment pointer to the quantized values of the right matrix
@@ -404,7 +433,8 @@ void kai_run_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa(
           [stride] "r"(dst_stride_row), [lut] "r"(lut), [args_ptr] "r"(&ka),
           [offset_stride_l] "I"(offsetof(KernelArgs, lhs_packed_stride)),
           [offset_stride_r] "I"(offsetof(KernelArgs, rhs_packed_stride)), [offset_mr] "I"(offsetof(KernelArgs, mr)),
-          [bl] "I"(offsetof(KernelArgs, bl))
+          [bl] "I"(offsetof(KernelArgs, bl)), [is_clamp_valid] "I"(offsetof(KernelArgs, is_clamp_valid)),
+          [offset_min] "I"(offsetof(KernelArgs, scalar_min)), [offset_max] "I"(offsetof(KernelArgs, scalar_max))
         : "p0", "p1", "p3", "p4", "p5", "p6", "p7", "p8", "p9", "p10", "p11", "p12", "p13", "p14", "p15", "z0", "z1",
           "z2", "z3", "z4", "z5", "z6", "z7", "z8", "z9", "z10", "z11", "z12", "z13", "z14", "z15", "z16", "z17", "z18",
           "z19", "z20", "z21", "z22", "z23", "z24", "z25", "z26", "z27", "z28", "z29", "z30", "z31", "x0", "x5", "x6",
