@@ -9,19 +9,20 @@
 #include <memory>
 
 #include "test/nextgen/harness/kernel_wrapper.hpp"
+#include "test/nextgen/operators/matmul/matmul_dims.hpp"
 
 namespace kai::test {
 
 /// Creates a wrapper for kai_lhs_quant_pack_qai8dxp_f32 micro-kernel.
-[[nodiscard]] std::unique_ptr<KernelWrapper> create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32();
+[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32();
 
 /// Creates a wrapper for kai_lhs_quant_pack_qai8dxp_f32 micro-kernel.
-[[nodiscard]] std::unique_ptr<KernelWrapper> create_matmul_lhs_quant_pack_qai8dxp1x4_f32();
+[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_lhs_quant_pack_qai8dxp1x4_f32();
 
 /// Creates a wrapper for kai_lhs_pack_f32p2vlx1_f32_sme micro-kernel.
-[[nodiscard]] std::unique_ptr<KernelWrapper> create_matmul_lhs_pack_f32p2vlx1_f32_sme();
+[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_lhs_pack_f32p2vlx1_f32_sme();
 
 /// Creates a wrapper for kai_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme.
-[[nodiscard]] std::unique_ptr<KernelWrapper> create_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme();
+[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme();
 
 }  // namespace kai::test

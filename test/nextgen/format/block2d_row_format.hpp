@@ -11,8 +11,8 @@
 
 #include "test/common/assert.hpp"
 #include "test/common/data_type.hpp"
-#include "test/common/span.hpp"
 #include "test/nextgen/common/random.hpp"
+#include "test/nextgen/common/shape.hpp"
 #include "test/nextgen/format/format.hpp"
 
 namespace kai::test {
@@ -91,14 +91,14 @@ public:
         }
     }
 
-    [[nodiscard]] size_t compute_offset(Span<const size_t> shape, Span<const size_t> indices) const override;
-    [[nodiscard]] size_t compute_size(Span<const size_t> shape) const override;
-    [[nodiscard]] Buffer generate(Span<const size_t> shape, const GeneratorFn& generator) const override;
-    [[nodiscard]] Buffer pack(Span<const size_t> shape, Span<const Span<const std::byte>> buffers) const override;
+    [[nodiscard]] size_t compute_offset(Shape shape, Span<const size_t> indices) const override;
+    [[nodiscard]] size_t compute_size(Shape shape) const override;
+    [[nodiscard]] Buffer generate(Shape shape, const GeneratorFn& generator) const override;
+    [[nodiscard]] Buffer pack(Shape shape, Span<const Span<const std::byte>> buffers) const override;
     [[nodiscard]] bool compare(
-        Span<const size_t> shape, Span<const size_t> tile_coords, Span<const size_t> tile_shape,
-        Span<const std::byte> imp_buffer, Span<const std::byte> ref_buffer, MismatchHandler& handler) const override;
-    void print(std::ostream& os, Span<const size_t> shape, Span<const std::byte> data) const override;
+        Shape shape, Span<const size_t> tile_coords, Shape tile_shape, Span<const std::byte> imp_buffer,
+        Span<const std::byte> ref_buffer, MismatchHandler& handler) const override;
+    void print(std::ostream& os, Shape shape, Span<const std::byte> data) const override;
     [[nodiscard]] bool operator==(const Format& other) const override;
 
 private:

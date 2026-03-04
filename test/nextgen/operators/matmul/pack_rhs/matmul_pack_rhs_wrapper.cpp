@@ -25,7 +25,7 @@
 
 namespace kai::test {
 
-std::unique_ptr<KernelWrapper> create_matmul_rhs_pack_nxk_qsi4cxp4vlx4s1s0_qsu4cxs1s0_neon() {
+std::unique_ptr<KernelWrapper<MatShape>> create_matmul_rhs_pack_nxk_qsi4cxp4vlx4s1s0_qsu4cxs1s0_neon() {
     return std::make_unique<MatMulPackRhsQuantWrapper>(
         "matmul_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon",
         MatMulPackRhsQuantInterface{
@@ -43,7 +43,7 @@ std::unique_ptr<KernelWrapper> create_matmul_rhs_pack_nxk_qsi4cxp4vlx4s1s0_qsu4c
             std::array{DataType::I32, DataType::FP32, DataType::FP32}));
 }
 
-std::unique_ptr<KernelWrapper> create_matmul_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme() {
+std::unique_ptr<KernelWrapper<MatShape>> create_matmul_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme() {
     return std::make_unique<MatMulPackRhsFpNtWrapper>(
         "matmul_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme",
         MatMulPackRhsFpInterface{
@@ -61,7 +61,7 @@ std::unique_ptr<KernelWrapper> create_matmul_rhs_pack_kxn_f32p2vlx1biasf32_f32_f
             std::array<DataType, 0>{}));
 }
 
-std::unique_ptr<KernelWrapper> create_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme() {
+std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme() {
     return std::make_unique<MatMulPackRhsUkerApiWrapper>(
         "create_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme", make_poly<PlainFormat>(DataType::FP32),
         make_poly<PlainFormat>(DataType::FP32),
@@ -70,7 +70,7 @@ std::unique_ptr<KernelWrapper> create_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_
             std::array<DataType, 0>{}));
 }
 
-std::unique_ptr<KernelWrapper> create_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme() {
+std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme() {
     return std::make_unique<MatMulPackRhsUkerApiTWrapper>(
         "create_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme", make_poly<PlainFormat>(DataType::FP32),
         make_poly<PlainFormat>(DataType::FP32),

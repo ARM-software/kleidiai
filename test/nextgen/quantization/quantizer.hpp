@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -10,7 +10,7 @@
 
 #include "test/common/buffer.hpp"
 #include "test/common/data_type.hpp"
-#include "test/common/span.hpp"
+#include "test/nextgen/common/shape.hpp"
 #include "test/nextgen/harness/tensor.hpp"
 
 namespace kai::test {
@@ -36,7 +36,7 @@ public:
     /// @param[out] qscale The quantization scale.
     /// @param[out] qzp The quantization zero-point.
     virtual void dynamic_quantize(
-        DataType fp_dtype, Span<const size_t> shape, Span<const std::byte> fp_data, Tensor& qdata, Tensor& qscale,
+        DataType fp_dtype, Shape shape, Span<const std::byte> fp_data, Tensor& qdata, Tensor& qscale,
         Tensor& qzp) const = 0;
 
     /// Dequantizes the data.
@@ -49,7 +49,7 @@ public:
     ///
     /// @return The dequantized data.
     [[nodiscard]] virtual Buffer dequantize(
-        DataType fp_dtype, Span<const size_t> shape, Span<const std::byte> qdata, Span<const std::byte> qscale,
+        DataType fp_dtype, Shape shape, Span<const std::byte> qdata, Span<const std::byte> qscale,
         Span<const std::byte> qzp) const = 0;
 };
 

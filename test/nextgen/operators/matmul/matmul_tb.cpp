@@ -24,6 +24,7 @@
 #include "test/nextgen/format/plain_format.hpp"
 #include "test/nextgen/harness/kernel_wrapper.hpp"
 #include "test/nextgen/operators/matmul/matmul_config.hpp"
+#include "test/nextgen/operators/matmul/matmul_dims.hpp"
 #include "test/nextgen/operators/matmul/matmul_slots.hpp"
 #include "test/nextgen/quantization/quantizer.hpp"
 #include "test/nextgen/reference/binary_elementwise.hpp"
@@ -56,12 +57,12 @@ void MatMulTb::generate_test_data(Rng& rng) {
     m_op->matmul->populate_constant_info(m_tensors);
 
     if (m_op->pack_lhs.has_value()) {
-        const KernelWrapper& pack_lhs = *m_op->pack_lhs.value();
+        const KernelWrapper<MatShape>& pack_lhs = *m_op->pack_lhs.value();
         pack_lhs.populate_constant_info(m_tensors);
     }
 
     if (m_op->pack_rhs.has_value()) {
-        const KernelWrapper& pack_rhs = *m_op->pack_rhs.value();
+        const KernelWrapper<MatShape>& pack_rhs = *m_op->pack_rhs.value();
         pack_rhs.populate_constant_info(m_tensors);
     }
 
@@ -115,17 +116,7 @@ void MatMulTb::populate_config() {
 }
 
 void MatMulTb::determine_required_tensors() {
-    std::vector<const KernelWrapper*> kernels{m_op->matmul.get()};
-
-    if (m_op->pack_lhs.has_value()) {
-        kernels.emplace_back(m_op->pack_lhs.value().get());
-    }
-
-    if (m_op->pack_rhs.has_value()) {
-        kernels.emplace_back(m_op->pack_rhs.value().get());
-    }
-
-    for (const KernelWrapper* kernel : kernels) {
+    auto add_required_tensors = [&](const auto* kernel) {
         if (kernel != nullptr) {
             const std::vector<MatMulSlot> run_inputs = kernel->run_inputs(m_tensors);
             const std::vector<MatMulSlot> ref_inputs = kernel->ref_inputs(m_tensors);
@@ -138,6 +129,16 @@ void MatMulTb::determine_required_tensors() {
                 set_tensor_required(id);
             }
         }
+    };
+
+    add_required_tensors(m_op->matmul.get());
+
+    if (m_op->pack_lhs.has_value()) {
+        add_required_tensors(m_op->pack_lhs.value().get());
+    }
+
+    if (m_op->pack_rhs.has_value()) {
+        add_required_tensors(m_op->pack_rhs.value().get());
     }
 }
 
@@ -219,7 +220,7 @@ void MatMulTb::compute_lhs_qzp_neg() {
     const Tensor& lhs_qzp = get_tensor(MatMulSlot::LHS_QZP);
     Tensor& lhs_qzp_neg = get_tensor(MatMulSlot::LHS_QZP_NEG);
 
-    const Span<const size_t> shape = lhs_qzp.shape();
+    const Shape shape = lhs_qzp.shape();
     const Poly<Format>& format = lhs_qzp.format();
 
     const UnaryElementwiseFn fn = make_negate(format->dtype());
@@ -232,7 +233,7 @@ void MatMulTb::compute_rhs_t_qdata_sign() {
     const Tensor& rhs_t_qdata = get_tensor(MatMulSlot::RHS_T_QDATA);
     Tensor& rhs_t_qdata_sign = get_tensor(MatMulSlot::RHS_T_QDATA_SIGN);
 
-    const Span<const size_t> shape = rhs_t_qdata.shape();
+    const Shape shape = rhs_t_qdata.shape();
     const DataType src_dtype = rhs_t_qdata.format()->dtype();
     DataType signed_dtype = DataType::I4;
     switch (src_dtype) {
@@ -269,13 +270,13 @@ void MatMulTb::compute_rhs_t_qdata_sign_sum() {
 }
 
 void MatMulTb::compute_ref_packed_lhs() {
-    const KernelWrapper& pack_lhs = *m_op->pack_lhs.value();
+    const KernelWrapper<MatShape>& pack_lhs = *m_op->pack_lhs.value();
     const std::array lhs_shape{m_shape_m, m_shape_k};
     pack_lhs.compute_reference(lhs_shape, m_tensors);
 }
 
 void MatMulTb::compute_ref_packed_rhs() {
-    const KernelWrapper& pack_rhs = *m_op->pack_rhs.value();
+    const KernelWrapper<MatShape>& pack_rhs = *m_op->pack_rhs.value();
     const std::array rhs_t_shape{m_shape_n, m_shape_k};
     pack_rhs.compute_reference(rhs_t_shape, m_tensors);
 }
@@ -356,13 +357,13 @@ void MatMulTb::compute_ref_matmul() {
 }
 
 std::tuple<size_t, size_t> MatMulTb::lhs_packing_steps() const {
-    const KernelWrapper& pack_lhs = *m_op->pack_lhs.value();
+    const KernelWrapper<MatShape>& pack_lhs = *m_op->pack_lhs.value();
     const std::vector<size_t> steps = pack_lhs.steps({m_shape_m, m_shape_k}, m_tensors);
-    return {steps.at(0), steps.at(1)};
+    return {steps.at(as_idx(MatDim::R)), steps.at(as_idx(MatDim::C))};
 }
 
 void MatMulTb::test_lhs_packing(size_t start_m, size_t start_k, size_t size_m, size_t size_k) {
-    const KernelWrapper& pack_lhs = *m_op->pack_lhs.value();
+    const KernelWrapper<MatShape>& pack_lhs = *m_op->pack_lhs.value();
 
     const std::array full_shape{m_shape_m, m_shape_k};
     const std::array tile_coords{start_m, start_k};
@@ -381,13 +382,13 @@ void MatMulTb::test_lhs_packing(size_t start_m, size_t start_k, size_t size_m, s
 }
 
 std::tuple<size_t, size_t> MatMulTb::rhs_packing_steps() const {
-    const KernelWrapper& pack_rhs = *m_op->pack_rhs.value();
+    const KernelWrapper<MatShape>& pack_rhs = *m_op->pack_rhs.value();
     const std::vector<size_t> steps = pack_rhs.steps({m_shape_n, m_shape_k}, m_tensors);
-    return {steps.at(0), steps.at(1)};
+    return {steps.at(as_idx(MatDim::R)), steps.at(as_idx(MatDim::C))};
 }
 
 void MatMulTb::test_rhs_packing(size_t start_n, size_t start_k, size_t size_n, size_t size_k) {
-    const KernelWrapper& pack_rhs = *m_op->pack_rhs.value();
+    const KernelWrapper<MatShape>& pack_rhs = *m_op->pack_rhs.value();
 
     const std::array full_shape{m_shape_n, m_shape_k};
     const std::array tile_coords{start_n, start_k};
@@ -407,7 +408,7 @@ void MatMulTb::test_rhs_packing(size_t start_n, size_t start_k, size_t size_n, s
 
 std::tuple<size_t, size_t> MatMulTb::matmul_steps() const {
     const std::vector<size_t> steps = m_op->matmul->steps({m_shape_m, m_shape_n, m_shape_k}, m_tensors);
-    return {steps.at(0), steps.at(1)};
+    return {steps.at(as_idx(MatMulDim::M)), steps.at(as_idx(MatMulDim::N))};
 }
 
 void MatMulTb::test_matmul(size_t start_m, size_t start_n, size_t size_m, size_t size_n) {

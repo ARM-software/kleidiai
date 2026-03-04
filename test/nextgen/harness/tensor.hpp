@@ -16,8 +16,8 @@
 
 #include "test/common/assert.hpp"
 #include "test/common/buffer.hpp"
-#include "test/common/span.hpp"
 #include "test/nextgen/common/poly.hpp"
+#include "test/nextgen/common/shape.hpp"
 #include "test/nextgen/format/format.hpp"
 #include "test/nextgen/operators/matmul/matmul_slots.hpp"
 
@@ -27,7 +27,7 @@ namespace kai::test {
 class Tensor {
 public:
     /// Gets the size of the multidimensional array.
-    [[nodiscard]] Span<const size_t> shape() const {
+    [[nodiscard]] Shape shape() const {
         return m_shape;
     }
 
@@ -37,7 +37,7 @@ public:
     /// the new shape must be the same as the existing shape
     /// to make sure all components in the test environment have the same
     /// expectation for this slot.
-    Tensor& set_shape(Span<const size_t> shape) {
+    Tensor& set_shape(Shape shape) {
         if (m_shape.empty()) {
             KAI_TEST_ASSERT_MSG(m_data.size() == 0, "The slot must be empty when its shape is setup.");
             m_shape = std::vector(shape.begin(), shape.end());

@@ -70,13 +70,13 @@ std::vector<MatMulSlot> MatMulPackRhsQuantWrapper::ref_inputs(ConstTensorSet ten
     return inputs;
 }
 
-std::vector<size_t> MatMulPackRhsQuantWrapper::steps(Span<const size_t> shape, ConstTensorSet tensors) const {
+std::vector<size_t> MatMulPackRhsQuantWrapper::steps(MatShape shape, ConstTensorSet tensors) const {
     KAI_TEST_ASSERT_MSG(shape.size() == 2, "Only N and K dimensions are expected.");
 
     const auto& pack_args = tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
 
     const size_t n_step = m_kernel.get_n_step(pack_args.nr);
-    const size_t shape_k = shape.at(1);
+    const size_t shape_k = shape.at(MatDim::C);
 
     return {n_step, shape_k};
 }
@@ -100,20 +100,19 @@ void MatMulPackRhsQuantWrapper::populate_constant_info(TensorSet tensors) const 
 }
 
 void MatMulPackRhsQuantWrapper::run(
-    Span<const size_t> full_shape, Span<const size_t> tile_coords, Span<const size_t> tile_shape,
-    TensorSet tensors) const {
+    MatShape full_shape, Span<const size_t> tile_coords, MatShape tile_shape, TensorSet tensors) const {
     KAI_TEST_ASSERT_MSG(full_shape.size() == 2, "Only N and K dimensions are expected.");
     KAI_TEST_ASSERT_MSG(tile_coords.size() == 2, "Only N and K dimensions are expected.");
     KAI_TEST_ASSERT_MSG(tile_shape.size() == 2, "Only N and K dimensions are expected.");
 
-    const size_t full_n = full_shape.at(0);
-    const size_t full_k = full_shape.at(1);
+    const size_t full_n = full_shape.at(MatDim::R);
+    const size_t full_k = full_shape.at(MatDim::C);
 
-    const size_t start_n = tile_coords.at(0);
-    const size_t start_k = tile_coords.at(1);
+    const size_t start_n = tile_coords.at(as_idx(MatDim::R));
+    const size_t start_k = tile_coords.at(as_idx(MatDim::C));
 
-    const size_t size_n = tile_shape.at(0);
-    const size_t size_k = tile_shape.at(1);
+    const size_t size_n = tile_shape.at(MatDim::R);
+    const size_t size_k = tile_shape.at(MatDim::C);
 
     KAI_TEST_ASSERT(start_k == 0);
     KAI_TEST_ASSERT(size_k == full_k);
@@ -164,9 +163,9 @@ void MatMulPackRhsQuantWrapper::run(
     });
 }
 
-void MatMulPackRhsQuantWrapper::compute_reference(Span<const size_t> shape, TensorSet tensors) const {
+void MatMulPackRhsQuantWrapper::compute_reference(MatShape shape, TensorSet tensors) const {
     KAI_TEST_ASSERT_MSG(shape.size() == 2, "Only N and K dimensions are expected.");
-    const size_t shape_n = shape.at(0);
+    const size_t shape_n = shape.at(MatDim::R);
 
     const std::optional<MatMulSlot> bias_tensor_id = determine_bias_tensor_id(tensors);
     const bool has_bias = bias_tensor_id.has_value();

@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -12,7 +12,7 @@
 
 #include "test/common/compare.hpp"
 #include "test/common/data_type.hpp"
-#include "test/common/span.hpp"
+#include "test/nextgen/common/shape.hpp"
 
 namespace kai::test {
 
@@ -31,9 +31,9 @@ namespace kai::test {
 ///
 /// @return The number of elements being checked.
 using CompareFn = size_t (*)(
-    Span<const size_t> shape, Span<const size_t> tile_coords, Span<const size_t> tile_shape,
-    Span<const std::byte> imp_buffer, Span<const std::byte> ref_buffer,
-    const std::function<void(std::ostream& os, Span<const size_t> coords)>& report_fn, MismatchHandler& handler);
+    Shape shape, Span<const size_t> tile_coords, Shape tile_shape, Span<const std::byte> imp_buffer,
+    Span<const std::byte> ref_buffer, const std::function<void(std::ostream& os, Span<const size_t> coords)>& report_fn,
+    MismatchHandler& handler);
 
 /// Gets the function to compare two plain 2D data buffers for the specified data type.
 ///

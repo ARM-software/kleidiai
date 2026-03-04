@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -25,7 +25,7 @@ namespace kai::test {
 namespace {
 
 template <typename T>
-void print_impl(std::ostream& os, Span<const size_t> shape, Span<const std::byte> data, size_t level = 0) {
+void print_impl(std::ostream& os, Shape shape, Span<const std::byte> data, size_t level = 0) {
     const std::string indent(level * 2, ' ');
     const size_t len = shape.at(0);
 
@@ -55,7 +55,7 @@ void print_impl(std::ostream& os, Span<const size_t> shape, Span<const std::byte
 }
 
 template <typename T>
-void print_array(std::ostream& os, Span<const size_t> shape, Span<const std::byte> data, size_t level) {
+void print_array(std::ostream& os, Shape shape, Span<const std::byte> data, size_t level) {
     print_impl<T>(os, shape, data, level);
 }
 

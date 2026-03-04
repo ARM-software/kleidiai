@@ -31,11 +31,10 @@ std::vector<MatMulSlot> MatMulUkerApiWrapper::ref_inputs([[maybe_unused]] ConstT
     return {};
 }
 
-std::vector<size_t> MatMulUkerApiWrapper::steps(
-    Span<const size_t> shape, [[maybe_unused]] ConstTensorSet tensors) const {
+std::vector<size_t> MatMulUkerApiWrapper::steps(MatMulShape shape, [[maybe_unused]] ConstTensorSet tensors) const {
     const size_t step_m = m_ukernel.get_m_step(&m_uker_config);
     const size_t step_n = m_ukernel.get_n_step(&m_uker_config);
-    const size_t shape_k = shape.at(2);
+    const size_t shape_k = shape.at(MatMulDim::K);
 
     return {step_m, step_n, shape_k};
 }
@@ -45,24 +44,23 @@ void MatMulUkerApiWrapper::populate_constant_info([[maybe_unused]] TensorSet ten
 }
 
 void MatMulUkerApiWrapper::run(
-    Span<const size_t> full_shape, Span<const size_t> tile_coords, Span<const size_t> tile_shape,
-    TensorSet tensors) const {
+    MatMulShape full_shape, Span<const size_t> tile_coords, MatMulShape tile_shape, TensorSet tensors) const {
     KAI_TEST_ASSERT(tile_coords.size() == full_shape.size());
     KAI_TEST_ASSERT(tile_shape.size() == full_shape.size());
 
     KAI_TEST_ASSERT_MSG(full_shape.size() == 3, "Only M, N and K dimensions are expected.");
 
-    const size_t full_m = full_shape.at(0);
-    const size_t full_n = full_shape.at(1);
-    const size_t full_k = full_shape.at(2);
+    const size_t full_m = full_shape.at(MatMulDim::M);
+    const size_t full_n = full_shape.at(MatMulDim::N);
+    const size_t full_k = full_shape.at(MatMulDim::K);
 
-    const size_t start_m = tile_coords.at(0);
-    const size_t start_n = tile_coords.at(1);
-    const size_t start_k = tile_coords.at(2);
+    const size_t start_m = tile_coords.at(as_idx(MatMulDim::M));
+    const size_t start_n = tile_coords.at(as_idx(MatMulDim::N));
+    const size_t start_k = tile_coords.at(as_idx(MatMulDim::K));
 
-    const size_t size_m = tile_shape.at(0);
-    const size_t size_n = tile_shape.at(1);
-    const size_t size_k = tile_shape.at(2);
+    const size_t size_m = tile_shape.at(MatMulDim::M);
+    const size_t size_n = tile_shape.at(MatMulDim::N);
+    const size_t size_k = tile_shape.at(MatMulDim::K);
 
     KAI_TEST_ASSERT_MSG(start_k == 0, "Only full K is supported.");
     KAI_TEST_ASSERT_MSG(size_k == full_k, "Only full K is supported.");
@@ -122,7 +120,7 @@ void MatMulUkerApiWrapper::run(
 }
 
 void MatMulUkerApiWrapper::compute_reference(
-    [[maybe_unused]] Span<const size_t> shape, [[maybe_unused]] TensorSet tensors) const {
+    [[maybe_unused]] MatMulShape shape, [[maybe_unused]] TensorSet tensors) const {
 }
 
 }  // namespace kai::test

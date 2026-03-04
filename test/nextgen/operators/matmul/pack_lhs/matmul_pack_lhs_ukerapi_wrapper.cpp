@@ -17,6 +17,7 @@
 #include "test/common/span.hpp"
 #include "test/nextgen/format/plain_format.hpp"
 #include "test/nextgen/harness/tensor.hpp"
+#include "test/nextgen/operators/matmul/matmul_dims.hpp"
 #include "test/nextgen/operators/matmul/matmul_pack_args.hpp"
 #include "test/nextgen/operators/matmul/matmul_slots.hpp"
 
@@ -34,12 +35,11 @@ std::vector<MatMulSlot> MatMulPackLhsUkerApiWrapper::ref_inputs([[maybe_unused]]
     return {MatMulSlot::LHS_DATA};
 }
 
-std::vector<size_t> MatMulPackLhsUkerApiWrapper::steps(
-    Span<const size_t> shape, [[maybe_unused]] ConstTensorSet tensors) const {
+std::vector<size_t> MatMulPackLhsUkerApiWrapper::steps(MatShape shape, [[maybe_unused]] ConstTensorSet tensors) const {
     KAI_TEST_ASSERT_MSG(shape.size() == 2, "Only M and K dimensions are expected.");
 
     const size_t m_step = pack_lhs_uker.get_m_step(&m_uker_config);
-    const size_t shape_k = shape.at(1);
+    const size_t shape_k = shape.at(MatDim::C);
 
     return {m_step, shape_k};
 }
@@ -53,20 +53,19 @@ void MatMulPackLhsUkerApiWrapper::populate_constant_info(TensorSet tensors) cons
 }
 
 void MatMulPackLhsUkerApiWrapper::run(
-    Span<const size_t> full_shape, Span<const size_t> tile_coords, Span<const size_t> tile_shape,
-    TensorSet tensors) const {
+    MatShape full_shape, Span<const size_t> tile_coords, MatShape tile_shape, TensorSet tensors) const {
     KAI_TEST_ASSERT_MSG(full_shape.size() == 2, "Only M and K dimensions are expected.");
     KAI_TEST_ASSERT_MSG(tile_coords.size() == 2, "Only M and K dimensions are expected.");
     KAI_TEST_ASSERT_MSG(tile_shape.size() == 2, "Only M and K dimensions are expected.");
 
-    const size_t full_m = full_shape.at(0);
-    const size_t full_k = full_shape.at(1);
+    const size_t full_m = full_shape.at(MatDim::R);
+    const size_t full_k = full_shape.at(MatDim::C);
 
-    const size_t start_m = tile_coords.at(0);
-    const size_t start_k = tile_coords.at(1);
+    const size_t start_m = tile_coords.at(as_idx(MatDim::R));
+    const size_t start_k = tile_coords.at(as_idx(MatDim::C));
 
-    const size_t size_m = tile_shape.at(0);
-    const size_t size_k = tile_shape.at(1);
+    const size_t size_m = tile_shape.at(MatDim::R);
+    const size_t size_k = tile_shape.at(MatDim::C);
 
     KAI_TEST_ASSERT(start_k == 0);
     KAI_TEST_ASSERT(size_k == full_k);
@@ -114,7 +113,7 @@ void MatMulPackLhsUkerApiWrapper::run(
     abi_check([&] { pack_lhs_uker.run(&m_uker_config, &args); });
 }
 
-void MatMulPackLhsUkerApiWrapper::compute_reference(Span<const size_t> shape, TensorSet tensors) const {
+void MatMulPackLhsUkerApiWrapper::compute_reference(MatShape shape, TensorSet tensors) const {
     const Tensor& lhs_data = tensors.at(MatMulSlot::LHS_DATA);
     Tensor& ref_packed_lhs = tensors.at(MatMulSlot::LHS_PACKED);
 

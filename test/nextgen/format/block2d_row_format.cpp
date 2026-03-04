@@ -26,7 +26,7 @@
 
 namespace kai::test {
 
-size_t Block2dRowFormat::compute_offset(Span<const size_t> shape, Span<const size_t> indices) const {
+size_t Block2dRowFormat::compute_offset(Shape shape, Span<const size_t> indices) const {
     KAI_TEST_ASSERT(shape.size() == 2);
     KAI_TEST_ASSERT(shape.size() == indices.size());
 
@@ -68,7 +68,7 @@ size_t Block2dRowFormat::compute_offset(Span<const size_t> shape, Span<const siz
     }
 }
 
-size_t Block2dRowFormat::compute_size(Span<const size_t> shape) const {
+size_t Block2dRowFormat::compute_size(Shape shape) const {
     KAI_TEST_ASSERT(shape.size() == 2);
 
     const size_t height = shape.at(0);
@@ -80,12 +80,11 @@ size_t Block2dRowFormat::compute_size(Span<const size_t> shape) const {
     return size;
 }
 
-Buffer Block2dRowFormat::generate(
-    [[maybe_unused]] Span<const size_t> shape, [[maybe_unused]] const GeneratorFn& generator) const {
+Buffer Block2dRowFormat::generate([[maybe_unused]] Shape shape, [[maybe_unused]] const GeneratorFn& generator) const {
     KAI_TEST_ERROR("Not supported!");
 }
 
-Buffer Block2dRowFormat::pack(Span<const size_t> shape, Span<const Span<const std::byte>> buffers) const {
+Buffer Block2dRowFormat::pack(Shape shape, Span<const Span<const std::byte>> buffers) const {
     KAI_TEST_ASSERT(shape.size() == 2);
 
     const size_t height = shape.at(0);
@@ -154,8 +153,8 @@ Buffer Block2dRowFormat::pack(Span<const size_t> shape, Span<const Span<const st
 }
 
 bool Block2dRowFormat::compare(
-    Span<const size_t> shape, Span<const size_t> tile_coords, Span<const size_t> tile_shape,
-    Span<const std::byte> imp_buffer, Span<const std::byte> ref_buffer, MismatchHandler& handler) const {
+    Shape shape, Span<const size_t> tile_coords, Shape tile_shape, Span<const std::byte> imp_buffer,
+    Span<const std::byte> ref_buffer, MismatchHandler& handler) const {
     KAI_TEST_ASSERT(shape.size() == 2);
     KAI_TEST_ASSERT(shape.size() == tile_coords.size());
     KAI_TEST_ASSERT(shape.size() == tile_shape.size());
@@ -258,7 +257,7 @@ bool Block2dRowFormat::compare(
     return handler.success(num_checks);
 }
 
-void Block2dRowFormat::print(std::ostream& os, Span<const size_t> shape, Span<const std::byte> data) const {
+void Block2dRowFormat::print(std::ostream& os, Shape shape, Span<const std::byte> data) const {
     if (shape.empty()) {
         os << "None";
     } else {

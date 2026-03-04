@@ -32,13 +32,13 @@ std::vector<MatMulSlot> MatMulPackLhsDqWrapper::ref_inputs([[maybe_unused]] Cons
     return {MatMulSlot::LHS_QDATA, MatMulSlot::LHS_QSCALE, MatMulSlot::LHS_QZP_NEG};
 }
 
-std::vector<size_t> MatMulPackLhsDqWrapper::steps(Span<const size_t> shape, ConstTensorSet tensors) const {
+std::vector<size_t> MatMulPackLhsDqWrapper::steps(MatShape shape, ConstTensorSet tensors) const {
     KAI_TEST_ASSERT_MSG(shape.size() == 2, "Only M and K dimensions are expected.");
 
     const auto& pack_args = tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
 
     const size_t m_step = m_kernel.get_m_step(pack_args.mr);
-    const size_t shape_k = shape.at(1);
+    const size_t shape_k = shape.at(MatDim::C);
 
     return {m_step, shape_k};
 }
@@ -52,20 +52,19 @@ void MatMulPackLhsDqWrapper::populate_constant_info(TensorSet tensors) const {
 }
 
 void MatMulPackLhsDqWrapper::run(
-    Span<const size_t> full_shape, Span<const size_t> tile_coords, Span<const size_t> tile_shape,
-    TensorSet tensors) const {
+    MatShape full_shape, Span<const size_t> tile_coords, MatShape tile_shape, TensorSet tensors) const {
     KAI_TEST_ASSERT_MSG(full_shape.size() == 2, "Only M and K dimensions are expected.");
     KAI_TEST_ASSERT_MSG(tile_coords.size() == 2, "Only M and K dimensions are expected.");
     KAI_TEST_ASSERT_MSG(tile_shape.size() == 2, "Only M and K dimensions are expected.");
 
-    const size_t full_m = full_shape.at(0);
-    const size_t full_k = full_shape.at(1);
+    const size_t full_m = full_shape.at(MatDim::R);
+    const size_t full_k = full_shape.at(MatDim::C);
 
-    const size_t start_m = tile_coords.at(0);
-    const size_t start_k = tile_coords.at(1);
+    const size_t start_m = tile_coords.at(as_idx(MatDim::R));
+    const size_t start_k = tile_coords.at(as_idx(MatDim::C));
 
-    const size_t size_m = tile_shape.at(0);
-    const size_t size_k = tile_shape.at(1);
+    const size_t size_m = tile_shape.at(MatDim::R);
+    const size_t size_k = tile_shape.at(MatDim::C);
 
     KAI_TEST_ASSERT(start_k == 0);
     KAI_TEST_ASSERT(size_k == full_k);
@@ -103,7 +102,7 @@ void MatMulPackLhsDqWrapper::run(
     });
 }
 
-void MatMulPackLhsDqWrapper::compute_reference(Span<const size_t> shape, TensorSet tensors) const {
+void MatMulPackLhsDqWrapper::compute_reference(MatShape shape, TensorSet tensors) const {
     const Tensor& lhs_qdata = tensors.at(MatMulSlot::LHS_QDATA);
     const Tensor& lhs_qscale = tensors.at(MatMulSlot::LHS_QSCALE);
     const Tensor& lhs_qzp_neg = tensors.at(MatMulSlot::LHS_QZP_NEG);

@@ -13,9 +13,9 @@
 #include <vector>
 
 #include "test/common/data_type.hpp"
-#include "test/common/span.hpp"
 #include "test/nextgen/harness/kernel_wrapper.hpp"
 #include "test/nextgen/operators/matmul/matmul_bias_mode.hpp"
+#include "test/nextgen/operators/matmul/matmul_dims.hpp"
 #include "test/nextgen/quantization/quantizer.hpp"
 
 namespace kai::test {
@@ -39,9 +39,9 @@ struct MatMulOperator {
     DataType acc_dtype;
     DataType dst_dtype;
 
-    std::optional<std::unique_ptr<KernelWrapper>> pack_lhs;
-    std::optional<std::unique_ptr<KernelWrapper>> pack_rhs;
-    std::unique_ptr<KernelWrapper> matmul;
+    std::optional<std::unique_ptr<KernelWrapper<MatShape>>> pack_lhs;
+    std::optional<std::unique_ptr<KernelWrapper<MatShape>>> pack_rhs;
+    std::unique_ptr<KernelWrapper<MatMulShape>> matmul;
 };
 
 [[nodiscard]] Span<const MatMulOperator> get_available_matmul_operators();

@@ -15,6 +15,7 @@
 #include "test/common/assert.hpp"
 #include "test/common/span.hpp"
 #include "test/nextgen/harness/tensor.hpp"
+#include "test/nextgen/operators/matmul/matmul_dims.hpp"
 #include "test/nextgen/operators/matmul/matmul_pack_args.hpp"
 #include "test/nextgen/operators/matmul/matmul_slots.hpp"
 
@@ -32,13 +33,13 @@ std::vector<MatMulSlot> MatMulPackLhsFpWrapper::ref_inputs([[maybe_unused]] Cons
     return {MatMulSlot::LHS_DATA};
 }
 
-std::vector<size_t> MatMulPackLhsFpWrapper::steps(Span<const size_t> shape, ConstTensorSet tensors) const {
+std::vector<size_t> MatMulPackLhsFpWrapper::steps(MatShape shape, ConstTensorSet tensors) const {
     KAI_TEST_ASSERT_MSG(shape.size() == 2, "Only M and K dimensions are expected.");
 
     const auto& pack_args = tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
 
     const size_t m_step = m_kernel.get_m_step(pack_args.mr);
-    const size_t shape_k = shape.at(1);
+    const size_t shape_k = shape.at(MatDim::C);
 
     return {m_step, shape_k};
 }
@@ -52,20 +53,19 @@ void MatMulPackLhsFpWrapper::populate_constant_info(TensorSet tensors) const {
 }
 
 void MatMulPackLhsFpWrapper::run(
-    Span<const size_t> full_shape, Span<const size_t> tile_coords, Span<const size_t> tile_shape,
-    TensorSet tensors) const {
+    MatShape full_shape, Span<const size_t> tile_coords, MatShape tile_shape, TensorSet tensors) const {
     KAI_TEST_ASSERT_MSG(full_shape.size() == 2, "Only M and K dimensions are expected.");
     KAI_TEST_ASSERT_MSG(tile_coords.size() == 2, "Only M and K dimensions are expected.");
     KAI_TEST_ASSERT_MSG(tile_shape.size() == 2, "Only M and K dimensions are expected.");
 
-    const size_t full_m = full_shape.at(0);
-    const size_t full_k = full_shape.at(1);
+    const size_t full_m = full_shape.at(MatDim::R);
+    const size_t full_k = full_shape.at(MatDim::C);
 
-    const size_t start_m = tile_coords.at(0);
-    const size_t start_k = tile_coords.at(1);
+    const size_t start_m = tile_coords.at(as_idx(MatDim::R));
+    const size_t start_k = tile_coords.at(as_idx(MatDim::C));
 
-    const size_t size_m = tile_shape.at(0);
-    const size_t size_k = tile_shape.at(1);
+    const size_t size_m = tile_shape.at(MatDim::R);
+    const size_t size_k = tile_shape.at(MatDim::C);
 
     KAI_TEST_ASSERT_MSG(start_k == 0, "This micro-kernel API doesn't allow K splitting.");
     KAI_TEST_ASSERT_MSG(size_k == full_k, "This micro-kernel API doesn't allow K splitting.");
@@ -103,7 +103,7 @@ void MatMulPackLhsFpWrapper::run(
     });
 }
 
-void MatMulPackLhsFpWrapper::compute_reference(Span<const size_t> shape, TensorSet tensors) const {
+void MatMulPackLhsFpWrapper::compute_reference(MatShape shape, TensorSet tensors) const {
     const Tensor& lhs_data = tensors.at(MatMulSlot::LHS_DATA);
     Tensor& ref_packed_lhs = tensors.at(MatMulSlot::LHS_PACKED);
 

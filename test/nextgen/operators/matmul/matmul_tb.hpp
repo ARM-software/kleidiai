@@ -116,8 +116,8 @@ private:
     float m_clamp_ratio;
 
     const MatMulOperator* m_op;
-    std::array<Tensor, n_entries<MatMulSlot>()> m_tensors;
-    std::array<bool, n_entries<MatMulSlot>()> m_tensors_required;
+    std::array<Tensor, n_elements<MatMulSlot>()> m_tensors;
+    std::array<bool, n_elements<MatMulSlot>()> m_tensors_required;
 };
 
 }  // namespace kai::test

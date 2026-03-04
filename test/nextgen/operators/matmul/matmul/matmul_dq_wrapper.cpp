@@ -14,6 +14,9 @@
 #include "test/common/assert.hpp"
 #include "test/common/span.hpp"
 #include "test/nextgen/harness/tensor.hpp"
+#include "test/nextgen/operators/matmul/matmul_bias_mode.hpp"
+#include "test/nextgen/operators/matmul/matmul_config.hpp"
+#include "test/nextgen/operators/matmul/matmul_dims.hpp"
 #include "test/nextgen/operators/matmul/matmul_main_args.hpp"
 #include "test/nextgen/operators/matmul/matmul_pack_args.hpp"
 #include "test/nextgen/operators/matmul/matmul_slots.hpp"
@@ -33,10 +36,10 @@ std::vector<MatMulSlot> MatMulDqWrapper::ref_inputs([[maybe_unused]] ConstTensor
             MatMulSlot::RHS_T_QDATA, MatMulSlot::RHS_T_QSCALE, MatMulSlot::BIAS_DATA};
 }
 
-std::vector<size_t> MatMulDqWrapper::steps(Span<const size_t> shape, [[maybe_unused]] ConstTensorSet tensorsf) const {
+std::vector<size_t> MatMulDqWrapper::steps(MatMulShape shape, [[maybe_unused]] ConstTensorSet tensorsf) const {
     const size_t step_m = m_kernel.get_m_step();
     const size_t step_n = m_kernel.get_n_step();
-    const size_t shape_k = shape.at(2);
+    const size_t shape_k = shape.at(MatMulDim::K);
 
     return {step_m, step_n, shape_k};
 }
@@ -57,24 +60,23 @@ void MatMulDqWrapper::populate_constant_info(TensorSet tensors) const {
 }
 
 void MatMulDqWrapper::run(
-    Span<const size_t> full_shape, Span<const size_t> tile_coords, Span<const size_t> tile_shape,
-    TensorSet tensors) const {
+    MatMulShape full_shape, Span<const size_t> tile_coords, MatMulShape tile_shape, TensorSet tensors) const {
     KAI_TEST_ASSERT(tile_coords.size() == full_shape.size());
     KAI_TEST_ASSERT(tile_shape.size() == full_shape.size());
 
     KAI_TEST_ASSERT_MSG(full_shape.size() == 3, "Only M, N and K dimensions are expected.");
 
-    const size_t full_m = full_shape.at(0);
-    const size_t full_n = full_shape.at(1);
-    const size_t full_k = full_shape.at(2);
+    const size_t full_m = full_shape.at(MatMulDim::M);
+    const size_t full_n = full_shape.at(MatMulDim::N);
+    const size_t full_k = full_shape.at(MatMulDim::K);
 
-    const size_t start_m = tile_coords.at(0);
-    const size_t start_n = tile_coords.at(1);
-    const size_t start_k = tile_coords.at(2);
+    const size_t start_m = tile_coords.at(as_idx(MatMulDim::M));
+    const size_t start_n = tile_coords.at(as_idx(MatMulDim::N));
+    const size_t start_k = tile_coords.at(as_idx(MatMulDim::K));
 
-    const size_t size_m = tile_shape.at(0);
-    const size_t size_n = tile_shape.at(1);
-    const size_t size_k = tile_shape.at(2);
+    const size_t size_m = tile_shape.at(MatMulDim::M);
+    const size_t size_n = tile_shape.at(MatMulDim::N);
+    const size_t size_k = tile_shape.at(MatMulDim::K);
 
     KAI_TEST_ASSERT_MSG(start_k == 0, "Only full K is supported.");
     KAI_TEST_ASSERT_MSG(size_k == full_k, "Only full K is supported.");
@@ -116,8 +118,7 @@ void MatMulDqWrapper::run(
     });
 }
 
-void MatMulDqWrapper::compute_reference(
-    [[maybe_unused]] Span<const size_t> shape, [[maybe_unused]] TensorSet tensors) const {
+void MatMulDqWrapper::compute_reference([[maybe_unused]] MatMulShape shape, [[maybe_unused]] TensorSet tensors) const {
 }
 
 }  // namespace kai::test

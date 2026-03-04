@@ -6,14 +6,14 @@
 
 #pragma once
 
-#include <cstddef>
 #include <cstdint>
-#include <type_traits>
+
+#include "test/nextgen/common/enum_utils.hpp"
 
 namespace kai::test {
 
 /// Matrix multiplication tensor slots.
-enum class MatMulSlot : uint32_t {
+enum class MatMulSlot : size_t {
     CONFIG,       ///< Matrix multiplication operator configuration.
     PACK_ARGS,    ///< Packing arguments.
     MATMUL_ARGS,  ///< Matrix multiplication micro-kernel parameters.
@@ -65,15 +65,5 @@ enum class MatMulSlot : uint32_t {
 
     LAST,  ///< Sentinel value equal to the number of slots.
 };
-
-template <typename T>
-constexpr std::underlying_type_t<T> as_idx(T val) noexcept {
-    return static_cast<std::underlying_type_t<T>>(val);
-}
-
-template <typename T>
-constexpr size_t n_entries() noexcept {
-    return static_cast<size_t>(as_idx(T::LAST));
-}
 
 }  // namespace kai::test

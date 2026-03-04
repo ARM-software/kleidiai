@@ -22,6 +22,7 @@
 #include "test/nextgen/harness/tensor.hpp"
 #include "test/nextgen/operators/matmul/matmul_bias_mode.hpp"
 #include "test/nextgen/operators/matmul/matmul_config.hpp"
+#include "test/nextgen/operators/matmul/matmul_dims.hpp"
 #include "test/nextgen/operators/matmul/matmul_pack_args.hpp"
 #include "test/nextgen/operators/matmul/matmul_slots.hpp"
 
@@ -32,7 +33,7 @@ enum class RhsLayout {
     NxK,
 };
 
-class MatMulPackRhsUkerApiCommon : public KernelWrapper {
+class MatMulPackRhsUkerApiCommon : public KernelWrapper<MatShape> {
 public:
     MatMulPackRhsUkerApiCommon(
         std::string_view name, MatMulSlot run_rhs_slot, RhsLayout layout, kai_matmul_pack_rhs_uker_api api,
@@ -73,12 +74,11 @@ public:
         return inputs;
     }
 
-    [[nodiscard]] std::vector<size_t> steps(
-        Span<const size_t> shape, [[maybe_unused]] ConstTensorSet tensors) const override {
+    [[nodiscard]] std::vector<size_t> steps(MatShape shape, [[maybe_unused]] ConstTensorSet tensors) const override {
         KAI_TEST_ASSERT_MSG(shape.size() == 2, "Only N and K dimensions are expected.");
 
         const size_t n_step = m_api.get_n_step(&m_uker_config);
-        const size_t shape_k = shape.at(1);
+        const size_t shape_k = shape.at(MatDim::C);
 
         return {n_step, shape_k};
     }
@@ -88,20 +88,19 @@ public:
     }
 
     void run(
-        Span<const size_t> full_shape, Span<const size_t> tile_coords, Span<const size_t> tile_shape,
-        TensorSet tensors) const override {
+        MatShape full_shape, Span<const size_t> tile_coords, MatShape tile_shape, TensorSet tensors) const override {
         KAI_TEST_ASSERT_MSG(full_shape.size() == 2, "Only N and K dimensions are expected.");
         KAI_TEST_ASSERT_MSG(tile_coords.size() == 2, "Only N and K dimensions are expected.");
         KAI_TEST_ASSERT_MSG(tile_shape.size() == 2, "Only N and K dimensions are expected.");
 
-        const size_t full_n = full_shape.at(0);
-        const size_t full_k = full_shape.at(1);
+        const size_t full_n = full_shape.at(MatDim::R);
+        const size_t full_k = full_shape.at(MatDim::C);
 
-        const size_t start_n = tile_coords.at(0);
-        const size_t start_k = tile_coords.at(1);
+        const size_t start_n = tile_coords.at(as_idx(MatDim::R));
+        const size_t start_k = tile_coords.at(as_idx(MatDim::C));
 
-        const size_t size_n = tile_shape.at(0);
-        const size_t size_k = tile_shape.at(1);
+        const size_t size_n = tile_shape.at(MatDim::R);
+        const size_t size_k = tile_shape.at(MatDim::C);
 
         KAI_TEST_ASSERT(start_k == 0);
         KAI_TEST_ASSERT(size_k == full_k);
@@ -159,9 +158,9 @@ public:
         abi_check([&] { m_api.run(&m_uker_config, &args); });
     }
 
-    void compute_reference(Span<const size_t> shape, TensorSet tensors) const override {
+    void compute_reference(MatShape shape, TensorSet tensors) const override {
         KAI_TEST_ASSERT_MSG(shape.size() == 2, "Only N and K dimensions are expected.");
-        const size_t shape_n = shape.at(0);
+        const size_t shape_n = shape.at(MatDim::R);
 
         const std::optional<MatMulSlot> bias_tensor_id = determine_bias_tensor_id(tensors);
         const bool has_bias = bias_tensor_id.has_value();

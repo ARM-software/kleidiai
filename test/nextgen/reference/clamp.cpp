@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -27,7 +27,7 @@ namespace kai::test {
 namespace {
 
 template <typename T>
-std::tuple<Buffer, Buffer> dynamic_clamp(float ratio, Span<const size_t> shape, Span<const std::byte> data) {
+std::tuple<Buffer, Buffer> dynamic_clamp(float ratio, Shape shape, Span<const std::byte> data) {
     KAI_TEST_ASSERT(ratio > 0.0F);
     KAI_TEST_ASSERT(ratio <= 1.0F);
 

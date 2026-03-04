@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -25,7 +25,7 @@ namespace kai::test {
 namespace {
 
 template <typename Op>
-[[nodiscard]] Buffer unary_elementwise(Span<const size_t> shape, Span<const std::byte> data) {
+[[nodiscard]] Buffer unary_elementwise(Shape shape, Span<const std::byte> data) {
     using Type = typename Op::Type;
 
     const size_t width = shape.at(shape.size() - 1);

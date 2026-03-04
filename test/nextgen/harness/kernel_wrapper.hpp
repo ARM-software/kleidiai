@@ -10,13 +10,14 @@
 #include <string_view>
 #include <vector>
 
-#include "test/common/span.hpp"
+#include "test/nextgen/common/shape.hpp"
 #include "test/nextgen/harness/tensor.hpp"
 #include "test/nextgen/operators/matmul/matmul_slots.hpp"
 
 namespace kai::test {
 
 /// Wrapper to provide unified API for all micro-kernels.
+template <typename ShapeT>
 class KernelWrapper {
 public:
     KernelWrapper() = default;                                ///< Default constructor.
@@ -49,7 +50,7 @@ public:
     /// @param[in] tensors The data pool.
     ///
     /// @return The step in each dimension.
-    [[nodiscard]] virtual std::vector<size_t> steps(Span<const size_t> shape, ConstTensorSet tensors) const = 0;
+    [[nodiscard]] virtual std::vector<size_t> steps(ShapeT shape, ConstTensorSet tensors) const = 0;
 
     /// Populates the data pool with constant information.
     ///
@@ -62,15 +63,13 @@ public:
     /// @param[in] tile_coords The starting coordinate of the tile to be processed by the kernel.
     /// @param[in] tile_shape The size of the tile to be processed by the kernel.
     /// @param[in, out] tensors The data pool.
-    virtual void run(
-        Span<const size_t> full_shape, Span<const size_t> tile_coords, Span<const size_t> tile_shape,
-        TensorSet tensors) const = 0;
+    virtual void run(ShapeT full_shape, Span<const size_t> tile_coords, ShapeT tile_shape, TensorSet tensors) const = 0;
 
     /// Computes the reference data.
     ///
     /// @param[in] shape The problem shape.
     /// @param[in, out] tensors The data pool.
-    virtual void compute_reference(Span<const size_t> shape, TensorSet tensors) const = 0;
+    virtual void compute_reference(ShapeT shape, TensorSet tensors) const = 0;
 };
 
 }  // namespace kai::test

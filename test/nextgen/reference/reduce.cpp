@@ -23,7 +23,7 @@ namespace kai::test {
 namespace {
 
 template <typename Op>
-[[nodiscard]] Buffer reduce(size_t axis, Span<const size_t> shape, Span<const std::byte> data) {
+[[nodiscard]] Buffer reduce(size_t axis, Shape shape, Span<const std::byte> data) {
     using Input = typename Op::InputType;
     using Output = typename Op::OutputType;
 
