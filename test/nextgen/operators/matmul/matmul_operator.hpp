@@ -13,6 +13,8 @@
 #include <vector>
 
 #include "test/common/data_type.hpp"
+#include "test/common/matrix_portion.hpp"
+#include "test/common/span.hpp"
 #include "test/nextgen/harness/kernel_wrapper.hpp"
 #include "test/nextgen/operators/matmul/matmul_bias_mode.hpp"
 #include "test/nextgen/operators/matmul/matmul_dims.hpp"
@@ -25,7 +27,7 @@ struct MatMulOperator {
     std::string_view name;
 
     bool (*is_cpu_supported)();
-    bool (*is_shape_suitable)(size_t shape_m, size_t shape_n, size_t shape_k);
+    bool (*is_shape_suitable)(size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
     std::vector<MatMulBiasMode> supported_bias_modes;
 
