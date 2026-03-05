@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -49,45 +49,60 @@ KAI_ASM_FUNCTION_LABEL(kai_kernel_rhs_pack_kxn_x32p16x1b_x32_x32_neon)
     str x28, [sp, 64]
     ldr x11, [x0, #0x8]
     mov x24, x11
-    ldr x10, [x0, #0x38]
+    ldr x10, [x0, #0x30]
     cmp x24, #0x10
     ldr x23, [x0, #0x0]
     ldr x22, [x0, #0x10]
     ldr x9, [x0, #0x18]
     ldr x28, [x0, #0x20]
-    ldr x20, [x0, #0x28]
-    ldr x27, [x0, #0x30]
+    ldr x27, [x0, #0x28]
     mov x21, x10
-    blt label_2
+    blt label_3
+    movi v19.16b, #0x0
+    movi v18.16b, #0x0
+    movi v17.16b, #0x0
+    movi v16.16b, #0x0
 KAI_ASM_LABEL(label_1)  // Bias: Full loop
+    cbz x23, label_2
     ldr q19, [x23, #0x0]
     ldr q18, [x23, #0x10]
-    sub x24, x24, #0x10
     ldr q17, [x23, #0x20]
     ldr q16, [x23, #0x30]
-    cmp x24, #0x10
-    add x23, x23, x20
+    add x23, x23, #0x40
+KAI_ASM_LABEL(label_2)  // Bias: Skip Bias Load
+    sub x24, x24, #0x10
     str q19, [x21, #0x0]
+    cmp x24, #0x10
     str q18, [x21, #0x10]
     str q17, [x21, #0x20]
     str q16, [x21, #0x30]
     add x21, x21, x28
     bge label_1
-    cbz x24, label_3
-KAI_ASM_LABEL(label_2)  // Bias: Tail loop
+    cbz x24, label_5
+KAI_ASM_LABEL(label_3)  // Bias: Tail check
+    movi v19.16b, #0x0
+    movi v18.16b, #0x0
+    movi v17.16b, #0x0
+    movi v16.16b, #0x0
+    str q19, [x21, #0x0]
+    str q18, [x21, #0x10]
+    str q17, [x21, #0x20]
+    str q16, [x21, #0x30]
+    cbz x23, label_5
+KAI_ASM_LABEL(label_4)  // Bias: Tail loop
     ldr w20, [x23, #0x0]
     sub x24, x24, #0x1
     add x23, x23, #0x4
     cmp x24, #0x0
     str w20, [x21]
     add x21, x21, #0x4
-    bgt label_2
-KAI_ASM_LABEL(label_3)  // Bias: Done
+    bgt label_4
+KAI_ASM_LABEL(label_5)  // Bias: Done
     mov x26, x22
     add x10, x10, #0x40
     cmp x26, #0x4
-    blt label_12
-KAI_ASM_LABEL(label_4)  // Main row loop: Head
+    blt label_14
+KAI_ASM_LABEL(label_6)  // Main row loop: Head
     mov x25, x27
     mov x24, x11
     mov x23, x10
@@ -97,8 +112,8 @@ KAI_ASM_LABEL(label_4)  // Main row loop: Head
     add x20, x21, x9
     cmp x24, #0x10
     add x27, x20, x9
-    blt label_6
-KAI_ASM_LABEL(label_5)  // Main row loop: Column loop
+    blt label_8
+KAI_ASM_LABEL(label_7)  // Main row loop: Column loop
     ldr q31, [x25], #0x10
     ldr q30, [x22], #0x10
     sub x24, x24, #0x10
@@ -134,9 +149,9 @@ KAI_ASM_LABEL(label_5)  // Main row loop: Column loop
     str q20, [x23, #0xe0]
     str q16, [x23, #0xf0]
     add x23, x23, x28
-    bge label_5
-KAI_ASM_LABEL(label_6)  // Main row loop: Column loop skip
-    cbz x24, label_11
+    bge label_7
+KAI_ASM_LABEL(label_8)  // Main row loop: Column loop skip
+    cbz x24, label_13
     cmp x24, #0x4
     movi v16.4s, #0x0
     str q16, [x23, #0x0]
@@ -155,8 +170,8 @@ KAI_ASM_LABEL(label_6)  // Main row loop: Column loop skip
     str q16, [x23, #0xd0]
     str q16, [x23, #0xe0]
     str q16, [x23, #0xf0]
-    blt label_8
-KAI_ASM_LABEL(label_7)  // Main row loop: width 4 loop: loop
+    blt label_10
+KAI_ASM_LABEL(label_9)  // Main row loop: width 4 loop: loop
     ldr q19, [x25], #0x10
     ldr q18, [x22], #0x10
     sub x24, x24, #0x4
@@ -168,11 +183,11 @@ KAI_ASM_LABEL(label_7)  // Main row loop: width 4 loop: loop
     str q17, [x23, #0x80]
     str q16, [x23, #0xc0]
     add x23, x23, #0x10
-    bge label_7
-KAI_ASM_LABEL(label_8)  // Main row loop: width 4 loop: skip
+    bge label_9
+KAI_ASM_LABEL(label_10)  // Main row loop: width 4 loop: skip
     cmp x24, #0x1
-    blt label_10
-KAI_ASM_LABEL(label_9)  // Main row loop: width 1 loop: loop
+    blt label_12
+KAI_ASM_LABEL(label_11)  // Main row loop: width 1 loop: loop
     ldr s19, [x25], #0x4
     ldr s18, [x22], #0x4
     sub x24, x24, #0x1
@@ -184,23 +199,23 @@ KAI_ASM_LABEL(label_9)  // Main row loop: width 1 loop: loop
     str s17, [x23, #0x80]
     str s16, [x23, #0xc0]
     add x23, x23, #0x4
-    bge label_9
-KAI_ASM_LABEL(label_10)  // Main row loop: width 1 loop: skip
-KAI_ASM_LABEL(label_11)  // Main row loop: odd col skip
+    bge label_11
+KAI_ASM_LABEL(label_12)  // Main row loop: width 1 loop: skip
+KAI_ASM_LABEL(label_13)  // Main row loop: odd col skip
     cmp x26, #0x4
     add x10, x10, #0x100
-    bge label_4
-    cbz x26, label_21
-KAI_ASM_LABEL(label_12)  // Main loop skip
-KAI_ASM_LABEL(label_13)  // Tail row loop: Head
+    bge label_6
+    cbz x26, label_23
+KAI_ASM_LABEL(label_14)  // Main loop skip
+KAI_ASM_LABEL(label_15)  // Tail row loop: Head
     mov x20, x11
     mov x25, x27
     mov x23, x10
     sub x26, x26, #0x1
     cmp x20, #0x10
     add x27, x25, x9
-    blt label_15
-KAI_ASM_LABEL(label_14)  // Tail row loop: Column loop
+    blt label_17
+KAI_ASM_LABEL(label_16)  // Tail row loop: Column loop
     ldr q19, [x25], #0x10
     sub x20, x20, #0x10
     ldr q18, [x25], #0x10
@@ -212,39 +227,39 @@ KAI_ASM_LABEL(label_14)  // Tail row loop: Column loop
     str q17, [x23, #0x20]
     str q16, [x23, #0x30]
     add x23, x23, x28
-    bge label_14
-KAI_ASM_LABEL(label_15)  // Tail row loop: Column loop skip
-    cbz x20, label_20
+    bge label_16
+KAI_ASM_LABEL(label_17)  // Tail row loop: Column loop skip
+    cbz x20, label_22
     cmp x20, #0x4
     movi v16.4s, #0x0
     str q16, [x23, #0x0]
     str q16, [x23, #0x10]
     str q16, [x23, #0x20]
     str q16, [x23, #0x30]
-    blt label_17
-KAI_ASM_LABEL(label_16)  // Tail row loop: width 4 loop: loop
+    blt label_19
+KAI_ASM_LABEL(label_18)  // Tail row loop: width 4 loop: loop
     ldr q16, [x25], #0x10
     sub x20, x20, #0x4
     cmp x20, #0x4
     str q16, [x23, #0x0]
     add x23, x23, #0x10
-    bge label_16
-KAI_ASM_LABEL(label_17)  // Tail row loop: width 4 loop: skip
+    bge label_18
+KAI_ASM_LABEL(label_19)  // Tail row loop: width 4 loop: skip
     cmp x20, #0x1
-    blt label_19
-KAI_ASM_LABEL(label_18)  // Tail row loop: width 1 loop: loop
+    blt label_21
+KAI_ASM_LABEL(label_20)  // Tail row loop: width 1 loop: loop
     ldr s16, [x25], #0x4
     sub x20, x20, #0x1
     cmp x20, #0x1
     str s16, [x23, #0x0]
     add x23, x23, #0x4
-    bge label_18
-KAI_ASM_LABEL(label_19)  // Tail row loop: width 1 loop: skip
-KAI_ASM_LABEL(label_20)  // Tail row loop: odd col skip
+    bge label_20
+KAI_ASM_LABEL(label_21)  // Tail row loop: width 1 loop: skip
+KAI_ASM_LABEL(label_22)  // Tail row loop: odd col skip
     cmp x26, #0x1
     add x10, x10, #0x40
-    bge label_13
-KAI_ASM_LABEL(label_21)  // Done
+    bge label_15
+KAI_ASM_LABEL(label_23)  // Done
     ldp x22, x23, [sp, 16]
     ldp x24, x25, [sp, 32]
     ldp x26, x27, [sp, 48]
