@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -397,19 +397,10 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsi4cx) {
 
     // Compares the output of the micro-kernels against the output of the reference implementation for the portion
     // tested.
-    for (size_t y = 0; y < rect.height(); ++y) {
-        for (size_t x = 0; x < rect.width(); ++x) {
-            const auto imp_value =
-                read_array<float>(imp_dst.data(), (rect.start_row() + y) * N + (x + rect.start_col()));
-            const auto ref_value =
-                read_array<float>(ref_clamped.data(), (rect.start_row() + y) * N + (x + rect.start_col()));
-            const auto rel_error = ref_value != 0 ? std::abs((imp_value - ref_value) / ref_value) : imp_value;
-
-            if (rel_error > 0.0001F) {
-                ASSERT_EQ(imp_value, ref_value);
-            }
-        }
-    }
+    DefaultMismatchHandler handler(0, 0.02, 0, 0.05);
+    DataFormat dst_format = DataFormat(DataType::FP32);
+    const auto success = compare(imp_dst.data(), ref_clamped.data(), dst_format, M, N, rect, handler);
+    ASSERT_TRUE(success);
 }
 
 TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsu4cx) {
@@ -541,19 +532,10 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsu4cx) {
 
     // Compares the output of the micro-kernels against the output of the reference implementation for the portion
     // tested.
-    for (size_t y = 0; y < rect.height(); ++y) {
-        for (size_t x = 0; x < rect.width(); ++x) {
-            const auto imp_value =
-                read_array<float>(imp_dst.data(), (rect.start_row() + y) * N + (x + rect.start_col()));
-            const auto ref_value =
-                read_array<float>(ref_clamped.data(), (rect.start_row() + y) * N + (x + rect.start_col()));
-            const auto rel_error = ref_value != 0 ? std::abs((imp_value - ref_value) / ref_value) : imp_value;
-
-            if (rel_error > 0.0001F) {
-                ASSERT_EQ(imp_value, ref_value);
-            }
-        }
-    }
+    DefaultMismatchHandler handler(0, 0.02, 0, 0.05);
+    DataFormat dst_format = DataFormat(DataType::FP32);
+    const auto success = compare(imp_dst.data(), ref_clamped.data(), dst_format, M, N, rect, handler);
+    ASSERT_TRUE(success);
 }
 
 TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsi4cx) {
@@ -688,19 +670,10 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsi4cx) {
 
     // Compares the output of the micro-kernels against the output of the reference implementation for the portion
     // tested.
-    for (size_t y = 0; y < rect.height(); ++y) {
-        for (size_t x = 0; x < rect.width(); ++x) {
-            const auto imp_value =
-                read_array<float>(imp_dst.data(), (rect.start_row() + y) * N + (x + rect.start_col()));
-            const auto ref_value =
-                read_array<float>(ref_clamped.data(), (rect.start_row() + y) * N + (x + rect.start_col()));
-            const auto rel_error = ref_value != 0 ? std::abs((imp_value - ref_value) / ref_value) : imp_value;
-
-            if (rel_error > 0.0001F) {
-                ASSERT_EQ(imp_value, ref_value);
-            }
-        }
-    }
+    DefaultMismatchHandler handler(0, 0.02, 0, 0.05);
+    DataFormat dst_format = DataFormat(DataType::FP32);
+    const auto success = compare(imp_dst.data(), ref_clamped.data(), dst_format, M, N, rect, handler);
+    ASSERT_TRUE(success);
 }
 
 TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsu4cx) {
@@ -838,7 +811,7 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsu4cx) {
 
     // Compares the output of the micro-kernels against the output of the reference implementation for the portion
     // tested.
-    DefaultMismatchHandler handler(0, 0.1, 0, 0.05);
+    DefaultMismatchHandler handler(0, 0.02, 0, 0.05);
     DataFormat dst_format = DataFormat(DataType::FP32);
     const auto success = compare(imp_dst.data(), ref_clamped.data(), dst_format, M, N, rect, handler);
     ASSERT_TRUE(success);
