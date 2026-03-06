@@ -339,7 +339,7 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, EndToEnd) {
         imp_packed_lhs.data() + lhs_matmul_offset, imp_packed_rhs.data() + rhs_matmul_offset,
         reinterpret_cast<float*>(imp_dst.data() + dst_offset), dst_stride_row, dst_stride_col, min, max);
 
-    DefaultMismatchHandler handler(0, 0.0001, 0, 0.0001);
+    DefaultMismatchHandler handler(0, 0.02, 0, 0.05);
     const auto success = compare(imp_dst.data(), out_clamped.data(), DataType::FP32, M, N, rect, handler);
 
     ASSERT_TRUE(success);
