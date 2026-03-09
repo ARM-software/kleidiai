@@ -8,7 +8,7 @@
 
 #include <cstdint>
 
-#include "test/nextgen/common/enum_utils.hpp"
+#include "test/common/enum_utils.hpp"
 
 namespace kai::test {
 

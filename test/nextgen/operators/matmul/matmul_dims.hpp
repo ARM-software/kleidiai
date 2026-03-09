@@ -9,7 +9,7 @@
 #include <cstddef>
 
 #include "test/common/assert.hpp"
-#include "test/nextgen/common/enum_utils.hpp"
+#include "test/common/enum_utils.hpp"
 #include "test/nextgen/common/shape.hpp"
 
 namespace kai::test {
