@@ -1,0 +1,23 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "default-config",
+      "generator": "Ninja",
+      "binaryDir": "build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_FLAGS": "-Werror",
+        "CMAKE_CXX_FLAGS": "-Werror",
+        "KLEIDIAI_BUILD_TESTS": "ON",
+        "KLEIDIAI_BUILD_BENCHMARK": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "default-build",
+      "configurePreset": "default-config"
+    }
+  ]
+}

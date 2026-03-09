@@ -274,6 +274,15 @@ test-verify-benchmark-registration:
   script:
     - python3 tools/check_benchmark_microkernels.py
 
+# Purpose: Build current sources against tests/benchmarks from latest semver tag to detect API breakage.
+test-api-compat:
+  extends:
+    - .standard-rules
+  stage: test
+  needs: []
+  script:
+    - ./tools/check_api_compat.py
+
 # Purpose: Run pre-commit hooks (formatting, linting) with cached tool downloads.
 pre-commit-hooks:
   variables:
