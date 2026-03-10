@@ -135,11 +135,10 @@ bool is_shape_suitable_rhs_kxn_x32p4vsx1bx32_x32_x32_sme(
     const kai_matmul_pack_rhs_uker_api api = kai_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme();
     const kai_matmul_pack_rhs_uker_config config = {};
 
-    const size_t n_step = api.get_n_step(&config);
-    const size_t k_step = api.get_k_step(&config);
+    const kai_matmul_pack_rhs_uker_dim_args step = api.get_step(&config);
 
-    const size_t block_n = (n_step == 0) ? shape_n : n_step;
-    const size_t block_k = (k_step == 0) ? shape_k : k_step;
+    const size_t block_n = (step.n == 0) ? shape_n : step.n;
+    const size_t block_k = (step.k == 0) ? shape_k : step.k;
 
     return portion_non_empty(shape_n, shape_k, block_n, block_k, portion);
 }
@@ -153,11 +152,10 @@ bool is_shape_suitable_rhs_nxk_x32p4vsx1bx32_x32_x32_sme(
     const kai_matmul_pack_rhs_uker_api api = kai_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme();
     const kai_matmul_pack_rhs_uker_config config = {};
 
-    const size_t n_step = api.get_n_step(&config);
-    const size_t k_step = api.get_k_step(&config);
+    const kai_matmul_pack_rhs_uker_dim_args step = api.get_step(&config);
 
-    const size_t block_n = (n_step == 0) ? shape_n : n_step;
-    const size_t block_k = (k_step == 0) ? shape_k : k_step;
+    const size_t block_n = (step.n == 0) ? shape_n : step.n;
+    const size_t block_k = (step.k == 0) ? shape_k : step.k;
 
     return portion_non_empty(shape_n, shape_k, block_n, block_k, portion);
 }

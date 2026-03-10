@@ -11,6 +11,7 @@
 #include <string_view>
 #include <vector>
 
+#include "kai/ukernels/matmul/kai_matmul_pack_lhs_types.h"
 #include "test/common/abi_checker.hpp"
 #include "test/common/assert.hpp"
 #include "test/common/data_type.hpp"
@@ -38,10 +39,14 @@ std::vector<MatMulSlot> MatMulPackLhsUkerApiWrapper::ref_inputs([[maybe_unused]]
 std::vector<size_t> MatMulPackLhsUkerApiWrapper::steps(MatShape shape, [[maybe_unused]] ConstTensorSet tensors) const {
     KAI_TEST_ASSERT_MSG(shape.size() == 2, "Only M and K dimensions are expected.");
 
-    const size_t m_step = pack_lhs_uker.get_m_step(&m_uker_config);
+    const struct kai_matmul_pack_lhs_uker_dim_args step = pack_lhs_uker.get_step(&m_uker_config);
+    const size_t shape_m = shape.at(MatDim::R);
     const size_t shape_k = shape.at(MatDim::C);
 
-    return {m_step, shape_k};
+    const size_t m_step = step.m != 0 ? step.m : shape_m;
+    const size_t k_step = step.k != 0 ? step.k : shape_k;
+
+    return {m_step, k_step};
 }
 
 void MatMulPackLhsUkerApiWrapper::populate_constant_info(TensorSet tensors) const {
@@ -75,22 +80,27 @@ void MatMulPackLhsUkerApiWrapper::run(
 
     packed_lhs_data.set_shape({full_m, full_k}).allocate();
 
-    const size_t lhs_stride = m_src_format->compute_size({1, full_k});
-
     const size_t lhs_offset = m_src_format->compute_offset(full_shape, tile_coords);
-    const size_t imp_lhs_offset = pack_lhs_uker.get_lhs_offset(&m_uker_config, start_m, start_k, lhs_stride);
+    const kai_matmul_pack_lhs_uker_lhs_dim_args imp_lhs_shape = {full_m, full_k};
+    const kai_matmul_pack_lhs_uker_lhs_dim_args imp_lhs_index = {start_m, start_k};
+    const kai_matmul_pack_lhs_uker_lhs_stride_args imp_lhs_stride =
+        pack_lhs_uker.get_lhs_stride(&m_uker_config, &imp_lhs_shape);
+    const size_t imp_lhs_offset = pack_lhs_uker.get_lhs_offset(&m_uker_config, &imp_lhs_index, &imp_lhs_stride);
     KAI_TEST_ASSERT_MSG(imp_lhs_offset == lhs_offset, "LHS packing: Reference and inference LHS offset mismatch.");
 
     const size_t packed_lhs_offset = m_dst_format->compute_offset(full_shape, tile_coords);
-    const size_t packed_lhs_stride = pack_lhs_uker.get_lhs_packed_stride_row(&m_uker_config, full_m, full_k);
+    const kai_matmul_pack_lhs_uker_lhs_packed_dim_args imp_packed_lhs_shape = {full_m, full_k};
+    const kai_matmul_pack_lhs_uker_lhs_packed_dim_args imp_packed_lhs_index = {start_m, start_k};
+    const kai_matmul_pack_lhs_uker_lhs_packed_stride_args imp_packed_lhs_stride =
+        pack_lhs_uker.get_lhs_packed_stride(&m_uker_config, &imp_packed_lhs_shape);
     const size_t imp_packed_lhs_offset =
-        pack_lhs_uker.get_lhs_packed_offset(&m_uker_config, start_m, start_k, packed_lhs_stride);
+        pack_lhs_uker.get_lhs_packed_offset(&m_uker_config, &imp_packed_lhs_index, &imp_packed_lhs_stride);
     KAI_TEST_ASSERT_MSG(
         imp_packed_lhs_offset == packed_lhs_offset, "LHS packing: Reference and inference LHS packed offset mismatch.");
 
     const size_t packed_lhs_size = packed_lhs_data.data().size();
     const size_t imp_packed_lhs_size =
-        pack_lhs_uker.get_lhs_packed_size(&m_uker_config, full_m, full_k, packed_lhs_stride);
+        pack_lhs_uker.get_lhs_packed_size(&m_uker_config, &imp_packed_lhs_shape, &imp_packed_lhs_stride);
     KAI_TEST_ASSERT_MSG(
         imp_packed_lhs_size == packed_lhs_size, "LHS packing: Calculated LHS kernel data size mismatch.");
 
@@ -104,11 +114,11 @@ void MatMulPackLhsUkerApiWrapper::run(
     args.shape.m = size_m;
     args.shape.k = size_k;
 
-    args.operands.lhs.ptr = lhs_tile.data();
-    args.operands.lhs.stride_row = pack_lhs_uker.get_lhs_stride_row(&m_uker_config, full_m, full_k);
+    args.operand.lhs.ptr = lhs_tile.data();
+    args.operand.lhs.stride = imp_lhs_stride;
 
-    args.operands.lhs_packed.ptr = packed_lhs_tile.data();
-    args.operands.lhs_packed.stride_row = pack_lhs_uker.get_lhs_packed_stride_row(&m_uker_config, full_m, full_k);
+    args.operand.lhs_packed.ptr = packed_lhs_tile.data();
+    args.operand.lhs_packed.stride = imp_packed_lhs_stride;
 
     abi_check([&] { pack_lhs_uker.run(&m_uker_config, &args); });
 }

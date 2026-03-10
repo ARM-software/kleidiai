@@ -77,10 +77,14 @@ public:
     [[nodiscard]] std::vector<size_t> steps(MatShape shape, [[maybe_unused]] ConstTensorSet tensors) const override {
         KAI_TEST_ASSERT_MSG(shape.size() == 2, "Only N and K dimensions are expected.");
 
-        const size_t n_step = m_api.get_n_step(&m_uker_config);
+        const kai_matmul_pack_rhs_uker_dim_args step = m_api.get_step(&m_uker_config);
+        const size_t shape_n = shape.at(MatDim::R);
         const size_t shape_k = shape.at(MatDim::C);
 
-        return {n_step, shape_k};
+        const size_t n_step = step.n != 0 ? step.n : shape_n;
+        const size_t k_step = step.k != 0 ? step.k : shape_k;
+
+        return {n_step, k_step};
     }
 
     void populate_constant_info(TensorSet tensors) const override {
@@ -114,24 +118,31 @@ public:
 
         packed_rhs.set_shape({full_n, full_k}).allocate();
 
-        const size_t rhs_stride = compute_rhs_stride(full_n, full_k);
         const size_t rhs_offset = compute_rhs_offset(full_n, full_k, start_n, start_k);
 
-        const size_t imp_rhs_offset = m_api.get_rhs_offset(&m_uker_config, start_n, start_k, rhs_stride);
+        const kai_matmul_pack_rhs_uker_rhs_dim_args imp_rhs_shape = {full_n, full_k};
+        const kai_matmul_pack_rhs_uker_rhs_dim_args imp_rhs_index = {start_n, start_k};
+        const kai_matmul_pack_rhs_uker_rhs_stride_args imp_rhs_stride =
+            m_api.get_rhs_stride(&m_uker_config, &imp_rhs_shape);
+        const size_t imp_rhs_offset = m_api.get_rhs_offset(&m_uker_config, &imp_rhs_index, &imp_rhs_stride);
         KAI_TEST_ASSERT_MSG(imp_rhs_offset == rhs_offset, "RHS packing: Reference and inference RHS offset mismatch.");
 
         const size_t bias_offset = m_src_bias_format->compute_offset({full_n}, {start_n});
 
         const size_t packed_rhs_offset = m_dst_format->compute_offset(full_shape, tile_coords);
-        const size_t packed_rhs_stride = m_api.get_rhs_packed_stride_row(&m_uker_config, size_n, size_k);
+        const kai_matmul_pack_rhs_uker_rhs_packed_dim_args imp_packed_rhs_shape = {full_n, full_k};
+        const kai_matmul_pack_rhs_uker_rhs_packed_dim_args imp_packed_rhs_index = {start_n, start_k};
+        const kai_matmul_pack_rhs_uker_rhs_packed_stride_args imp_packed_rhs_stride =
+            m_api.get_rhs_packed_stride(&m_uker_config, &imp_packed_rhs_shape);
         const size_t imp_packed_rhs_offset =
-            m_api.get_rhs_packed_offset(&m_uker_config, start_n, start_k, packed_rhs_stride);
+            m_api.get_rhs_packed_offset(&m_uker_config, &imp_packed_rhs_index, &imp_packed_rhs_stride);
         KAI_TEST_ASSERT_MSG(
             imp_packed_rhs_offset == packed_rhs_offset,
             "RHS packing: Reference and inference RHS packed offset mismatch.");
 
         const size_t packed_rhs_size = packed_rhs.data().size();
-        const size_t imp_packed_rhs_size = m_api.get_rhs_packed_size(&m_uker_config, full_n, full_k, packed_rhs_stride);
+        const size_t imp_packed_rhs_size =
+            m_api.get_rhs_packed_size(&m_uker_config, &imp_packed_rhs_shape, &imp_packed_rhs_stride);
         KAI_TEST_ASSERT_MSG(
             imp_packed_rhs_size == packed_rhs_size, "RHS packing: Calculated RHS kernel data size mismatch.");
 
@@ -147,13 +158,13 @@ public:
         args.shape.n = size_n;
         args.shape.k = size_k;
 
-        args.operands.rhs.ptr = rhs_tile.data();
-        args.operands.rhs.stride_row = rhs_stride;
+        args.operand.rhs.ptr = rhs_tile.data();
+        args.operand.rhs.stride = imp_rhs_stride;
 
-        args.operands.rhs_packed.ptr = packed_rhs_tile.data();
-        args.operands.rhs_packed.stride_row = packed_rhs_stride;
+        args.operand.rhs_packed.ptr = packed_rhs_tile.data();
+        args.operand.rhs_packed.stride = imp_packed_rhs_stride;
 
-        args.operands.bias_n.ptr = bias_tile.data();
+        args.operand.bias_n.ptr = bias_tile.data();
 
         abi_check([&] { m_api.run(&m_uker_config, &args); });
     }

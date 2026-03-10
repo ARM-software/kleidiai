@@ -76,9 +76,9 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
     KAI_UNUSED(config);
     KAI_ASSUME_MSG((args->flags & ~((size_t)SUPPORTED_FLAGS)) == 0, "Only supported flags are accepted!");
 
-    KAI_ASSUME(args->operands.lhs.ptr != NULL);
-    KAI_ASSUME(args->operands.rhs.ptr != NULL);
-    KAI_ASSUME(args->operands.dst.ptr != NULL);
+    KAI_ASSUME(args->operand.lhs.ptr != NULL);
+    KAI_ASSUME(args->operand.rhs.ptr != NULL);
+    KAI_ASSUME(args->operand.dst.ptr != NULL);
 
     float clamp_min_max[2];
 
@@ -108,14 +108,14 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
         uker_args.n = main_n;
         uker_args.k = args->shape.k;
 
-        uker_args.lhs_ptr = args->operands.lhs.ptr;
-        uker_args.lhs_stride_row = args->operands.lhs.stride_row;
+        uker_args.lhs_ptr = args->operand.lhs.ptr;
+        uker_args.lhs_stride_row = args->operand.lhs.stride.m;
 
-        uker_args.rhs_ptr = args->operands.rhs.ptr;
-        uker_args.rhs_stride_row = args->operands.rhs.stride_row;
+        uker_args.rhs_ptr = args->operand.rhs.ptr;
+        uker_args.rhs_stride_row = args->operand.rhs.stride.n;
 
-        uker_args.dst_ptr = args->operands.dst.ptr;
-        uker_args.dst_stride_row = args->operands.dst.stride_row;
+        uker_args.dst_ptr = args->operand.dst.ptr;
+        uker_args.dst_stride_row = args->operand.dst.stride.m;
 
         uker_args.acc_ptr = NULL;
         uker_args.acc_bias_m_ptr = NULL;
@@ -133,10 +133,10 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
         size_t leftover_m = main_m;
         const size_t leftover_n = args->shape.n - main_n;
 
-        const uint8_t* lhs_ptr = (const uint8_t*)args->operands.lhs.ptr;
+        const uint8_t* lhs_ptr = (const uint8_t*)args->operand.lhs.ptr;
         const uint8_t* const rhs_ptr =
-            (const uint8_t*)args->operands.rhs.ptr + main_n / acc_vl * args->operands.rhs.stride_row;
-        uint8_t* dst_ptr = (uint8_t*)args->operands.dst.ptr + main_n * DST_ESIZE;
+            (const uint8_t*)args->operand.rhs.ptr + main_n / acc_vl * args->operand.rhs.stride.n;
+        uint8_t* dst_ptr = (uint8_t*)args->operand.dst.ptr + main_n * DST_ESIZE;
 
         // Processes the right edge of the output using 16vsx4vs variant.
         const size_t shape_m_16vs = KAI_MIN(leftover_m, kai_rounddown(kai_roundup(leftover_m, acc_vl), 4 * acc_vl));
@@ -151,13 +151,13 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
             uker_args.k = args->shape.k;
 
             uker_args.lhs_ptr = lhs_ptr;
-            uker_args.lhs_stride_row = args->operands.lhs.stride_row;
+            uker_args.lhs_stride_row = args->operand.lhs.stride.m;
 
             uker_args.rhs_ptr = rhs_ptr;
-            uker_args.rhs_stride_row = args->operands.rhs.stride_row;
+            uker_args.rhs_stride_row = args->operand.rhs.stride.n;
 
             uker_args.dst_ptr = dst_ptr;
-            uker_args.dst_stride_row = args->operands.dst.stride_row;
+            uker_args.dst_stride_row = args->operand.dst.stride.m;
 
             uker_args.acc_ptr = NULL;
             uker_args.acc_bias_m_ptr = NULL;
@@ -170,8 +170,8 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
             kai_kernel_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_16vsx4vs_sme2_mopa(&uker_args);
 
             leftover_m -= shape_m_16vs;
-            lhs_ptr += shape_m_16vs / acc_vl * args->operands.lhs.stride_row;
-            dst_ptr += shape_m_16vs * args->operands.dst.stride_row;
+            lhs_ptr += shape_m_16vs / acc_vl * args->operand.lhs.stride.m;
+            dst_ptr += shape_m_16vs * args->operand.dst.stride.m;
         }
 
         // Processes the remaining of the right edge of the output using 8vsx4vs variant.
@@ -185,13 +185,13 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
             uker_args.k = args->shape.k;
 
             uker_args.lhs_ptr = lhs_ptr;
-            uker_args.lhs_stride_row = args->operands.lhs.stride_row;
+            uker_args.lhs_stride_row = args->operand.lhs.stride.m;
 
             uker_args.rhs_ptr = rhs_ptr;
-            uker_args.rhs_stride_row = args->operands.rhs.stride_row;
+            uker_args.rhs_stride_row = args->operand.rhs.stride.n;
 
             uker_args.dst_ptr = dst_ptr;
-            uker_args.dst_stride_row = args->operands.dst.stride_row;
+            uker_args.dst_stride_row = args->operand.dst.stride.m;
 
             uker_args.acc_ptr = NULL;
             uker_args.acc_bias_m_ptr = NULL;
@@ -211,9 +211,9 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
         size_t leftover_n = args->shape.n;
 
         const uint8_t* const lhs_ptr =
-            (const uint8_t*)args->operands.lhs.ptr + main_m / acc_vl * args->operands.lhs.stride_row;
-        const uint8_t* rhs_ptr = (const uint8_t*)args->operands.rhs.ptr;
-        uint8_t* dst_ptr = (uint8_t*)args->operands.dst.ptr + main_m * args->operands.dst.stride_row;
+            (const uint8_t*)args->operand.lhs.ptr + main_m / acc_vl * args->operand.lhs.stride.m;
+        const uint8_t* rhs_ptr = (const uint8_t*)args->operand.rhs.ptr;
+        uint8_t* dst_ptr = (uint8_t*)args->operand.dst.ptr + main_m * args->operand.dst.stride.m;
 
         // Processes the bottom edge of the output using 4vsx16vs variant.
         const size_t shape_n_16vs = KAI_MIN(leftover_n, kai_rounddown(kai_roundup(leftover_n, acc_vl), 4 * acc_vl));
@@ -228,13 +228,13 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
             uker_args.k = args->shape.k;
 
             uker_args.lhs_ptr = lhs_ptr;
-            uker_args.lhs_stride_row = args->operands.lhs.stride_row;
+            uker_args.lhs_stride_row = args->operand.lhs.stride.m;
 
             uker_args.rhs_ptr = rhs_ptr;
-            uker_args.rhs_stride_row = args->operands.rhs.stride_row;
+            uker_args.rhs_stride_row = args->operand.rhs.stride.n;
 
             uker_args.dst_ptr = dst_ptr;
-            uker_args.dst_stride_row = args->operands.dst.stride_row;
+            uker_args.dst_stride_row = args->operand.dst.stride.m;
 
             uker_args.acc_ptr = NULL;
             uker_args.acc_bias_m_ptr = NULL;
@@ -247,7 +247,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
             kai_kernel_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_4vsx16vs_sme2_mopa(&uker_args);
 
             leftover_n -= shape_n_16vs;
-            rhs_ptr += shape_n_16vs / acc_vl * args->operands.rhs.stride_row;
+            rhs_ptr += shape_n_16vs / acc_vl * args->operand.rhs.stride.n;
             dst_ptr += shape_n_16vs * DST_ESIZE;
         }
 
@@ -264,13 +264,13 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
             uker_args.k = args->shape.k;
 
             uker_args.lhs_ptr = lhs_ptr;
-            uker_args.lhs_stride_row = args->operands.lhs.stride_row;
+            uker_args.lhs_stride_row = args->operand.lhs.stride.m;
 
             uker_args.rhs_ptr = rhs_ptr;
-            uker_args.rhs_stride_row = args->operands.rhs.stride_row;
+            uker_args.rhs_stride_row = args->operand.rhs.stride.n;
 
             uker_args.dst_ptr = dst_ptr;
-            uker_args.dst_stride_row = args->operands.dst.stride_row;
+            uker_args.dst_stride_row = args->operand.dst.stride.m;
 
             uker_args.acc_ptr = NULL;
             uker_args.acc_bias_m_ptr = NULL;
@@ -283,7 +283,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
             kai_kernel_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_4vsx8vs_sme2_mopa(&uker_args);
 
             leftover_n -= shape_n_8vs;
-            rhs_ptr += shape_n_8vs / acc_vl * args->operands.rhs.stride_row;
+            rhs_ptr += shape_n_8vs / acc_vl * args->operand.rhs.stride.n;
             dst_ptr += shape_n_8vs * DST_ESIZE;
         }
 
@@ -298,13 +298,13 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
             uker_args.k = args->shape.k;
 
             uker_args.lhs_ptr = lhs_ptr;
-            uker_args.lhs_stride_row = args->operands.lhs.stride_row;
+            uker_args.lhs_stride_row = args->operand.lhs.stride.m;
 
             uker_args.rhs_ptr = rhs_ptr;
-            uker_args.rhs_stride_row = args->operands.rhs.stride_row;
+            uker_args.rhs_stride_row = args->operand.rhs.stride.n;
 
             uker_args.dst_ptr = dst_ptr;
-            uker_args.dst_stride_row = args->operands.dst.stride_row;
+            uker_args.dst_stride_row = args->operand.dst.stride.m;
 
             uker_args.acc_ptr = NULL;
             uker_args.acc_bias_m_ptr = NULL;
@@ -327,94 +327,109 @@ static size_t get_nr(void) {
     return NR_VL * kai_get_sme_vector_length_u32();
 }
 
-static size_t get_m_step(const struct kai_matmul_uker_config* config) {
-    KAI_UNUSED(config);
+static size_t get_m_step(void) {
     return get_mr();
 }
 
-static size_t get_n_step(const struct kai_matmul_uker_config* config) {
-    KAI_UNUSED(config);
+static size_t get_n_step(void) {
     return get_nr();
 }
 
-static size_t get_k_step(const struct kai_matmul_uker_config* config) {
+static struct kai_matmul_uker_dim_args get_step(const struct kai_matmul_uker_config* config) {
     KAI_UNUSED(config);
-    return 0;
+
+    const struct kai_matmul_uker_dim_args step = {
+        .m = get_m_step(),
+        .n = get_n_step(),
+        .k = 0,
+    };
+
+    return step;
 }
 
-static size_t get_lhs_stride_row(const struct kai_matmul_uker_config* config, size_t m, size_t k) {
+static struct kai_matmul_uker_lhs_stride_args get_lhs_stride(
+    const struct kai_matmul_uker_config* config, const struct kai_matmul_uker_lhs_dim_args* shape) {
     KAI_UNUSED(config);
-    KAI_UNUSED(m);
 
-    return get_mr() * kai_roundup(k, KR) * LHS_ESIZE;
+    const struct kai_matmul_uker_lhs_stride_args stride = {
+        .m = get_mr() * kai_roundup(shape->k, KR) * LHS_ESIZE,
+    };
+
+    return stride;
 }
 
-static size_t get_lhs_offset(const struct kai_matmul_uker_config* config, size_t m_idx, size_t k_idx, size_t stride) {
+static size_t get_lhs_offset(
+    const struct kai_matmul_uker_config* config, const struct kai_matmul_uker_lhs_dim_args* index,
+    const struct kai_matmul_uker_lhs_stride_args* stride) {
     KAI_UNUSED(config);
-    KAI_ASSUME(m_idx % get_m_step(config) == 0);
+    KAI_ASSUME(index->m % get_m_step() == 0);
+    KAI_ASSUME(index->k == 0);
 
-    KAI_UNUSED(k_idx);
-    KAI_ASSUME(k_idx == 0);
-
-    return m_idx / get_mr() * stride;
+    return index->m / get_mr() * stride->m;
 }
 
-static size_t get_rhs_stride_row(const struct kai_matmul_uker_config* config, size_t n, size_t k) {
+static struct kai_matmul_uker_rhs_stride_args get_rhs_stride(
+    const struct kai_matmul_uker_config* config, const struct kai_matmul_uker_rhs_dim_args* shape) {
     KAI_UNUSED(config);
-    KAI_UNUSED(n);
 
-    return get_nr() * (kai_roundup(k, KR) * RHS_ESIZE + BIAS_ESIZE);
+    const struct kai_matmul_uker_rhs_stride_args stride = {
+        .n = get_nr() * (kai_roundup(shape->k, KR) * RHS_ESIZE + BIAS_ESIZE),
+    };
+
+    return stride;
 }
 
-static size_t get_rhs_offset(const struct kai_matmul_uker_config* config, size_t n_idx, size_t k_idx, size_t stride) {
+static size_t get_rhs_offset(
+    const struct kai_matmul_uker_config* config, const struct kai_matmul_uker_rhs_dim_args* index,
+    const struct kai_matmul_uker_rhs_stride_args* stride) {
     KAI_UNUSED(config);
-    KAI_ASSUME(n_idx % get_n_step(config) == 0);
+    KAI_ASSUME(index->n % get_n_step() == 0);
+    KAI_ASSUME(index->k == 0);
 
-    KAI_UNUSED(k_idx);
-    KAI_ASSUME(k_idx == 0);
-
-    return n_idx / get_nr() * stride;
+    return index->n / get_nr() * stride->n;
 }
 
-static size_t get_dst_stride_row(const struct kai_matmul_uker_config* config, size_t m, size_t n) {
+static struct kai_matmul_uker_dst_stride_args get_dst_stride(
+    const struct kai_matmul_uker_config* config, const struct kai_matmul_uker_dst_dim_args* shape) {
     KAI_UNUSED(config);
-    KAI_UNUSED(m);
 
-    return n * DST_ESIZE;
+    const struct kai_matmul_uker_dst_stride_args stride = {
+        .m = shape->n * DST_ESIZE,
+    };
+
+    return stride;
 }
 
-static size_t get_dst_offset(const struct kai_matmul_uker_config* config, size_t m_idx, size_t n_idx, size_t stride) {
+static size_t get_dst_offset(
+    const struct kai_matmul_uker_config* config, const struct kai_matmul_uker_dst_dim_args* index,
+    const struct kai_matmul_uker_dst_stride_args* stride) {
     KAI_UNUSED(config);
-    KAI_ASSUME(m_idx % get_m_step(config) == 0);
+    KAI_ASSUME(index->m % get_m_step() == 0);
+    KAI_ASSUME(index->n % get_n_step() == 0);
 
-    KAI_UNUSED(n_idx);
-    KAI_ASSUME(n_idx % get_n_step(config) == 0);
-
-    return m_idx * stride;
+    return index->m * stride->m + index->n * DST_ESIZE;
 }
 
-static size_t get_dst_size(const struct kai_matmul_uker_config* config, size_t m, size_t n, size_t stride) {
+static size_t get_dst_size(
+    const struct kai_matmul_uker_config* config, const struct kai_matmul_uker_dst_dim_args* shape,
+    const struct kai_matmul_uker_dst_stride_args* stride) {
     KAI_UNUSED(config);
-    KAI_UNUSED(n);
 
-    return m * stride;
+    return shape->m * stride->m;
 }
 
 struct kai_matmul_uker_api kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8vs_sme2_mopa(void) {
     struct kai_matmul_uker_api api = {
         .run = run,
+        .get_step = get_step,
 
-        .get_m_step = get_m_step,
-        .get_n_step = get_n_step,
-        .get_k_step = get_k_step,
-
-        .get_lhs_stride_row = get_lhs_stride_row,
+        .get_lhs_stride = get_lhs_stride,
         .get_lhs_offset = get_lhs_offset,
 
-        .get_rhs_stride_row = get_rhs_stride_row,
+        .get_rhs_stride = get_rhs_stride,
         .get_rhs_offset = get_rhs_offset,
 
-        .get_dst_stride_row = get_dst_stride_row,
+        .get_dst_stride = get_dst_stride,
         .get_dst_offset = get_dst_offset,
         .get_dst_size = get_dst_size,
     };

@@ -99,11 +99,10 @@ bool is_shape_suitable_lhs_x32p4vsx1_x32_sme(
     const kai_matmul_pack_lhs_uker_api api = kai_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme();
     const kai_matmul_pack_lhs_uker_config config = {};
 
-    const size_t m_step = api.get_m_step(&config);
-    const size_t k_step = api.get_k_step(&config);
+    const struct kai_matmul_pack_lhs_uker_dim_args step = api.get_step(&config);
 
-    const size_t block_m = (m_step == 0) ? shape_m : m_step;
-    const size_t block_k = (k_step == 0) ? shape_k : k_step;
+    const size_t block_m = (step.m == 0) ? shape_m : step.m;
+    const size_t block_k = (step.k == 0) ? shape_k : step.k;
 
     return portion_non_empty(shape_m, shape_k, block_m, block_k, portion);
 }

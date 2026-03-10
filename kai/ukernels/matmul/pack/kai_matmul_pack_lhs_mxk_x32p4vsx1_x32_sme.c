@@ -39,8 +39,8 @@ static void run(
     const size_t height = args->shape.m;
     const size_t width = args->shape.k;
 
-    const uint8_t* lhs_ptr = args->operands.lhs.ptr;
-    uint8_t* lhs_packed_ptr = args->operands.lhs_packed.ptr;
+    const uint8_t* lhs_ptr = args->operand.lhs.ptr;
+    uint8_t* lhs_packed_ptr = args->operand.lhs_packed.ptr;
 
     const uint8_t* src_ptrs[MAX_MR];
 
@@ -50,82 +50,103 @@ static void run(
         const size_t block_height = KAI_MIN(height - start_row, mr);
 
         uint8_t* dst = lhs_packed_ptr;
-        lhs_packed_ptr += args->operands.lhs_packed.stride_row;
+        lhs_packed_ptr += args->operand.lhs_packed.stride.m;
 
         for (size_t row = 0; row < block_height; ++row) {
-            src_ptrs[row] = lhs_ptr + row * args->operands.lhs.stride_row;
+            src_ptrs[row] = lhs_ptr + row * args->operand.lhs.stride.m;
         }
-        lhs_ptr += mr * args->operands.lhs.stride_row;
+        lhs_ptr += mr * args->operand.lhs.stride.m;
 
         kai_kernel_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme(
             block_height, width, src_ptrs, 0, dst);  // NOLINT(bugprone-multi-level-implicit-pointer-conversion)
     }
 }
 
-static size_t get_m_step(const struct kai_matmul_pack_lhs_uker_config* config) {
-    KAI_UNUSED(config);
+static size_t get_m_step(void) {
     return get_mr();
 }
 
-static size_t get_k_step(const struct kai_matmul_pack_lhs_uker_config* config) {
-    KAI_UNUSED(config);
-    return KR;
+static size_t get_k_step(void) {
+    return 0;
 }
 
-static size_t get_lhs_stride(const struct kai_matmul_pack_lhs_uker_config* config, size_t m, size_t k) {
+static struct kai_matmul_pack_lhs_uker_dim_args get_step(const struct kai_matmul_pack_lhs_uker_config* config) {
     KAI_UNUSED(config);
-    KAI_UNUSED(m);
 
-    return k * RHS_ESIZE;
+    const struct kai_matmul_pack_lhs_uker_dim_args step = {
+        .m = get_m_step(),
+        .k = get_k_step(),
+    };
+
+    return step;
+}
+
+static struct kai_matmul_pack_lhs_uker_lhs_stride_args get_lhs_stride(
+    const struct kai_matmul_pack_lhs_uker_config* config, const struct kai_matmul_pack_lhs_uker_lhs_dim_args* shape) {
+    KAI_UNUSED(config);
+
+    const struct kai_matmul_pack_lhs_uker_lhs_stride_args stride = {
+        .m = shape->k * RHS_ESIZE,
+    };
+
+    return stride;
 }
 
 static size_t get_lhs_offset(
-    const struct kai_matmul_pack_lhs_uker_config* config, size_t m_idx, size_t k_idx, size_t stride) {
+    const struct kai_matmul_pack_lhs_uker_config* config, const struct kai_matmul_pack_lhs_uker_lhs_dim_args* index,
+    const struct kai_matmul_pack_lhs_uker_lhs_stride_args* stride) {
     KAI_UNUSED(config);
-    KAI_ASSUME(m_idx % get_m_step(config) == 0);
-    KAI_ASSUME(k_idx % get_k_step(config) == 0);
+    KAI_ASSUME(index->m % get_m_step() == 0);
+    KAI_ASSUME(index->k == 0);
 
-    return m_idx * stride + k_idx * RHS_ESIZE;
+    return index->m * stride->m + index->k * RHS_ESIZE;
 }
 
-static size_t get_lhs_packed_stride(const struct kai_matmul_pack_lhs_uker_config* config, size_t m, size_t k) {
+static struct kai_matmul_pack_lhs_uker_lhs_packed_stride_args get_lhs_packed_stride(
+    const struct kai_matmul_pack_lhs_uker_config* config,
+    const struct kai_matmul_pack_lhs_uker_lhs_packed_dim_args* shape) {
     KAI_UNUSED(config);
-    KAI_UNUSED(m);
 
     const size_t mr = get_mr();
-    return mr * kai_roundup(k, KR) * RHS_ESIZE;
+    const struct kai_matmul_pack_lhs_uker_lhs_packed_stride_args stride = {
+        .m = mr * kai_roundup(shape->k, KR) * RHS_ESIZE,
+    };
+
+    return stride;
 }
 
 static size_t get_lhs_packed_offset(
-    const struct kai_matmul_pack_lhs_uker_config* config, size_t m_idx, size_t k_idx, size_t stride) {
+    const struct kai_matmul_pack_lhs_uker_config* config,
+    const struct kai_matmul_pack_lhs_uker_lhs_packed_dim_args* index,
+    const struct kai_matmul_pack_lhs_uker_lhs_packed_stride_args* stride) {
     KAI_UNUSED(config);
-    KAI_ASSUME(m_idx % get_m_step(config) == 0);
-    KAI_ASSUME(k_idx % get_k_step(config) == 0);
+    KAI_ASSUME(index->m % get_m_step() == 0);
+    KAI_ASSUME(index->k == 0);
 
     const size_t mr = get_mr();
-    return m_idx / mr * stride + k_idx * mr * RHS_ESIZE;
+    return index->m / mr * stride->m + index->k * mr * RHS_ESIZE;
 }
 
 static size_t get_lhs_packed_size(
-    const struct kai_matmul_pack_lhs_uker_config* config, size_t m, size_t k, size_t stride) {
+    const struct kai_matmul_pack_lhs_uker_config* config,
+    const struct kai_matmul_pack_lhs_uker_lhs_packed_dim_args* shape,
+    const struct kai_matmul_pack_lhs_uker_lhs_packed_stride_args* stride) {
     KAI_UNUSED(config);
-    KAI_UNUSED(k);
 
     const size_t mr = get_mr();
-    return div_ceil(m, mr) * stride;
+    return div_ceil(shape->m, mr) * stride->m;
 }
 
 struct kai_matmul_pack_lhs_uker_api kai_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme(void) {
     struct kai_matmul_pack_lhs_uker_api api = {
         .run = run,
 
-        .get_m_step = get_m_step,
-        .get_k_step = get_k_step,
+        .get_step = get_step,
 
-        .get_lhs_stride_row = get_lhs_stride,
+        .get_lhs_stride = get_lhs_stride,
         .get_lhs_offset = get_lhs_offset,
 
-        .get_lhs_packed_stride_row = get_lhs_packed_stride,
+        .get_lhs_packed_stride = get_lhs_packed_stride,
         .get_lhs_packed_offset = get_lhs_packed_offset,
         .get_lhs_packed_size = get_lhs_packed_size,
     };

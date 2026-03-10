@@ -10,6 +10,7 @@
 #include <string_view>
 #include <vector>
 
+#include "kai/ukernels/matmul/kai_matmul_types.h"
 #include "test/common/abi_checker.hpp"
 #include "test/common/assert.hpp"
 #include "test/common/span.hpp"
@@ -32,11 +33,17 @@ std::vector<MatMulSlot> MatMulUkerApiWrapper::ref_inputs([[maybe_unused]] ConstT
 }
 
 std::vector<size_t> MatMulUkerApiWrapper::steps(MatMulShape shape, [[maybe_unused]] ConstTensorSet tensors) const {
-    const size_t step_m = m_ukernel.get_m_step(&m_uker_config);
-    const size_t step_n = m_ukernel.get_n_step(&m_uker_config);
+    const kai_matmul_uker_dim_args step = m_ukernel.get_step(&m_uker_config);
+
+    const size_t shape_m = shape.at(MatMulDim::M);
+    const size_t shape_n = shape.at(MatMulDim::N);
     const size_t shape_k = shape.at(MatMulDim::K);
 
-    return {step_m, step_n, shape_k};
+    const size_t step_m = step.m != 0 ? step.m : shape_m;
+    const size_t step_n = step.n != 0 ? step.n : shape_n;
+    const size_t step_k = step.k != 0 ? step.k : shape_k;
+
+    return {step_m, step_n, step_k};
 }
 
 void MatMulUkerApiWrapper::populate_constant_info([[maybe_unused]] TensorSet tensors) const {
@@ -73,20 +80,25 @@ void MatMulUkerApiWrapper::run(
     const auto& clamp_args = kernel_args.value<MatMulClampArgsF32>();
 
     const size_t ref_packed_lhs_offset = m_lhs_format->compute_offset({full_m, full_k}, {start_m, start_k});
-    const size_t imp_lhs_stride = m_ukernel.get_lhs_stride_row(&m_uker_config, full_m, full_k);
-    const size_t imp_packed_lhs_offset = m_ukernel.get_lhs_offset(&m_uker_config, start_m, start_k, imp_lhs_stride);
+    const kai_matmul_uker_lhs_dim_args imp_lhs_shape = {full_m, full_k};
+    const kai_matmul_uker_lhs_dim_args imp_lhs_index = {start_m, start_k};
+    const kai_matmul_uker_lhs_stride_args imp_lhs_stride = m_ukernel.get_lhs_stride(&m_uker_config, &imp_lhs_shape);
+    const size_t imp_packed_lhs_offset = m_ukernel.get_lhs_offset(&m_uker_config, &imp_lhs_index, &imp_lhs_stride);
     KAI_TEST_ASSERT_MSG(
         imp_packed_lhs_offset == ref_packed_lhs_offset, "Matmul: Reference and inference LHS offset mismatch.");
 
     const size_t ref_packed_rhs_offset = m_rhs_format->compute_offset({full_n, full_k}, {start_n, start_k});
-    const size_t imp_rhs_stride = m_ukernel.get_rhs_stride_row(&m_uker_config, full_n, full_k);
-    const size_t imp_packed_rhs_offset = m_ukernel.get_rhs_offset(&m_uker_config, start_n, start_k, imp_rhs_stride);
+    const kai_matmul_uker_rhs_dim_args imp_rhs_shape = {full_n, full_k};
+    const kai_matmul_uker_rhs_dim_args imp_rhs_index = {start_n, start_k};
+    const kai_matmul_uker_rhs_stride_args imp_rhs_stride = m_ukernel.get_rhs_stride(&m_uker_config, &imp_rhs_shape);
+    const size_t imp_packed_rhs_offset = m_ukernel.get_rhs_offset(&m_uker_config, &imp_rhs_index, &imp_rhs_stride);
     KAI_TEST_ASSERT_MSG(
         imp_packed_rhs_offset == ref_packed_rhs_offset, "Matmul: Reference and inference RHS offset mismatch.");
 
     imp_dst_data.set_shape({full_m, full_n}).set_format(m_dst_format).allocate();
-    const size_t imp_dst_stride = m_ukernel.get_dst_stride_row(&m_uker_config, full_m, full_n);
-    const size_t imp_dst_size = m_ukernel.get_dst_size(&m_uker_config, full_m, full_n, imp_dst_stride);
+    const kai_matmul_uker_dst_dim_args imp_dst_shape = {full_m, full_n};
+    const kai_matmul_uker_dst_stride_args imp_dst_stride = m_ukernel.get_dst_stride(&m_uker_config, &imp_dst_shape);
+    const size_t imp_dst_size = m_ukernel.get_dst_size(&m_uker_config, &imp_dst_shape, &imp_dst_stride);
     KAI_TEST_ASSERT_MSG(
         imp_dst_size == imp_dst_data.data().size(), "Matmul: Calculated destination kernel data size mismatch.");
 
@@ -104,14 +116,14 @@ void MatMulUkerApiWrapper::run(
     args.shape.n = size_n;
     args.shape.k = size_k;
 
-    args.operands.lhs.ptr = packed_lhs_tile.data();
-    args.operands.lhs.stride_row = imp_lhs_stride;
+    args.operand.lhs.ptr = packed_lhs_tile.data();
+    args.operand.lhs.stride = imp_lhs_stride;
 
-    args.operands.rhs.ptr = packed_rhs_tile.data();
-    args.operands.rhs.stride_row = imp_rhs_stride;
+    args.operand.rhs.ptr = packed_rhs_tile.data();
+    args.operand.rhs.stride = imp_rhs_stride;
 
-    args.operands.dst.ptr = dst_tile.data();
-    args.operands.dst.stride_row = imp_dst_stride;
+    args.operand.dst.ptr = dst_tile.data();
+    args.operand.dst.stride = imp_dst_stride;
 
     args.activation.clamp.min_ptr = &clamp_args.clamp_min;
     args.activation.clamp.max_ptr = &clamp_args.clamp_max;

@@ -25,26 +25,48 @@ struct kai_matmul_pack_lhs_uker_config {
     struct kai_matmul_pack_lhs_uker_format_config format;  ///< Data format.
 };
 
-/// Problem shape for matrix multiplication LHS packing micro-kernel.
-struct kai_matmul_pack_lhs_uker_shape_args {
-    size_t m;  ///< Shape in M dimension.
-    size_t k;  ///< Shape in K dimension.
+/// Problem dimensions for matrix multiplication LHS packing micro-kernel.
+struct kai_matmul_pack_lhs_uker_dim_args {
+    size_t m;  ///< Length or coordinate in M dimension.
+    size_t k;  ///< Length or coordinate in K dimension.
+};
+
+/// Dimensions of the LHS buffer for matrix multiplication LHS packing micro-kernel.
+struct kai_matmul_pack_lhs_uker_lhs_dim_args {
+    size_t m;  ///< Length or coordinate in M dimension.
+    size_t k;  ///< Length or coordinate in K dimension.
+};
+
+/// Strides in bytes of the LHS buffer for matrix multiplication LHS packing micro-kernel.
+struct kai_matmul_pack_lhs_uker_lhs_stride_args {
+    size_t m;  ///< Stride in bytes in M dimension.
 };
 
 /// LHS buffer for matrix multiplication LHS packing micro-kernel.
 struct kai_matmul_pack_lhs_uker_lhs_args {
-    const void* ptr;    ///< LHS buffer.
-    size_t stride_row;  ///< Row or packed row stride in bytes of the LHS buffer.
+    const void* ptr;                                         ///< LHS buffer.
+    struct kai_matmul_pack_lhs_uker_lhs_stride_args stride;  ///< Strides in bytes.
+};
+
+/// Dimensions of the packed LHS buffer for matrix multiplication LHS packing micro-kernel.
+struct kai_matmul_pack_lhs_uker_lhs_packed_dim_args {
+    size_t m;  ///< Length or coordinate in M dimension.
+    size_t k;  ///< Length or coordinate in K dimension.
+};
+
+/// Strides in bytes of the packed LHS buffer for matrix multiplication LHS packing micro-kernel.
+struct kai_matmul_pack_lhs_uker_lhs_packed_stride_args {
+    size_t m;  ///< Stride in bytes in M dimension.
 };
 
 /// Packed LHS buffer for matrix multiplication LHS packing micro-kernel.
 struct kai_matmul_pack_lhs_uker_lhs_packed_args {
-    void* ptr;          ///< Packed LHS buffer.
-    size_t stride_row;  ///< Packed row stride in bytes of the packed LHS buffer.
+    void* ptr;                                                      ///< Packed LHS buffer.
+    struct kai_matmul_pack_lhs_uker_lhs_packed_stride_args stride;  ///< Strides in bytes.
 };
 
 /// Operands for matrix multiplication LHS packing micro-kernel.
-struct kai_matmul_pack_lhs_uker_operands_args {
+struct kai_matmul_pack_lhs_uker_operand_args {
     struct kai_matmul_pack_lhs_uker_lhs_packed_args lhs_packed;  ///< Packed LHS buffer.
     struct kai_matmul_pack_lhs_uker_lhs_args lhs;                ///< LHS buffer.
 };
@@ -53,8 +75,8 @@ struct kai_matmul_pack_lhs_uker_operands_args {
 struct kai_matmul_pack_lhs_uker_args {
     uint64_t flags;  ///< Control flags.
 
-    struct kai_matmul_pack_lhs_uker_shape_args shape;        ///< Problem shape.
-    struct kai_matmul_pack_lhs_uker_operands_args operands;  ///< Operands.
+    struct kai_matmul_pack_lhs_uker_dim_args shape;        ///< Problem shape.
+    struct kai_matmul_pack_lhs_uker_operand_args operand;  ///< Operands.
 };
 
 /// Matrix multiplication LHS packing micro-kernel API.
@@ -65,83 +87,72 @@ struct kai_matmul_pack_lhs_uker_api {
     /// @param[in] args The micro-kernel arguments.
     void (*run)(const struct kai_matmul_pack_lhs_uker_config* config, const struct kai_matmul_pack_lhs_uker_args* args);
 
-    /// Gets the step in M dimension.
+    /// Gets the step in each problem dimension.
     ///
-    /// If this function returns a non-zero value, when splitting the output
-    /// the start coordinate in the M dimension must be divisible by that value.
+    /// If this function returns a non-zero value for a given dimension, when splitting the problem,
+    /// the start coordinate in that dimension must be divisible by the returned value.
     ///
-    /// If this function returns zero, the M dimension must not be split.
+    /// If this function returns zero for a given dimension, that dimension must not be split.
     ///
     /// @param[in] config The micro-kernel configuration.
     ///
-    /// @return The step in M dimension.
-    size_t (*get_m_step)(const struct kai_matmul_pack_lhs_uker_config* config);
+    /// @return The step in each dimension.
+    struct kai_matmul_pack_lhs_uker_dim_args (*get_step)(const struct kai_matmul_pack_lhs_uker_config* config);
 
-    /// Gets the step in K dimension.
-    ///
-    /// If this function returns a non-zero value, when splitting the output
-    /// the start coordinate in the K dimension must be divisible by that value.
-    ///
-    /// If this function returns zero, the K dimension must not be split.
+    /// Gets the stride in bytes in each dimension of the LHS data.
     ///
     /// @param[in] config The micro-kernel configuration.
+    /// @param[in] shape The shape.
     ///
-    /// @return The step in K dimension.
-    size_t (*get_k_step)(const struct kai_matmul_pack_lhs_uker_config* config);
-
-    /// Gets the stride in bytes of the LHS data.
-    ///
-    /// If the LHS is plain matrix, this function returns the row stride.
-    /// If the LHS is packed, this function returns the packed row stride.
-    ///
-    /// @param[in] config The micro-kernel configuration.
-    /// @param[in] m The shape in M dimension.
-    /// @param[in] k The shape in K dimension.
-    ///
-    /// @return The stride in bytes.
-    size_t (*get_lhs_stride_row)(const struct kai_matmul_pack_lhs_uker_config* config, size_t m, size_t k);
+    /// @return The strides in bytes.
+    struct kai_matmul_pack_lhs_uker_lhs_stride_args (*get_lhs_stride)(
+        const struct kai_matmul_pack_lhs_uker_config* config,
+        const struct kai_matmul_pack_lhs_uker_lhs_dim_args* shape);
 
     /// Gets the offset in bytes of the LHS data.
     ///
     /// @param[in] config The micro-kernel configuration.
-    /// @param[in] m_idx The coordinate in M dimension.
-    /// @param[in] k_idx The coordinate in K dimension.
+    /// @param[in] index The start coordinate in each dimension.
     /// @param[in] stride The stride in bytes of the LHS data.
     ///
     /// @return The offset in bytes.
     size_t (*get_lhs_offset)(
-        const struct kai_matmul_pack_lhs_uker_config* config, size_t m_idx, size_t k_idx, size_t stride);
+        const struct kai_matmul_pack_lhs_uker_config* config, const struct kai_matmul_pack_lhs_uker_lhs_dim_args* index,
+        const struct kai_matmul_pack_lhs_uker_lhs_stride_args* stride);
 
-    /// Gets the packed row stride in bytes of the packed LHS data.
+    /// Gets the stride in bytes in each dimension of the packed LHS data.
     ///
     /// @param[in] config The micro-kernel configuration.
-    /// @param[in] m The shape in M dimension.
-    /// @param[in] k The shape in K dimension.
+    /// @param[in] shape The shape.
     ///
-    /// @return The stride in bytes.
-    size_t (*get_lhs_packed_stride_row)(const struct kai_matmul_pack_lhs_uker_config* config, size_t m, size_t k);
+    /// @return The strides in bytes.
+    struct kai_matmul_pack_lhs_uker_lhs_packed_stride_args (*get_lhs_packed_stride)(
+        const struct kai_matmul_pack_lhs_uker_config* config,
+        const struct kai_matmul_pack_lhs_uker_lhs_packed_dim_args* shape);
 
     /// Gets the offset in bytes of the packed LHS data.
     ///
     /// @param[in] config The micro-kernel configuration.
-    /// @param[in] m_idx The coordinate in M dimension.
-    /// @param[in] k_idx The coordinate in K dimension.
+    /// @param[in] index The start coordinate in each dimension.
     /// @param[in] stride The stride in bytes of the packed LHS data.
     ///
     /// @return The offset in bytes.
     size_t (*get_lhs_packed_offset)(
-        const struct kai_matmul_pack_lhs_uker_config* config, size_t m_idx, size_t k_idx, size_t stride);
+        const struct kai_matmul_pack_lhs_uker_config* config,
+        const struct kai_matmul_pack_lhs_uker_lhs_packed_dim_args* index,
+        const struct kai_matmul_pack_lhs_uker_lhs_packed_stride_args* stride);
 
     /// Gets the size in bytes of the packed LHS data.
     ///
     /// @param[in] config The micro-kernel configuration.
-    /// @param[in] m The shape in M dimension.
-    /// @param[in] k The shape in K dimension.
+    /// @param[in] shape The shape.
     /// @param[in] stride The stride in bytes of the packed LHS data.
     ///
     /// @return The size in bytes.
     size_t (*get_lhs_packed_size)(
-        const struct kai_matmul_pack_lhs_uker_config* config, size_t m, size_t k, size_t stride);
+        const struct kai_matmul_pack_lhs_uker_config* config,
+        const struct kai_matmul_pack_lhs_uker_lhs_packed_dim_args* shape,
+        const struct kai_matmul_pack_lhs_uker_lhs_packed_stride_args* stride);
 };
 
 #ifdef __cplusplus
