@@ -274,6 +274,23 @@ test-verify-benchmark-registration:
   script:
     - python3 tools/check_benchmark_microkernels.py
 
+# Purpose: Verify that all micro-kernels are documented in docs/microkernel_tables.md.
+test-verify-microkernel-tables:
+  extends:
+    - .standard-rules
+  stage: test
+  needs: []
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event' && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != 'main'
+      when: never
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event' && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'main'
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      variables:
+        CACHE_POLICY: pull-push
+    - if: $CI_COMMIT_TAG && $CI_COMMIT_REF_PROTECTED == "true"
+  script:
+    - python3 tools/check_microkernel_tables.py
+
 # Purpose: Build current sources against tests/benchmarks from latest semver tag to detect API breakage.
 test-api-compat:
   extends:
