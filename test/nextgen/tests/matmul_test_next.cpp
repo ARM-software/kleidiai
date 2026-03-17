@@ -338,7 +338,8 @@ MatMulFixtureParams pick_fixture(
     static constexpr uint32_t max_attempts = 10'000;
     uint32_t attempts = 0;
     while (true) {
-        KAI_TEST_ASSERT_MSG(attempts++ <= max_attempts, "Unable to find matching shape after _many_ tries");
+        KAI_TEST_ASSERT_MSG(attempts <= max_attempts, "Unable to find matching shape after _many_ tries");
+        ++attempts;
         shape_m = dist_ctx.m_shape_dist(dist_ctx.m_rng);
         shape_n = dist_ctx.m_shape_dist(dist_ctx.m_rng);
         shape_k = dist_ctx.m_shape_dist(dist_ctx.m_rng);

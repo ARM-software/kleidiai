@@ -119,12 +119,11 @@ static const std::array<MatMulMethod, 2>& get_matmul_methods() {
 
     return matmul_methods;
 }
-}  // namespace
 
 /// Matrix multiplication test fixture.
 class MatMulTestBf16OutFp16 : public testing::Test {
 public:
-    explicit MatMulTestBf16OutFp16(MatMulClampTestParams params) : m_params(std::move(params)) {
+    explicit MatMulTestBf16OutFp16(const MatMulClampTestParams& params) : m_params{params} {
     }
     void TestBody() override;
 
@@ -340,7 +339,6 @@ void MatMulTestBf16OutFp16::TestBody() {
     ASSERT_TRUE(success);
 }
 
-namespace {
 const auto matmul_tests_setup = kai::test::TestRegistry::register_setup([]() {
     auto& feed = seed_stream("MatMulTestBf16OutFp16::shapes");
     MatMulShapeGenerator gen({1, 256}, {1, 256}, {1, 256}, feed);
@@ -353,14 +351,17 @@ const auto matmul_tests_setup = kai::test::TestRegistry::register_setup([]() {
         MatrixPortion(0.4, 0.5, 0.6, 0.8),  // Middle portion.
     };
     const std::array clamp = {1.0f, 0.9f, 0.5f};
-    for (const auto& method : get_matmul_methods())
-        for (const auto& shape : shapes)
-            for (const auto& portion : portions)
+    for (const auto& method : get_matmul_methods()) {
+        for (const auto& shape : shapes) {
+            for (const auto& portion : portions) {
                 for (float clamp_ratio : clamp) {
                     MatMulClampTestParams params{method, shape, portion, BiasMode::PROVIDED, clamp_ratio};
                     const std::string name = test_description(method.name, shape, portion, true, clamp_ratio);
                     KAI_REGISTER_TEST(MatMulTestBf16OutFp16, MatMulTestBf16OutFp16, "MatMul", name.c_str(), params);
                 }
+            }
+        }
+    }
 });
 }  // namespace
 

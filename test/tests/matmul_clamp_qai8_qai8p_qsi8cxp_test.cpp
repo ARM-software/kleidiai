@@ -894,7 +894,7 @@ TEST_P(MatMulQuantizedTest, EndToEnd) {
         output_portion.compute_portion(shape.m, shape.n, variant.acc_step.m, variant.acc_step.n);
 
     auto test_kernel = [pack_portion, matmul_portion](
-                           MatMulShape shape, MatMulVariant variant, float clamp_ratio, float scale_ratio,
+                           MatMulShape shape, const MatMulVariant& variant, float clamp_ratio, float scale_ratio,
                            bool saturated) -> void {
         const TestDataId test_data_id{shape, variant.acc_pack, shape.k, false, clamp_ratio, scale_ratio};
         const TestReference& reference = get_test_reference(test_data_id);
@@ -1023,7 +1023,7 @@ TEST_P(IndirectMatMulQuantizedTest, EndToEnd) {
 
     // Toggle padding testst when LHS has more than one row
     auto test_kernel = [pack_portion, k_chunk, shape](
-                           IndirectMatMulVariant variant, float clamp_keep_ratio, float scale_ratio,
+                           const IndirectMatMulVariant& variant, float clamp_keep_ratio, float scale_ratio,
                            bool saturated) -> void {
         TestDataId test_data_id{shape, variant.acc_pack, k_chunk.length, shape.m > 1, clamp_keep_ratio, scale_ratio};
         const TestReference& reference = get_test_reference(test_data_id);
@@ -1032,7 +1032,7 @@ TEST_P(IndirectMatMulQuantizedTest, EndToEnd) {
         Buffer packed_rhs = imatmul::rhs_pack(variant.rhs_pack, pack_portion, reference, shape.n, k_chunk);
         Buffer impl_result =
             imatmul::matmul(variant.matmul, pack_portion, reference, packed_lhs, packed_rhs, shape, k_chunk, saturated);
-        auto& ref_dst = saturated ? reference.dst_qsi8_saturated : reference.dst_qsi8_clamped;
+        const auto& ref_dst = saturated ? reference.dst_qsi8_saturated : reference.dst_qsi8_clamped;
         compare_matmul_result(shape, pack_portion, impl_result, ref_dst);
     };
 
