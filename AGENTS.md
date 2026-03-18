@@ -1,5 +1,5 @@
 <!--
-    SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+    SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 
     SPDX-License-Identifier: Apache-2.0
 -->
@@ -56,8 +56,9 @@ Use items here as checklist when reviewing, or making changes,
 
 - Add new source files to all relevant build scripts (CMake and Bazel).
 
-- Update copyright notices to include the current year. For Markdown and image
-  files, the notice lives in a `.license` sidecar.
+- Update copyright notices to include the current year. For binary files, like
+  images, and files that otherwise don't support comments, like JSON files,
+  the notice lives in a `.license` sidecar.
 
 - Use `TODO` comments sparingly and explain the follow-up.
 
