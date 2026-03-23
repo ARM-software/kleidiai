@@ -32,6 +32,10 @@ Buffer fill_matrix_random_raw(size_t height, size_t width, uint32_t seed) {
     std::mt19937 rnd(seed);
     TDist dist;
 
+    if (std::is_floating_point_v<T>) {
+        dist.param(std::uniform_real_distribution<float>::param_type(-2.0f, 1.0f));
+    }
+
     return fill_matrix_raw<T>(height, width, [&](size_t, size_t) { return dist(rnd); });
 }
 
