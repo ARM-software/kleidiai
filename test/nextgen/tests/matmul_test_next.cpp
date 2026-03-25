@@ -21,6 +21,7 @@
 #include "test/common/seed.hpp"
 #include "test/common/span.hpp"
 #include "test/nextgen/common/random.hpp"
+#include "test/nextgen/common/test_config.hpp"
 #include "test/nextgen/common/test_registry.hpp"
 #include "test/nextgen/operators/matmul/matmul_bias_mode.hpp"
 #include "test/nextgen/operators/matmul/matmul_operator.hpp"
@@ -397,7 +398,7 @@ void register_operator_test(
 
 /// Registers all MatMulNext tests with the test registry.
 const auto matmul_tests_setup = TestRegistry::register_setup([]() {
-    const size_t num_shapes_per_op = 100;
+    const size_t num_shapes_per_op = TestConfig::Get().num_shapes();
     const auto output_portions = make_output_portions();
 
     /* NOTE: that `dist_cxt` must only be constructed once here, as

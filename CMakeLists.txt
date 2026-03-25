@@ -628,6 +628,7 @@ if(KLEIDIAI_BUILD_TESTS)
         test/reference/reorder.cpp
         test/reference/transpose.cpp
 
+        test/nextgen/common/test_config.cpp
         test/nextgen/common/test_registry.cpp
         test/nextgen/reference/unary_elementwise.cpp
         test/nextgen/reference/binary_elementwise.cpp
