@@ -150,6 +150,8 @@ The release version conforms to Semantic Versioning.
 
 > ⚠️ Please note that API modifications, including function name changes, and feature enhancements may occur without advance notice.
 
+We recommend that you use release versions of KleidiAI. You can either use `git` to clone the repository or download a source archive. These are available from the [official source](https://gitlab.arm.com/kleidi/kleidiai) or the [GitHub mirror](https://github.com/ARM-software/kleidiai).
+
 ## Support
 
 Please raise a [GitLab Issue](https://gitlab.arm.com/kleidi/kleidiai/-/issues/new) for technical support.
@@ -193,6 +195,10 @@ KleidiAI offers optimized micro-kernels such as matrix multiplication and depthw
 *The micro-kernel does not use any internal threading mechanism*. However, the micro-kernel's API is designed to allow the computation to be carried out only on specific areas of the output tensor. Therefore, this mechanism is sufficient to split the workload on parallel threads.
 
 Please refer to [examples/matmul_clamp_f32_qsi8d32p_qsi4c32p](/examples/matmul_clamp_f32_qsi8d32p_qsi4c32p) for an example on how to use micro-kernels in a multithreaded environment.
+
+### What are the recommended download sources for KleidiAI?
+
+Note that dynamically generated source archives can result in changed hash digests. If you want something unchanging, then use released source archives. These are listed under _Packages_ on the [official release page](https://gitlab.arm.com/kleidi/kleidiai/-/releases), or have a hash digest (e.g.,`SHA256`) on GitHub.
 
 ## License
 
