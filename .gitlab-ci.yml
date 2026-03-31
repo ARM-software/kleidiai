@@ -396,35 +396,6 @@ test-linux-aarch64:
     reports:
       junit: ${UT_REPORT_PATH}*.xml
 
-test-benchmark-dry-run:
-  extends:
-    - .standard-rules
-  stage: test
-  parallel:
-    matrix:
-      - BUILD_JOB_PROVIDER: [ clang, gcc ]
-  needs:
-    - build-clang
-    - build-gcc
-  script:
-    - BENCHMARK_LOG_FILE="benchmark_dry_run_${BUILD_JOB_PROVIDER}.log"
-    - BENCHMARK_BINARY="build-${BUILD_JOB_PROVIDER}/kleidiai_benchmark"
-    - test -x "${BENCHMARK_BINARY}"
-    - (${BENCHMARK_BINARY} --benchmark_dry_run=true -m 1 -n 30 -k 64) |& tee ${BENCHMARK_LOG_FILE}
-    - (${BENCHMARK_BINARY} matmul --benchmark_dry_run=true -m 1 -n 30 -k 64) |& tee -a ${BENCHMARK_LOG_FILE}
-    - (${BENCHMARK_BINARY} imatmul --benchmark_dry_run=true -m 1 -n 30 -c 4 -l 15) |& tee -a ${BENCHMARK_LOG_FILE}
-    - (${BENCHMARK_BINARY} --benchmark_list_tests) |& tee -a ${BENCHMARK_LOG_FILE}
-    - (${BENCHMARK_BINARY} matmul --benchmark_list_tests) |& tee -a ${BENCHMARK_LOG_FILE}
-    - (${BENCHMARK_BINARY} imatmul --benchmark_list_tests) |& tee -a ${BENCHMARK_LOG_FILE}
-    - (${BENCHMARK_BINARY} || true) |& tee -a ${BENCHMARK_LOG_FILE}
-    - (${BENCHMARK_BINARY} matmul || true) |& tee -a ${BENCHMARK_LOG_FILE}
-    - (${BENCHMARK_BINARY} imatmul || true) |& tee -a ${BENCHMARK_LOG_FILE}
-  artifacts:
-    when: always
-    expire_in: 1 day
-    paths:
-      - "benchmark_dry_run_${BUILD_JOB_PROVIDER}.log"
-
 # Purpose: Specialization of test-linux-aarch64 to run only SVE 256-bit VL unit test subset
 test-linux-aarch64-sve256:
   extends:
