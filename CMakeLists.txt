@@ -800,6 +800,28 @@ if(KLEIDIAI_BUILD_BENCHMARK)
             kleidiai_test_framework
             benchmark::benchmark
     )
+
+    if(APPLE)
+        find_library(KPERF_FRAMEWORK kperf
+            PATHS /System/Library/PrivateFrameworks
+            NO_DEFAULT_PATH
+        )
+        find_library(KPERFDATA_FRAMEWORK kperfdata
+            PATHS /System/Library/PrivateFrameworks
+            NO_DEFAULT_PATH
+        )
+
+        if(KPERF_FRAMEWORK AND KPERFDATA_FRAMEWORK)
+            target_link_libraries(kleidiai_benchmark
+                PRIVATE
+                    "${KPERF_FRAMEWORK}"
+                    "${KPERFDATA_FRAMEWORK}"
+            )
+            target_compile_definitions(kleidiai_benchmark PRIVATE KAI_BENCHMARK_KPERF=1)
+        else()
+            target_compile_definitions(kleidiai_benchmark PRIVATE KAI_BENCHMARK_KPERF=0)
+        endif()
+    endif()
 endif()
 
 install(TARGETS kleidiai
