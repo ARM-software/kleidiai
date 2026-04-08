@@ -316,6 +316,15 @@ pre-commit-hooks:
   script:
     - PRE_COMMIT_HOME=$PRE_COMMIT_HOME pre-commit run --all-files
 
+# Purpose: Validate MR metadata used as the squash/merge commit message.
+test-verify-squash-commit-message:
+  stage: test
+  needs: []
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  script:
+    - python3 tools/check_squash_commit_message.py
+
 # Purpose: Manual gate job to record external pipeline status.
 test-remote:
   # Part of the pipeline is executed in a separate system.
