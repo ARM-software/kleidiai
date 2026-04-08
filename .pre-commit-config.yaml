@@ -25,7 +25,12 @@ repos:
       - id: check-yaml
         stages: [ pre-commit ]
         name: "YAML Syntax"
-        exclude: ^\.clang-format$
+        exclude: ^(\.clang-format|\.gitlab-ci\.yml)$
+      - id: check-yaml
+        stages: [ pre-commit ]
+        name: "GitLab CI YAML Syntax"
+        files: ^\.gitlab-ci\.yml$
+        args: [ "--unsafe" ]
   - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
     rev: 2.7.3
     hooks:
