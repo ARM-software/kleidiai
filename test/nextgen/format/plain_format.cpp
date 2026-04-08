@@ -58,7 +58,7 @@ size_t PlainFormat::compute_size(Shape shape) const {
     }
 
     const size_t row_size = round_up_division(shape.at(shape.size() - 1) * data_type_size_in_bits(m_dtype), 8);
-    const size_t num_rows = std::accumulate(shape.begin(), shape.end() - 1, 1, std::multiplies<>());
+    const size_t num_rows = std::accumulate(shape.begin(), shape.end() - 1, size_t{1}, std::multiplies<>());
     const size_t size = row_size * num_rows;
 
     return size;
