@@ -105,16 +105,27 @@ default:
     - if: $CI_COMMIT_TAG && $CI_COMMIT_REF_PROTECTED == "true"
 
 # Base template: .main-branch-verification-rules
-# Purpose: Common rules for jobs validating main branch state
+# Purpose: Common opt-out rules for jobs validating main branch state
 .main-branch-verification-rules:
   rules:
-  - if: $CI_PIPELINE_SOURCE == 'merge_request_event' && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != 'main'
+  - if: >
+      $DISABLE_MAIN_BRANCH_VERIFICATION_JOBS != "true" &&
+      $CI_PIPELINE_SOURCE == 'merge_request_event' &&
+      $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != 'main'
     when: never
-  - if: $CI_PIPELINE_SOURCE == 'merge_request_event' && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'main'
-  - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  - if: >
+      $DISABLE_MAIN_BRANCH_VERIFICATION_JOBS != "true" &&
+      $CI_PIPELINE_SOURCE == 'merge_request_event' &&
+      $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'main'
+  - if: >
+      $DISABLE_MAIN_BRANCH_VERIFICATION_JOBS != "true" &&
+      $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     variables:
       CACHE_POLICY: pull-push
-  - if: $CI_COMMIT_TAG && $CI_COMMIT_REF_PROTECTED == "true"
+  - if: >
+      $DISABLE_MAIN_BRANCH_VERIFICATION_JOBS != "true" &&
+      $CI_COMMIT_TAG &&
+      $CI_COMMIT_REF_PROTECTED == "true"
 
 workflow:
   auto_cancel:
