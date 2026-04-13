@@ -31,41 +31,6 @@ static size_t div_ceil(size_t a, size_t b) {
     return (a + b - 1) / b;
 }
 
-static void run(
-    const struct kai_matmul_pack_rhs_uker_config* config, const struct kai_matmul_pack_rhs_uker_args* args) {
-    KAI_UNUSED(config);
-
-    const size_t nr = get_nr();
-
-    const size_t height = args->shape.n;
-    const size_t width = args->shape.k;
-
-    const uint8_t* rhs_ptr = args->operand.rhs.ptr;
-    const uint8_t* bias_n_ptr = args->operand.bias_n.ptr;
-    uint8_t* rhs_packed_ptr = args->operand.rhs_packed.ptr;
-
-    const uint8_t* src_ptrs[MAX_NR];
-
-    kai_commit_za();
-
-    for (size_t start_row = 0; start_row < height; start_row += nr) {
-        const size_t block_height = KAI_MIN(height - start_row, nr);
-
-        uint8_t* dst = rhs_packed_ptr;
-        rhs_packed_ptr += args->operand.rhs_packed.stride.n;
-
-        for (size_t row = 0; row < block_height; ++row) {
-            src_ptrs[row] = rhs_ptr + row * args->operand.rhs.stride.n;
-        }
-        rhs_ptr += nr * args->operand.rhs.stride.n;
-
-        const uint8_t* bias = bias_n_ptr + start_row * BIAS_ESIZE;
-
-        kai_kernel_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme(
-            block_height, width, src_ptrs, 0, dst, bias);  // NOLINT(bugprone-multi-level-implicit-pointer-conversion)
-    }
-}
-
 static size_t get_n_step(void) {
     return get_nr();
 }
@@ -149,6 +114,41 @@ static size_t get_bias_n_offset(
     KAI_UNUSED(index->n % get_n_step() == 0);
 
     return index->n * BIAS_ESIZE;
+}
+
+static void run(
+    const struct kai_matmul_pack_rhs_uker_config* config, const struct kai_matmul_pack_rhs_uker_args* args) {
+    KAI_UNUSED(config);
+
+    const size_t nr = get_nr();
+
+    const size_t height = args->shape.n;
+    const size_t width = args->shape.k;
+
+    const uint8_t* rhs_ptr = args->operand.rhs.ptr;
+    const uint8_t* bias_n_ptr = args->operand.bias_n.ptr;
+    uint8_t* rhs_packed_ptr = args->operand.rhs_packed.ptr;
+
+    const uint8_t* src_ptrs[MAX_NR];
+
+    kai_commit_za();
+
+    for (size_t start_row = 0; start_row < height; start_row += nr) {
+        const size_t block_height = KAI_MIN(height - start_row, nr);
+
+        uint8_t* dst = rhs_packed_ptr;
+        rhs_packed_ptr += args->operand.rhs_packed.stride.n;
+
+        for (size_t row = 0; row < block_height; ++row) {
+            src_ptrs[row] = rhs_ptr + row * args->operand.rhs.stride.n;
+        }
+        rhs_ptr += nr * args->operand.rhs.stride.n;
+
+        const uint8_t* bias = bias_n_ptr + start_row * BIAS_ESIZE;
+
+        kai_kernel_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme(
+            block_height, width, src_ptrs, 0, dst, bias);  // NOLINT(bugprone-multi-level-implicit-pointer-conversion)
+    }
 }
 
 struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme(void) {

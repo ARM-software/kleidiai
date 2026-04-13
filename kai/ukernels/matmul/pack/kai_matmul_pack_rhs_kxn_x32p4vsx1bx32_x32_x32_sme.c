@@ -38,25 +38,6 @@ static size_t div_ceil(size_t a, size_t b) {
     return (a + b - 1) / b;
 }
 
-static void run(
-    const struct kai_matmul_pack_rhs_uker_config* config, const struct kai_matmul_pack_rhs_uker_args* args) {
-    KAI_UNUSED(config);
-
-    kai_commit_za();
-
-    const struct uker_args_t uker_args = {
-        .bias_ptr = args->operand.bias_n.ptr,
-        .width = args->shape.n,
-        .height = args->shape.k,
-        .in_stride = args->operand.rhs.stride.k,
-        .out_stride = args->operand.rhs_packed.stride.n,
-        .in = args->operand.rhs.ptr,
-        .out = args->operand.rhs_packed.ptr,
-    };
-
-    kai_kernel_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme(&uker_args);
-}
-
 static size_t get_n_step(void) {
     return get_nr();
 }
@@ -141,6 +122,25 @@ static size_t get_bias_n_offset(
     KAI_UNUSED(index->n % get_n_step() == 0);
 
     return index->n * BIAS_ESIZE;
+}
+
+static void run(
+    const struct kai_matmul_pack_rhs_uker_config* config, const struct kai_matmul_pack_rhs_uker_args* args) {
+    KAI_UNUSED(config);
+
+    kai_commit_za();
+
+    const struct uker_args_t uker_args = {
+        .bias_ptr = args->operand.bias_n.ptr,
+        .width = args->shape.n,
+        .height = args->shape.k,
+        .in_stride = args->operand.rhs.stride.k,
+        .out_stride = args->operand.rhs_packed.stride.n,
+        .in = args->operand.rhs.ptr,
+        .out = args->operand.rhs_packed.ptr,
+    };
+
+    kai_kernel_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme(&uker_args);
 }
 
 struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme(void) {
