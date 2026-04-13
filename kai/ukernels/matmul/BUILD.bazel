@@ -239,6 +239,17 @@ SME_KERNELS_ASM_NOHDR = [
 ]
 
 # buildifier: keep sorted
+SME_KERNELS_NOHDR = [
+    "pack/kai_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme",
+    "pack/kai_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme",
+]
+
+# buildifier: keep sorted
+SME_KERNELS_ASM_ONLY = [
+    "pack/kai_matmul_pack_x8p4vsx4_x8_sme",
+]
+
+# buildifier: keep sorted
 SME2_KERNELS = [
     "matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa",
     "matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot",
@@ -418,6 +429,8 @@ kai_c_library(
     cpu_uarch = kai_cpu_sme(),
     kernels_asm = SME_KERNELS_ASM,
     kernels_asm_nohdr = SME_KERNELS_ASM_NOHDR,
+    kernels_asm_only = SME_KERNELS_ASM_ONLY,
+    kernels_nohdr = SME_KERNELS_NOHDR,
     textual_hdrs = [
         "kai_matmul.h",
         "kai_matmul_types.h",

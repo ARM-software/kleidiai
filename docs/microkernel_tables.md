@@ -203,3 +203,5 @@ Micro-kernel categories:
 | x32 | - | x32 | - | x32 | - | - | SVE | <a id="pack-kai-rhs-pack-kxn-x32p4vlx1b-x32-x32-sve"></a>`kai_rhs_pack_kxn_x32p4vlx1b_x32_x32_sve` |
 | x8 | - | x8 | - | - | - | - | SME | <a id="pack-kai-lhs-pack-x8p2vlx4-x8-sme"></a>`kai_lhs_pack_x8p2vlx4_x8_sme` |
 | x8 | - | x8 | - | - | - | - | SME | <a id="pack-kai-lhs-imatmul-pack-x8p2vlx4-x8p-sme"></a>`kai_lhs_imatmul_pack_x8p2vlx4_x8p_sme` |
+| x8 | - | x8 | - | - | - | - | SME | <a id="pack-kai-matmul-pack-lhs-mxk-x8p4vsx4-x8-sme"></a>`kai_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme` |
+| x8 | - | x8 | - | - | - | - | SME | <a id="pack-kai-matmul-pack-rhs-nxk-x8p4vsx4-x8-sme"></a>`kai_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme` |
