@@ -21,7 +21,7 @@ enum {
     MAX_MR = MR * (KAI_SME_VEC_LENGTH_MAX_BYTES / sizeof(int8_t)) / KR,
 };
 
-void kai_matmul_pack_x8p4vsx4_x8_sme(size_t height, size_t width, const void* in, void* out);
+void kai_matmul_pack_rows_x8p4vsx4_x8_sme(size_t height, size_t width, const void* in, void* out);
 
 static size_t get_mr(void) {
     return MR * kai_get_sme_vector_length_u8() / KR;
@@ -58,7 +58,7 @@ static void run(
         lhs_ptr += mr * args->operand.lhs.stride.m;
 
         // NOLINTNEXTLINE(bugprone-multi-level-implicit-pointer-conversion)
-        kai_matmul_pack_x8p4vsx4_x8_sme(height, width, in, out);
+        kai_matmul_pack_rows_x8p4vsx4_x8_sme(height, width, in, out);
     }
 }
 

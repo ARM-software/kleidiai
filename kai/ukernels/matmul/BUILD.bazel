@@ -246,7 +246,7 @@ SME_KERNELS_NOHDR = [
 
 # buildifier: keep sorted
 SME_KERNELS_ASM_ONLY = [
-    "pack/kai_matmul_pack_x8p4vsx4_x8_sme",
+    "pack/kai_matmul_pack_rows_x8p4vsx4_x8_sme",
 ]
 
 # buildifier: keep sorted
