@@ -56,10 +56,6 @@ Use items here as checklist when reviewing, or making changes,
 
 - Add new source files to all relevant build scripts (CMake and Bazel).
 
-- Update copyright notices to include the current year. For binary files, like
-  images, and files that otherwise don't support comments, like JSON files,
-  the notice lives in a `.license` sidecar.
-
 - Use `TODO` comments sparingly and explain the follow-up.
 
 - Write clear, correctly formatted documentation for every function:
