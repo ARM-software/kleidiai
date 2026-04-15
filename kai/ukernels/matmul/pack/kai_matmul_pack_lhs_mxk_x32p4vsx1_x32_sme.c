@@ -16,14 +16,14 @@ enum {
     MR_VSCALE = 4,
     KR = 1,
 
-    MAX_MR = MR_VSCALE * KAI_SME_VEC_LENGTH_MAX_BYTES / 16,
+    MAX_MR = MR_VSCALE * KAI_VSCALE_MAX,
 };
 
 void kai_kernel_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme(
     size_t height, size_t width, const void* in, size_t row_offset, void* out);
 
 static size_t get_mr(void) {
-    return MR_VSCALE * kai_get_sme_vector_length_u8() / 16;
+    return MR_VSCALE * kai_get_sme_vscale();
 }
 
 static size_t div_ceil(size_t a, size_t b) {
