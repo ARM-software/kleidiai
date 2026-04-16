@@ -118,14 +118,23 @@ extern "C" {
 #define KAI_MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define KAI_MAX(a, b) (((a) > (b)) ? (a) : (b))
 
-/// Largest supported SME vector length in bytes
-#define KAI_SME_VEC_LENGTH_MAX_BYTES 256  // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+/// KleidiAI shared constants
+enum {
+    /// Largest supported SME vector length in bytes
+    KAI_SME_VEC_LENGTH_MAX_BYTES = 256,
+
+    /// Size of one vscale unit, in bytes
+    KAI_VSCALE_UNIT_BYTES = 16,
+
+    /// Maximum possible VSCALE
+    KAI_VSCALE_MAX = KAI_SME_VEC_LENGTH_MAX_BYTES / KAI_VSCALE_UNIT_BYTES,
+};
 
 /// Gets the version of the project in the Major.Minor.Patch semantic versioning format.
 ///
 /// @return Project version as a string literal.
 inline const char* kai_get_version(void) {
-    return "1.23.0";
+    return "1.24.0";
 }
 
 /// KleidiAI data types
@@ -221,6 +230,11 @@ inline static uint64_t kai_get_sme_vector_length_u32(void) {
     return kai_get_sme_vector_length_u8() / 4;
 }
 
+/// Gets the vscale scale factor for SME
+inline static uint64_t kai_get_sme_vscale(void) {
+    return kai_get_sme_vector_length_u8() / KAI_VSCALE_UNIT_BYTES;
+}
+
 /// Commit ZA to lazy save buffer
 void kai_commit_za(void);
 #endif  // defined(__ARM_FEATURE_SVE2) || defined(_M_ARM64)
@@ -244,7 +258,7 @@ inline static uint64_t kai_get_sve_vector_length_u32(void) {
 /// @return the int8_t value with sign extended
 inline static int8_t kai_ext_sign_i8_i4(int8_t value) {
     // Make sure value holds correct int4 value
-    KAI_ASSERT(value <= 0xF);
+    KAI_ASSUME(value <= 0xF);
 
     return (value ^ 0x8) - 8;  // NOLINT(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
 }

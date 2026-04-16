@@ -11,6 +11,7 @@
 #include <string>
 #include <string_view>
 
+#include "kai/ukernels/matmul/kai_matmul_pack_lhs.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa.h"
@@ -61,7 +62,8 @@ bool portion_non_empty(
 
 std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme() {
     return std::make_unique<MatMulPackLhsUkerApiWrapper>(
-        "create_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme", make_poly<PlainFormat>(DataType::FP32),
+        "create_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme", kai_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme(),
+        make_poly<PlainFormat>(DataType::FP32),
         make_poly<Block2dRowFormat>(
             1 * get_sme_vector_length<float>(), 1, 1, false, DataType::FP32, std::array<DataType, 0>{},
             std::array<DataType, 0>{}));

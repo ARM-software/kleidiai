@@ -1,5 +1,5 @@
 <!--
-    SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+    SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 
     SPDX-License-Identifier: Apache-2.0
 -->
@@ -93,11 +93,12 @@ would be `<type>p<NR>x<BD>`. `BD`, block depth, equals `KR / SR`. The `MR`,
 `kai_get_(mr|nr|kr)...`, and represent the shape of the packed blocks. `MR`,
 `NR` and `KR` can be written as:
 
-| Symbol                | example       | Description                                        |
-|-----------------------|---------------|----------------------------------------------------|
-| _Integer literal_     | `1`, `2`, `4` | Constant value                                     |
-| `mr`/`nr`/`kr`        | `mr`          | Parametric size, given as argument to micro kernel |
-| `<Integer literal>vl` | `1vl`, `4vl`  | Accumulator vector length multiple                 |
+| Symbol                  | example         | Description                                                                                                            |
+| ----------------------- | --------------- | ------------------------------------------------------                                                                 |
+| _Integer literal_       | `1`, `2`, `4`   | Constant value                                                                                                         |
+| `mr`/`nr`/`kr`          | `mr`            | Parametric size, given as argument to micro kernel                                                                     |
+| `<Integer literal>vl`   | `1vl`, `4vl`    | Accumulator _vector length_ multiple. Assuming 32-bit accumulation on a 512-bit configuration, `4vl` means 64 elements |
+| `<Integer literal>vs`   | `1vs`, `4vs`    | _Vector scale_ multiplier, assuming a vector length of 128 bits. For a 512-bit configuration, `4vs` means 16 elements  |
 
 ## Known naming issues
 

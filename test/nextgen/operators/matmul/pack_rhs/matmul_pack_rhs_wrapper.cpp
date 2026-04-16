@@ -77,8 +77,8 @@ std::unique_ptr<KernelWrapper<MatShape>> create_matmul_rhs_pack_kxn_f32p2vlx1bia
 
 std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme() {
     return std::make_unique<MatMulPackRhsUkerApiWrapper>(
-        "create_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme", make_poly<PlainFormat>(DataType::FP32),
-        make_poly<PlainFormat>(DataType::FP32),
+        "create_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme", kai_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme(),
+        make_poly<PlainFormat>(DataType::FP32), make_poly<PlainFormat>(DataType::FP32),
         make_poly<Block2dRowFormat>(
             1 * get_sme_vector_length<float>(), 1, 1, false, DataType::FP32, std::array{DataType::FP32},
             std::array<DataType, 0>{}));
@@ -86,8 +86,8 @@ std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_kxn_x32p4vsx1bx3
 
 std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme() {
     return std::make_unique<MatMulPackRhsUkerApiTWrapper>(
-        "create_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme", make_poly<PlainFormat>(DataType::FP32),
-        make_poly<PlainFormat>(DataType::FP32),
+        "create_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme", kai_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme(),
+        make_poly<PlainFormat>(DataType::FP32), make_poly<PlainFormat>(DataType::FP32),
         make_poly<Block2dRowFormat>(
             1 * get_sme_vector_length<float>(), 1, 1, false, DataType::FP32, std::array{DataType::FP32},
             std::array<DataType, 0>{}));

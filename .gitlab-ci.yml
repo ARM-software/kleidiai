@@ -104,6 +104,29 @@ default:
     # Run a job for protected tags (release and rc ones)
     - if: $CI_COMMIT_TAG && $CI_COMMIT_REF_PROTECTED == "true"
 
+# Base template: .main-branch-verification-rules
+# Purpose: Common opt-out rules for jobs validating main branch state
+.main-branch-verification-rules:
+  rules:
+  - if: >
+      $DISABLE_MAIN_BRANCH_VERIFICATION_JOBS != "true" &&
+      $CI_PIPELINE_SOURCE == 'merge_request_event' &&
+      $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != 'main'
+    when: never
+  - if: >
+      $DISABLE_MAIN_BRANCH_VERIFICATION_JOBS != "true" &&
+      $CI_PIPELINE_SOURCE == 'merge_request_event' &&
+      $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'main'
+  - if: >
+      $DISABLE_MAIN_BRANCH_VERIFICATION_JOBS != "true" &&
+      $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    variables:
+      CACHE_POLICY: pull-push
+  - if: >
+      $DISABLE_MAIN_BRANCH_VERIFICATION_JOBS != "true" &&
+      $CI_COMMIT_TAG &&
+      $CI_COMMIT_REF_PROTECTED == "true"
+
 workflow:
   auto_cancel:
     # Interrupt old pipeline when new one pushed for MR
@@ -264,13 +287,7 @@ test-verify-benchmark-registration:
   stage: test
   needs: []
   rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event' && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != 'main'
-      when: never
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event' && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'main'
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      variables:
-        CACHE_POLICY: pull-push
-    - if: $CI_COMMIT_TAG && $CI_COMMIT_REF_PROTECTED == "true"
+    - !reference [.main-branch-verification-rules, rules]
   script:
     - python3 tools/check_benchmark_microkernels.py
 
@@ -281,13 +298,7 @@ test-verify-microkernel-tables:
   stage: test
   needs: []
   rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event' && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != 'main'
-      when: never
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event' && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'main'
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      variables:
-        CACHE_POLICY: pull-push
-    - if: $CI_COMMIT_TAG && $CI_COMMIT_REF_PROTECTED == "true"
+    - !reference [.main-branch-verification-rules, rules]
   script:
     - python3 tools/check_microkernel_tables.py
 
@@ -297,6 +308,8 @@ test-api-compat:
     - .standard-rules
   stage: test
   needs: []
+  rules:
+    - !reference [.main-branch-verification-rules, rules]
   script:
     - ./tools/check_api_compat.py
 
@@ -315,6 +328,15 @@ pre-commit-hooks:
       policy: $CACHE_POLICY
   script:
     - PRE_COMMIT_HOME=$PRE_COMMIT_HOME pre-commit run --all-files
+
+# Purpose: Validate MR metadata used as the squash/merge commit message.
+test-verify-squash-commit-message:
+  stage: test
+  needs: []
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  script:
+    - python3 tools/check_squash_commit_message.py
 
 # Purpose: Manual gate job to record external pipeline status.
 test-remote:

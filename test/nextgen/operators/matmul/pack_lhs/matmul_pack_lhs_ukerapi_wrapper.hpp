@@ -12,7 +12,6 @@
 #include <utility>
 #include <vector>
 
-#include "kai/ukernels/matmul/kai_matmul_pack_lhs.h"
 #include "kai/ukernels/matmul/kai_matmul_pack_lhs_types.h"
 #include "test/common/span.hpp"
 #include "test/nextgen/common/poly.hpp"
@@ -20,7 +19,6 @@
 #include "test/nextgen/harness/kernel_wrapper.hpp"
 #include "test/nextgen/harness/tensor.hpp"
 #include "test/nextgen/operators/matmul/matmul_dims.hpp"
-#include "test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_interface.hpp"
 
 namespace kai::test {
 
@@ -32,10 +30,12 @@ public:
     /// @param[in] name The kernel name.
     /// @param[in] src_format The input data format.
     /// @param[in] dst_format The output data format.
-    MatMulPackLhsUkerApiWrapper(std::string_view name, Poly<Format>&& src_format, Poly<Format>&& dst_format) :
+    MatMulPackLhsUkerApiWrapper(
+        std::string_view name, kai_matmul_pack_lhs_uker_api uker_api, Poly<Format>&& src_format,
+        Poly<Format>&& dst_format) :
         m_name(name),
         m_uker_config({}),
-        pack_lhs_uker(kai_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme()),
+        m_uker_api(uker_api),
         m_src_format(std::move(src_format)),
         m_dst_format(std::move(dst_format)) {
     }
@@ -52,7 +52,7 @@ public:
 private:
     std::string m_name;
     kai_matmul_pack_lhs_uker_config m_uker_config;
-    kai_matmul_pack_lhs_uker_api pack_lhs_uker;
+    kai_matmul_pack_lhs_uker_api m_uker_api;
     Poly<Format> m_src_format;
     Poly<Format> m_dst_format;
 };
