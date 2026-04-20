@@ -131,18 +131,16 @@ Use items here as checklist when reviewing, or making changes,
   like `common/cache.hpp`.
 - Test code must use `KAI_ASSUME_ALWAYS(expr)` and `KAI_ASSERT_ALWAYS(expr)` as
   to not be optimized away in release builds.
+- Tests should have deterministic behavior, and seed should only be randomized if
+  explicitly requested by runtime parameter.
 
 ### Common Problems
 
 - Confirm `KAI_UNUSED(symbol)` values are actually unused.
-
 - Enforce required parameter values via `KAI_ASSUME(param == value)`.
-
 - Use `KAI_ASSERT(<assumption>)` for other invariants.
-
 - At the top of `.c` files, assert required architecture extensions, for
   example:
-
   ```c
   #if (!defined(__aarch64__) || !defined(__ARM_FEATURE_DOTPROD)) && \
       !defined(_M_ARM64)
