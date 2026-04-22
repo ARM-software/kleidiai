@@ -172,7 +172,7 @@ struct kai_matmul_pack_rhs_uker_api {
     /// @param[in] config The micro-kernel configuration.
     /// @param[in] index The start coordinate in each dimension.
     ///
-    /// @return The offset in bytes.
+    /// @return The offset in bytes, or zero if `bias_n` is unused.
     size_t (*get_bias_n_offset)(
         const struct kai_matmul_pack_rhs_uker_config* config,
         const struct kai_matmul_pack_rhs_uker_bias_n_dim_args* index);

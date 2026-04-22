@@ -241,11 +241,13 @@ SME_KERNELS_ASM_NOHDR = [
 # buildifier: keep sorted
 SME_KERNELS_NOHDR = [
     "pack/kai_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme",
+    "pack/kai_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme",
     "pack/kai_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme",
 ]
 
 # buildifier: keep sorted
 SME_KERNELS_ASM_ONLY = [
+    "pack/kai_matmul_pack_cols_x8p4vsx4_x8_sme",
     "pack/kai_matmul_pack_rows_x8p4vsx4_x8_sme",
 ]
 
