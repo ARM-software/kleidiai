@@ -16,15 +16,15 @@
 
 enum {
     DATA_ESIZE = 1,
-    MR = 1,
+    MR_VSCALE = 4,
     KR = 4,
-    MAX_MR = MR * (KAI_SME_VEC_LENGTH_MAX_BYTES / sizeof(int8_t)) / KR,
+    MAX_MR = MR_VSCALE * KAI_VSCALE_MAX,
 };
 
 void kai_matmul_pack_rows_x8p4vsx4_x8_sme(size_t height, size_t width, const void* in, void* out);
 
 static size_t get_mr(void) {
-    return MR * kai_get_sme_vector_length_u8() / KR;
+    return MR_VSCALE * kai_get_sme_vscale();
 }
 
 static size_t div_ceil(size_t a, size_t b) {
