@@ -399,6 +399,16 @@ static constexpr std::array shapes_k64{
     MatMulShape{32, 64, 256},  //
     MatMulShape{77, 99, 256},
 };
+static constexpr std::array shapes_k96{
+    MatMulShape{32, 64, 96},   //
+    MatMulShape{16, 32, 96},   //
+    MatMulShape{8, 32, 96},    //
+    MatMulShape{77, 99, 96},   //
+    MatMulShape{32, 64, 192},  //
+    MatMulShape{16, 32, 192},  //
+    MatMulShape{32, 64, 288},  //
+    MatMulShape{77, 99, 288},
+};
 static constexpr std::array shapes_k128{
     MatMulShape{32, 64, 128},  //
     MatMulShape{16, 32, 128},  //
@@ -435,6 +445,15 @@ INSTANTIATE_TEST_SUITE_P(
         testing::ValuesIn(shapes_k64), testing::ValuesIn(portions),
         testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
         testing::Values(64), testing::Values(true)),
+    testing::PrintToStringParamName());
+
+INSTANTIATE_TEST_SUITE_P(
+    MatMulVariableBL_bl96, MatMulTest_f32_qsi8d32p_qsi4c32p,
+    testing::Combine(
+        testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.size()),
+        testing::ValuesIn(shapes_k96), testing::ValuesIn(portions),
+        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
+        testing::Values(96), testing::Values(true)),
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
