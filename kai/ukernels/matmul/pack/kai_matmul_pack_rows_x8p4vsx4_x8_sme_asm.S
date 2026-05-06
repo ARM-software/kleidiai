@@ -52,7 +52,7 @@ KAI_ASM_FUNCTION_LABEL(kai_matmul_pack_rows_x8p4vsx4_x8_sme)
     stp d12, d13, [sp, 104]
     stp d14, d15, [sp, 120]
     KAI_ASM_INST(0xd503477f)  // SMSTART ZA
-    mov x10, #0x0
+    mov x10, #0
     cntb x21
     mov x23, x1
     incb x23
@@ -70,12 +70,12 @@ KAI_ASM_FUNCTION_LABEL(kai_matmul_pack_rows_x8p4vsx4_x8_sme)
     sub x27, x28, #0x2
     whilelt p9.b, XZR, x22
     whilelt p8.b, x21, x22
-    mov x26, #0x0
+    mov x26, #0
     mov x25, x2
     lsr x20, x20, #0x1  // n_loops = (n_passes - 1) / 2
     and x24, x23, #0x1  // odd_tail = bool(n_passes & 0x1)
     lsr x9, x9, #0x2
-    ldr x23, [x25, #0x0]
+    ldr x23, [x25, #0]
     ptrue p11.s
     zip1 p10.b, p9.b, p8.b
     ldr x22, [x25, #0x8]
@@ -83,13 +83,13 @@ KAI_ASM_FUNCTION_LABEL(kai_matmul_pack_rows_x8p4vsx4_x8_sme)
     whilelt p9.b, x26, x1
     whilelt p8.b, x26, x1
     add x25, x25, #0x10
-    mov x12, #0x0
+    mov x12, #0
     cbz x27, label_2
 KAI_ASM_LABEL(label_1)  // K loop: Charge: Loop
     KAI_ASM_INST(0x25246141)  // psel p1.b, p8.b/Z, p10.b[w12]
     KAI_ASM_INST(0x25646140)  // psel p0.b, p8.b/Z, p10.b[w12, #4]
     KAI_ASM_INST(0xe01506e0)  // ld1b { za0h.b[x12] }, p1/Z, [x23, x21]
-    ldr x23, [x25, #0x0]
+    ldr x23, [x25, #0]
     KAI_ASM_INST(0xe01502c4)  // ld1b { za0h.b[x12, #4] }, p0/Z, [x22, x21]
     add x12, x12, #0x8
     ldr x22, [x25, #0x8]
@@ -102,7 +102,7 @@ KAI_ASM_LABEL(label_2)  // K loop: Charge: End
     mov x25, x2
     incb x26
     KAI_ASM_INST(0xe01506e0)  // ld1b { za0h.b[x12] }, p1/Z, [x23, x21]
-    ldr x23, [x25, #0x0]
+    ldr x23, [x25, #0]
     KAI_ASM_INST(0xe01502c4)  // ld1b { za0h.b[x12, #4] }, p0/Z, [x22, x21]
     ldr x22, [x25, #0x8]
     add x25, x25, #0x10
@@ -111,8 +111,8 @@ KAI_ASM_LABEL(label_2)  // K loop: Charge: End
     mov x20, x20
 KAI_ASM_LABEL(label_3)  // K loop: Main loop
     whilelt p8.b, x26, x1
-    mov x12, #0x0
-    mov x14, #0x0
+    mov x12, #0
+    mov x14, #0
     cbz x27, label_5
 KAI_ASM_LABEL(label_4)  // K loop: Main loop: First: Loop
     KAI_ASM_INST(0x25346143)  // psel p3.b, p8.b/Z, p10.b[w12, #2]
@@ -120,7 +120,7 @@ KAI_ASM_LABEL(label_4)  // K loop: Main loop: First: Loop
     KAI_ASM_INST(0x25266d21)  // psel p1.b, p11.b/Z, p9.b[w14]
     KAI_ASM_INST(0x252e6d20)  // psel p0.b, p11.b/Z, p9.b[w14, #1]
     KAI_ASM_INST(0xe0150ee2)  // ld1b { za0h.b[x12, #2] }, p3/Z, [x23, x21]
-    ldr x23, [x25, #0x0]
+    ldr x23, [x25, #0]
     KAI_ASM_INST(0xe0150ac6)  // ld1b { za0h.b[x12, #6] }, p2/Z, [x22, x21]
     ldr x22, [x25, #0x8]
     add x25, x25, #0x10
@@ -139,16 +139,16 @@ KAI_ASM_LABEL(label_5)  // K loop: Main loop: First: Tail
     mov x25, x2
     whilelt p9.b, x26, x1
     KAI_ASM_INST(0xe0150ee2)  // ld1b { za0h.b[x12, #2] }, p3/Z, [x23, x21]
-    ldr x23, [x25, #0x0]
+    ldr x23, [x25, #0]
     incb x26
-    mov x13, #0x0
+    mov x13, #0
     KAI_ASM_INST(0xe0150ac6)  // ld1b { za0h.b[x12, #6] }, p2/Z, [x22, x21]
     ldr x22, [x25, #0x8]
     add x25, x25, #0x10
     incb x21
     KAI_ASM_INST(0xe0bfc460)  // st1w { za0v.s[x14] }, p1/Z, [x3, XZR, LSL #2]
     whilelt p8.b, x26, x1
-    mov x12, #0x0
+    mov x12, #0
     KAI_ASM_INST(0xe0bcc061)  // st1w { za0v.s[x14, #1] }, p0/Z, [x3, x28, LSL #2]
     addvl x3, x3, #2
     cbz x27, label_7
@@ -158,7 +158,7 @@ KAI_ASM_LABEL(label_6)  // K loop: Main loop: Second: Loop
     KAI_ASM_INST(0x25246d21)  // psel p1.b, p11.b/Z, p9.b[w12]
     KAI_ASM_INST(0x252c6d20)  // psel p0.b, p11.b/Z, p9.b[w12, #1]
     KAI_ASM_INST(0xe0152ee0)  // ld1b { za0h.b[x13] }, p3/Z, [x23, x21]
-    ldr x23, [x25, #0x0]
+    ldr x23, [x25, #0]
     KAI_ASM_INST(0xe0152ac4)  // ld1b { za0h.b[x13, #4] }, p2/Z, [x22, x21]
     ldr x22, [x25, #0x8]
     add x25, x25, #0x10
@@ -177,7 +177,7 @@ KAI_ASM_LABEL(label_7)  // K loop: Main loop: Second: Tail
     mov x25, x2
     whilelt p9.b, x26, x1
     KAI_ASM_INST(0xe0152ee0)  // ld1b { za0h.b[x13] }, p3/Z, [x23, x21]
-    ldr x23, [x25, #0x0]
+    ldr x23, [x25, #0]
     subs x20, x20, #0x1
     incb x26
     KAI_ASM_INST(0xe0152ac4)  // ld1b { za0h.b[x13, #4] }, p2/Z, [x22, x21]
@@ -192,15 +192,15 @@ KAI_ASM_LABEL(label_8)  // K loop: Tails
     cbnz x24, label_11
     mov x25, x2
     whilelt p8.b, x26, x1
-    mov x13, #0x0
-    mov x12, #0x0
+    mov x13, #0
+    mov x12, #0
 KAI_ASM_LABEL(label_9)  // K loop: Tails: Even: First
     KAI_ASM_INST(0x25306d21)  // psel p1.s, p11.s/Z, p9.s[w12]
     KAI_ASM_INST(0x25356140)  // psel p0.b, p8.b/Z, p10.b[w13, #2]
     KAI_ASM_INST(0xe0bf8460)  // st1w { za0v.s[x12] }, p1/Z, [x3, XZR, LSL #2]
     add x12, x12, #0x1
     addvl x3, x3, #1
-    ldr x20, [x25, #0x0]
+    ldr x20, [x25, #0]
     cmp x12, x28
     add x25, x25, #0x8
     KAI_ASM_INST(0xe0152282)  // ld1b { za0h.b[x13, #2] }, p0/Z, [x20, x21]
@@ -208,8 +208,8 @@ KAI_ASM_LABEL(label_9)  // K loop: Tails: Even: First
     blt label_9
     whilelt p9.b, x26, x1
     whilelt p8.b, x26, x1
-    mov x20, #0x0
-    mov x12, #0x0
+    mov x20, #0
+    mov x12, #0
 KAI_ASM_LABEL(label_10)  // K loop: Tails: Even: Second
     KAI_ASM_INST(0x25306d20)  // psel p0.s, p11.s/Z, p9.s[w12]
     add x20, x20, #0x4
@@ -221,7 +221,7 @@ KAI_ASM_LABEL(label_10)  // K loop: Tails: Even: Second
     whilelt p8.b, x26, x1
     b label_13
 KAI_ASM_LABEL(label_11)  // K loop: Tails: Odd
-    mov x12, #0x0
+    mov x12, #0
 KAI_ASM_LABEL(label_12)  // K loop: Tails: Odd: Loop
     KAI_ASM_INST(0x25306d20)  // psel p0.s, p11.s/Z, p9.s[w12]
     KAI_ASM_INST(0xe0bf8060)  // st1w { za0v.s[x12] }, p0/Z, [x3, XZR, LSL #2]

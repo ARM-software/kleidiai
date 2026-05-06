@@ -15,8 +15,8 @@
 #include "kai/ukernels/matmul/kai_matmul_pack_rhs_types.h"
 
 enum {
-    DATA_ESIZE = 1,
-    BIAS_ESIZE = 0,
+    OUTPUT_ELEM_BYTES = 1,
+    BIAS_ELEM_BYTES = 0,
 
     NR_VSCALE = 4,
     KR = 4,
@@ -32,38 +32,6 @@ static size_t get_nr(void) {
 
 static size_t div_ceil(size_t a, size_t b) {
     return (a + b - 1) / b;
-}
-
-static void run(
-    const struct kai_matmul_pack_rhs_uker_config* config, const struct kai_matmul_pack_rhs_uker_args* args) {
-    KAI_UNUSED(config);
-
-    const size_t nr = get_nr();
-
-    const size_t n = args->shape.n;
-    const size_t width = args->shape.k;
-
-    const uint8_t* rhs_ptr = args->operand.rhs.ptr;
-    uint8_t* rhs_packed_ptr = args->operand.rhs_packed.ptr;
-
-    const uint8_t* in[MAX_NR];
-    kai_commit_za();
-
-    for (size_t start_row = 0; start_row < n; start_row += nr) {
-        const size_t height = KAI_MIN(n - start_row, nr);
-
-        void* out = rhs_packed_ptr;
-        rhs_packed_ptr += args->operand.rhs_packed.stride.n;
-
-        for (size_t row = 0; row < height; ++row) {
-            in[row] = rhs_ptr + row * args->operand.rhs.stride.n;
-        }
-        rhs_ptr += nr * args->operand.rhs.stride.n;
-
-        KAI_UNUSED(args->operand.bias_n.ptr);
-        // NOLINTNEXTLINE(bugprone-multi-level-implicit-pointer-conversion)
-        kai_matmul_pack_rows_x8p4vsx4_x8_sme(height, width, in, out);
-    }
 }
 
 static struct kai_matmul_pack_rhs_uker_dim_args get_step(const struct kai_matmul_pack_rhs_uker_config* config) {
@@ -82,8 +50,8 @@ static struct kai_matmul_pack_rhs_uker_rhs_stride_args get_rhs_stride(
     KAI_UNUSED(config);
 
     const struct kai_matmul_pack_rhs_uker_rhs_stride_args stride = {
-        .n = shape->k * DATA_ESIZE,
-        .k = DATA_ESIZE,
+        .n = shape->k * OUTPUT_ELEM_BYTES,
+        .k = OUTPUT_ELEM_BYTES,
     };
 
     return stride;
@@ -106,7 +74,7 @@ static struct kai_matmul_pack_rhs_uker_rhs_packed_stride_args get_rhs_packed_str
 
     const size_t nr = get_nr();
     const struct kai_matmul_pack_rhs_uker_rhs_packed_stride_args stride = {
-        .n = nr * (BIAS_ESIZE + kai_roundup(shape->k, KR) * DATA_ESIZE),
+        .n = nr * (BIAS_ELEM_BYTES + kai_roundup(shape->k, KR) * OUTPUT_ELEM_BYTES),
     };
 
     return stride;
@@ -141,6 +109,38 @@ static size_t get_bias_n_offset(
     KAI_UNUSED(index);
 
     return 0;
+}
+
+static void run(
+    const struct kai_matmul_pack_rhs_uker_config* config, const struct kai_matmul_pack_rhs_uker_args* args) {
+    KAI_UNUSED(config);
+
+    const size_t nr = get_nr();
+
+    const size_t n = args->shape.n;
+    const size_t width = args->shape.k;
+
+    const uint8_t* rhs_ptr = args->operand.rhs.ptr;
+    uint8_t* rhs_packed_ptr = args->operand.rhs_packed.ptr;
+
+    const uint8_t* in[MAX_NR];
+    kai_commit_za();
+
+    for (size_t start_row = 0; start_row < n; start_row += nr) {
+        const size_t height = KAI_MIN(n - start_row, nr);
+
+        void* out = rhs_packed_ptr;
+        rhs_packed_ptr += args->operand.rhs_packed.stride.n;
+
+        for (size_t row = 0; row < height; ++row) {
+            in[row] = rhs_ptr + row * args->operand.rhs.stride.n;
+        }
+        rhs_ptr += nr * args->operand.rhs.stride.n;
+
+        KAI_UNUSED(args->operand.bias_n.ptr);
+        // NOLINTNEXTLINE(bugprone-multi-level-implicit-pointer-conversion)
+        kai_matmul_pack_rows_x8p4vsx4_x8_sme(height, width, in, out);
+    }
 }
 
 struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme(void) {
