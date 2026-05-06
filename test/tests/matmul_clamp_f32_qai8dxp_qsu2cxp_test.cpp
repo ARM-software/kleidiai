@@ -375,6 +375,7 @@ INSTANTIATE_TEST_SUITE_P(
             MatMulShape{1, 63, 32},   //
             MatMulShape{1, 64, 32},   //
             MatMulShape{1, 65, 32},   //
+            MatMulShape{1, 71, 32},   //
             MatMulShape{1, 128, 64},  //
             MatMulShape{1, 225, 64}),
         testing::Values(

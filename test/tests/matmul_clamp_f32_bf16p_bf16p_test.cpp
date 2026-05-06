@@ -604,6 +604,7 @@ INSTANTIATE_TEST_SUITE_P(
             MatMulShape{1, 37, 23},      //
             MatMulShape{1, 57, 89},      //
             MatMulShape{1, 36, 89},      //
+            MatMulShape{1, 71, 32},      //
             MatMulShape{1, 98, 23},      //
             MatMulShape{1, 64, 1024},    // Nice shapes - Long Rhs Rect
             MatMulShape{1, 1024, 64},    // Nice shapes - Wide Rhs Rect

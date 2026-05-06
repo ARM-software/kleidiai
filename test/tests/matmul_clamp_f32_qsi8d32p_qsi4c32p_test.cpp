@@ -382,6 +382,7 @@ static constexpr std::array shapes_k32{
     MatMulShape{1, 2, 32},     //
     MatMulShape{1, 40, 32},    //
     MatMulShape{1, 33, 32},    //
+    MatMulShape{1, 71, 32},    //
     MatMulShape{15, 32, 32},   //
     MatMulShape{32, 64, 64},   //
     MatMulShape{16, 32, 64},   //

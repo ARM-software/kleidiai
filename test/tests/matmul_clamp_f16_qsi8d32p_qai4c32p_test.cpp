@@ -109,6 +109,7 @@ static const std::array<
 static const auto test_matmul_shapes = testing::Values(
     MatMulShape{1, 64, 32},    //
     MatMulShape{1, 63, 32},    //
+    MatMulShape{1, 71, 32},    //
     MatMulShape{1, 65, 32},    //
     MatMulShape{1, 64, 64},    //
     MatMulShape{1, 64, 128},   //
