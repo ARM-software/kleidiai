@@ -10,6 +10,10 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+## v1.25.0
+
+- Optimizations
+  - Optimize rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon for Int4 GEMM/GEMV kernels
 - Fixes
   - Fix RHS tail handling in `kai_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa`.
 
