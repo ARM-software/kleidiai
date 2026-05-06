@@ -253,6 +253,7 @@ INSTANTIATE_TEST_SUITE_P(
             MatMulShape{1, 3, 32},     //
             MatMulShape{1, 4, 32},     //
             MatMulShape{1, 5, 31},     //
+            MatMulShape{1, 71, 32},    //
             MatMulShape{3, 3, 32},     //
             MatMulShape{4, 4, 32},     //
             MatMulShape{5, 5, 31},     //

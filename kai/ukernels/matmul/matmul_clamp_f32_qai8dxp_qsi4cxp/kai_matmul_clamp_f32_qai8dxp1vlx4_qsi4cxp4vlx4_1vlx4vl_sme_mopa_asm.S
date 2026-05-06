@@ -51,15 +51,16 @@ KAI_ASM_FUNCTION_LABEL(kai_kernel_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vl
     ldr x21, [x0, #0x18]                         // dst_stride_row
     ldr x23, [x0, #0x30]                         // lhs_stride
     ldr x22, [x0, #0x38]                         // rhs_stride
-    ldr x24, [x0, #0x40]                         // m_blk
-    ldr x26, [x0, #0x48]                         // dst_inc
+    ldr x25, [x0, #0x40]                         // rhs_row_bytes
+    ldr x24, [x0, #0x48]                         // m_blk
+    ldr x26, [x0, #0x50]                         // dst_inc
     mov w9, #0xf0
     dup z28.b, w9
     cntw x7
     lsl x27, x7, #2
     ptrue p2.b
-    KAI_ASM_INST(0x8554c81e) // ld1rw { z30.s }, p2/z, [x0, #0x50] // clamp_min
-    KAI_ASM_INST(0x8555c81f) // ld1rw { z31.s }, p2/z, [x0, #0x54] // clamp_max
+    KAI_ASM_INST(0x8556c81e) // ld1rw { z30.s }, p2/z, [x0, #0x58] // clamp_min
+    KAI_ASM_INST(0x8557c81f) // ld1rw { z31.s }, p2/z, [x0, #0x5c] // clamp_max
     // M loop head
     ldr  x12, [x0, #0x20]                        // m
     KAI_ASM_INST(0x25ac17e0) //whilelt p0.s, xzr, x12
@@ -71,7 +72,7 @@ KAI_ASM_LABEL(label_1)
     csel x16, x7, x12, lt
     lsl  x16, x16, #2
     // N loop head
-    whilelt p3.h, xzr, x13
+    add x28, x8, x25
 KAI_ASM_LABEL(label_2)
     mov x10, x20
     mov x11, x8
@@ -83,10 +84,18 @@ KAI_ASM_LABEL(label_2)
 KAI_ASM_LABEL(label_3)
     KAI_ASM_INST(0xa540a150) // ld1w { z16.s }, p0/z, [x10]
     KAI_ASM_INST(0xa544a154) // ld1w { z20.s }, p0/z, [x10, #0x4, mul vl]
+    mov x15, x11
+    whilelt p3.h, x15, x28
+    addvl x15, x11, #1
+    whilelt p4.h, x15, x28
+    addvl x15, x11, #2
+    whilelt p6.h, x15, x28
+    addvl x15, x11, #3
+    whilelt p7.h, x15, x28
     ld1h z0.h, p3/z, [x11]
-    ld1h z1.h, p3/z, [x11, #1, mul vl]
-    ld1h z2.h, p3/z, [x11, #2, mul vl]
-    ld1h z3.h, p3/z, [x11, #3, mul vl]
+    ld1h z1.h, p4/z, [x11, #1, mul vl]
+    ld1h z2.h, p6/z, [x11, #2, mul vl]
+    ld1h z3.h, p7/z, [x11, #3, mul vl]
     lsl  z24.b, z0.b, #4
     lsl  z25.b, z1.b, #4
     lsl  z26.b, z2.b, #4
@@ -105,10 +114,18 @@ KAI_ASM_LABEL(label_3)
     KAI_ASM_INST(0xa0834a83) // smopa za3.s, p2/m, p2/m, z20.b, z3.b
     KAI_ASM_INST(0xa541a151) // ld1w { z17.s }, p0/z, [x10, #0x1, mul vl]
     KAI_ASM_INST(0xa545a155) // ld1w { z21.s }, p0/z, [x10, #0x5, mul vl]
+    addvl x15, x11, #4
+    whilelt p3.h, x15, x28
+    addvl x15, x11, #5
+    whilelt p4.h, x15, x28
+    addvl x15, x11, #6
+    whilelt p6.h, x15, x28
+    addvl x15, x11, #7
+    whilelt p7.h, x15, x28
     ld1h z4.h, p3/z, [x11, #4, mul vl]
-    ld1h z5.h, p3/z, [x11, #5, mul vl]
-    ld1h z6.h, p3/z, [x11, #6, mul vl]
-    ld1h z7.h, p3/z, [x11, #7, mul vl]
+    ld1h z5.h, p4/z, [x11, #5, mul vl]
+    ld1h z6.h, p6/z, [x11, #6, mul vl]
+    ld1h z7.h, p7/z, [x11, #7, mul vl]
     addvl x11, x11, #8
     lsl z24.b, z4.b, #4
     lsl z25.b, z5.b, #4
@@ -128,10 +145,18 @@ KAI_ASM_LABEL(label_3)
     KAI_ASM_INST(0xa0874aa3) // smopa za3.s, p2/m, p2/m, z21.b, z7.b
     KAI_ASM_INST(0xa542a152) // ld1w { z18.s }, p0/z, [x10, #0x2, mul vl]
     KAI_ASM_INST(0xa546a156) // ld1w { z22.s }, p0/z, [x10, #0x6, mul vl]
+    mov x15, x11
+    whilelt p3.h, x15, x28
+    addvl x15, x11, #1
+    whilelt p4.h, x15, x28
+    addvl x15, x11, #2
+    whilelt p6.h, x15, x28
+    addvl x15, x11, #3
+    whilelt p7.h, x15, x28
     ld1h z8.h,  p3/z, [x11]
-    ld1h z9.h,  p3/z, [x11, #1, mul vl]
-    ld1h z10.h, p3/z, [x11, #2, mul vl]
-    ld1h z11.h, p3/z, [x11, #3, mul vl]
+    ld1h z9.h,  p4/z, [x11, #1, mul vl]
+    ld1h z10.h, p6/z, [x11, #2, mul vl]
+    ld1h z11.h, p7/z, [x11, #3, mul vl]
     lsl  z24.b, z8.b, #4
     lsl  z25.b, z9.b, #4
     lsl  z26.b, z10.b, #4
@@ -150,10 +175,18 @@ KAI_ASM_LABEL(label_3)
     KAI_ASM_INST(0xa08b4ac3) // smopa za3.s, p2/m, p2/m, z22.b, z11.b
     KAI_ASM_INST(0xa543a153) // ld1w { z19.s }, p0/z, [x10, #0x3, mul vl]
     KAI_ASM_INST(0xa547a157) // ld1w { z23.s }, p0/z, [x10, #0x7, mul vl]
+    addvl x15, x11, #4
+    whilelt p3.h, x15, x28
+    addvl x15, x11, #5
+    whilelt p4.h, x15, x28
+    addvl x15, x11, #6
+    whilelt p6.h, x15, x28
+    addvl x15, x11, #7
+    whilelt p7.h, x15, x28
     ld1h z12.h, p3/z, [x11, #4, mul vl]
-    ld1h z13.h, p3/z, [x11, #5, mul vl]
-    ld1h z14.h, p3/z, [x11, #6, mul vl]
-    ld1h z15.h, p3/z, [x11, #7, mul vl]
+    ld1h z13.h, p4/z, [x11, #5, mul vl]
+    ld1h z14.h, p6/z, [x11, #6, mul vl]
+    ld1h z15.h, p7/z, [x11, #7, mul vl]
     lsl  z24.b, z12.b, #4
     lsl  z25.b, z13.b, #4
     lsl  z26.b, z14.b, #4
@@ -256,8 +289,9 @@ KAI_ASM_LABEL(label_4)
     add x8, x8, x22
     KAI_ASM_INST(0x04295089) // addvl x9, x9, #4
     sub x13, x13, x27
-    whilelt p3.h, xzr, x13
-    b.mi label_2
+    add x28, x8, x25
+    cmp x13, xzr
+    b.gt label_2
     // M loop tail
     add x20, x20, x23
     add x19, x19, x26

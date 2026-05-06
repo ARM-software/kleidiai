@@ -1197,6 +1197,7 @@ static constexpr std::array shapes{
     MatMulShape{  1,   49, 21},
     MatMulShape{  1,   64,  4},
     MatMulShape{  1,   65,  4},
+    MatMulShape{  1,   71, 32},
     MatMulShape{  1,  300, 10},
     MatMulShape{  1,  512,  4},
     MatMulShape{  1, 1523, 10},

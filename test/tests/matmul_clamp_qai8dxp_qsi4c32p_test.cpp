@@ -1482,6 +1482,7 @@ static constexpr std::array gemm_shapes_large{
 static constexpr std::array gemv_shapes_small{
     MatMulShape{  1,   16,  64},
     MatMulShape{  1,   31,  64},
+    MatMulShape{  1,   71,  64},
     MatMulShape{  1,  128, 256},
     MatMulShape{  1,  256, 256},
     MatMulShape{  1,  320, 320},

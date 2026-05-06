@@ -824,6 +824,7 @@ static auto get_indirect_matmul_shapes() {
         MatMulShape{  1,  49,  21},
         MatMulShape{  1,  64,   4},
         MatMulShape{  1,  65,   4},
+        MatMulShape{  1,  71,  32},
         MatMulShape{  3,   6,   6},
         MatMulShape{  3,  28,  25},
         MatMulShape{  4,  16,   4},
