@@ -7,6 +7,17 @@
 default_install_hook_types: [ pre-commit, pre-push ]
 fail_fast: false
 repos:
+  # Requires pip install cmake-format==0.6.13
+  - repo: local
+    hooks:
+      - id: cmake-format
+        name: cmake-format
+        entry: cmake-format
+        language: python
+        additional_dependencies: [ "cmake-format==0.6.13" ]
+        args: ["--config-files", "./experimental/ops/.cmake-format.py", "--in-place"]
+        files: '^experimental/ops/.*(?:CMakeLists\.txt|\.cmake(?:\.in)?)$'
+        stages: [ pre-commit ]
   - repo: https://github.com/fsfe/reuse-tool
     rev: v5.0.2
     hooks:
@@ -19,9 +30,14 @@ repos:
     hooks:
       - id: check-added-large-files
         args: [ '--maxkb=200', '--enforce-all' ]
-        exclude: 'third_party/.*\.zip$'
+        exclude: '(third_party/.*\.zip$|^experimental/ops/)'
         stages: [ pre-commit ]
         name: "File size limit not exceeded"
+      - id: check-added-large-files
+        stages: [ pre-commit ]
+        name: File size limit not exceeded (experimental/ops/, 300kb)
+        args: [ '--maxkb=300', '--enforce-all' ]
+        files: ^experimental/ops/
       - id: check-yaml
         stages: [ pre-commit ]
         name: "YAML Syntax"
@@ -31,6 +47,10 @@ repos:
         name: "GitLab CI YAML Syntax"
         files: ^\.gitlab-ci\.yml$
         args: [ "--unsafe" ]
+      - id: trailing-whitespace
+        stages: [ pre-commit ]
+        exclude: ^LICENSES/
+
   - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
     rev: 2.7.3
     hooks:
@@ -45,6 +65,12 @@ repos:
       - id: cmakelint
         stages: [ pre-commit ]
         name: CMake Linter
+        exclude: ^experimental/ops/
+      - id: cmakelint
+        stages: [ pre-commit ]
+        name: CMake Linter (experimental/ops/, no indent)
+        files: ^experimental/ops/
+        args: [--filter=-whitespace/indent]
   - repo: https://github.com/executablebooks/mdformat
     rev: 0.7.17
     hooks:
@@ -57,12 +83,14 @@ repos:
       - id: clang-format
         stages: [ pre-commit ]
         name: "C/C++: clang-format Formatter"
+        exclude: '^experimental/ops/'
   - repo: https://github.com/asottile/reorder-python-imports
     rev: v3.12.0
     hooks:
       - id: reorder-python-imports
         stages: [ pre-commit ]
         name: "Python: Reorder Imports"
+        exclude: '^experimental/ops/'
   - repo: https://github.com/psf/black
     rev: 24.2.0
     hooks:

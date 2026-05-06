@@ -31,3 +31,11 @@ indent_size = 2
 # Override settings.
 [LICENSES/*]
 indent_size = unset
+
+# Override settings.
+[experimental/ops/**/{CMakeLists.txt,*.cmake,*.cmake.in}]
+indent_size = unset
+
+# Override settings.
+[Makefile]
+indent_size = unset

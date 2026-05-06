@@ -1,0 +1,194 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 25,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "KLEIDIAI_OPS_C_STANDARD": "11",
+        "KLEIDIAI_OPS_CXX_STANDARD": "11"
+      }
+    },
+    {
+      "name": "native-linux-aarch64-debug",
+      "inherits": "base",
+      "displayName": "Native AArch64 Debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_TOOLCHAIN_FILE": "toolchains/native/native-linux-aarch64-gnu.cmake"
+      }
+    },
+    {
+      "name": "native-linux-aarch64-release",
+      "inherits": "base",
+      "displayName": "Native AArch64 Release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_TOOLCHAIN_FILE": "toolchains/native/native-linux-aarch64-gnu.cmake"
+      }
+    },
+    {
+      "name": "cross-linux-aarch64-debug",
+      "inherits": "base",
+      "displayName": "Cross AArch64 Linux Debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_TOOLCHAIN_FILE": "toolchains/cross/cross-linux-aarch64-gnu.cmake"
+      }
+    },
+    {
+      "name": "cross-linux-aarch64-release",
+      "inherits": "base",
+      "displayName": "Cross AArch64 Linux Release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_TOOLCHAIN_FILE": "toolchains/cross/cross-linux-aarch64-gnu.cmake"
+      }
+    },
+    {
+      "name": "cross-arm-linux-debug",
+      "inherits": "base",
+      "displayName": "Cross AArch32 Linux Debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_TOOLCHAIN_FILE": "toolchains/cross/cross-linux-arm-gnueabihf.cmake"
+      }
+    },
+    {
+      "name": "cross-arm-linux-release",
+      "inherits": "base",
+      "displayName": "Cross AArch32 Linux Release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_TOOLCHAIN_FILE": "toolchains/cross/cross-linux-arm-gnueabihf.cmake"
+      }
+    },
+    {
+      "name": "cross-baremetal-aarch64-debug",
+      "inherits": "base",
+      "displayName": "Bare-metal AArch64 Debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_TOOLCHAIN_FILE": "toolchains/cross/cross-baremetal-aarch64-elf.cmake"
+      }
+    },
+    {
+      "name": "cross-baremetal-aarch64-release",
+      "inherits": "base",
+      "displayName": "Bare-metal AArch64 Release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_TOOLCHAIN_FILE": "toolchains/cross/cross-baremetal-aarch64-elf.cmake"
+      }
+    },
+    {
+      "name": "cross-baremetal-arm-debug",
+      "inherits": "base",
+      "displayName": "Bare-metal AArch32 Debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_TOOLCHAIN_FILE": "toolchains/cross/cross-baremetal-arm-eabi.cmake"
+      }
+    },
+    {
+      "name": "cross-baremetal-arm-release",
+      "inherits": "base",
+      "displayName": "Bare-metal AArch32 Release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_TOOLCHAIN_FILE": "toolchains/cross/cross-baremetal-arm-eabi.cmake"
+      }
+    },
+    {
+      "name": "android-arm64-v8a-debug",
+      "inherits": "base",
+      "displayName": "Android arm64-v8a Debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_TOOLCHAIN_FILE": "toolchains/cross/cross-android-arm64-v8a.cmake"
+      }
+    },
+    {
+      "name": "android-arm64-v8a-release",
+      "inherits": "base",
+      "displayName": "Android arm64-v8a Release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_TOOLCHAIN_FILE": "toolchains/cross/cross-android-arm64-v8a.cmake"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "native-linux-aarch64-debug",
+      "configurePreset": "native-linux-aarch64-debug"
+    },
+    {
+      "name": "native-linux-aarch64-release",
+      "configurePreset": "native-linux-aarch64-release"
+    },
+    {
+      "name": "cross-linux-aarch64-debug",
+      "configurePreset": "cross-linux-aarch64-debug"
+    },
+    {
+      "name": "cross-linux-aarch64-release",
+      "configurePreset": "cross-linux-aarch64-release"
+    },
+    {
+      "name": "cross-arm-linux-debug",
+      "configurePreset": "cross-arm-linux-debug"
+    },
+    {
+      "name": "cross-arm-linux-release",
+      "configurePreset": "cross-arm-linux-release"
+    },
+    {
+      "name": "cross-baremetal-aarch64-debug",
+      "configurePreset": "cross-baremetal-aarch64-debug"
+    },
+    {
+      "name": "cross-baremetal-aarch64-release",
+      "configurePreset": "cross-baremetal-aarch64-release"
+    },
+    {
+      "name": "cross-baremetal-arm-debug",
+      "configurePreset": "cross-baremetal-arm-debug"
+    },
+    {
+      "name": "cross-baremetal-arm-release",
+      "configurePreset": "cross-baremetal-arm-release"
+    },
+    {
+      "name": "android-arm64-v8a-debug",
+      "configurePreset": "android-arm64-v8a-debug"
+    },
+    {
+      "name": "android-arm64-v8a-release",
+      "configurePreset": "android-arm64-v8a-release"
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "native-linux-aarch64-debug",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "native-linux-aarch64-debug"
+        },
+        {
+          "type": "build",
+          "name": "native-linux-aarch64-debug"
+        }
+      ]
+    }
+  ]
+}
