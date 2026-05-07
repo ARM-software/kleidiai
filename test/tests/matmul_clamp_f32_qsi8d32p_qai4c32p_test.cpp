@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -164,7 +164,7 @@ static inline std::tuple<Buffer, size_t> pack_rhs_qai4c32p(
 }
 
 using MatMulTestClampPortionedParamsWithBias_WithBL =
-    std::tuple<size_t, MatMulShape, size_t, MatrixPortion, float, bool>;
+    std::tuple<size_t, MatMulShape, size_t, MatrixPortion, std::optional<float>, bool>;
 class MatMulTest_f32_qsi8d32p_qai4c32p
     : public ::testing::TestWithParam<MatMulTestClampPortionedParamsWithBias_WithBL> {};
 
@@ -392,7 +392,7 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0.75, 0, 1, 1),      // Partial rows
             MatrixPortion(0.4, 0.5, 0.6, 0.8)  // Somewhere Middle
             ),
-        testing::ValuesIn(std::initializer_list<float>{1.0f, 0.9f, 0.5f}),  //
+        testing::ValuesIn(std::initializer_list<std::optional<float>>{std::nullopt, 1.0f, 0.9f, 0.5f}),  //
         testing::Bool()),
     [](const auto& info) {
         const auto variant_idx = std::get<0>(info.param);
@@ -407,7 +407,9 @@ INSTANTIATE_TEST_SUITE_P(
         sstream << name << "__";
         PrintTo(shape, &sstream);
         sstream << "__BL_" << bl << "_";
-        sstream << "__clamp_keep_ratio_" << static_cast<int>(clamp_keep_ratio * 100);
+        sstream << "__clamp_keep_ratio_"
+                << (clamp_keep_ratio.has_value() ? std::to_string(static_cast<int>(clamp_keep_ratio.value() * 100))
+                                                 : "noclamp");
 
         if (has_bias) {
             sstream << "_withBias_";

@@ -239,7 +239,7 @@ static const std::array<UkernelVariantCustom<kai_matmul_clamp_f32_qai8dxp_qsi4cx
 
 };
 
-using MatMulClampTestPortionedParams = std::tuple<size_t, MatMulShape, MatrixPortion, float>;
+using MatMulClampTestPortionedParams = std::tuple<size_t, MatMulShape, MatrixPortion, std::optional<float>>;
 class MatMulTest_f32_qai8dxp_qsi4cxp : public ::testing::TestWithParam<MatMulClampTestPortionedParams> {};
 
 TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, Offset_RHS) {
@@ -874,7 +874,8 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0, 0.75, 1, 1),  // Rightmost portion.
             MatrixPortion(0, 0.5, 1, 0.8)  // Somewhere Middle
             ),
-        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
+        testing::ValuesIn(
+            std::initializer_list<std::optional<float>>({std::nullopt, 1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
     [](const auto& info) {
         const auto variant_idx = std::get<0>(info.param);
         const std::string name{variants_kai_matmul_clamp_f32_qai8dxp_qsi4cxp.at(variant_idx).name};

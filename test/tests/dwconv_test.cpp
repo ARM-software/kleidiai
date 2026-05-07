@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -66,7 +66,7 @@ struct Depthwise {
 
 /// Convenience types for testing.
 using DepthwiseArray = std::array<Depthwise, 1>;
-using DepthwiseParamsParams = std::tuple<Depthwise, MatMulShape, Padding2D, float>;
+using DepthwiseParamsParams = std::tuple<Depthwise, MatMulShape, Padding2D, std::optional<float>>;
 using DepthwisePlanarTest = testing::TestWithParam<DepthwiseParamsParams>;
 
 /// Use interface for depthwise kernel
@@ -107,17 +107,17 @@ struct TestDataId {
     Padding2D pad;
     DataType dt;
     DataType dt_acc;
-    float clamp_keep_ratio;
+    std::optional<float> clamp_keep_ratio;
 
     struct Hash {
         size_t operator()(const TestDataId& test_id) const {
-            return                                                         //
-                (MatMulShape::Hash{}(test_id.in_shape) << 0) ^             //
-                (MatMulShape::Hash{}(test_id.rhs_shape) << 1) ^            //
-                (Padding2D::Hash{}(test_id.pad) << 2) ^                    //
-                (std::hash<DT>{}(static_cast<DT>(test_id.dt)) << 3) ^      //
-                (std::hash<DT>{}(static_cast<DT>(test_id.dt_acc)) << 4) ^  //
-                (std::hash<float>{}(test_id.clamp_keep_ratio) << 5);       //
+            return                                                                  //
+                (MatMulShape::Hash{}(test_id.in_shape) << 0) ^                      //
+                (MatMulShape::Hash{}(test_id.rhs_shape) << 1) ^                     //
+                (Padding2D::Hash{}(test_id.pad) << 2) ^                             //
+                (std::hash<DT>{}(static_cast<DT>(test_id.dt)) << 3) ^               //
+                (std::hash<DT>{}(static_cast<DT>(test_id.dt_acc)) << 4) ^           //
+                (std::hash<float>{}(test_id.clamp_keep_ratio.value_or(0.0)) << 5);  //
         }
     };
 
@@ -280,7 +280,9 @@ TEST_P(DepthwisePlanarTest, Output) {
     *os << "__";
     PrintTo(padding, os);
     *os << "__";
-    *os << "__clamp_keep_ratio_" << static_cast<int>(clamp_keep_ratio * 100);
+    *os << "__clamp_keep_ratio_"
+        << (clamp_keep_ratio.has_value() ? std::to_string(static_cast<int>(clamp_keep_ratio.value() * 100))
+                                         : "noclamp");
 }
 
 ///  Test parameter listing
@@ -307,7 +309,12 @@ INSTANTIATE_TEST_SUITE_P(
             Padding2D{5, 11, 7, 3},
             // clang-format on
         }),
-        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
+        testing::ValuesIn(std::initializer_list<std::optional<float>>({
+            std::nullopt,  //
+            1.0f,          //
+            0.9f,          //
+            0.5f           // clamp_keep_ratio
+        }))),
     testing::PrintToStringParamName());
 
 }  // namespace kai::test
