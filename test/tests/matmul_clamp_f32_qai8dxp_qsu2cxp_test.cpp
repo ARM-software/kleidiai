@@ -164,7 +164,7 @@ using TestDataKey = std::tuple<
     size_t,                          // kr
     size_t,                          // sr
     size_t, size_t, size_t, size_t,  // rect.start_row, rect.start_col, rect.height, rect.width
-    float                            // clamp_keep_ratio
+    std::optional<float>             // clamp_keep_ratio
     >;
 
 struct TestData {
@@ -197,7 +197,8 @@ TestData ReferenceGenerator<TestDataKey, TestData>::generate_reference(const Tes
 
     // Creates a unique seed for the test data.
     const auto key = std::string("QSI2CXMatMulRefKey:") + std::to_string(ref.M) + "x" + std::to_string(ref.N) + "x" +
-        std::to_string(ref.K) + "_" + std::to_string(clamp_keep_ratio);
+        std::to_string(ref.K) + "_" +
+        (clamp_keep_ratio.has_value() ? std::to_string(clamp_keep_ratio.value()) : "noclamp");
     auto& feed = seed_stream(key);
 
     // Inputs
@@ -239,7 +240,7 @@ TestData ReferenceGenerator<TestDataKey, TestData>::generate_reference(const Tes
 
 static std::string test_description(
     const std::string_view& name, const MatMulShape& shape, const MatrixPortion& portion, bool bias,
-    float clamp_keep_ratio, bool lut) {
+    std::optional<float> clamp_keep_ratio, bool lut) {
     std::ostringstream os;
 
     os << name << "__";
@@ -249,14 +250,15 @@ static std::string test_description(
     if (bias) {
         os << "__Bias";
     }
-    os << "__clamp_keep_ratio_" << static_cast<int>(clamp_keep_ratio * 100);
+    os << "__clamp_keep_ratio_"
+       << (clamp_keep_ratio.has_value() ? std::to_string(static_cast<int>(clamp_keep_ratio.value() * 100)) : "noclamp");
     if (lut) {
         os << "__Lut";
     }
     return os.str();
 }
 
-using QMatmulClampF32ParamT = std::tuple<size_t, bool, MatMulShape, MatrixPortion, float, bool, bool>;
+using QMatmulClampF32ParamT = std::tuple<size_t, bool, MatMulShape, MatrixPortion, std::optional<float>, bool, bool>;
 
 class MatMulTest_f32_qai8dxp_qsu2cxp : public ::testing::TestWithParam<QMatmulClampF32ParamT> {};
 
@@ -348,13 +350,14 @@ INSTANTIATE_TEST_SUITE_P(
             MatMulShape{19, 129, 64},  //
             MatMulShape{1, 128, 32}),
         testing::Values(
-            MatrixPortion(0, 0, 1, 1),                                        // Full matrix.
-            MatrixPortion(0, 0, 1, 0.25),                                     // Leftmost portion.
-            MatrixPortion(0, 0.75, 1, 1),                                     // Rightmost portion.
-            MatrixPortion(0.4, 0.5, 0.6, 0.8)),                               // Somewhere Middle block
-        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
-        testing::Bool(),                                                      // Bias
-        testing::Bool()),                                                     // Look up table argument
+            MatrixPortion(0, 0, 1, 1),           // Full matrix.
+            MatrixPortion(0, 0, 1, 0.25),        // Leftmost portion.
+            MatrixPortion(0, 0.75, 1, 1),        // Rightmost portion.
+            MatrixPortion(0.4, 0.5, 0.6, 0.8)),  // Somewhere Middle block
+        testing::ValuesIn(
+            std::initializer_list<std::optional<float>>({std::nullopt, 1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
+        testing::Bool(),                                                                     // Bias
+        testing::Bool()),                                                                    // Look up table argument
     [](const auto& info) {
         const auto variant_idx = std::get<0>(info.param);
         const std::string name{get_qsi2cx_gemm_variants().at(variant_idx).name};
@@ -379,13 +382,14 @@ INSTANTIATE_TEST_SUITE_P(
             MatMulShape{1, 128, 64},  //
             MatMulShape{1, 225, 64}),
         testing::Values(
-            MatrixPortion(0, 0, 1, 1),                                        // Full matrix.
-            MatrixPortion(0, 0, 1, 0.25),                                     // Leftmost portion.
-            MatrixPortion(0, 0.75, 1, 1),                                     // Rightmost portion.
-            MatrixPortion(0.4, 0.5, 0.6, 0.8)),                               // Somewhere Middle block
-        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
-        testing::Bool(),                                                      // Bias
-        testing::Bool()),                                                     // Look up table argument
+            MatrixPortion(0, 0, 1, 1),           // Full matrix.
+            MatrixPortion(0, 0, 1, 0.25),        // Leftmost portion.
+            MatrixPortion(0, 0.75, 1, 1),        // Rightmost portion.
+            MatrixPortion(0.4, 0.5, 0.6, 0.8)),  // Somewhere Middle block
+        testing::ValuesIn(
+            std::initializer_list<std::optional<float>>({std::nullopt, 1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
+        testing::Bool(),                                                                     // Bias
+        testing::Bool()),                                                                    // Look up table argument
     [](const auto& info) {
         const auto variant_idx = std::get<0>(info.param);
         const std::string name{get_qsi2cx_gemv_variants().at(variant_idx).name};

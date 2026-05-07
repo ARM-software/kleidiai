@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -7,6 +7,7 @@
 #pragma once
 
 #include <cstddef>
+#include <optional>
 #include <tuple>
 
 #include "test/common/buffer.hpp"
@@ -22,7 +23,7 @@ namespace kai::test {
 ///
 /// @return The minimum value and the maximum value.
 template <typename T>
-std::tuple<T, T> find_clamp_range(const void* src, size_t len, float keep_ratio);
+std::tuple<T, T> find_clamp_range(const void* src, size_t len, std::optional<float> keep_ratio);
 
 /// Finds the clamping parameters to limit the dynamic range.
 ///
@@ -32,7 +33,7 @@ std::tuple<T, T> find_clamp_range(const void* src, size_t len, float keep_ratio)
 /// @param[in] keep_ratio The ratio of values that are unaffected by clamping.
 ///
 /// @return The minimum value and the maximum value.
-std::tuple<float, float> find_clamp_range(DataType type, const void* src, size_t len, float keep_ratio);
+std::tuple<float, float> find_clamp_range(DataType type, const void* src, size_t len, std::optional<float> keep_ratio);
 
 /// Clamps the matrix.
 ///

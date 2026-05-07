@@ -134,7 +134,8 @@ static const std::array<UKernelVariants, 2>
             rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)}}};
 // clang-format on
 
-using MatMulTestParams_f32_qsi8d32p_qsi4c32p = std::tuple<size_t, MatMulShape, MatrixPortion, float, size_t, bool>;
+using MatMulTestParams_f32_qsi8d32p_qsi4c32p =
+    std::tuple<size_t, MatMulShape, MatrixPortion, std::optional<float>, size_t, bool>;
 
 [[maybe_unused]] static void PrintTo(const MatMulTestParams_f32_qsi8d32p_qsi4c32p& param, std::ostream* os) {
     const auto variant_idx = std::get<0>(param);
@@ -148,7 +149,9 @@ using MatMulTestParams_f32_qsi8d32p_qsi4c32p = std::tuple<size_t, MatMulShape, M
     PrintTo(shape, os);
     *os << "__";
     PrintTo(portion, os);
-    *os << "__clamp_keep_ratio_" << static_cast<int>(clamp_keep_ratio * 100);
+    *os << "__clamp_keep_ratio_"
+        << (clamp_keep_ratio.has_value() ? std::to_string(static_cast<int>(clamp_keep_ratio.value() * 100))
+                                         : "noclamp");
     *os << (variable_bl ? "__VarBL" : "__FixedBL");
     *os << "__bl_" << bl;
 }
@@ -364,7 +367,8 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0, 0.75, 1, 1),  // Rightmost portion.
             MatrixPortion(0, 0.5, 1, 0.8)  // Somewhere Middle
             ),
-        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
+        testing::ValuesIn(
+            std::initializer_list<std::optional<float>>({std::nullopt, 1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
         testing::Values(32), testing::Values(false)),
     [](const auto& info) {
         const auto variant_idx = std::get<0>(info.param);
@@ -435,7 +439,12 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.size()),
         testing::ValuesIn(shapes_k32), testing::ValuesIn(portions),
-        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
+        testing::ValuesIn(std::initializer_list<std::optional<float>>{
+            std::nullopt,  //
+            1.0F,          //
+            0.9F,          //
+            0.5F,          // clamp_keep_ratio
+        }),
         testing::Values(32), testing::Values(true)),
     testing::PrintToStringParamName());
 
@@ -444,7 +453,12 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.size()),
         testing::ValuesIn(shapes_k64), testing::ValuesIn(portions),
-        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
+        testing::ValuesIn(std::initializer_list<std::optional<float>>{
+            std::nullopt,  //
+            1.0F,          //
+            0.9F,          //
+            0.5F,          // clamp_keep_ratio
+        }),
         testing::Values(64), testing::Values(true)),
     testing::PrintToStringParamName());
 
@@ -453,7 +467,12 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.size()),
         testing::ValuesIn(shapes_k96), testing::ValuesIn(portions),
-        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
+        testing::ValuesIn(std::initializer_list<std::optional<float>>{
+            std::nullopt,  //
+            1.0F,          //
+            0.9F,          //
+            0.5F,          // clamp_keep_ratio
+        }),
         testing::Values(96), testing::Values(true)),
     testing::PrintToStringParamName());
 
@@ -462,7 +481,12 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.size()),
         testing::ValuesIn(shapes_k128), testing::ValuesIn(portions),
-        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
+        testing::ValuesIn(std::initializer_list<std::optional<float>>{
+            std::nullopt,  //
+            1.0F,          //
+            0.9F,          //
+            0.5F,          // clamp_keep_ratio
+        }),
         testing::Values(128), testing::Values(true)),
     testing::PrintToStringParamName());
 
@@ -471,7 +495,8 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.size()),
         testing::ValuesIn(shapes_k256), testing::ValuesIn(portions),
-        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
+        testing::ValuesIn(
+            std::initializer_list<std::optional<float>>({std::nullopt, 1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
         testing::Values(256), testing::Values(true)),
     testing::PrintToStringParamName());
 

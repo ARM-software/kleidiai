@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -393,10 +393,11 @@ INSTANTIATE_TEST_SUITE_P(
     MatMul, MatMulTest_f16_qsi8d32p_qai4c32p,
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f16_qsi8d32p_qai4c32p.size()), test_matmul_shapes,
-        test_block_lengths,                                                   //
-        test_portions,                                                        //
-        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
-        testing::Bool()),                                                     //
+        test_block_lengths,  //
+        test_portions,       //
+        testing::ValuesIn(
+            std::initializer_list<std::optional<float>>({std::nullopt, 1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
+        testing::Bool()),                                                                    //
     [](const auto& info) {
         const auto variant_idx = std::get<0>(info.param);
         const std::string name{variants_kai_matmul_clamp_f16_qsi8d32p_qai4c32p.at(variant_idx).ukernel.name};
@@ -420,7 +421,9 @@ INSTANTIATE_TEST_SUITE_P(
         } else {
             sstream << "_RHS_s1s0__";
         }
-        sstream << "__clamp_keep_ratio_" << static_cast<int>(clamp_keep_ratio * 100);
+        sstream << "__clamp_keep_ratio_"
+                << (clamp_keep_ratio.has_value() ? std::to_string(static_cast<int>(clamp_keep_ratio.value() * 100))
+                                                 : "noclamp");
         PrintTo(portion, &sstream);
 
         return sstream.str();

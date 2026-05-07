@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -145,7 +145,7 @@ struct IndirectMatMul {
 };
 
 /// Test parameter bundle type
-using IndirectMatMulTestParams = std::tuple<IndirectMatMul, MatMulShape, size_t, MatrixPortion, float>;
+using IndirectMatMulTestParams = std::tuple<IndirectMatMul, MatMulShape, size_t, MatrixPortion, std::optional<float>>;
 
 /// Test type
 using IndirectMatMulTest = testing::TestWithParam<IndirectMatMulTestParams>;
@@ -415,16 +415,16 @@ struct TestDataId {
     MatMulShape pack_shape;
     IndirectMatMul::Format format;
     size_t k_chunk_length;
-    float clamp_keep_ratio;
+    std::optional<float> clamp_keep_ratio;
 
     struct Hash {
         size_t operator()(const TestDataId& test_id) const {
-            return                                                       //
-                (MatMulShape::Hash{}(test_id.shape) << 0) ^              //
-                (MatMulShape::Hash{}(test_id.pack_shape) << 1) ^         //
-                (IndirectMatMul::Format::Hash{}(test_id.format) << 2) ^  //
-                (std::hash<size_t>{}(test_id.k_chunk_length) << 3) ^     //
-                (std::hash<float>{}(test_id.clamp_keep_ratio) << 4);     //
+            return                                                                  //
+                (MatMulShape::Hash{}(test_id.shape) << 0) ^                         //
+                (MatMulShape::Hash{}(test_id.pack_shape) << 1) ^                    //
+                (IndirectMatMul::Format::Hash{}(test_id.format) << 2) ^             //
+                (std::hash<size_t>{}(test_id.k_chunk_length) << 3) ^                //
+                (std::hash<float>{}(test_id.clamp_keep_ratio.value_or(0.0)) << 4);  //
         }
     };
 
@@ -705,7 +705,9 @@ TEST_P(IndirectMatMulTest, Output) {
     *os << method.name << "__";
     PrintTo(shape, os);
     *os << "__K_chunk_length_" << k_chunk_length;
-    *os << "__clamp_keep_ratio_" << static_cast<int>(clamp_keep_ratio * 100) << "__";
+    *os << "__clamp_keep_ratio_"
+        << (clamp_keep_ratio.has_value() ? std::to_string(static_cast<int>(clamp_keep_ratio.value() * 100)) : "noclamp")
+        << "__";
     PrintTo(portion, os);
 }
 
@@ -775,7 +777,7 @@ INSTANTIATE_TEST_SUITE_P(
         testing::ValuesIn(get_indirect_matmul_shapes()),                          //
         testing::ValuesIn(std::initializer_list<size_t>{1, 2, 3, 4, 8, 11, 16}),  //
         testing::ValuesIn(get_indirect_matmul_portions()),                        //
-        testing::Values(0.5F)),                                                   //
+        testing::Values(std::nullopt)),                                           //
     testing::PrintToStringParamName());
 
 // Test suite focused on K chunk 31
@@ -786,7 +788,7 @@ INSTANTIATE_TEST_SUITE_P(
         testing::ValuesIn(get_indirect_matmul_shapes()),    //
         testing::Values(static_cast<size_t>(31)),           //
         testing::ValuesIn(get_indirect_matmul_portions()),  //
-        testing::Values(0.5F)),                             //
+        testing::Values(std::nullopt)),                     //
     testing::PrintToStringParamName());
 
 // Test suite focused on K chunk 32
@@ -797,7 +799,7 @@ INSTANTIATE_TEST_SUITE_P(
         testing::ValuesIn(get_indirect_matmul_shapes()),    //
         testing::Values(static_cast<size_t>(32)),           //
         testing::ValuesIn(get_indirect_matmul_portions()),  //
-        testing::Values(0.5F)),                             //
+        testing::Values(std::nullopt)),                     //
     testing::PrintToStringParamName());
 
 // Test suite focused on K chunk 64
@@ -808,7 +810,7 @@ INSTANTIATE_TEST_SUITE_P(
         testing::ValuesIn(get_indirect_matmul_shapes()),    //
         testing::Values(static_cast<size_t>(64)),           //
         testing::ValuesIn(get_indirect_matmul_portions()),  //
-        testing::Values(0.5F)),                             //
+        testing::Values(std::nullopt)),                     //
     testing::PrintToStringParamName());
 
 // Test suite focused on K chunk 65, other parametes are limited
@@ -819,7 +821,7 @@ INSTANTIATE_TEST_SUITE_P(
         testing::ValuesIn(get_indirect_matmul_shapes()),    //
         testing::Values(static_cast<size_t>(65)),           //
         testing::ValuesIn(get_indirect_matmul_portions()),  //
-        testing::Values(0.5F)),                             //
+        testing::Values(std::nullopt)),                     //
     testing::PrintToStringParamName());
 
 // Test suite focused on clamping values, other parametes are limited
@@ -830,7 +832,7 @@ INSTANTIATE_TEST_SUITE_P(
         testing::ValuesIn(get_indirect_matmul_shapes()),   //
         testing::Values(static_cast<size_t>(3)),           //
         testing::Values(MatrixPortion(0, 0, 1, 1)),        //
-        testing::Values(1.0F, 0.9F, 0.5F)),                //
+        testing::Values(std::nullopt, 1.0F, 0.9F, 0.5F)),  //
     testing::PrintToStringParamName());
 
 }  // namespace kai::test
