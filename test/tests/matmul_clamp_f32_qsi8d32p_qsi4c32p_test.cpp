@@ -9,14 +9,16 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <cstdlib>
+#include <iomanip>
 #include <limits>
 #include <sstream>
 #include <string>
 #include <tuple>
 
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme_dot.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p8x4_1x8_sve_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p4x8_1x4x32_neon_dotprod.h"
@@ -30,6 +32,7 @@
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qsi8d32p_f32.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qsi8d32p_f32_neon.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon.h"
+#include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0.h"
 #include "test/common/abi_checker.hpp"
 #include "test/common/buffer.hpp"
@@ -40,7 +43,6 @@
 #include "test/common/matmul_test_common.hpp"
 #include "test/common/matrix_portion.hpp"
 #include "test/common/memory.hpp"
-#include "test/common/round.hpp"
 #include "test/common/test_suite.hpp"
 #include "test/reference/cast.hpp"
 #include "test/reference/clamp.hpp"
@@ -83,7 +85,7 @@ struct UKernelVariants {
 };
 
 // clang-format off
-static const std::array<UKernelVariants, 11>
+static const std::array<UKernelVariants, 13>
     variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p = {
         {
          // NOTE: The following kernels do not support clamping despite their names.
@@ -99,8 +101,14 @@ static const std::array<UKernelVariants, 11>
              clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa, cpu_has_sme2, lhs_quant_pack_qsi8d32p_f32_neon,
              rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)},
          {UKERNEL_MATMUL_PACK_VARIANT(
+             clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme_mopa, cpu_has_sme, lhs_quant_pack_qsi8d32p_f32_neon,
+             rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon, false)},
+         {UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot, cpu_has_sme2, lhs_quant_pack_qsi8d32p_f32_neon,
              rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)},
+         {UKERNEL_MATMUL_PACK_VARIANT(
+             clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme_dot, cpu_has_sme, lhs_quant_pack_qsi8d32p_f32_neon,
+             rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon, false)},
          {UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p4x8_qsi4c32p4x8_8x4x32_neon_i8mm, cpu_has_i8mm, lhs_quant_pack_qsi8d32p_f32,
              rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
@@ -123,15 +131,21 @@ static const std::array<UKernelVariants, 11>
               clamp_f32_qsi8d32p4x8_qsi4c32p8x8_16x8_sve_i8mm, (cpu_check<cpu_has_sve_vl256, cpu_has_i8mm>), lhs_quant_pack_qsi8d32p_f32,
               rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)}}};
 
-static const std::array<UKernelVariants, 2>
+static const std::array<UKernelVariants, 4>
     variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl = {
         {
          {UKERNEL_MATMUL_PACK_VARIANT(
             clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa, cpu_has_sme2, lhs_quant_pack_qsi8d32p_f32_neon,
             rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)},
          {UKERNEL_MATMUL_PACK_VARIANT(
+            clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme_mopa, cpu_has_sme, lhs_quant_pack_qsi8d32p_f32_neon,
+            rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon, false)},
+         {UKERNEL_MATMUL_PACK_VARIANT(
             clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot, cpu_has_sme2, lhs_quant_pack_qsi8d32p_f32_neon,
-            rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)}}};
+            rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)},
+         {UKERNEL_MATMUL_PACK_VARIANT(
+            clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme_dot, cpu_has_sme, lhs_quant_pack_qsi8d32p_f32_neon,
+            rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon, false)}}};
 // clang-format on
 
 using MatMulTestParams_f32_qsi8d32p_qsi4c32p =
@@ -164,6 +178,106 @@ static const UKernelVariants& get_variant_entry(size_t variant_index, bool varia
     }
 
     return variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.at(variant_index);
+}
+
+static uint8_t get_qsu4_rhs_value(const size_t row, const size_t k_idx) {
+    return static_cast<uint8_t>((1 + (row * 5) + (k_idx * 3)) & 0x0F);
+}
+
+static Float16 get_rhs_scale_value(const size_t row, const size_t block_idx) {
+    return Float16(16.0F * static_cast<float>(1 + row + block_idx));
+}
+
+static Buffer make_s4s0_rhs_with_scales(const size_t n, const size_t k, const size_t bl) {
+    const size_t num_blocks = k / bl;
+    const size_t num_bytes_per_block = (bl / 2) + sizeof(Float16);
+    const size_t rhs_stride = num_blocks * num_bytes_per_block;
+    Buffer rhs(n * rhs_stride);
+
+    for (size_t row = 0; row < n; ++row) {
+        for (size_t block_idx = 0; block_idx < num_blocks; ++block_idx) {
+            std::byte* block = rhs.data() + (row * rhs_stride) + (block_idx * num_bytes_per_block);
+            write_array<Float16>(block, 0, get_rhs_scale_value(row, block_idx));
+
+            auto* values = reinterpret_cast<uint8_t*>(block + sizeof(Float16));
+            const size_t k_block_start = block_idx * bl;
+            for (size_t idx = 0; idx < bl / 2; ++idx) {
+                const uint8_t low = get_qsu4_rhs_value(row, k_block_start + idx);
+                const uint8_t high = get_qsu4_rhs_value(row, k_block_start + idx + (bl / 2));
+                values[idx] = static_cast<uint8_t>((high << 4) | low);
+            }
+        }
+    }
+
+    return rhs;
+}
+
+static Buffer reference_pack_s4s0sf16_rhs(const size_t n, const size_t k, const size_t nr, const size_t bl) {
+    const size_t num_blocks = k / bl;
+    const size_t num_bytes_per_block = (bl / 2) + sizeof(Float16);
+    const size_t rhs_packed_stride = nr * num_blocks * num_bytes_per_block;
+    const size_t packed_size = kai_roundup(n, nr) / nr * rhs_packed_stride;
+    const size_t packets_per_block = bl / 8;
+    const size_t scales_offset = rhs_packed_stride - (nr * num_blocks * sizeof(Float16));
+    Buffer expected(packed_size);
+
+    for (size_t group_start = 0; group_start < n; group_start += nr) {
+        const size_t rows_in_group = KAI_MIN(n - group_start, nr);
+        std::byte* group_base = expected.data() + ((group_start / nr) * rhs_packed_stride);
+        auto* group_packets = reinterpret_cast<uint32_t*>(group_base);
+
+        for (size_t block_idx = 0; block_idx < num_blocks; ++block_idx) {
+            for (size_t packet_idx = 0; packet_idx < packets_per_block; ++packet_idx) {
+                for (size_t row_idx = 0; row_idx < rows_in_group; ++row_idx) {
+                    const size_t row = group_start + row_idx;
+                    const size_t k_packet_start = (block_idx * bl) + (packet_idx * 8);
+                    uint32_t packed_packet = 0;
+
+                    for (size_t idx = 0; idx < 4; ++idx) {
+                        const uint8_t low = get_qsu4_rhs_value(row, k_packet_start + idx);
+                        const uint8_t high = get_qsu4_rhs_value(row, k_packet_start + idx + 4);
+                        const uint8_t packed_byte = static_cast<uint8_t>(((high << 4) | low) ^ 0x88U);
+                        packed_packet |= static_cast<uint32_t>(packed_byte) << (idx * 8);
+                    }
+
+                    group_packets[(block_idx * packets_per_block + packet_idx) * nr + row_idx] = packed_packet;
+                }
+            }
+
+            for (size_t row_idx = 0; row_idx < rows_in_group; ++row_idx) {
+                const size_t row = group_start + row_idx;
+                write_array<Float16>(
+                    group_base + scales_offset, (block_idx * nr) + row_idx,
+                    Float16(static_cast<float>(get_rhs_scale_value(row, block_idx)) / 16.0F));
+            }
+        }
+    }
+
+    return expected;
+}
+
+TEST(RhsPackNxkQsi4c32pS4s0Sf16Neon, ScalarFallback) {
+    constexpr size_t n = 5;
+    constexpr size_t k = 32;
+    constexpr size_t nr = 2;
+    constexpr size_t kr = 4;
+    constexpr size_t sr = 2;
+    constexpr size_t bl = 32;
+
+    const auto rhs = make_s4s0_rhs_with_scales(n, k, bl);
+    const auto expected = reference_pack_s4s0sf16_rhs(n, k, nr, bl);
+    Buffer packed(expected.size());
+
+    const kai_rhs_pack_qs4cxs1s0_param params{.lhs_zero_point = 1, .rhs_zero_point = 8};
+    abi_check(
+        kai_run_rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon, 1, n, k, nr, kr, sr, bl,
+        reinterpret_cast<const uint8_t*>(rhs.data()), nullptr, packed.data(), 0, &params);
+
+    const auto* packed_bytes = reinterpret_cast<const uint8_t*>(packed.data());
+    const auto* expected_bytes = reinterpret_cast<const uint8_t*>(expected.data());
+    for (size_t idx = 0; idx < expected.size(); ++idx) {
+        ASSERT_EQ(packed_bytes[idx], expected_bytes[idx]) << "Mismatch at byte " << idx;
+    }
 }
 
 TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, Offset_RHS) {
@@ -288,8 +402,10 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, EndToEnd) {
         std::numeric_limits<float>::max());
 
     // Clamp reference output
-    const auto [min, max] = find_clamp_range<float>(ref_dst.data(), M * N, clamp_keep_ratio);
-    const auto out_clamped = clamp<float>(ref_dst.data(), M * N, min, max);
+    const auto clamp_range = find_clamp_range<float>(ref_dst.data(), M * N, clamp_keep_ratio);
+    const float clamp_min = std::get<0>(clamp_range);
+    const float clamp_max = std::get<1>(clamp_range);
+    const auto out_clamped = clamp<float>(ref_dst.data(), M * N, clamp_min, clamp_max);
 
     // Runs the LHS packing micro-kernel.
     const auto lhs_start_row = rect.start_row();
@@ -340,12 +456,41 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, EndToEnd) {
     abi_check(
         ukernel_variant.ukernel.interface.run_matmul, rect.height(), rect.width(), K, bl,
         imp_packed_lhs.data() + lhs_matmul_offset, imp_packed_rhs.data() + rhs_matmul_offset,
-        reinterpret_cast<float*>(imp_dst.data() + dst_offset), dst_stride_row, dst_stride_col, min, max);
+        reinterpret_cast<float*>(imp_dst.data() + dst_offset), dst_stride_row, dst_stride_col, clamp_min, clamp_max);
 
     DefaultMismatchHandler handler(0, 0.02, 0, 0.05);
     const auto success = compare(imp_dst.data(), out_clamped.data(), DataType::FP32, M, N, rect, handler);
 
     ASSERT_TRUE(success);
+
+    // The standard clamping test uses finite min and max values. Exercise one-sided clamping for the SME MOPA path.
+    if (variant_index == 3 && !variable_bl && M == 1 && N == 40 && K == 32 && rect.height() == M && rect.width() == N &&
+        clamp_keep_ratio == 1.0F) {
+        const auto one_sided_clamp_range = find_clamp_range<float>(ref_dst.data(), M * N, 0.5F);
+        const std::array<std::tuple<float, float>, 2> one_sided_clamp_bounds = {{
+            {std::get<0>(one_sided_clamp_range), std::numeric_limits<float>::max()},
+            {std::numeric_limits<float>::lowest(), std::get<1>(one_sided_clamp_range)},
+        }};
+
+        for (const auto& [one_sided_clamp_min, one_sided_clamp_max] : one_sided_clamp_bounds) {
+            SCOPED_TRACE(
+                "one_sided_clamp_min=" + std::to_string(one_sided_clamp_min) +
+                " one_sided_clamp_max=" + std::to_string(one_sided_clamp_max));
+
+            const auto one_sided_out_clamped =
+                clamp<float>(ref_dst.data(), M * N, one_sided_clamp_min, one_sided_clamp_max);
+            Buffer one_sided_imp_dst(imp_dst_size);
+            abi_check(
+                ukernel_variant.ukernel.interface.run_matmul, rect.height(), rect.width(), K, bl,
+                imp_packed_lhs.data() + lhs_matmul_offset, imp_packed_rhs.data() + rhs_matmul_offset,
+                reinterpret_cast<float*>(one_sided_imp_dst.data() + dst_offset), dst_stride_row, dst_stride_col,
+                one_sided_clamp_min, one_sided_clamp_max);
+
+            const auto one_sided_success =
+                compare(one_sided_imp_dst.data(), one_sided_out_clamped.data(), DataType::FP32, M, N, rect, handler);
+            ASSERT_TRUE(one_sided_success);
+        }
+    }
 }
 
 INSTANTIATE_TEST_SUITE_P(
