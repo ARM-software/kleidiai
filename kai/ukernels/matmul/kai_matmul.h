@@ -42,6 +42,31 @@ extern "C" {
 /// @return The micro-kernel API.
 struct kai_matmul_uker_api kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8vs_sme2_mopa(void);
 
+/// Matrix multiplication with 32-bit integer accumulation using SME2 MOPA instruction.
+///
+/// Required CPU features:
+///   * FEAT_SME2
+///
+/// Configuration parameters: none.
+///
+/// Operands:
+///   * dst - The output matrix.
+///     * Output matrix: I32 in plain format.
+///   * lhs - The LHS matrix.
+///     * LHS matrix: U8 in 4vsx4 blocked format.
+///   * rhs - The RHS matrix.
+///     * RHS matrix: U8 in 4vsx4 blocked format.
+///   * bias
+///     * acc_bias_m - Accumulator row bias in I32
+///     * acc_bias_n - Accumulator column bias in I32
+///
+/// Matrix multiplication:
+///   * Accumulator type: I32.
+///   * Primary output block: 8vsx8vs.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa(void);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

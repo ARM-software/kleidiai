@@ -81,22 +81,59 @@ struct kai_matmul_uker_dst_args {
     struct kai_matmul_uker_dst_stride_args stride;  ///< Strides in bytes.
 };
 
+//// Bias types ////
+///
+/// Bias can be applied at multiple stages
+/// * `acc_bias` - Bias applied at the accumulation stage
+///
+/// There are different kind of biases.
+/// * `global` - Scalar value applied to entire _stage_ for a global value shift
+/// * `m` - Scalar value applied to each row of _stage_ for a per row value shift
+/// * `n` - Scalar value applied to each column _stage_ for a per column value shift
+
+/// Global accumulation bias parameters
+struct kai_matmul_uker_acc_bias_global_args {
+    const void* ptr;  ///< Global accumulation bias value
+};
+
+/// Per M accumulation bias
+struct kai_matmul_uker_acc_bias_m_args {
+    const void* ptr;  ///< Per row accumulation bias vector
+};
+
+/// Per N accumulation bias
+struct kai_matmul_uker_acc_bias_n_args {
+    const void* ptr;  ///< Column accumulation bias vector
+};
+
+/// Bias parameters
+struct kai_matmul_uker_bias_args {
+    struct kai_matmul_uker_acc_bias_global_args acc_bias_global;  ///< Accumulation bias, global
+    struct kai_matmul_uker_acc_bias_m_args acc_bias_m;            ///< Accumulation bias, per row
+    struct kai_matmul_uker_acc_bias_n_args acc_bias_n;            ///< Accumulation bias, per column
+};
+
+//// Activation parameter types ////
+
 /// Clamping activation arguments for matrix multiplication micro-kernel.
 struct kai_matmul_uker_clamp_args {
     const void* min_ptr;  ///< Pointer to the minimum value.
     const void* max_ptr;  ///< Pointer to the maximum value.
 };
 
-/// Operands for matrix multiplication micro-kernel.
-struct kai_matmul_uker_operand_args {
-    struct kai_matmul_uker_dst_args dst;  ///< Output buffer.
-    struct kai_matmul_uker_lhs_args lhs;  ///< LHS buffer.
-    struct kai_matmul_uker_rhs_args rhs;  ///< RHS buffer.
-};
-
 /// Activation function arguments for matrix multiplication micro-kernel.
 struct kai_matmul_uker_activation_args {
     struct kai_matmul_uker_clamp_args clamp;  ///< Output clamping function.
+};
+
+//// Operand and high level argument types ////
+
+/// Operands for matrix multiplication micro-kernel.
+struct kai_matmul_uker_operand_args {
+    struct kai_matmul_uker_dst_args dst;    ///< Output buffer.
+    struct kai_matmul_uker_lhs_args lhs;    ///< LHS buffer.
+    struct kai_matmul_uker_rhs_args rhs;    ///< RHS buffer.
+    struct kai_matmul_uker_bias_args bias;  ///< Bias parameters
 };
 
 /// Matrix multiplication micro-kernel run arguments.
