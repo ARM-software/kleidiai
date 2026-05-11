@@ -10,12 +10,25 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+- New SME micro-kernels
+  - Added an x8 matmul pack micro-kernel family with 4vsx4 blocked layout.
+
+## v1.25.0
+
+- Optimizations
+  - Optimize rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon for Int4 GEMM/GEMV kernels
+- Fixes
+  - Fix RHS tail handling in `kai_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa`.
+
 ## v1.24.0
 
 - New SME micro-kernels
   - Matrix Multiplication (1xN) Micro-Kernel of QAI8DXP LHS and QSI4CXP RHS with F32 output.
   - Matrix Multiplication (MxN) Micro-Kernel of QAI8DXP LHS and QSI4CXP RHS with F32 output.
-  - Added an x8 matmul pack micro-kernel family with 4vsx4 blocked layout.
+  - Matrix Multiplication (1xN) Micro-Kernel of QSI8D32P LHS and QSI4C32P RHS variable block with F32 output.
+  - Matrix Multiplication (MxN) Micro-Kernel of QSI8D32P LHS and QSI4C32P RHS variable block with F32 output.
+- New RHS packing kernels to support SME int4 variable block kernels:
+  - Add common RHS packer `kai_rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon` for new SME micro-kernels, using K+0/K+4 nibble order for more efficient int4 decode.
 
 ## v1.23.0
 

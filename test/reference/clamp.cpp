@@ -19,12 +19,15 @@
 namespace kai::test {
 
 template <typename T>
-std::tuple<T, T> find_clamp_range(const void* src, size_t len, float keep_ratio) {
-    KAI_ASSUME_ALWAYS(keep_ratio > 0.0F);
-    KAI_ASSUME_ALWAYS(keep_ratio <= 1.0F);
-
+std::tuple<T, T> find_clamp_range(const void* src, size_t len, std::optional<float> keep_ratio) {
+    if (!keep_ratio.has_value()) {
+        return {numeric_lowest<T>, numeric_highest<T>};
+    }
     T min_value = numeric_highest<T>;
     T max_value = numeric_lowest<T>;
+
+    KAI_ASSUME_ALWAYS(keep_ratio.value() > 0.0F);
+    KAI_ASSUME_ALWAYS(keep_ratio.value() <= 1.0F);
 
     for (size_t i = 0; i < len; ++i) {
         const T value = read_array<T>(src, i);
@@ -37,7 +40,7 @@ std::tuple<T, T> find_clamp_range(const void* src, size_t len, float keep_ratio)
     max_value = std::min(max_value, numeric_highest<T>);
 
     const T range = max_value - min_value;
-    const T reduction = static_cast<T>(static_cast<float>(range) * (1.0F - keep_ratio) / 2);
+    const T reduction = static_cast<T>(static_cast<float>(range) * (1.0F - keep_ratio.value()) / 2);
 
     const T clamp_min_value = min_value + reduction;
     const T clamp_max_value = max_value - reduction;
@@ -45,21 +48,24 @@ std::tuple<T, T> find_clamp_range(const void* src, size_t len, float keep_ratio)
     return {clamp_min_value, clamp_max_value};
 }
 
-template std::tuple<float, float> find_clamp_range(const void* src, size_t len, float keep_ratio);
-template std::tuple<Float16, Float16> find_clamp_range(const void* src, size_t len, float keep_ratio);
+template std::tuple<float, float> find_clamp_range(const void* src, size_t len, std::optional<float> keep_ratio);
+template std::tuple<Float16, Float16> find_clamp_range(const void* src, size_t len, std::optional<float> keep_ratio);
 
-std::tuple<float, float> find_clamp_range(DataType type, const void* src, size_t len, float keep_ratio) {
-    KAI_ASSUME_ALWAYS(keep_ratio > 0.0F);  // Avoid total clamping.
+std::tuple<float, float> find_clamp_range(DataType type, const void* src, size_t len, std::optional<float> keep_ratio) {
+    if (!keep_ratio.has_value()) {
+        return {std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max()};
+    }
     auto max = std::numeric_limits<float>::lowest();
     auto min = std::numeric_limits<float>::max();
 
+    KAI_ASSUME_ALWAYS(keep_ratio.value() > 0.0F);  // Avoid total clamping.
     for (size_t i = 0; i < len; i += 1) {
         const float value = read_array(type, src, i);
         max = std::max(value, max);
         min = std::min(value, min);
     }
 
-    const float reduction = (max - min) * (1.0F - keep_ratio) / 2.0F;
+    const float reduction = (max - min) * (1.0F - keep_ratio.value()) / 2.0F;
     return {min + reduction, max - reduction};
 }
 

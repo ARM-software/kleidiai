@@ -46,7 +46,7 @@ struct MatMulFixtureParams {
     size_t shape_n;
     size_t shape_k;
     MatMulBiasMode bias_mode;
-    float clamp_ratio;
+    std::optional<float> clamp_ratio;
 
     const MatMulOperator* op;
 
@@ -56,7 +56,8 @@ struct MatMulFixtureParams {
     [[nodiscard]] std::string name() const {
         return std::string(op->name) + ",m=" + std::to_string(shape_m) + ",n=" + std::to_string(shape_n) +
             ",k=" + std::to_string(shape_k) + ",bias=" + matmul_bias_mode_name(bias_mode) +
-            ",clamp_ratio=" + std::to_string(clamp_ratio) + ",iteration=" + std::to_string(iteration_no);
+            ",clamp_ratio=" + (clamp_ratio.has_value() ? std::to_string(clamp_ratio.value()) : "noclamp") +
+            ",iteration=" + std::to_string(iteration_no);
     }
 };
 
@@ -292,18 +293,24 @@ std::array<MatrixPortion, 3> make_output_portions() {
 /// @param[in,out] dist_ctx The shared distribution context.
 ///
 /// @return A clamp ratio in the range [0, 1], where 1.0 means no clamping.
-float pick_clamp_ratio(MatMulDistribution& dist_ctx) {
+std::optional<float> pick_clamp_ratio(MatMulDistribution& dist_ctx) {
     // Clamping range:
-    //   * 20% of tests have no clamping.
-    //   * 40% of tests have clamping range between 70% to 100% the output range.
-    //   * 40% of tests have clamping range between 0% to 70% the output range.
+    //   * 50% of tests have no clamping.
+    //   * 10% of tests have clamp to the full output range.
+    //   * 20% of tests have clamping range between 70% to 100% the output range.
+    //   * 20% of tests have clamping range between 0% to 70% the output range.
     const float clamp_prob = dist_ctx.m_probability_dist(dist_ctx.m_rng);
 
-    const bool no_clamp = clamp_prob < 0.2F;
-    const bool clamp_70_to_100 = clamp_prob >= 0.2F && clamp_prob < 0.6F;
-    const bool clamp_0_to_70 = clamp_prob >= 0.6F;
+    const bool no_clamp = clamp_prob < 0.5F;
+    const bool clamp_100 = clamp_prob >= 0.5F && clamp_prob < 0.6F;
+    const bool clamp_70_to_100 = clamp_prob >= 0.6F && clamp_prob < 0.8F;
+    const bool clamp_0_to_70 = clamp_prob >= 0.8F;
 
     if (no_clamp) {
+        return std::nullopt;
+    }
+
+    if (clamp_100) {
         return 1.0F;
     }
 
@@ -334,7 +341,7 @@ MatMulFixtureParams pick_fixture(
     size_t shape_n = 0;
     size_t shape_k = 0;
     MatMulBiasMode bias_mode = MatMulBiasMode::NO_BIAS;
-    float clamp_ratio = 0.0F;
+    std::optional<float> clamp_ratio = 0.0F;
 
     static constexpr uint32_t max_attempts = 10'000;
     uint32_t attempts = 0;

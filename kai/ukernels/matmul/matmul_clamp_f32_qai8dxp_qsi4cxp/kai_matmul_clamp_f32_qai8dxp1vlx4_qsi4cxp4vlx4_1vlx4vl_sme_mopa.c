@@ -24,10 +24,11 @@ typedef struct {
     size_t n;                // 0x28
     size_t lhs_stride;       // 0x30
     size_t rhs_stride;       // 0x38
-    size_t m_blk;            // 0x40
-    size_t dst_inc;          // 0x48
-    float clamp_min;         // 0x50
-    float clamp_max;         // 0x54
+    size_t rhs_row_bytes;    // 0x40
+    size_t m_blk;            // 0x48
+    size_t dst_inc;          // 0x50
+    float clamp_min;         // 0x58
+    float clamp_max;         // 0x5c
 } KernelArgs;
 
 extern void kai_kernel_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa(KernelArgs* args_ptr);
@@ -139,6 +140,8 @@ void kai_run_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa(
     KAI_ASSERT(m > 0);
 
     const uint64_t mr = kai_get_mr_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa();
+    const uint64_t nr = kai_get_nr_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa();
+    const uint64_t k_internal = kai_k_roundedup(k);
     KernelArgs args;
     args.dst = dst;
     args.lhs_packed = lhs_packed;
@@ -148,7 +151,8 @@ void kai_run_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa(
     args.n = n;
     args.lhs_stride = kai_get_lhs_packed_stride(k);
     args.rhs_stride = kai_get_rhs_packed_stride(k);
-    args.m_blk = (uint64_t)kai_k_roundedup(k) * mr;
+    args.rhs_row_bytes = nr * (k_internal / kai_recip_num_bytes_qvalue_rhs);
+    args.m_blk = k_internal * mr;
     args.dst_inc = mr * dst_stride_row;
     args.clamp_min = scalar_min;
     args.clamp_max = scalar_max;

@@ -37,7 +37,7 @@
 namespace kai::test {
 
 MatMulTb::MatMulTb(
-    size_t shape_m, size_t shape_n, size_t shape_k, MatMulBiasMode bias_mode, float clamp_ratio,
+    size_t shape_m, size_t shape_n, size_t shape_k, MatMulBiasMode bias_mode, std::optional<float> clamp_ratio,
     const MatMulOperator* op) :
     m_shape_m(shape_m),
     m_shape_n(shape_n),
@@ -346,14 +346,23 @@ void MatMulTb::compute_ref_matmul() {
             KAI_TEST_ERROR("Not supported.");
     }
 
-    const DynamicClampFn dynamic_clamp_fn = make_dynamic_clamp(m_op->acc_dtype);
-    auto [clamp_args, clampped_dst] = dynamic_clamp_fn(m_clamp_ratio, {m_shape_m, m_shape_n}, dst);
-
-    kernel_args.set_shape({clamp_args.size()}).set_data(std::move(clamp_args));
-
     KAI_TEST_ASSERT_MSG(
         m_op->dst_dtype == m_op->acc_dtype, "Only support the accumulator and output type being the same.");
-    ref_dst_data.set_data(std::move(clampped_dst));
+
+    Buffer clamp_args(sizeof(std::optional<ClampLimits<float>>), 0);
+
+    if (m_clamp_ratio.has_value()) {
+        const DynamicClampFn dynamic_clamp_fn = make_dynamic_clamp(m_op->acc_dtype);
+        auto [clamp_range, clamped_dst] = dynamic_clamp_fn(m_clamp_ratio.value(), {m_shape_m, m_shape_n}, dst);
+        ref_dst_data.set_data(std::move(clamped_dst));
+        *reinterpret_cast<std::optional<ClampLimits<float>>*>(clamp_args.data()) = {
+            reinterpret_cast<ClampLimits<float>*>(clamp_range.data())->min_value,
+            reinterpret_cast<ClampLimits<float>*>(clamp_range.data())->max_value};
+    } else {
+        *reinterpret_cast<std::optional<ClampLimits<float>>*>(clamp_args.data()) = std::nullopt;
+        ref_dst_data.set_data(std::move(dst));
+    }
+    kernel_args.set_shape({clamp_args.size()}).set_data(std::move(clamp_args));
 }
 
 std::tuple<size_t, size_t> MatMulTb::lhs_packing_steps() const {

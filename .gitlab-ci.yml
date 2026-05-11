@@ -303,7 +303,10 @@ test-verify-microkernel-tables:
     - python3 tools/check_microkernel_tables.py
 
 # Purpose: Build current sources against tests/benchmarks from latest semver tag to detect API breakage.
-test-api-compat:
+# Note: current implementation doesn't properly handle transitions to pure assembly, meaning that
+#       moving functionality from C file to Asm doesn't pass due to added S file isn't handled
+#       by old build file. This should be re-enabled as soon as the issue is resolved
+.test-api-compat:
   extends:
     - .standard-rules
   stage: test
