@@ -11,6 +11,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <test/common/data_type.hpp>
+#include <vector>
 
 #include "kai/kai_common.h"
 #include "kai/ukernels/matmul/kai_matmul_types.h"
@@ -66,6 +67,9 @@ public:
     /// @param dst Destination buffer to write to.
     void run(const void* lhs, const void* rhs, void* dst);
 
+    /// Prepares auxiliary data required by the matrix multiplication micro-kernel.
+    void prepare();
+
 private:
     MatMulInterface matmul_interface_ = {};
 
@@ -79,7 +83,16 @@ private:
     size_t lhs_stride_ = 1;
     size_t dst_stride_row_ = 1;
     size_t dst_stride_col_ = 1;
+
+    std::vector<std::byte> acc_bias_m_;
+    std::vector<std::byte> acc_bias_n_;
 };
+
+/// Prepares auxiliary data required by the matrix multiplication micro-kernel.
+template <typename MatMulInterface>
+void MatMulRunner<MatMulInterface>::prepare() {
+    // Default to no-op
+}
 
 /// Runs the matrix multiplication micro-kernel.
 ///
@@ -206,12 +219,13 @@ inline void MatMulRunner<MatMulUkernelApiInterface>::run(const void* lhs, const 
     const auto config = matmul_interface_.get_config();
 
     const ClampArgs clamp_args{-FLT_MAX, FLT_MAX};
+    const bool has_clamp = (matmul_interface_.flags & KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP) != 0;
 
     const kai_matmul_uker_lhs_dim_args lhs_shape = {m_, k_};
     const kai_matmul_uker_rhs_dim_args rhs_shape = {n_, k_};
 
     kai_matmul_uker_args args = {};
-    args.flags = KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP;
+    args.flags = matmul_interface_.flags;
 
     args.shape.m = m_;
     args.shape.n = n_;
@@ -226,10 +240,39 @@ inline void MatMulRunner<MatMulUkernelApiInterface>::run(const void* lhs, const 
     args.operand.dst.ptr = dst;
     args.operand.dst.stride.m = dst_stride_row_;
 
-    args.activation.clamp.min_ptr = &clamp_args.min;
-    args.activation.clamp.max_ptr = &clamp_args.max;
+    if (has_clamp) {
+        args.activation.clamp.min_ptr = &clamp_args.min;
+        args.activation.clamp.max_ptr = &clamp_args.max;
+    }
+
+    if ((matmul_interface_.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_ACC_BIAS_M) != 0) {
+        args.operand.bias.acc_bias_m.ptr = acc_bias_m_.data();
+    }
+
+    if ((matmul_interface_.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_ACC_BIAS_N) != 0) {
+        args.operand.bias.acc_bias_n.ptr = acc_bias_n_.data();
+    }
 
     api.run(&config, &args);
+}
+
+/// Prepares auxiliary data required by the ukernel API interface.
+template <>
+inline void MatMulRunner<MatMulUkernelApiInterface>::prepare() {
+    acc_bias_m_.clear();
+    acc_bias_n_.clear();
+
+    // Allocate row bias for accumulation stage
+    if ((matmul_interface_.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_ACC_BIAS_M) != 0) {
+        KAI_ASSUME(matmul_interface_.acc_bias_elem_size != 0);
+        acc_bias_m_.resize(m_ * matmul_interface_.acc_bias_elem_size);
+    }
+
+    // Allocate column bias for accumulation stage
+    if ((matmul_interface_.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_ACC_BIAS_N) != 0) {
+        KAI_ASSUME(matmul_interface_.acc_bias_elem_size != 0);
+        acc_bias_n_.resize(n_ * matmul_interface_.acc_bias_elem_size);
+    }
 }
 
 }  // namespace kai::benchmark

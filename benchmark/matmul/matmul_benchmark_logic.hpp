@@ -93,6 +93,7 @@ void kai_benchmark_matmul(
     MatMulRunner matmul_runner(matmul_interface, dst_type);
     matmul_runner.set_mnk(m, n, k);
     matmul_runner.set_bl(bl);
+    matmul_runner.prepare();
 
     const bool cycle_counter_available = cycle_counter_init();
     uint64_t total_cycles = 0;

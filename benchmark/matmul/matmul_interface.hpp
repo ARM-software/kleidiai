@@ -8,11 +8,17 @@
 #define KLEIDIAI_BENCHMARK_MATMUL_MATMUL_INTERFACE_HPP
 
 #include <cstddef>
+#include <cstdint>
 
 #include "kai/kai_common.h"
 #include "kai/ukernels/matmul/kai_matmul_types.h"
 
 namespace kai::benchmark {
+
+enum : uint32_t {
+    KAI_BENCHMARK_MATMUL_UKER_ARGS_ACC_BIAS_M = 1U << 0,
+    KAI_BENCHMARK_MATMUL_UKER_ARGS_ACC_BIAS_N = 1U << 1,
+};
 
 /// Abstraction for the unspecialized Matrix Multiplication microkernel interface
 struct MatMulBaseInterface {
@@ -100,6 +106,9 @@ struct MatMulBlockwiseDynamicQuantLutInterface {
 struct MatMulUkernelApiInterface {
     kai_matmul_uker_config (*get_config)(void);
     kai_matmul_uker_api (*get_api)(void);
+    uint64_t flags = 0;
+    uint32_t args_flags = 0;
+    size_t acc_bias_elem_size = 0;
 };
 
 }  // namespace kai::benchmark
