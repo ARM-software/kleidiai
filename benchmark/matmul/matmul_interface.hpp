@@ -18,6 +18,8 @@ namespace kai::benchmark {
 enum : uint32_t {
     KAI_BENCHMARK_MATMUL_UKER_ARGS_ACC_BIAS_M = 1U << 0,
     KAI_BENCHMARK_MATMUL_UKER_ARGS_ACC_BIAS_N = 1U << 1,
+    KAI_BENCHMARK_MATMUL_UKER_ARGS_SCALE_BIAS_N = 1U << 2,
+    KAI_BENCHMARK_MATMUL_UKER_ARGS_ACC_SCALE_GLOBAL = 1U << 3,
 };
 
 /// Abstraction for the unspecialized Matrix Multiplication microkernel interface
@@ -109,6 +111,8 @@ struct MatMulUkernelApiInterface {
     uint64_t flags = 0;
     uint32_t args_flags = 0;
     size_t acc_bias_elem_size = 0;
+    size_t acc_scale_elem_size = 0;
+    size_t scale_bias_elem_size = 0;
 };
 
 }  // namespace kai::benchmark
