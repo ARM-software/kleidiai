@@ -22,6 +22,9 @@
 
 namespace kai::test {
 
+using MatMulKernelPtr = std::unique_ptr<KernelWrapper<MatMulShape>>;
+using MatPackKernelPtr = std::unique_ptr<KernelWrapper<MatShape>>;
+
 /// Matrix multiplication operator.
 struct MatMulOperator {
     std::string_view name;
@@ -41,9 +44,9 @@ struct MatMulOperator {
     DataType acc_dtype;
     DataType dst_dtype;
 
-    std::optional<std::unique_ptr<KernelWrapper<MatShape>>> pack_lhs;
-    std::optional<std::unique_ptr<KernelWrapper<MatShape>>> pack_rhs;
-    std::unique_ptr<KernelWrapper<MatMulShape>> matmul;
+    std::optional<MatPackKernelPtr> pack_lhs;
+    std::optional<MatPackKernelPtr> pack_rhs;
+    std::optional<MatMulKernelPtr> matmul;
 };
 
 [[nodiscard]] Span<const MatMulOperator> get_available_matmul_operators();

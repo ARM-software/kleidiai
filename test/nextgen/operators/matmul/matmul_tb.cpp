@@ -54,16 +54,16 @@ void MatMulTb::generate_test_data(Rng& rng) {
     determine_required_tensors();
 
     // Populates the constant information.
-    m_op->matmul->populate_constant_info(m_tensors);
-
-    if (m_op->pack_lhs.has_value()) {
-        const KernelWrapper<MatShape>& pack_lhs = *m_op->pack_lhs.value();
-        pack_lhs.populate_constant_info(m_tensors);
+    if (const std::optional<MatMulKernelPtr>& matmul = m_op->matmul) {
+        (*matmul)->populate_constant_info(m_tensors);
     }
 
-    if (m_op->pack_rhs.has_value()) {
-        const KernelWrapper<MatShape>& pack_rhs = *m_op->pack_rhs.value();
-        pack_rhs.populate_constant_info(m_tensors);
+    if (const std::optional<MatPackKernelPtr>& pack_lhs = m_op->pack_lhs) {
+        (*pack_lhs)->populate_constant_info(m_tensors);
+    }
+
+    if (const std::optional<MatPackKernelPtr>& pack_rhs = m_op->pack_rhs) {
+        (*pack_rhs)->populate_constant_info(m_tensors);
     }
 
     // Generates the non-quantized inputs.
@@ -108,7 +108,9 @@ void MatMulTb::generate_test_data(Rng& rng) {
         compute_ref_packed_rhs();
     }
 
-    compute_ref_matmul();
+    if (m_op->matmul.has_value()) {
+        compute_ref_matmul();
+    }
 }
 
 void MatMulTb::populate_config() {
@@ -131,7 +133,9 @@ void MatMulTb::determine_required_tensors() {
         }
     };
 
-    add_required_tensors(m_op->matmul.get());
+    if (m_op->matmul.has_value()) {
+        add_required_tensors(m_op->matmul.value().get());
+    }
 
     if (m_op->pack_lhs.has_value()) {
         add_required_tensors(m_op->pack_lhs.value().get());
@@ -416,11 +420,14 @@ void MatMulTb::test_rhs_packing(size_t start_n, size_t start_k, size_t size_n, s
 }
 
 std::tuple<size_t, size_t> MatMulTb::matmul_steps() const {
-    const std::vector<size_t> steps = m_op->matmul->steps({m_shape_m, m_shape_n, m_shape_k}, m_tensors);
+    const KernelWrapper<MatMulShape>& matmul = *m_op->matmul.value();
+    const std::vector<size_t> steps = matmul.steps({m_shape_m, m_shape_n, m_shape_k}, m_tensors);
     return {steps.at(as_idx(MatMulDim::M)), steps.at(as_idx(MatMulDim::N))};
 }
 
 void MatMulTb::test_matmul(size_t start_m, size_t start_n, size_t size_m, size_t size_n) {
+    const KernelWrapper<MatMulShape>& matmul = *m_op->matmul.value();
+
     const std::array matmul_full_shape{m_shape_m, m_shape_n, m_shape_k};
     const std::array matmul_tile_coords{start_m, start_n, static_cast<size_t>(0)};
     const std::array matmul_tile_shape{size_m, size_n, m_shape_k};
@@ -429,7 +436,7 @@ void MatMulTb::test_matmul(size_t start_m, size_t start_n, size_t size_m, size_t
     const std::array dst_tile_coords{start_m, start_n};
     const std::array dst_tile_shape{size_m, size_n};
 
-    m_op->matmul->run(matmul_full_shape, matmul_tile_coords, matmul_tile_shape, m_tensors);
+    matmul.run(matmul_full_shape, matmul_tile_coords, matmul_tile_shape, m_tensors);
 
     const Tensor& ref_dst_data = get_tensor(MatMulSlot::DST_DATA);
     const Tensor& imp_dst_data = get_tensor(MatMulSlot::DST_DATA_IMP);

@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -46,7 +46,7 @@ bool data_type_is_integral(DataType dt) {
 }
 
 bool data_type_is_float(DataType dt) {
-    KAI_ASSERT_ALWAYS(data_type_is_signed(dt));
+    KAI_ASSERT_ALWAYS(dt != DataType::UNKNOWN);
     return !data_type_is_integral(dt);
 }
 

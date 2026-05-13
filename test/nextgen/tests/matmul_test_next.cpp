@@ -396,7 +396,7 @@ void register_operator_test(
             test_params);
     }
 
-    if (op.matmul != nullptr) {
+    if (op.matmul.has_value()) {
         KAI_REGISTER_TEST(
             MatMulFixture, MatMulMatMulTest, test_suite_name.c_str(), ("MatMul/" + desc).c_str(), fixture_params,
             test_params);

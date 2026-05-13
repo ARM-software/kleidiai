@@ -23,17 +23,24 @@
 
 namespace kai::test {
 
+namespace {
+
+/// Combine several functions, and return true of all return true
+template <auto... Functions>
+constexpr auto all_true = [](auto... args) -> bool { return (Functions(args...) && ...); };
+
+}  // namespace
+
 Span<const MatMulOperator> get_available_matmul_operators() {
-    static std::array<MatMulOperator, 5> operators;
+    static std::array<MatMulOperator, 6> operators;
 
     // matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa
     operators[0].name = "matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa";
 
     operators[0].is_cpu_supported = cpu_has_sme2;
-    operators[0].is_shape_suitable = [](size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
-        return is_shape_suitable_lhs_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa(shape_m, shape_n, shape_k, portion) &&
-            is_shape_suitable_rhs_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa(shape_m, shape_n, shape_k, portion);
-    };
+    operators[0].is_shape_suitable = all_true<                              //
+        is_shape_suitable_lhs_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa,  //
+        is_shape_suitable_rhs_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa>;
 
     operators[0].supported_bias_modes = {MatMulBiasMode::NO_BIAS, MatMulBiasMode::PER_N};
 
@@ -57,10 +64,9 @@ Span<const MatMulOperator> get_available_matmul_operators() {
     operators[1].name = "matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot";
 
     operators[1].is_cpu_supported = cpu_has_sme2;
-    operators[1].is_shape_suitable = [](size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
-        return is_shape_suitable_lhs_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot(shape_m, shape_n, shape_k, portion) &&
-            is_shape_suitable_rhs_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot(shape_m, shape_n, shape_k, portion);
-    };
+    operators[1].is_shape_suitable = all_true<                          //
+        is_shape_suitable_lhs_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot,  //
+        is_shape_suitable_rhs_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot>;
 
     operators[1].supported_bias_modes = {MatMulBiasMode::NO_BIAS, MatMulBiasMode::PER_N};
 
@@ -84,10 +90,9 @@ Span<const MatMulOperator> get_available_matmul_operators() {
     operators[2].name = "matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa";
 
     operators[2].is_cpu_supported = cpu_has_sme2;
-    operators[2].is_shape_suitable = [](size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
-        return is_shape_suitable_lhs_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa(shape_m, shape_n, shape_k, portion) &&
-            is_shape_suitable_rhs_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa(shape_m, shape_n, shape_k, portion);
-    };
+    operators[2].is_shape_suitable = all_true<                       //
+        is_shape_suitable_lhs_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa,  //
+        is_shape_suitable_rhs_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa>;
 
     operators[2].supported_bias_modes = {MatMulBiasMode::PER_N};
 
@@ -109,10 +114,9 @@ Span<const MatMulOperator> get_available_matmul_operators() {
     operators[3].name = "matmul_clamp_f32_f32p4vsx1_f32p4vsx1b_8vsx8vs_elastic_sme2_mopa";
 
     operators[3].is_cpu_supported = cpu_has_sme2;
-    operators[3].is_shape_suitable = [](size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
-        return is_shape_suitable_lhs_x32p4vsx1_x32_sme(shape_m, shape_n, shape_k, portion) &&
-            is_shape_suitable_rhs_kxn_x32p4vsx1bx32_x32_x32_sme(shape_m, shape_n, shape_k, portion);
-    };
+    operators[3].is_shape_suitable = all_true<    //
+        is_shape_suitable_lhs_x32p4vsx1_x32_sme,  //
+        is_shape_suitable_rhs_kxn_x32p4vsx1bx32_x32_x32_sme>;
     operators[3].supported_bias_modes = {MatMulBiasMode::PER_N};
     operators[3].lhs_quant = std::nullopt;
     operators[3].rhs_quant = std::nullopt;
@@ -131,10 +135,9 @@ Span<const MatMulOperator> get_available_matmul_operators() {
     operators[4].name = "matmul_clamp_t_f32_f32p4vsx1_f32p4vsx1b_8vsx8vs_elastic_sme2_mopa";
 
     operators[4].is_cpu_supported = cpu_has_sme2;
-    operators[4].is_shape_suitable = [](size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
-        return is_shape_suitable_lhs_x32p4vsx1_x32_sme(shape_m, shape_n, shape_k, portion) &&
-            is_shape_suitable_rhs_nxk_x32p4vsx1bx32_x32_x32_sme(shape_m, shape_n, shape_k, portion);
-    };
+    operators[4].is_shape_suitable = all_true<    //
+        is_shape_suitable_lhs_x32p4vsx1_x32_sme,  //
+        is_shape_suitable_rhs_nxk_x32p4vsx1bx32_x32_x32_sme>;
     operators[4].supported_bias_modes = {MatMulBiasMode::PER_N};
     operators[4].lhs_quant = std::nullopt;
     operators[4].rhs_quant = std::nullopt;
@@ -148,6 +151,25 @@ Span<const MatMulOperator> get_available_matmul_operators() {
     operators[4].pack_lhs = create_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme();
     operators[4].pack_rhs = create_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme();
     operators[4].matmul = create_matmul_clamp_f32_f32p4vsx1_f32p4vsx1b_8vsx8vs_elastic_sme2_mopa();
+
+    // kai_matmul_clamp_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa - pack-only
+    operators[5].name = "matmul_clamp_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa";
+
+    operators[5].is_cpu_supported = cpu_has_sme;
+    operators[5].is_shape_suitable = all_true<is_shape_suitable_lhs_x8p4vsx4_x8_sme>;
+    operators[5].supported_bias_modes = {MatMulBiasMode::NO_BIAS};
+    operators[5].lhs_quant = std::nullopt;
+    operators[5].rhs_quant = std::nullopt;
+    operators[5].bias_quant = std::nullopt;
+    operators[5].lhs_dtype = DataType::U8;
+    operators[5].rhs_dtype = DataType::U8;
+    operators[5].bias_dtype = DataType::I32;  // placeholder value
+    operators[5].acc_dtype = DataType::I32;   // placeholder value
+    operators[5].dst_dtype = DataType::I32;   // placeholder value
+
+    operators[5].pack_lhs = create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme();
+    operators[5].pack_rhs = std::nullopt;
+    operators[5].matmul = std::nullopt;
 
     return operators;
 }
