@@ -83,34 +83,89 @@ struct kai_matmul_uker_dst_args {
 
 //// Bias types ////
 ///
-/// Bias can be applied at multiple stages
+/// Bias can be applied at multiple stages:
 /// * `acc_bias` - Bias applied at the accumulation stage
+/// * `scale_bias` - Bias applied to the scaled accumulation stage
 ///
 /// There are different kind of biases.
 /// * `global` - Scalar value applied to entire _stage_ for a global value shift
 /// * `m` - Scalar value applied to each row of _stage_ for a per row value shift
 /// * `n` - Scalar value applied to each column _stage_ for a per column value shift
 
+/// Accumulation stage ///
+
 /// Global accumulation bias parameters
 struct kai_matmul_uker_acc_bias_global_args {
     const void* ptr;  ///< Global accumulation bias value
 };
 
-/// Per M accumulation bias
+/// Per-M accumulation bias
 struct kai_matmul_uker_acc_bias_m_args {
-    const void* ptr;  ///< Per row accumulation bias vector
+    const void* ptr;  ///< Per-M accumulation bias vector
 };
 
-/// Per N accumulation bias
+/// Per-N accumulation bias
 struct kai_matmul_uker_acc_bias_n_args {
-    const void* ptr;  ///< Column accumulation bias vector
+    const void* ptr;  ///< Per-N accumulation bias buffer.
+};
+
+/// Scaling stage ///
+
+/// Global scaled accumulation bias parameter
+struct kai_matmul_uker_scale_bias_global_args {
+    const void* ptr;  ///< Scalar scaling bias parameter.
+};
+
+/// Per-M scaled accumulation bias
+struct kai_matmul_uker_scale_bias_m_args {
+    const void* ptr;  ///< Per-M scaling bias buffer.
+};
+
+/// Per-N scaled accumulation bias
+struct kai_matmul_uker_scale_bias_n_args {
+    const void* ptr;  ///< Per-N scaling bias buffer.
 };
 
 /// Bias parameters
 struct kai_matmul_uker_bias_args {
-    struct kai_matmul_uker_acc_bias_global_args acc_bias_global;  ///< Accumulation bias, global
-    struct kai_matmul_uker_acc_bias_m_args acc_bias_m;            ///< Accumulation bias, per row
-    struct kai_matmul_uker_acc_bias_n_args acc_bias_n;            ///< Accumulation bias, per column
+    struct kai_matmul_uker_acc_bias_global_args acc_bias_global;      ///< Accumulation bias, global
+    struct kai_matmul_uker_acc_bias_m_args acc_bias_m;                ///< Accumulation bias, per row
+    struct kai_matmul_uker_acc_bias_n_args acc_bias_n;                ///< Accumulation bias, per column
+    struct kai_matmul_uker_scale_bias_global_args scale_bias_global;  ///< Scale bias, scalar
+    struct kai_matmul_uker_scale_bias_m_args scale_bias_m;            ///< Scale bias, per row
+    struct kai_matmul_uker_scale_bias_n_args scale_bias_n;            ///< Scale bias, column
+};
+
+//// Scaling types ////
+///
+/// Scaling can be applied at multiple stages
+/// * `acc_scale` - Scaling applied to the biased accumulation stage
+///
+/// There are different kind of scaling.
+/// * `global` - Scalar value applied to entire _stage_ for a global scaling
+/// * `m` - Scalar value applied to each element in row of _stage_ for a per row scaling
+/// * `n` - Scalar value applied to each element in column of _stage_ for a per column scaling
+
+/// Global scale parameter for matrix multiplication micro-kernel.
+struct kai_matmul_uker_acc_scale_global_args {
+    const void* ptr;  ///< Global scale parameter.
+};
+
+/// Per-M accumulation scale buffer for matrix multiplication micro-kernel.
+struct kai_matmul_uker_acc_scale_m_args {
+    const void* ptr;  ///< Per-M accumulation scale buffer.
+};
+
+/// Per-N accumulation scale buffer for matrix multiplication micro-kernel.
+struct kai_matmul_uker_acc_scale_n_args {
+    const void* ptr;  ///< Per-N accumulation scale buffer.
+};
+
+/// Scale parameters
+struct kai_matmul_uker_scale_args {
+    struct kai_matmul_uker_acc_scale_global_args acc_scale_global;  ///< Accumulation scale, scalar
+    struct kai_matmul_uker_acc_scale_m_args acc_scale_m;            ///< Accumulation scale, per row
+    struct kai_matmul_uker_acc_scale_n_args acc_scale_n;            ///< Accumulation scale, per column
 };
 
 //// Activation parameter types ////
@@ -130,10 +185,11 @@ struct kai_matmul_uker_activation_args {
 
 /// Operands for matrix multiplication micro-kernel.
 struct kai_matmul_uker_operand_args {
-    struct kai_matmul_uker_dst_args dst;    ///< Output buffer.
-    struct kai_matmul_uker_lhs_args lhs;    ///< LHS buffer.
-    struct kai_matmul_uker_rhs_args rhs;    ///< RHS buffer.
-    struct kai_matmul_uker_bias_args bias;  ///< Bias parameters
+    struct kai_matmul_uker_dst_args dst;      ///< Output buffer.
+    struct kai_matmul_uker_lhs_args lhs;      ///< LHS buffer.
+    struct kai_matmul_uker_rhs_args rhs;      ///< RHS buffer.
+    struct kai_matmul_uker_bias_args bias;    ///< Bias parameters
+    struct kai_matmul_uker_scale_args scale;  ///< Scale parameters
 };
 
 /// Matrix multiplication micro-kernel run arguments.
