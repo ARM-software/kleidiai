@@ -3,7 +3,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 //
-#if !defined(__aarch64__) && !defined(__ARM_FEATURE_DOTPROD)
+#if (!defined(__aarch64__) || !defined(__ARM_FEATURE_DOTPROD)) && !defined(_M_ARM64)
 #error "Dotprod extension required to compile this micro-kernel"
 #else  // Architectural features check.
 
@@ -13,6 +13,20 @@
 #include <stdint.h>
 
 #include "kai/kai_common.h"
+
+typedef struct {
+    void* dst;
+    const void* lhs_packed;
+    const void* rhs_packed;
+    const float* clamp_vals;
+    size_t dst_stride_row;
+    size_t m;
+    size_t n;
+    size_t num_blocks;
+    size_t num_subblocks;
+} KernelArgs;
+
+void kai_kernel_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod(KernelArgs* args_ptr);
 
 // Compute args
 static const size_t kai_m_step = 1;
@@ -39,16 +53,16 @@ inline static size_t kai_num_bytes_per_block_lhs(size_t bl) {
 }
 
 inline static size_t kai_num_bytes_per_block_rhs(size_t bl) {
-    KAI_ASSUME(bl == kai_bl);
+    KAI_ASSUME((bl % kai_bl) == 0);
     size_t num_bytes_per_block_rhs = (bl / kai_recip_num_bytes_qvalue_rhs) + kai_num_bytes_multiplier_rhs;
     return num_bytes_per_block_rhs;
 }
 
 inline static size_t kai_num_blocks_per_row(size_t k, size_t bl) {
-    KAI_ASSUME(bl == kai_bl);
-    KAI_ASSUME((k % kai_bl) == 0);
+    KAI_ASSUME((bl % kai_bl) == 0);
+    KAI_ASSUME((k % bl) == 0);
 
-    return kai_roundup(k, bl) / bl;
+    return k / bl;
 }
 
 inline static size_t kai_lhs_packed_stride(size_t k, size_t bl) {
@@ -56,8 +70,7 @@ inline static size_t kai_lhs_packed_stride(size_t k, size_t bl) {
 }
 
 inline static size_t kai_rhs_packed_stride(size_t k, size_t bl) {
-    KAI_ASSUME(bl == kai_bl);
-    KAI_ASSUME((k % kai_bl) == 0);
+    KAI_ASSUME((k % bl) == 0);
 
     const size_t num_blocks_per_row = kai_num_blocks_per_row(k, bl);
     const size_t num_bytes_per_block = kai_num_bytes_per_block_rhs(bl);
@@ -130,96 +143,29 @@ void kai_run_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod(
     float scalar_min,                 //
     float scalar_max) {
     KAI_ASSUME(m == 1);
+    KAI_ASSUME((bl % kai_bl) == 0);
+    KAI_ASSUME((k % bl) == 0);
     KAI_ASSUME(dst_stride_col == sizeof(float));
 
     if (m == 0) {
         return;
     }
-    size_t num_blocks = kai_num_blocks_per_row(k, bl);
+    size_t num_blocks = k / bl;
+    size_t num_subblocks = bl / kai_bl;
     float clamp_vals[2] = {scalar_min, scalar_max};
 
-    __asm__ __volatile__(
-        "mov x26, #0x22\n"
-        "movi v30.16b, #0xf0\n"
-        "mov x25, %x[m]\n"
-        "mul x26, %x[num_blocks], x26\n"
-        "1:"  // Row loop
-        "mov x24, %x[rhs_packed]\n"
-        "mov x23, %x[n]\n"
-        "add x22, %x[dst], %x[dst_stride_row]\n"
-        "2:"  // Column loop
-        "mov x21, %x[lhs_packed]\n"
-        "movi v29.16b, #0x0\n"
-        "mov x20, %x[num_blocks]\n"
-        "3:"  // Block loop
-        "ldr d16, [x24, #0x0]\n"
-        "ld1r { v28.8h }, [x21]\n"
-        "add x24, x24, #0x8\n"
-        "add x21, x21, #0x2\n"
-        "ldr q27, [x24, #0x0]\n"
-        "ldr q26, [x21, #0x0]\n"
-        "movi v25.4s, #0x0\n"
-        "sub x20, x20, #0x1\n"
-        "ldr q24, [x24, #0x10]\n"
-        "ldr q23, [x24, #0x20]\n"
-        "ldr q22, [x24, #0x30]\n"
-        "ldr q21, [x21, #0x10]\n"
-        "fcvtl v28.4s, v28.4h\n"
-        "fcvtl v20.4s, v16.4h\n"
-        "shl v19.16b, v27.16b, #0x4\n"
-        "and v27.16b, v27.16b, v30.16b\n"
-        "add x24, x24, #0x40\n"
-        "add x21, x21, #0x20\n"
-        "shl v18.16b, v24.16b, #0x4\n"
-        "shl v17.16b, v23.16b, #0x4\n"
-        "shl v16.16b, v22.16b, #0x4\n"
-        "and v24.16b, v24.16b, v30.16b\n"
-        ".inst 0x4f9ae279  // sdot v25.4s, v19.16b, v26.4b[0]\n"
-        "and v23.16b, v23.16b, v30.16b\n"
-        "and v22.16b, v22.16b, v30.16b\n"
-        "fmul v20.4s, v20.4s, v28.4s\n"
-        ".inst 0x4fbae259  // sdot v25.4s, v18.16b, v26.4b[1]\n"
-        ".inst 0x4f9aea39  // sdot v25.4s, v17.16b, v26.4b[2]\n"
-        ".inst 0x4fbaea19  // sdot v25.4s, v16.16b, v26.4b[3]\n"
-        ".inst 0x4f95e379  // sdot v25.4s, v27.16b, v21.4b[0]\n"
-        ".inst 0x4fb5e319  // sdot v25.4s, v24.16b, v21.4b[1]\n"
-        ".inst 0x4f95eaf9  // sdot v25.4s, v23.16b, v21.4b[2]\n"
-        ".inst 0x4fb5ead9  // sdot v25.4s, v22.16b, v21.4b[3]\n"
-        "scvtf v25.4s, v25.4s, #0x4\n"
-        "fmla v29.4s, v25.4s, v20.4s\n"
-        "cbnz x20, 3b\n"
-        "ld1r { v17.4s }, [%x[clamp_vals]]\n"
-        "add x20, %x[clamp_vals], #0x4\n"
-        "cmp x23, #0x4\n"
-        "ld1r { v16.4s }, [x20]\n"
-        "fmax v29.4s, v29.4s, v17.4s\n"
-        "fmin v29.4s, v29.4s, v16.4s\n"
-        "blt 4f\n"
-        "str q29, [%x[dst], #0x0]\n"
-        "b 7f\n"
-        "4:"  // Partial output
-        "mov x20, %x[dst]\n"
-        "tbz x23, #1, 5f\n"
-        "st1 { v29.d }[0], [x20], #0x8\n"
-        "tbz x23, #0, 6f\n"
-        "st1 { v29.s }[2], [x20]\n"
-        "b 6f\n"
-        "5:"  // Output block 0: partial_1_0
-        "st1 { v29.s }[0], [x20]\n"
-        "6:"  // Output block 0: Done
-        "7:"  // Stores done
-        "subs x23, x23, #0x4\n"
-        "add %x[dst], %x[dst], #0x10\n"
-        "bgt 2b\n"
-        "subs x25, x25, #0x1\n"
-        "add %x[lhs_packed], %x[lhs_packed], x26\n"
-        "mov %x[dst], x22\n"
-        "bgt 1b\n"
-        : [dst] "+&r"(dst), [lhs_packed] "+&r"(lhs_packed)
-        : [clamp_vals] "r"(clamp_vals), [dst_stride_row] "r"(dst_stride_row), [m] "r"(m), [n] "r"(n),
-          [num_blocks] "r"(num_blocks), [rhs_packed] "r"(rhs_packed)
-        : "cc", "memory", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28",
-          "v29", "v30", "x20", "x21", "x22", "x23", "x24", "x25", "x26");
+    KernelArgs args;
+    args.dst = dst;
+    args.lhs_packed = lhs_packed;
+    args.rhs_packed = rhs_packed;
+    args.clamp_vals = clamp_vals;
+    args.dst_stride_row = dst_stride_row;
+    args.m = m;
+    args.n = n;
+    args.num_blocks = num_blocks;
+    args.num_subblocks = num_subblocks;
+
+    kai_kernel_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod(&args);
 }
 
 #endif  // Architectural features check.
