@@ -32,7 +32,7 @@ constexpr auto all_true = [](auto... args) -> bool { return (Functions(args...) 
 }  // namespace
 
 Span<const MatMulOperator> get_available_matmul_operators() {
-    static std::array<MatMulOperator, 6> operators;
+    static std::array<MatMulOperator, 7> operators;
 
     // matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa
     operators[0].name = "matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa";
@@ -157,7 +157,7 @@ Span<const MatMulOperator> get_available_matmul_operators() {
 
     operators[5].is_cpu_supported = cpu_has_sme;
     operators[5].is_shape_suitable = all_true<is_shape_suitable_lhs_x8p4vsx4_x8_sme>;
-    operators[5].supported_bias_modes = {MatMulBiasMode::NO_BIAS};
+    operators[5].supported_bias_modes = {MatMulBiasMode::UNPACKED_BIAS};
     operators[5].lhs_quant = std::nullopt;
     operators[5].rhs_quant = std::nullopt;
     operators[5].bias_quant = std::nullopt;
@@ -170,6 +170,25 @@ Span<const MatMulOperator> get_available_matmul_operators() {
     operators[5].pack_lhs = create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme();
     operators[5].pack_rhs = std::nullopt;
     operators[5].matmul = std::nullopt;
+
+    // kai_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme - pack-only
+    operators[6].name = "matmul_pack_rhs_nxk_x8p4vsx4_x8_sme";
+
+    operators[6].is_cpu_supported = cpu_has_sme;
+    operators[6].is_shape_suitable = all_true<is_shape_suitable_rhs_nxk_x8p4vsx4_x8_sme>;
+    operators[6].supported_bias_modes = {MatMulBiasMode::UNPACKED_BIAS};
+    operators[6].lhs_quant = std::nullopt;
+    operators[6].rhs_quant = std::nullopt;
+    operators[6].bias_quant = std::nullopt;
+    operators[6].lhs_dtype = DataType::U8;
+    operators[6].rhs_dtype = DataType::U8;
+    operators[6].bias_dtype = DataType::I32;  // placeholder value
+    operators[6].acc_dtype = DataType::I32;   // placeholder value
+    operators[6].dst_dtype = DataType::I32;   // placeholder value
+
+    operators[6].pack_lhs = std::nullopt;
+    operators[6].pack_rhs = create_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme();
+    operators[6].matmul = std::nullopt;
 
     return operators;
 }

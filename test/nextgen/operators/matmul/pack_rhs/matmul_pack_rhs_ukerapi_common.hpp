@@ -110,10 +110,8 @@ public:
         KAI_TEST_ASSERT(size_k == full_k);
 
         const std::optional<MatMulSlot> bias_tensor_id = determine_bias_tensor_id(tensors);
-        const bool has_bias = bias_tensor_id.has_value();
 
         const Tensor& rhs_data = tensors.at(m_run_rhs_slot);
-        const Tensor& bias_data = tensors.at(bias_tensor_id.value_or(MatMulSlot::BIAS_DATA));
         Tensor& packed_rhs = tensors.at(MatMulSlot::RHS_PACKED_IMP);
 
         packed_rhs.set_shape({full_n, full_k}).allocate();
@@ -126,8 +124,6 @@ public:
             m_api.get_rhs_stride(&m_uker_config, &imp_rhs_shape);
         const size_t imp_rhs_offset = m_api.get_rhs_offset(&m_uker_config, &imp_rhs_index, &imp_rhs_stride);
         KAI_TEST_ASSERT_MSG(imp_rhs_offset == rhs_offset, "RHS packing: Reference and inference RHS offset mismatch.");
-
-        const size_t bias_offset = m_src_bias_format->compute_offset({full_n}, {start_n});
 
         const size_t packed_rhs_offset = m_dst_format->compute_offset(full_shape, tile_coords);
         const kai_matmul_pack_rhs_uker_rhs_packed_dim_args imp_packed_rhs_shape = {full_n, full_k};
@@ -147,8 +143,12 @@ public:
             imp_packed_rhs_size == packed_rhs_size, "RHS packing: Calculated RHS kernel data size mismatch.");
 
         const Span<const std::byte> rhs_tile = rhs_data.data().subspan(rhs_offset);
-        const Span<const std::byte> bias_tile =
-            has_bias ? bias_data.data().subspan(bias_offset) : Span<const std::byte>();
+        Span<const std::byte> bias_tile;
+        if (bias_tensor_id.has_value()) {
+            const Tensor& bias_data = tensors.at(bias_tensor_id.value());
+            const size_t bias_offset = m_src_bias_format->compute_offset({full_n}, {start_n});
+            bias_tile = bias_data.data().subspan(bias_offset);
+        }
         const Span<std::byte> packed_rhs_tile = packed_rhs.data().subspan(packed_rhs_offset);
 
         kai_matmul_pack_rhs_uker_args args = {};
@@ -173,17 +173,23 @@ public:
         KAI_TEST_ASSERT_MSG(shape.size() == 2, "Only N and K dimensions are expected.");
         const size_t shape_n = shape.at(MatDim::R);
 
+        const MatMulConfig& config = tensors.at(MatMulSlot::CONFIG).value<MatMulConfig>();
         const std::optional<MatMulSlot> bias_tensor_id = determine_bias_tensor_id(tensors);
-        const bool has_bias = bias_tensor_id.has_value();
 
         const Tensor& rhs_t_data = tensors.at(MatMulSlot::RHS_T_DATA);
-        const Tensor& bias_data = tensors.at(bias_tensor_id.value_or(MatMulSlot::BIAS_DATA));
         Tensor& ref_packed_rhs = tensors.at(MatMulSlot::RHS_PACKED);
+
+        if (!matmul_bias_mode_packs_rhs_bias(config.bias_mode)) {
+            ref_packed_rhs.set_shape(shape)
+                .set_format(m_dst_format)
+                .set_data(m_dst_format->pack(shape, std::array{rhs_t_data.data()}));
+            return;
+        }
 
         Buffer empty_bias;
         Span<const std::byte> bias_data_view;
-
-        if (has_bias) {
+        if (bias_tensor_id.has_value()) {
+            const Tensor& bias_data = tensors.at(bias_tensor_id.value());
             bias_data_view = bias_data.data();
         } else {
             empty_bias = Buffer(m_src_bias_format->compute_size({shape_n}));
@@ -201,6 +207,7 @@ private:
 
         switch (config.bias_mode) {
             case MatMulBiasMode::NO_BIAS:
+            case MatMulBiasMode::UNPACKED_BIAS:
                 return std::nullopt;
 
             case MatMulBiasMode::PER_N:

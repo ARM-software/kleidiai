@@ -37,6 +37,22 @@ bool portion_non_empty(
     return rect.height() > 0 && rect.width() > 0;
 }
 
+bool is_shape_suitable_rhs_uker_api(
+    size_t shape_n, size_t shape_k, const MatrixPortion& portion, const kai_matmul_pack_rhs_uker_api& api) {
+    if (shape_n == 0 || shape_k == 0) {
+        return false;
+    }
+
+    const kai_matmul_pack_rhs_uker_config config = {};
+
+    const kai_matmul_pack_rhs_uker_dim_args step = api.get_step(&config);
+
+    const size_t block_n = (step.n == 0) ? shape_n : step.n;
+    const size_t block_k = (step.k == 0) ? shape_k : step.k;
+
+    return portion_non_empty(shape_n, shape_k, block_n, block_k, portion);
+}
+
 }  // namespace
 
 std::unique_ptr<KernelWrapper<MatShape>> create_matmul_rhs_pack_nxk_qsi4cxp4vlx4s1s0_qsu4cxs1s0_neon() {
@@ -80,7 +96,7 @@ std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_kxn_x32p4vsx1bx3
         "create_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme", kai_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme(),
         make_poly<PlainFormat>(DataType::FP32), make_poly<PlainFormat>(DataType::FP32),
         make_poly<Block2dRowFormat>(
-            1 * get_sme_vector_length<float>(), 1, 1, false, DataType::FP32, std::array{DataType::FP32},
+            4 * get_sme_vector_scale(), 1, 1, false, DataType::FP32, std::array{DataType::FP32},
             std::array<DataType, 0>{}));
 }
 
@@ -89,7 +105,16 @@ std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_nxk_x32p4vsx1bx3
         "create_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme", kai_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme(),
         make_poly<PlainFormat>(DataType::FP32), make_poly<PlainFormat>(DataType::FP32),
         make_poly<Block2dRowFormat>(
-            1 * get_sme_vector_length<float>(), 1, 1, false, DataType::FP32, std::array{DataType::FP32},
+            4 * get_sme_vector_scale(), 1, 1, false, DataType::FP32, std::array{DataType::FP32},
+            std::array<DataType, 0>{}));
+}
+
+std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme() {
+    return std::make_unique<MatMulPackRhsUkerApiTWrapper>(
+        "matmul_pack_rhs_nxk_x8p4vsx4_x8_sme", kai_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme(),
+        make_poly<PlainFormat>(DataType::U8), make_poly<PlainFormat>(DataType::I32),
+        make_poly<Block2dRowFormat>(
+            4 * get_sme_vector_scale(), 4, 4, false, DataType::U8, std::array<DataType, 0>{},
             std::array<DataType, 0>{}));
 }
 
@@ -141,35 +166,18 @@ bool is_shape_suitable_rhs_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa(
 
 bool is_shape_suitable_rhs_kxn_x32p4vsx1bx32_x32_x32_sme(
     [[maybe_unused]] size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
-    if (shape_n == 0 || shape_k == 0) {
-        return false;
-    }
-
-    const kai_matmul_pack_rhs_uker_api api = kai_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme();
-    const kai_matmul_pack_rhs_uker_config config = {};
-
-    const kai_matmul_pack_rhs_uker_dim_args step = api.get_step(&config);
-
-    const size_t block_n = (step.n == 0) ? shape_n : step.n;
-    const size_t block_k = (step.k == 0) ? shape_k : step.k;
-
-    return portion_non_empty(shape_n, shape_k, block_n, block_k, portion);
+    return is_shape_suitable_rhs_uker_api(
+        shape_n, shape_k, portion, kai_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme());
 }
 
 bool is_shape_suitable_rhs_nxk_x32p4vsx1bx32_x32_x32_sme(
     [[maybe_unused]] size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
-    if (shape_n == 0 || shape_k == 0) {
-        return false;
-    }
+    return is_shape_suitable_rhs_uker_api(
+        shape_n, shape_k, portion, kai_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme());
+}
 
-    const kai_matmul_pack_rhs_uker_api api = kai_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme();
-    const kai_matmul_pack_rhs_uker_config config = {};
-
-    const kai_matmul_pack_rhs_uker_dim_args step = api.get_step(&config);
-
-    const size_t block_n = (step.n == 0) ? shape_n : step.n;
-    const size_t block_k = (step.k == 0) ? shape_k : step.k;
-
-    return portion_non_empty(shape_n, shape_k, block_n, block_k, portion);
+bool is_shape_suitable_rhs_nxk_x8p4vsx4_x8_sme(
+    [[maybe_unused]] size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
+    return is_shape_suitable_rhs_uker_api(shape_n, shape_k, portion, kai_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme());
 }
 }  // namespace kai::test

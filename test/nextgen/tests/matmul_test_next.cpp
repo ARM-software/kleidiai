@@ -226,18 +226,18 @@ public:
     ///
     /// @param[in] op The operator providing supported bias modes.
     explicit BiasSelector(const MatMulOperator& op) {
-        // Separates no-bias mode from the list of supported bias modes.
+        // Separates with-bias modes from the list of supported bias modes.
         //
         // Reason: no-bias and with-bias cases are chosen by a distribution,
-        // and if the with-bias case is chosen, each with-bias modes will be chosen
-        // by another distribution.
+        // and if the with-bias case is chosen, each with-bias mode will be
+        // chosen by another distribution.
         has_no_bias_mode =
             std::find(op.supported_bias_modes.begin(), op.supported_bias_modes.end(), MatMulBiasMode::NO_BIAS) !=
             op.supported_bias_modes.end();
 
         std::copy_if(
             op.supported_bias_modes.begin(), op.supported_bias_modes.end(), std::back_inserter(with_bias_modes),
-            [](MatMulBiasMode bias_mode) { return bias_mode != MatMulBiasMode::NO_BIAS; });
+            matmul_bias_mode_has_bias_data);
         has_with_bias_mode = !with_bias_modes.empty();
         if (has_with_bias_mode) {
             with_bias_dist = std::uniform_int_distribution<size_t>(0, with_bias_modes.size() - 1);
@@ -257,10 +257,10 @@ public:
         //   * 30% of tests have no bias.
         //
         // If there is no bias mode, with bias mode is always chosen.
-        // If with bias mode is chosen, each bias modes (except no bias mode)
+        // If with bias mode is chosen, each bias mode (except no bias mode)
         // will be chosen uniformly.
         const float bias_prob = dist_ctx.m_probability_dist(dist_ctx.m_rng);
-        const bool with_bias = !has_no_bias_mode || (has_with_bias_mode && bias_prob < 0.7F);
+        const bool with_bias = has_with_bias_mode && (!has_no_bias_mode || bias_prob < 0.7F);
 
         if (with_bias) {
             const size_t bias_mode_idx = with_bias_dist(dist_ctx.m_rng);
