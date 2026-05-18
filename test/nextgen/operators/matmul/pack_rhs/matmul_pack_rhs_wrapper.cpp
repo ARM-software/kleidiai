@@ -53,6 +53,11 @@ bool is_shape_suitable_rhs_uker_api(
     return portion_non_empty(shape_n, shape_k, block_n, block_k, portion);
 }
 
+/// Creates a placeholder format used to explicitly indicate that bias is unused.
+Poly<Format> unused_bias_format() {
+    return make_poly<PlainFormat>(DataType::UNKNOWN);
+}
+
 }  // namespace
 
 std::unique_ptr<KernelWrapper<MatShape>> create_matmul_rhs_pack_nxk_qsi4cxp4vlx4s1s0_qsu4cxs1s0_neon() {
@@ -112,7 +117,16 @@ std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_nxk_x32p4vsx1bx3
 std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme() {
     return std::make_unique<MatMulPackRhsUkerApiTWrapper>(
         "matmul_pack_rhs_nxk_x8p4vsx4_x8_sme", kai_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme(),
-        make_poly<PlainFormat>(DataType::U8), make_poly<PlainFormat>(DataType::I32),
+        make_poly<PlainFormat>(DataType::U8), unused_bias_format(),
+        make_poly<Block2dRowFormat>(
+            4 * get_sme_vector_scale(), 4, 4, false, DataType::U8, std::array<DataType, 0>{},
+            std::array<DataType, 0>{}));
+}
+
+std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme() {
+    return std::make_unique<MatMulPackRhsUkerApiWrapper>(
+        "matmul_pack_rhs_kxn_x8p4vsx4_x8_sme", kai_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme(),
+        make_poly<PlainFormat>(DataType::U8), unused_bias_format(),
         make_poly<Block2dRowFormat>(
             4 * get_sme_vector_scale(), 4, 4, false, DataType::U8, std::array<DataType, 0>{},
             std::array<DataType, 0>{}));
@@ -179,5 +193,10 @@ bool is_shape_suitable_rhs_nxk_x32p4vsx1bx32_x32_x32_sme(
 bool is_shape_suitable_rhs_nxk_x8p4vsx4_x8_sme(
     [[maybe_unused]] size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
     return is_shape_suitable_rhs_uker_api(shape_n, shape_k, portion, kai_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme());
+}
+
+bool is_shape_suitable_rhs_kxn_x8p4vsx4_x8_sme(
+    [[maybe_unused]] size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
+    return is_shape_suitable_rhs_uker_api(shape_n, shape_k, portion, kai_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme());
 }
 }  // namespace kai::test

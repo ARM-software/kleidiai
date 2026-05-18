@@ -32,7 +32,7 @@ constexpr auto all_true = [](auto... args) -> bool { return (Functions(args...) 
 }  // namespace
 
 Span<const MatMulOperator> get_available_matmul_operators() {
-    static std::array<MatMulOperator, 7> operators;
+    static std::array<MatMulOperator, 8> operators;
 
     // matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa
     operators[0].name = "matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa";
@@ -189,6 +189,25 @@ Span<const MatMulOperator> get_available_matmul_operators() {
     operators[6].pack_lhs = std::nullopt;
     operators[6].pack_rhs = create_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme();
     operators[6].matmul = std::nullopt;
+
+    // kai_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme - pack-only
+    operators[7].name = "matmul_pack_rhs_kxn_x8p4vsx4_x8_sme";
+
+    operators[7].is_cpu_supported = cpu_has_sme;
+    operators[7].is_shape_suitable = all_true<is_shape_suitable_rhs_kxn_x8p4vsx4_x8_sme>;
+    operators[7].supported_bias_modes = {MatMulBiasMode::UNPACKED_BIAS};
+    operators[7].lhs_quant = std::nullopt;
+    operators[7].rhs_quant = std::nullopt;
+    operators[7].bias_quant = std::nullopt;
+    operators[7].lhs_dtype = DataType::U8;
+    operators[7].rhs_dtype = DataType::U8;
+    operators[7].bias_dtype = DataType::I32;  // placeholder value
+    operators[7].acc_dtype = DataType::I32;   // placeholder value
+    operators[7].dst_dtype = DataType::I32;   // placeholder value
+
+    operators[7].pack_lhs = std::nullopt;
+    operators[7].pack_rhs = create_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme();
+    operators[7].matmul = std::nullopt;
 
     return operators;
 }
