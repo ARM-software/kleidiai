@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -16,17 +16,17 @@ static const size_t kai_bl = 32;
 
 inline static size_t kai_num_blocks_per_row(size_t k, size_t bl) {
     KAI_ASSUME((k % 2) == 0);
-    KAI_ASSUME(bl == kai_bl);
+    KAI_ASSUME(bl % kai_bl == 0);
     return kai_roundup(k, bl) / bl;
 }
 
 inline static size_t kai_num_bytes_per_block(size_t bl) {
-    KAI_ASSUME(bl == kai_bl);
+    KAI_ASSUME(bl % kai_bl == 0);
     return (bl / 2) + kai_num_bytes_multiplier;
 }
 
 inline static size_t kai_rhs_stride(size_t k, size_t bl) {
-    KAI_ASSUME(bl == kai_bl);
+    KAI_ASSUME(bl % kai_bl == 0);
     KAI_ASSUME((k % 2) == 0);
     KAI_ASSUME((k % bl) == 0);
 
@@ -37,7 +37,7 @@ inline static size_t kai_rhs_stride(size_t k, size_t bl) {
 }
 
 size_t kai_get_rhs_packed_stride_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0(size_t k, size_t nr, size_t kr, size_t bl) {
-    KAI_ASSUME(bl == kai_bl);
+    KAI_ASSUME(bl % kai_bl == 0);
     KAI_ASSUME((k % 2) == 0);
     KAI_ASSUME((k % kr) == 0);
     KAI_ASSUME((k % bl) == 0);
@@ -54,7 +54,7 @@ size_t kai_get_rhs_offset_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0(size_t n_id
 
 size_t kai_get_rhs_packed_offset_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0(
     size_t n_idx, size_t k, size_t nr, size_t kr, size_t bl) {
-    KAI_ASSUME(bl == kai_bl);
+    KAI_ASSUME(bl % kai_bl == 0);
     KAI_ASSUME((k % 2) == 0);
     KAI_ASSUME((k % kr) == 0);
     KAI_ASSUME((k % bl) == 0);
@@ -65,7 +65,7 @@ size_t kai_get_rhs_packed_offset_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0(
 
 size_t kai_get_rhs_packed_size_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0(
     size_t n, size_t k, size_t nr, size_t kr, size_t bl) {
-    KAI_ASSUME(bl == kai_bl);
+    KAI_ASSUME(bl % kai_bl == 0);
     KAI_ASSUME((k % 2) == 0);
     KAI_ASSUME((k % kr) == 0);
     KAI_ASSUME((k % bl) == 0);
@@ -78,7 +78,7 @@ size_t kai_get_rhs_packed_size_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0(
 void kai_run_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0(
     size_t num_groups, size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t bl, const uint8_t* rhs,
     const float* bias, void* rhs_packed, size_t extra_bytes, const struct kai_rhs_pack_qs4cxs1s0_param* params) {
-    KAI_ASSUME(bl == kai_bl);
+    KAI_ASSUME(bl % kai_bl == 0);
     KAI_ASSUME(num_groups == 1);
     KAI_ASSUME((k % 2) == 0);
     KAI_ASSUME((k % kr) == 0);
