@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <functional>
 #include <iosfwd>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <tuple>
@@ -529,11 +530,12 @@ enum class BiasMode {
 };
 
 /// Matrix multiplication test information.
-using MatMulClampTestParams = std::tuple<MatMulMethod, MatMulShape, MatrixPortion, BiasMode, float>;
-using MatMulClampTestPortionedParams = std::tuple<size_t, MatMulShape, MatrixPortion, float>;
-using MatMulClampTestPortionedParamsWithBias = std::tuple<size_t, MatMulShape, MatrixPortion, float, bool>;
+using MatMulClampTestParams = std::tuple<MatMulMethod, MatMulShape, MatrixPortion, BiasMode, std::optional<float>>;
+using MatMulClampTestPortionedParams = std::tuple<size_t, MatMulShape, MatrixPortion, std::optional<float>>;
+using MatMulClampTestPortionedParamsWithBias =
+    std::tuple<size_t, MatMulShape, MatrixPortion, std::optional<float>, bool>;
 using MatMulClampTestPortionedParamsWithBias_WithBL =
-    std::tuple<size_t, MatMulShape, size_t, MatrixPortion, float, bool>;
+    std::tuple<size_t, MatMulShape, size_t, MatrixPortion, std::optional<float>, bool>;
 
 /// Prints the test information.
 void PrintTo(const MatMulClampTestParams& param, std::ostream* os);
@@ -544,7 +546,7 @@ void PrintTo(const BiasMode& bias_mode, std::ostream* os);
 /// Generate test information
 std::string test_description(
     const std::string_view& name, const MatMulShape& shape, const MatrixPortion& portion, bool bias,
-    float clamp_keep_ratio);
+    std::optional<float> clamp_keep_ratio);
 
 }  // namespace kai::test
 

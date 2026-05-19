@@ -33,7 +33,7 @@ public:
     /// @param[in] clamp_ratio The ratio of clamping range and the output range.
     /// @param[in] op The operator under test.
     MatMulTb(
-        size_t shape_m, size_t shape_n, size_t shape_k, MatMulBiasMode bias_mode, float clamp_ratio,
+        size_t shape_m, size_t shape_n, size_t shape_k, MatMulBiasMode bias_mode, std::optional<float> clamp_ratio,
         const MatMulOperator* op);
 
     /// Generates the test data.
@@ -113,7 +113,7 @@ private:
     size_t m_shape_n;
     size_t m_shape_k;
     MatMulBiasMode m_bias_mode;
-    float m_clamp_ratio;
+    std::optional<float> m_clamp_ratio;
 
     const MatMulOperator* m_op;
     std::array<Tensor, n_elements<MatMulSlot>()> m_tensors;

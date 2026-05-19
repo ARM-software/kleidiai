@@ -77,7 +77,7 @@ void MatMulUkerApiWrapper::run(
     const Tensor& kernel_args = tensors.at(MatMulSlot::MATMUL_ARGS);
     Tensor& imp_dst_data = tensors.at(MatMulSlot::DST_DATA_IMP);
 
-    const auto& clamp_args = kernel_args.value<MatMulClampArgsF32>();
+    const auto& clamp_args = kernel_args.value<std::optional<MatMulClampArgsF32>>();
 
     const size_t ref_packed_lhs_offset = m_lhs_format->compute_offset({full_m, full_k}, {start_m, start_k});
     const kai_matmul_uker_lhs_dim_args imp_lhs_shape = {full_m, full_k};
@@ -110,7 +110,7 @@ void MatMulUkerApiWrapper::run(
 
     kai_matmul_uker_args args = {};
 
-    args.flags = KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP;
+    args.flags = clamp_args.has_value() ? KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP : 0;
 
     args.shape.m = size_m;
     args.shape.n = size_n;
@@ -125,8 +125,8 @@ void MatMulUkerApiWrapper::run(
     args.operand.dst.ptr = dst_tile.data();
     args.operand.dst.stride = imp_dst_stride;
 
-    args.activation.clamp.min_ptr = &clamp_args.clamp_min;
-    args.activation.clamp.max_ptr = &clamp_args.clamp_max;
+    args.activation.clamp.min_ptr = clamp_args.has_value() ? &clamp_args.value().clamp_min : nullptr;
+    args.activation.clamp.max_ptr = clamp_args.has_value() ? &clamp_args.value().clamp_max : nullptr;
 
     abi_check([&] { m_ukernel.run(&m_uker_config, &args); });
 }

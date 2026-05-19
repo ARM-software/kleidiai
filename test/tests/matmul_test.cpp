@@ -839,13 +839,13 @@ static const auto& get_nullbias_matmul_methods() {
     return nullbias_matmul_methods;
 }
 
-using MatMulClampTestParams = std::tuple<MatMulMethod, MatMulShape, MatrixPortion, BiasMode, float>;
+using MatMulClampTestParams = std::tuple<MatMulMethod, MatMulShape, MatrixPortion, BiasMode, std::optional<float>>;
 
 /// Matrix multiplication test fixture.
 class MatMulTest : public testing::TestWithParam<MatMulClampTestParams> {
 private:
     /// Unique ID: m, n, k, method_id.
-    using TestDataId = std::tuple<size_t, size_t, size_t, std::string_view, BiasMode, float>;
+    using TestDataId = std::tuple<size_t, size_t, size_t, std::string_view, BiasMode, std::optional<float>>;
 
 protected:
     /// Cached test data that is shared between multiple test case.
@@ -870,7 +870,7 @@ protected:
         // Creates a unique seed for the test data.
         const auto key = std::string(method.name) + "_" + std::to_string(info.m) + "x" + std::to_string(info.n) + "x" +
             std::to_string(info.k) + "_" + (bias_mode == BiasMode::INTERNAL ? "internal" : "provided") + "_" +
-            std::to_string(clamp_keep_ratio);
+            (clamp_keep_ratio.has_value() ? std::to_string(clamp_keep_ratio.value()) : "noclamp");
         auto& feed = seed_stream(key);
 
         // If the test data is already available, returns it.
@@ -1277,21 +1277,23 @@ const std::vector<MatMulShape> MatMulShapes = {
 INSTANTIATE_TEST_SUITE_P(
     MatMul, MatMulTest,
     testing::Combine(
-        testing::ValuesIn(get_matmul_methods()),                               //
-        testing::ValuesIn(MatMulShapes),                                       //
-        testing::ValuesIn(MatrixPortions),                                     //
-        testing::Values(BiasMode::PROVIDED),                                   //
-        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
+        testing::ValuesIn(get_matmul_methods()),  //
+        testing::ValuesIn(MatMulShapes),          //
+        testing::ValuesIn(MatrixPortions),        //
+        testing::Values(BiasMode::PROVIDED),      //
+        testing::ValuesIn(
+            std::initializer_list<std::optional<float>>({std::nullopt, 1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
     NullBiasMatMul, MatMulTest,
     testing::Combine(
-        testing::ValuesIn(get_nullbias_matmul_methods()),                      //
-        testing::ValuesIn(MatMulShapes),                                       //
-        testing::ValuesIn(MatrixPortions),                                     //
-        testing::Values(BiasMode::INTERNAL, BiasMode::PROVIDED),               //
-        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
+        testing::ValuesIn(get_nullbias_matmul_methods()),         //
+        testing::ValuesIn(MatMulShapes),                          //
+        testing::ValuesIn(MatrixPortions),                        //
+        testing::Values(BiasMode::INTERNAL, BiasMode::PROVIDED),  //
+        testing::ValuesIn(
+            std::initializer_list<std::optional<float>>({std::nullopt, 1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
@@ -1319,8 +1321,9 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0, .4, 1, 0.3),   // mid row-section.
             MatrixPortion(0, 0.75, 1, .25)  // right row section
             ),
-        testing::Values(BiasMode::PROVIDED),                                   //
-        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
+        testing::Values(BiasMode::PROVIDED),  //
+        testing::ValuesIn(
+            std::initializer_list<std::optional<float>>({std::nullopt, 1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
     testing::PrintToStringParamName());
 
 }  // namespace kai::test

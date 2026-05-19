@@ -10,11 +10,31 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+- Extended the following micro-kernels to support variable block length
+  - kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod
+  - kai_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p4x8_1x4x32_neon_dotprod
+  - kai_matmul_clamp_f32_qsi8d32p4x4_qsi4c32p4x4_16x4_neon_dotprod
+  - kai_matmul_clamp_f32_qsi8d32p4x8_qsi4c32p4x8_8x4x32_neon_i8mm
+  - kai_matmul_clamp_f32_qsi8d32p4x8_qsi4c32p4x8_16x4_neon_i8mm
+  - kai_rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0
+  - kai_lhs_quant_pack_qsi8d32p4x8sb_f32_neon
+
+## v1.25.0
+
+- Optimizations
+  - Optimize rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon for Int4 GEMM/GEMV kernels
+- Fixes
+  - Fix RHS tail handling in `kai_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa`.
+
 ## v1.24.0
 
 - New SME micro-kernels
   - Matrix Multiplication (1xN) Micro-Kernel of QAI8DXP LHS and QSI4CXP RHS with F32 output.
   - Matrix Multiplication (MxN) Micro-Kernel of QAI8DXP LHS and QSI4CXP RHS with F32 output.
+  - Matrix Multiplication (1xN) Micro-Kernel of QSI8D32P LHS and QSI4C32P RHS variable block with F32 output.
+  - Matrix Multiplication (MxN) Micro-Kernel of QSI8D32P LHS and QSI4C32P RHS variable block with F32 output.
+- New RHS packing kernels to support SME int4 variable block kernels:
+  - Add common RHS packer `kai_rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon` for new SME micro-kernels, using K+0/K+4 nibble order for more efficient int4 decode.
 
 ## v1.23.0
 
