@@ -20,6 +20,8 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
   - kai_lhs_quant_pack_qsi8d32p4x8sb_f32_neon
 - Fixes
   - Added ZA lazy save to kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme_dot
+- New Advanced SIMD micro-kernels
+  - Matrix Multiplication MxN and 1xN Micro-Kernels of QAI8DXP LHS and QSU2CXP RHS with F32 output, optimized for FEAT_DotProd, along with RHS packing kernel.
 
 ## v1.25.0
 
