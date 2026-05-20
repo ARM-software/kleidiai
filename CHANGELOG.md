@@ -18,6 +18,8 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
   - kai_matmul_clamp_f32_qsi8d32p4x8_qsi4c32p4x8_16x4_neon_i8mm
   - kai_rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0
   - kai_lhs_quant_pack_qsi8d32p4x8sb_f32_neon
+- Fixes
+  - Added ZA lazy save to kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme_dot
 
 ## v1.25.0
 
