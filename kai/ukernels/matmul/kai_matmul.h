@@ -12,32 +12,32 @@
 extern "C" {
 #endif
 
+/// For micro-kernel naming and associated packing micro-kernel that goes with it, see:
+///   * docs/microkernel_tables.md
+///   * kai/ukernels/matmul/README.md
+///  This provides information such as the data type and packing format of the buffers.
+///  Any information that is not present in the above files is documented here.
+///
+/// Documentation conventions in this file:
+///   * Only required or conditionally required configuration parameters,
+///     operands, activation arguments, and flags are documented.
+///   * See the *_types.h file for the description of those argument types.
+///   * Accumulation data type matches the output data type by default. It is
+///     documented along with the API only when the data types differ.
+///   * Any argument not listed for a micro-kernel is unused and does not need
+///     to be populated.
+///
+
 /// Single-precision floating-point matrix multiplication using SME2 MOPA instruction.
 ///
-/// Required CPU features:
-///   * FEAT_SME2
-///
-/// Configuration parameters: none.
-///
-/// Operands:
-///   * dst - The output matrix.
-///     * Output matrix: FP32 in plain format.
-///   * lhs - The LHS matrix.
-///     * LHS matrix: FP32 in 4vsx1 blocked format.
-///   * rhs - The RHS matrix and per-n accumulator bias vector.
-///     * RHS matrix: FP32 in 4vsx1 blocked format.
-///     * Per-n accumulator bias vector: FP32.
-///   * clamp - (Optional) The output clamp range.
-///     * Data type: FP32.
-///     * This operand is only needed when CLAMP flag is set.
-///
-/// Matrix multiplication:
-///   * Accumulator type: FP32.
-///   * Primary output block: 8vsx8vs.
+/// Required operands:
+///   * lhs, dst
+///   * rhs - rhs with per-n accumulator bias
+/// Optional arguments:
+///   * clamp - F32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
 ///
 /// Supported flags:
-///   * CLAMP - Clamping output data.
-///     If this flag is set, clamp operand is required.
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
 ///
 /// @return The micro-kernel API.
 struct kai_matmul_uker_api kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8vs_qmx_mopa(void);
