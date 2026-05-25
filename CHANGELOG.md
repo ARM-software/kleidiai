@@ -12,6 +12,19 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 - New SME micro-kernels
   - Added an x8 matmul pack micro-kernel family with 4vsx4 blocked layout.
+- Extended the following micro-kernels to support variable block length
+  - kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod
+  - kai_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p4x8_1x4x32_neon_dotprod
+  - kai_matmul_clamp_f32_qsi8d32p4x4_qsi4c32p4x4_16x4_neon_dotprod
+  - kai_matmul_clamp_f32_qsi8d32p4x8_qsi4c32p4x8_8x4x32_neon_i8mm
+  - kai_matmul_clamp_f32_qsi8d32p4x8_qsi4c32p4x8_16x4_neon_i8mm
+  - kai_rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0
+  - kai_lhs_quant_pack_qsi8d32p4x8sb_f32_neon
+- Fixes
+  - Added ZA lazy save to kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme_dot
+  - Fix QAI8/QSI8CXP matmul test failures by constraining generated qsi32 bias values to preserve int32 accumulator headroom.
+- New Advanced SIMD micro-kernels
+  - Matrix Multiplication MxN and 1xN Micro-Kernels of QAI8DXP LHS and QSU2CXP RHS with F32 output, optimized for FEAT_DotProd, along with RHS packing kernel.
 
 ## v1.25.0
 

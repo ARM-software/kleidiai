@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -68,25 +68,26 @@ void kai_run_lhs_quant_pack_qsi8d32p4x8sb_f32_neon(
         return;
     }
 
-    KAI_ASSUME(bl == 32);
+    const size_t kai_bl = 32;
+
+    KAI_ASSUME(bl % kai_bl == 0);
     KAI_ASSUME(mr == 4);
     KAI_ASSUME(kr == 16);
     KAI_ASSUME(sr == 2);
 
-    const size_t local_bl = 32;
     const size_t local_mr = 4;
     const size_t local_kr = 16;
     const size_t local_sr = 2;
     const size_t num_rows = m;
     const size_t k_block_len = local_kr / local_sr;
-    const size_t lhs_packed_stride = kai_lhs_packed_stride(k, local_mr, local_kr, local_bl);
-    const size_t num_blocks_per_row = kai_num_blocks_per_row(k, local_bl);
-    const size_t num_bytes_per_block = kai_num_bytes_per_block(local_bl);
+    const size_t lhs_packed_stride = kai_lhs_packed_stride(k, local_mr, local_kr, bl);
+    const size_t num_blocks_per_row = kai_num_blocks_per_row(k, bl);
+    const size_t num_bytes_per_block = kai_num_bytes_per_block(bl);
 
     size_t row_idx = 0;
 
     const size_t write_mem_increment = 2 * k_block_len * sizeof(int8_t);
-    const size_t read_mem_increment = num_blocks_per_row * local_bl * sizeof(int8_t);
+    const size_t read_mem_increment = num_blocks_per_row * bl * sizeof(int8_t);
 
     if (num_rows >= 4) {
         for (; row_idx + 4 <= num_rows; row_idx += 4) {
@@ -106,7 +107,7 @@ void kai_run_lhs_quant_pack_qsi8d32p4x8sb_f32_neon(
                 float32x4_t v_currentmax_2 = vdupq_n_f32(0);
                 float32x4_t v_currentmax_3 = vdupq_n_f32(0);
 
-                for (size_t idx_v = 0; idx_v < local_bl; idx_v += 4) {
+                for (size_t idx_v = 0; idx_v < bl; idx_v += 4) {
                     const float32x4_t v_f32_maxvals_0 = vld1q_f32(src_ptr + idx_v);
                     const float32x4_t v_f32_abs_values_0 = vabsq_f32(v_f32_maxvals_0);
                     v_currentmax_0 = vmaxq_f32(v_f32_abs_values_0, v_currentmax_0);
@@ -145,7 +146,7 @@ void kai_run_lhs_quant_pack_qsi8d32p4x8sb_f32_neon(
                 dst_ptr += dst_x * k_block_len * sizeof(int8_t);
 
                 // Quantize and pack the blocks
-                for (size_t k_idx = 0; k_idx < local_bl; k_idx += k_block_len * 2) {
+                for (size_t k_idx = 0; k_idx < bl; k_idx += k_block_len * 2) {
                     // Row 1 blocks
                     const float32x4_t v_f32_block1 = vld1q_f32(src_ptr + k_idx);
                     const float32x4_t v_f32_sblock1 = vmulq_n_f32(v_f32_block1, vgetq_lane_f32(rep_scales, 0));
@@ -258,7 +259,7 @@ void kai_run_lhs_quant_pack_qsi8d32p4x8sb_f32_neon(
                     vst1q_s8(dst_ptr, v_i8_block6_8);
                     dst_ptr += write_mem_increment;
                 }
-                src_ptr += local_bl;
+                src_ptr += bl;
             }
             lhs_packed = (void*)((int8_t*)lhs_packed + lhs_packed_stride);
         }
@@ -277,7 +278,7 @@ void kai_run_lhs_quant_pack_qsi8d32p4x8sb_f32_neon(
                 float32x4_t v_f32_maxvals;
                 float32x4_t v_currentmax = vdupq_n_f32(0);
 
-                for (size_t idx_v = 0; idx_v < local_bl; idx_v += 4) {
+                for (size_t idx_v = 0; idx_v < bl; idx_v += 4) {
                     v_f32_maxvals = vld1q_f32(src_ptr + idx_v);
                     v_f32_abs_values = vabsq_f32(v_f32_maxvals);
                     v_currentmax = vmaxq_f32(v_f32_abs_values, v_currentmax);
@@ -294,7 +295,7 @@ void kai_run_lhs_quant_pack_qsi8d32p4x8sb_f32_neon(
                 dst_ptr += dst_x * k_block_len * sizeof(int8_t);
 
                 // Quantize and pack the block
-                for (size_t k_idx = 0; k_idx < local_bl; k_idx += k_block_len * 2) {
+                for (size_t k_idx = 0; k_idx < bl; k_idx += k_block_len * 2) {
                     const float32x4_t v_f32_block1 = vld1q_f32(src_ptr + k_idx);
                     const float32x4_t v_f32_sblock1 = vmulq_n_f32(v_f32_block1, rep_scale);
                     const int32x4_t v_i32_block1 = vcvtnq_s32_f32(v_f32_sblock1);
@@ -328,7 +329,7 @@ void kai_run_lhs_quant_pack_qsi8d32p4x8sb_f32_neon(
                     dst_ptr += 8 * sizeof(int8_t);
                     dst_ptr += (local_mr - 1) * k_block_len * sizeof(int8_t);
                 }
-                src_ptr += local_bl;
+                src_ptr += bl;
             }
             // Move to the next row if we have interleaved all Mr rows
             if ((((row_idx + 1) + m_idx_start) % local_mr) == 0) {

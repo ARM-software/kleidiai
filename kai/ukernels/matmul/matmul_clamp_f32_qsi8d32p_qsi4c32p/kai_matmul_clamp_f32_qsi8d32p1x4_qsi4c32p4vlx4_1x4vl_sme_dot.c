@@ -190,6 +190,8 @@ void kai_run_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme_dot(
     args.scalar_min = scalar_min;
     args.scalar_max = scalar_max;
 
+    kai_commit_za();
+
     kai_kernel_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme_dot(&args);
 }
 
