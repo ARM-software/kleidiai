@@ -23,6 +23,9 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
   - Fix QAI8/QSI8CXP matmul test failures by constraining generated qsi32 bias values to preserve int32 accumulator headroom.
 - New Advanced SIMD micro-kernels
   - Matrix Multiplication MxN and 1xN Micro-Kernels of QAI8DXP LHS and QSU2CXP RHS with F32 output, optimized for FEAT_DotProd, along with RHS packing kernel.
+- Documentation
+  - Contribution policy updates as part of third party contribution enablement
+  - Added coding standard and conventions
 
 ## v1.25.0
 
