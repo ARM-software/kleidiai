@@ -9,6 +9,7 @@
 #include <array>
 #include <memory>
 
+#include "kai/ukernels/matmul/kai_matmul_pack_rhs.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot.h"
@@ -102,7 +103,8 @@ std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_kxn_x32p4vsx1bx3
         make_poly<PlainFormat>(DataType::FP32), make_poly<PlainFormat>(DataType::FP32),
         make_poly<Block2dRowFormat>(
             4 * get_sme_vector_scale(), 1, 1, false, DataType::FP32, std::array{DataType::FP32},
-            std::array<DataType, 0>{}));
+            std::array<DataType, 0>{}),
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS);
 }
 
 std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme() {
@@ -111,7 +113,8 @@ std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_nxk_x32p4vsx1bx3
         make_poly<PlainFormat>(DataType::FP32), make_poly<PlainFormat>(DataType::FP32),
         make_poly<Block2dRowFormat>(
             4 * get_sme_vector_scale(), 1, 1, false, DataType::FP32, std::array{DataType::FP32},
-            std::array<DataType, 0>{}));
+            std::array<DataType, 0>{}),
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS);
 }
 
 std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme() {
@@ -120,7 +123,8 @@ std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_nxk_x8p4vsx4_x8_
         make_poly<PlainFormat>(DataType::U8), unused_bias_format(),
         make_poly<Block2dRowFormat>(
             4 * get_sme_vector_scale(), 4, 4, false, DataType::U8, std::array<DataType, 0>{},
-            std::array<DataType, 0>{}));
+            std::array<DataType, 0>{}),
+        MatMulUkerApiBiasDeliveryStage::MATMUL);
 }
 
 std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme() {
@@ -129,7 +133,8 @@ std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_kxn_x8p4vsx4_x8_
         make_poly<PlainFormat>(DataType::U8), unused_bias_format(),
         make_poly<Block2dRowFormat>(
             4 * get_sme_vector_scale(), 4, 4, false, DataType::U8, std::array<DataType, 0>{},
-            std::array<DataType, 0>{}));
+            std::array<DataType, 0>{}),
+        MatMulUkerApiBiasDeliveryStage::MATMUL);
 }
 
 bool is_shape_suitable_rhs_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa(

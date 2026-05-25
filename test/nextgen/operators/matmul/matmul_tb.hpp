@@ -29,12 +29,12 @@ public:
     /// @param[in] shape_m The LHS and output height.
     /// @param[in] shape_n The RHS and output width.
     /// @param[in] shape_k The LHS width and RHS height.
-    /// @param[in] bias_mode The bias mode.
+    /// @param[in] bias_formats The logical bias formats selected for this test.
     /// @param[in] clamp_ratio The ratio of clamping range and the output range.
     /// @param[in] op The operator under test.
     MatMulTb(
-        size_t shape_m, size_t shape_n, size_t shape_k, MatMulBiasMode bias_mode, std::optional<float> clamp_ratio,
-        const MatMulOperator* op);
+        size_t shape_m, size_t shape_n, size_t shape_k, MatMulBiasModeSet bias_formats,
+        std::optional<float> clamp_ratio, const MatMulOperator* op);
 
     /// Generates the test data.
     ///
@@ -87,9 +87,10 @@ private:
     /// or reference implementation.
     void determine_required_tensors();
 
-    void generate_lhs_data(Rng& rng);   ///< Generates the LHS data.
-    void generate_rhs_data(Rng& rng);   ///< Generates the RHS data.
-    void generate_bias_data(Rng& rng);  ///< Generates the bias data.
+    void generate_lhs_data(Rng& rng);         ///< Generates the LHS data.
+    void generate_rhs_data(Rng& rng);         ///< Generates the RHS data.
+    void generate_acc_bias_m_data(Rng& rng);  ///< Generates the per-M accumulator bias data.
+    void generate_acc_bias_n_data(Rng& rng);  ///< Generates the per-N accumulator bias data.
 
     void compute_rhs_t_data();  ///< Computes the transposed RHS data.
     void quantize_lhs();        ///< Quantizes the LHS data.
@@ -112,7 +113,7 @@ private:
     size_t m_shape_m;
     size_t m_shape_n;
     size_t m_shape_k;
-    MatMulBiasMode m_bias_mode;
+    MatMulBiasModeSet m_bias_modes;
     std::optional<float> m_clamp_ratio;
 
     const MatMulOperator* m_op;

@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -8,9 +8,7 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <functional>
-#include <numeric>
-#include <vector>
+#include <cstdint>
 
 #include "test/common/assert.hpp"
 #include "test/common/buffer.hpp"
@@ -66,6 +64,9 @@ BinaryElementwiseFn make_add_2d(DataType dtype) {
     switch (dtype) {
         case DataType::FP32:
             return add<float>;
+
+        case DataType::I32:
+            return add<int32_t>;
 
         case DataType::U4:
         case DataType::I4:

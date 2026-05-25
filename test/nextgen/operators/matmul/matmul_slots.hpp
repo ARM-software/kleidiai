@@ -52,11 +52,8 @@ enum class MatMulSlot : size_t {
     RHS_PACKED,            ///< Packed RHS.
     RHS_PACKED_IMP,        ///< Packed RHS from micro-kernel.
 
-    BIAS_DATA,      ///< Bias data.
-    BIAS_CVT_DATA,  ///< Bias data after conversion.
-    BIAS_SCALE,     ///< Bias quantization scale.
-    BIAS_ZP,        ///< Bias quantization zero-point.
-    BIAS_PACKED,    ///< Packed bias.
+    ACC_BIAS_M_DATA,  ///< Accumulator bias data per M.
+    ACC_BIAS_N_DATA,  ///< Accumulator bias data per N.
 
     DST_DATA,      ///< Output data (can be floating-point or quantized).
     DST_QSCALE,    ///< Output quantization scale.

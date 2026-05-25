@@ -1067,8 +1067,11 @@ TEST_P(MatMulTest, PackedRhs) {
         method.packed_rhs_format.default_offset_in_bytes(rhs_start_row, rhs_start_col, rhs_full_height);
     ASSERT_EQ(packed_rhs_offset, ref_packed_rhs_offset);
 
-    const auto scale_type = method.packed_rhs_format.scale_data_type();
-    const auto ref_rhs_scales_offset = rhs_start_row * data_type_size_in_bits(scale_type) / 8;
+    size_t ref_rhs_scales_offset = 0;
+    if (data.rhs_scales.size() != 0) {
+        const auto scale_type = method.packed_rhs_format.scale_data_type();
+        ref_rhs_scales_offset = rhs_start_row * data_type_size_in_bits(scale_type) / 8;
+    }
 
     const auto bias_offset = method.fn_get_bias_offset(rhs_start_row);
     const auto ref_bias_offset =
@@ -1133,8 +1136,11 @@ TEST_P(MatMulTest, PackedTransposedRhs) {
         method.packed_rhs_format.default_offset_in_bytes(rect.start_row(), rect.start_col(), info.k);
     ASSERT_EQ(packed_rhs_offset, ref_packed_rhs_offset);
 
-    const auto ref_rhs_scales_offset =
-        rect.start_row() * data_type_size_in_bits(method.packed_rhs_format.scale_data_type()) / 8;
+    size_t ref_rhs_scales_offset = 0;
+    if (data.rhs_scales.size() != 0) {
+        ref_rhs_scales_offset =
+            rect.start_row() * data_type_size_in_bits(method.packed_rhs_format.scale_data_type()) / 8;
+    }
 
     const auto bias_offset = method.fn_get_bias_offset(rect.start_row());
     const auto ref_bias_offset =

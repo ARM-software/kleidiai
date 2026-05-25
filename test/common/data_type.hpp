@@ -67,6 +67,14 @@ enum class DataType : uint16_t {
 /// @return The size in bits.
 [[nodiscard]] size_t data_type_size_in_bits(DataType dt);
 
+/// Gets the size in bytes of an array of the specified data type
+///
+/// @param[in] dt The data type.
+/// @param[in] len The number of elements in the vector
+///
+/// @return size in bytes
+[[nodiscard]] size_t data_type_array_size_in_bytes(DataType dt, size_t len);
+
 /// Gets a value indicating whether the data type is integral.
 ///
 /// @param[in] dt The data type.

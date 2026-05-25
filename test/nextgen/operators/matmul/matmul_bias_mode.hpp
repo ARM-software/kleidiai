@@ -9,22 +9,29 @@
 #include <cstdint>
 #include <string>
 
+#include "test/common/enum_utils.hpp"
+
 namespace kai::test {
 
-/// Bias mode.
+/// Bias mode used by matrix multiplication tests.
 enum class MatMulBiasMode : uint8_t {
-    NO_BIAS,        ///< No bias.
-    PER_N,          ///< Per-N bias packed into RHS.
-    UNPACKED_BIAS,  ///< Bias passed to the matmul micro-kernel, not packed into RHS.
+    ACCUMULATION_PER_M,  ///< Per-row bias applied at the accumulation stage.
+    ACCUMULATION_PER_N,  ///< Per-column bias applied at the accumulation stage.
 };
 
-/// Gets the name of the bias mode.
-[[nodiscard]] std::string matmul_bias_mode_name(MatMulBiasMode bias_mode);
+/// Set of bias modes to describe all the different ways a matmul operator applies bias.
+using MatMulBiasModeSet = FlagSet<MatMulBiasMode>;
 
-/// Checks if the bias mode uses logical bias data.
-[[nodiscard]] bool matmul_bias_mode_has_bias_data(MatMulBiasMode bias_mode);
+/// Stage where bias is delivered to a matrix multiplication micro-kernel using the ukernel API.
+enum class MatMulUkerApiBiasDeliveryStage : uint8_t {
+    PACK_RHS,  ///< Bias is delivered while packing RHS.
+    MATMUL,    ///< Bias is delivered to matrix multiplication.
+};
 
-/// Checks if the bias mode packs bias data into RHS.
-[[nodiscard]] bool matmul_bias_mode_packs_rhs_bias(MatMulBiasMode bias_mode);
+/// Gets the name of the bias format set.
+[[nodiscard]] std::string matmul_bias_format_set_name(MatMulBiasModeSet bias_formats);
+
+/// Checks if the bias format set uses logical bias data.
+[[nodiscard]] bool matmul_bias_format_set_has_bias_data(MatMulBiasModeSet bias_formats);
 
 }  // namespace kai::test

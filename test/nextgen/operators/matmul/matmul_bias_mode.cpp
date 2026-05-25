@@ -7,53 +7,45 @@
 #include "test/nextgen/operators/matmul/matmul_bias_mode.hpp"
 
 #include <string>
+#include <string_view>
 
 #include "test/common/assert.hpp"
 
 namespace kai::test {
 
-std::string matmul_bias_mode_name(MatMulBiasMode bias_mode) {
-    switch (bias_mode) {
-        case MatMulBiasMode::NO_BIAS:
-            return "no";
+namespace {
 
-        case MatMulBiasMode::PER_N:
-            return "col";
-
-        case MatMulBiasMode::UNPACKED_BIAS:
-            return "unpacked";
-
-        default:
-            KAI_TEST_ERROR("Not supported.");
+void append_bias_format_name(std::string& name, std::string_view suffix) {
+    if (!name.empty()) {
+        name += "_";
     }
+
+    name += suffix;
 }
 
-bool matmul_bias_mode_has_bias_data(MatMulBiasMode bias_mode) {
-    switch (bias_mode) {
-        case MatMulBiasMode::NO_BIAS:
-            return false;
+}  // namespace
 
-        case MatMulBiasMode::PER_N:
-        case MatMulBiasMode::UNPACKED_BIAS:
-            return true;
-
-        default:
-            KAI_TEST_ERROR("Not supported.");
+std::string matmul_bias_format_set_name(MatMulBiasModeSet bias_formats) {
+    if (bias_formats.is_empty()) {
+        return "no";
     }
+
+    std::string name;
+
+    if (bias_formats.has(MatMulBiasMode::ACCUMULATION_PER_M)) {
+        append_bias_format_name(name, "acc_m");
+    }
+
+    if (bias_formats.has(MatMulBiasMode::ACCUMULATION_PER_N)) {
+        append_bias_format_name(name, "acc_n");
+    }
+
+    KAI_TEST_ASSERT_MSG(!name.empty(), "Bias format set must contain a known bias format.");
+    return name;
 }
 
-bool matmul_bias_mode_packs_rhs_bias(MatMulBiasMode bias_mode) {
-    switch (bias_mode) {
-        case MatMulBiasMode::NO_BIAS:
-        case MatMulBiasMode::UNPACKED_BIAS:
-            return false;
-
-        case MatMulBiasMode::PER_N:
-            return true;
-
-        default:
-            KAI_TEST_ERROR("Not supported.");
-    }
+bool matmul_bias_format_set_has_bias_data(MatMulBiasModeSet bias_formats) {
+    return !bias_formats.is_empty();
 }
 
 }  // namespace kai::test

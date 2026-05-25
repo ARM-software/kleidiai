@@ -9,6 +9,7 @@
 #include <array>
 #include <memory>
 
+#include "kai/ukernels/matmul/kai_matmul.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa.h"
@@ -139,13 +140,29 @@ std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f32_f32p2vlx1_f3
 std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f32_f32p4vsx1_f32p4vsx1b_8vsx8vs_elastic_sme2_mopa() {
     return std::make_unique<MatMulUkerApiWrapper>(
         "matmul_clamp_f32_f32p4vsx1_f32p4vsx1b_8vsx8vs_elastic_sme2_mopa",
+        kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8vs_sme2_mopa(),
         make_poly<Block2dRowFormat>(
-            1 * get_sme_vector_length<float>(), 1, 1, false, DataType::FP32, std::array<DataType, 0>{},
+            4 * get_sme_vector_scale(), 1, 1, false, DataType::FP32, std::array<DataType, 0>{},
             std::array<DataType, 0>{}),
         make_poly<Block2dRowFormat>(
-            1 * get_sme_vector_length<float>(), 1, 1, false, DataType::FP32, std::array{DataType::FP32},
+            4 * get_sme_vector_scale(), 1, 1, false, DataType::FP32, std::array{DataType::FP32},
             std::array<DataType, 0>{}),
-        make_poly<PlainFormat>(DataType::FP32));
+        make_poly<PlainFormat>(DataType::FP32), DataType::FP32, MatMulUkerClampConfig::optional(DataType::FP32),
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS);
+}
+
+std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa() {
+    return std::make_unique<MatMulUkerApiWrapper>(
+        "matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa",
+        kai_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa(),
+        make_poly<Block2dRowFormat>(
+            4 * get_sme_vector_scale(), 4, 4, false, DataType::U8, std::array<DataType, 0>{},
+            std::array<DataType, 0>{}),
+        make_poly<Block2dRowFormat>(
+            4 * get_sme_vector_scale(), 4, 4, false, DataType::U8, std::array<DataType, 0>{},
+            std::array<DataType, 0>{}),
+        make_poly<PlainFormat>(DataType::I32), DataType::I32, MatMulUkerClampConfig::unsupported(),
+        MatMulUkerApiBiasDeliveryStage::MATMUL);
 }
 
 }  // namespace kai::test

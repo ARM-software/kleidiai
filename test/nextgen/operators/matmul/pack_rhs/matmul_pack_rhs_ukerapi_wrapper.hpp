@@ -19,9 +19,11 @@ public:
     /// Creates a new wrapper.
     MatMulPackRhsUkerApiWrapper(
         std::string_view name, kai_matmul_pack_rhs_uker_api api, const Poly<Format>& src_data_format,
-        const Poly<Format>& src_bias_format, const Poly<Format>& dst_format) :
+        const Poly<Format>& src_bias_format, const Poly<Format>& dst_format,
+        MatMulUkerApiBiasDeliveryStage bias_delivery_stage) :
         MatMulPackRhsUkerApiCommon(
-            name, MatMulSlot::RHS_DATA, RhsLayout::KxN, api, src_data_format, src_bias_format, dst_format) {
+            name, MatMulSlot::RHS_DATA, RhsLayout::KxN, api, src_data_format, src_bias_format, dst_format,
+            bias_delivery_stage) {
     }
 };
 

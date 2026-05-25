@@ -30,16 +30,15 @@ namespace {
 std::optional<MatMulSlot> determine_bias_tensor_id(ConstTensorSet tensors) {
     const MatMulConfig& config = tensors.at(MatMulSlot::CONFIG).value<MatMulConfig>();
 
-    switch (config.bias_mode) {
-        case MatMulBiasMode::NO_BIAS:
-            return std::nullopt;
-
-        case MatMulBiasMode::PER_N:
-            return MatMulSlot::BIAS_DATA;
-
-        default:
-            KAI_TEST_ERROR("Not supported.");
+    if (config.bias_modes.is_empty()) {
+        return std::nullopt;
     }
+
+    KAI_TEST_ASSERT_MSG(
+        !config.bias_modes.has(MatMulBiasMode::ACCUMULATION_PER_M), "RHS packing only supports per-N bias.");
+    KAI_TEST_ASSERT_MSG(config.bias_modes.has(MatMulBiasMode::ACCUMULATION_PER_N), "RHS packing requires per-N bias.");
+
+    return MatMulSlot::ACC_BIAS_N_DATA;
 }
 
 }  // namespace
@@ -122,7 +121,7 @@ void MatMulPackRhsQuantWrapper::run(
 
     const Tensor& rhs_t_qdata = tensors.at(MatMulSlot::RHS_T_QDATA);
     const Tensor& rhs_t_qscale = tensors.at(MatMulSlot::RHS_T_QSCALE);
-    const Tensor& bias_data = tensors.at(bias_tensor_id.value_or(MatMulSlot::BIAS_DATA));
+    const Tensor& bias_data = tensors.at(bias_tensor_id.value_or(MatMulSlot::ACC_BIAS_N_DATA));
     Tensor& packed_rhs = tensors.at(MatMulSlot::RHS_PACKED_IMP);
 
     const auto& pack_args = tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
@@ -173,7 +172,7 @@ void MatMulPackRhsQuantWrapper::compute_reference(MatShape shape, TensorSet tens
     const Tensor& rhs_t_qdata_sign = tensors.at(MatMulSlot::RHS_T_QDATA_SIGN);
     const Tensor& rhs_t_qdata_sign_sum = tensors.at(MatMulSlot::RHS_T_QDATA_SIGN_SUM);
     const Tensor& rhs_t_qscale = tensors.at(MatMulSlot::RHS_T_QSCALE);
-    const Tensor& bias_data = tensors.at(bias_tensor_id.value_or(MatMulSlot::BIAS_DATA));
+    const Tensor& bias_data = tensors.at(bias_tensor_id.value_or(MatMulSlot::ACC_BIAS_N_DATA));
     Tensor& ref_packed_rhs = tensors.at(MatMulSlot::RHS_PACKED);
 
     Buffer empty_bias;
