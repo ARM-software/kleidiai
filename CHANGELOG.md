@@ -11,7 +11,10 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 ## Upcoming Release
 
 - New SME micro-kernels
-  - Added an x8 matmul pack micro-kernel family with 4vsx4 blocked layout.
+  - Added an x8 matmul pack micro-kernel family with 4vsx4 blocked layout, without packing bias.
+- New SME2 micro-kernels
+  - kai_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa.
+  - kai_matmul_clamp_f32_u8p4vsx4_u8p4vsx4_i32_i32_f32_f32_8vsx8vs_sme2_mopa.
 - Extended the following micro-kernels to support variable block length
   - kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod
   - kai_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p4x8_1x4x32_neon_dotprod
