@@ -44,62 +44,30 @@ struct kai_matmul_uker_api kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8vs_
 
 /// Matrix multiplication with 32-bit integer accumulation using SME2 MOPA instruction.
 ///
-/// Required CPU features:
-///   * FEAT_SME2
-///
-/// Configuration parameters: none.
-///
-/// Operands:
-///   * dst - The output matrix.
-///     * Output matrix: I32 in plain format.
-///   * lhs - The LHS matrix.
-///     * LHS matrix: U8 in 4vsx4 blocked format.
-///   * rhs - The RHS matrix.
-///     * RHS matrix: U8 in 4vsx4 blocked format.
+/// Required operands:
+///   * lhs, dst, rhs
 ///   * bias
-///     * acc_bias_m - Accumulator row bias in I32
-///     * acc_bias_n - Accumulator column bias in I32
-///
-/// Matrix multiplication:
-///   * Accumulator type: I32.
-///   * Primary output block: 8vsx8vs.
+///     * acc_bias_m, acc_bias_n
 ///
 /// @return The micro-kernel API.
 struct kai_matmul_uker_api kai_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa(void);
 
 /// Matrix multiplication with 32-bit integer accumulation and FP32 output using SME2 MOPA instruction.
 ///
-/// Required CPU features:
-///   * FEAT_SME2
-///
-/// Configuration parameters: none.
-///
-/// Operands:
-///   * dst - The output matrix.
-///     * Output matrix: FP32 in plain format.
-///   * lhs - The LHS matrix.
-///     * LHS matrix: U8 in 4vsx4 blocked format.
-///   * rhs - The RHS matrix.
-///     * RHS matrix: U8 in 4vsx4 blocked format.
+/// Required operands:
+///   * lhs, dst, rhs
 ///   * bias
-///     * acc_bias_m - Accumulator row bias in I32.
-///     * acc_bias_n - Accumulator column bias in I32.
-///     * scale_bias_n - Scaled accumulator column bias in F32.
+///     * acc_bias_m, acc_bias_n, scale_bias_n
 ///   * scale
-///     * acc_bias_global - Global biased accumulator scale value in F32.
-///   * clamp - (Optional) The output clamp range.
-///     * Data type: FP32.
-///     * This operand is only needed when CLAMP flag is set.
+///     * acc_scale_global
 ///
-/// Matrix multiplication:
-///   * Accumulator type: I32.
-///   * Primary output block: 8vsx8vs.
+/// Optional arguments:
+///   * clamp - F32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
+///
+/// Accumulation: I32, then converted to F32 using global scaling and per column bias
 ///
 /// Supported flags:
-///   * CLAMP - Clamping output data.
-///     If this flag is set, clamp operand is required.
-///
-/// @note This wrapper always selects the internal FP32 post-processing path for the assembly micro-kernel.
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamping output data.
 ///
 /// @return The micro-kernel API.
 struct kai_matmul_uker_api kai_matmul_clamp_f32_u8p4vsx4_u8p4vsx4_i32_i32_f32_f32_8vsx8vs_sme2_mopa(void);
