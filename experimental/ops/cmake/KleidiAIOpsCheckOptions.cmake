@@ -26,20 +26,6 @@ if(KLEIDIAI_OPS_ENABLE_BIND_THREADS AND NOT KLEIDIAI_OPS_ENABLE_THREADS)
     message(FATAL_ERROR "Cannot enable thread binding without enabling threads")
 endif()
 
-# Can we enable SVE?
-if(KLEIDIAI_OPS_ENABLE_SVE)
-    if(KLEIDIAI_OPS_ENABLE_AARCH32)
-        if(KLEIDIAI_OPS_ENABLE_BARE_METAL OR NOT KLEIDIAI_OPS_ENABLE_NATIVE)
-            message(
-                FATAL_ERROR
-                    "Unable to enable SVE for cross-compilation on a bare-metal 32-bit Arm device")
-        endif()
-    endif()
-    message(STATUS "SVE features enabled")
-else()
-    message(STATUS "SVE features disabled")
-endif()
-
 # Only allow cycle profiling if this is the top-level project
 if(KLEIDIAI_OPS_ENABLE_CYCLE_PROFILING)
     if(PROJECT_IS_TOP_LEVEL)

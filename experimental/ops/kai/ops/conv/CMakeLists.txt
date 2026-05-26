@@ -303,16 +303,13 @@ arm_add_obj_lib(
     SOURCES ${KLEIDIAI_OPS_CONV_WINOGRAD_CORE_SOURCES}
     ARCH ${KLEIDIAI_OPS_ARCH})
 
-# Winograd sources; SVE only
-if(KLEIDIAI_OPS_ENABLE_SVE)
+# Winograd sources; AArch64-only buckets
+if(NOT KLEIDIAI_OPS_ENABLE_AARCH32)
     arm_add_obj_lib(
         conv_winograd_sve
         SOURCES ${KLEIDIAI_OPS_CONV_WINOGRAD_SVE_SOURCES}
         ARCH ${KLEIDIAI_OPS_SVE_ARCH})
-endif()
 
-# Winograd sources; FP16 only
-if(KLEIDIAI_OPS_ENABLE_FP16)
     arm_add_obj_lib(
         conv_winograd_fp16
         SOURCES ${KLEIDIAI_OPS_CONV_WINOGRAD_FP16_SOURCES}
@@ -327,21 +324,17 @@ if(NOT KLEIDIAI_OPS_ENABLE_AARCH32)
         SOURCES ${KLEIDIAI_OPS_CONV_DEPTHWISE_CORE_SOURCES}
         ARCH ${KLEIDIAI_OPS_ARCH})
 
-    # Depthwise sources; SVE only
-    if(KLEIDIAI_OPS_ENABLE_SVE)
-        arm_add_obj_lib(
-            conv_depthwise_sve
-            SOURCES ${KLEIDIAI_OPS_CONV_DEPTHWISE_SVE_SOURCES}
-            ARCH ${KLEIDIAI_OPS_SVE_ARCH})
-    endif()
+    # Depthwise sources; combined SVE/SME/SME2 bucket
+    arm_add_obj_lib(
+        conv_depthwise_sve
+        SOURCES ${KLEIDIAI_OPS_CONV_DEPTHWISE_SVE_SOURCES}
+        ARCH ${KLEIDIAI_OPS_SVE_ARCH})
 
-    # Depthwise sources; FP16 only
-    if(KLEIDIAI_OPS_ENABLE_FP16)
-        arm_add_obj_lib(
-            conv_depthwise_fp16
-            SOURCES ${KLEIDIAI_OPS_CONV_DEPTHWISE_FP16_SOURCES}
-            ARCH ${KLEIDIAI_OPS_FP16_ARCH})
-    endif()
+    # Depthwise sources; FP16
+    arm_add_obj_lib(
+        conv_depthwise_fp16
+        SOURCES ${KLEIDIAI_OPS_CONV_DEPTHWISE_FP16_SOURCES}
+        ARCH ${KLEIDIAI_OPS_FP16_ARCH})
 endif()
 
 # -------------------------------------------------------------------------------------------------
@@ -355,9 +348,8 @@ target_sources(
 if(NOT KLEIDIAI_OPS_ENABLE_AARCH32)
     target_sources(
         kleidiai_ops
-        PRIVATE $<TARGET_OBJECTS:conv_depthwise_core>
-                $<$<TARGET_EXISTS:conv_depthwise_sve>:$<TARGET_OBJECTS:conv_depthwise_sve>>
-                $<$<TARGET_EXISTS:conv_depthwise_fp16>:$<TARGET_OBJECTS:conv_depthwise_fp16>>)
+        PRIVATE $<TARGET_OBJECTS:conv_depthwise_core> $<TARGET_OBJECTS:conv_depthwise_sve>
+                $<TARGET_OBJECTS:conv_depthwise_fp16>)
 endif()
 
 message(STATUS "Leaving conv directory")

@@ -12,16 +12,18 @@ set(CMAKE_SYSTEM_NAME Android)
 if(NOT DEFINED CMAKE_ANDROID_NDK)
     if(DEFINED ENV{ANDROID_NDK_HOME})
         set(CMAKE_ANDROID_NDK "$ENV{ANDROID_NDK_HOME}" CACHE PATH "" FORCE)
+    elseif(DEFINED ENV{ANDROID_NDK})
+        set(CMAKE_ANDROID_NDK "$ENV{ANDROID_NDK}" CACHE PATH "" FORCE)
     else()
-        message(FATAL_ERROR "Set CMAKE_ANDROID_NDK or ANDROID_NDK_HOME to your NDK root.")
+        message(FATAL_ERROR "Set CMAKE_ANDROID_NDK, ANDROID_NDK_HOME, or ANDROID_NDK to your NDK root.")
     endif()
 endif()
 
-# See: https://developer.android.com/ndk/guides/cmake#the_new_toolchain_file
-include("${CMAKE_ANDROID_NDK}/build/cmake/android.toolchain.cmake")
-
 set(ANDROID_ABI arm64-v8a CACHE STRING "" FORCE)
 set(ANDROID_PLATFORM android-30 CACHE STRING "" FORCE) # for clang++ 30
+
+# See: https://developer.android.com/ndk/guides/cmake#the_new_toolchain_file
+include("${CMAKE_ANDROID_NDK}/build/cmake/android.toolchain.cmake")
 
 set(KLEIDIAI_OPS_ENABLE_NATIVE OFF CACHE BOOL "" FORCE)
 set(KLEIDIAI_OPS_ENABLE_BARE_METAL OFF CACHE BOOL "" FORCE)

@@ -311,16 +311,13 @@ arm_add_obj_lib(
     SOURCES ${KLEIDIAI_OPS_GEMM_CORE_SOURCES}
     ARCH ${KLEIDIAI_OPS_ARCH})
 
-# GEMM sources; SVE only
-if(KLEIDIAI_OPS_ENABLE_SVE)
+# GEMM sources; AArch64-only buckets
+if(NOT KLEIDIAI_OPS_ENABLE_AARCH32)
     arm_add_obj_lib(
         gemm_sve
         SOURCES ${KLEIDIAI_OPS_GEMM_SVE_SOURCES}
         ARCH ${KLEIDIAI_OPS_SVE_ARCH})
-endif()
 
-# GEMM sources; FP16 only
-if(KLEIDIAI_OPS_ENABLE_FP16)
     arm_add_obj_lib(
         gemm_fp16
         SOURCES ${KLEIDIAI_OPS_GEMM_FP16_SOURCES}
