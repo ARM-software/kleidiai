@@ -83,7 +83,7 @@ target_compile_options(
 if(KLEIDIAI_OPS_ENABLE_THREADS)
     find_package(Threads REQUIRED)
     if(NOT KLEIDIAI_OPS_ENABLE_ANDROID)
-        if(KLEIDIAI_OPS_ENABLE_NATIVE)
+        if(KLEIDIAI_OPS_ENABLE_NATIVE OR (CMAKE_VERSION VERSION_LESS 3.24))
             target_link_libraries(gemm PRIVATE Threads::Threads)
         else()
             target_link_libraries(gemm PRIVATE $<LINK_LIBRARY:WHOLE_ARCHIVE,Threads::Threads>)

@@ -1,8 +1,8 @@
 {
-  "version": 6,
+  "version": 3,
   "cmakeMinimumRequired": {
     "major": 3,
-    "minor": 25,
+    "minor": 22,
     "patch": 0
   },
   "configurePresets": [
@@ -174,21 +174,6 @@
     {
       "name": "android-arm64-v8a-release",
       "configurePreset": "android-arm64-v8a-release"
-    }
-  ],
-  "workflowPresets": [
-    {
-      "name": "native-linux-aarch64-debug",
-      "steps": [
-        {
-          "type": "configure",
-          "name": "native-linux-aarch64-debug"
-        },
-        {
-          "type": "build",
-          "name": "native-linux-aarch64-debug"
-        }
-      ]
     }
   ]
 }

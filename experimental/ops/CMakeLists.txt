@@ -6,12 +6,20 @@
 
 # -------------------------------------------------------------------------------------------------
 
-cmake_minimum_required(VERSION 3.25 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.13)
 project(
     KleidiAIOps
     VERSION 0.0.1
     DESCRIPTION "Benchmark GEMM kernels of various flavours for AArch64"
     LANGUAGES C CXX)
+
+if(NOT DEFINED PROJECT_IS_TOP_LEVEL)
+    if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+        set(PROJECT_IS_TOP_LEVEL ON)
+    else()
+        set(PROJECT_IS_TOP_LEVEL OFF)
+    endif()
+endif()
 
 # Search for additional CMake helpers in the cmake/ subdir
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
