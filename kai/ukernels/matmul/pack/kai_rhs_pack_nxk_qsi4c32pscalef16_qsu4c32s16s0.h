@@ -19,8 +19,8 @@ extern "C" {
 /// @param[in] k The number of columns in the RHS matrix (not packed).
 /// @param[in] nr The number of columns written by the matmul micro-kernel.
 /// @param[in] kr The number of columns loaded in the single innermost loop of the matmul micro-kernel.
-/// @param[in] bl The block length, which defines the number of K values stored in a single block. It must be equivalent
-/// to 32.
+/// @param[in] bl The block length, which defines the number of K values stored in a single block. It must be a multiple
+/// of 32.
 ///
 /// @return Row stride in bytes to the packed RHS matrix.
 size_t kai_get_rhs_packed_stride_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0(size_t k, size_t nr, size_t kr, size_t bl);

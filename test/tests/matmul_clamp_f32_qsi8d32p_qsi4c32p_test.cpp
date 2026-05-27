@@ -85,18 +85,9 @@ struct UKernelVariants {
 };
 
 // clang-format off
-static const std::array<UKernelVariants, 13>
+static const std::array<UKernelVariants, 7>
     variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p = {
         {
-         // NOTE: The following kernels do not support clamping despite their names.
-         {UKERNEL_MATMUL_PACK_VARIANT(
-             clamp_f32_qsi8d32p4x4_qsi4c32p4x4_16x4_neon_dotprod, cpu_has_dotprod, lhs_quant_pack_qsi8d32p_f32,
-             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
-         {UKERNEL_MATMUL_PACK_VARIANT(
-             clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod, cpu_has_dotprod, lhs_quant_pack_qsi8d32p_f32,
-             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
-
-         // The kernels below this point will run clamping tests
          {UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa, cpu_has_sme2, lhs_quant_pack_qsi8d32p_f32_neon,
              rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)},
@@ -110,18 +101,6 @@ static const std::array<UKernelVariants, 13>
              clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme_dot, cpu_has_sme, lhs_quant_pack_qsi8d32p_f32_neon,
              rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon, false)},
          {UKERNEL_MATMUL_PACK_VARIANT(
-             clamp_f32_qsi8d32p4x8_qsi4c32p4x8_8x4x32_neon_i8mm, cpu_has_i8mm, lhs_quant_pack_qsi8d32p_f32,
-             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
-         {UKERNEL_MATMUL_PACK_VARIANT(
-             clamp_f32_qsi8d32p4x8_qsi4c32p4x8_16x4_neon_i8mm, cpu_has_i8mm, lhs_quant_pack_qsi8d32p_f32,
-             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
-         {UKERNEL_MATMUL_PACK_VARIANT(
-             4x8sb_clamp_f32_qsi8d32p4x8_qsi4c32p4x8_16x4_neon_i8mm, clamp_f32_qsi8d32p4x8_qsi4c32p4x8_16x4_neon_i8mm,
-             cpu_has_i8mm, lhs_quant_pack_qsi8d32p4x8sb_f32_neon, rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
-         {UKERNEL_MATMUL_PACK_VARIANT(
-             clamp_f32_qsi8d32p1x8_qsi4c32p4x8_1x4x32_neon_dotprod, cpu_has_dotprod, lhs_quant_pack_qsi8d32p_f32,
-             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
-         {UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p1x4_qsi4c32p8x4_1x8_sve_dotprod, (cpu_check<cpu_has_sve_vl256, cpu_has_dotprod>), lhs_quant_pack_qsi8d32p_f32,
              rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
          {UKERNEL_MATMUL_PACK_VARIANT(
@@ -131,7 +110,7 @@ static const std::array<UKernelVariants, 13>
               clamp_f32_qsi8d32p4x8_qsi4c32p8x8_16x8_sve_i8mm, (cpu_check<cpu_has_sve_vl256, cpu_has_i8mm>), lhs_quant_pack_qsi8d32p_f32,
               rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)}}};
 
-static const std::array<UKernelVariants, 4>
+static const std::array<UKernelVariants, 10>
     variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl = {
         {
          {UKERNEL_MATMUL_PACK_VARIANT(
@@ -145,7 +124,25 @@ static const std::array<UKernelVariants, 4>
             rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)},
          {UKERNEL_MATMUL_PACK_VARIANT(
             clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme_dot, cpu_has_sme, lhs_quant_pack_qsi8d32p_f32_neon,
-            rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon, false)}}};
+            rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon, false)},
+         {UKERNEL_MATMUL_PACK_VARIANT(
+             clamp_f32_qsi8d32p4x4_qsi4c32p4x4_16x4_neon_dotprod, cpu_has_dotprod, lhs_quant_pack_qsi8d32p_f32,
+             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
+         {UKERNEL_MATMUL_PACK_VARIANT(
+            clamp_f32_qsi8d32p4x8_qsi4c32p4x8_16x4_neon_i8mm, cpu_has_i8mm, lhs_quant_pack_qsi8d32p_f32,
+            rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
+         {UKERNEL_MATMUL_PACK_VARIANT(
+            clamp_f32_qsi8d32p4x8_qsi4c32p4x8_8x4x32_neon_i8mm, cpu_has_i8mm, lhs_quant_pack_qsi8d32p_f32,
+            rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
+         {UKERNEL_MATMUL_PACK_VARIANT(
+            clamp_f32_qsi8d32p1x8_qsi4c32p4x8_1x4x32_neon_dotprod, cpu_has_dotprod, lhs_quant_pack_qsi8d32p_f32,
+            rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
+         {UKERNEL_MATMUL_PACK_VARIANT(
+             4x8sb_clamp_f32_qsi8d32p4x8_qsi4c32p4x8_16x4_neon_i8mm, clamp_f32_qsi8d32p4x8_qsi4c32p4x8_16x4_neon_i8mm,
+             cpu_has_i8mm, lhs_quant_pack_qsi8d32p4x8sb_f32_neon, rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
+         {UKERNEL_MATMUL_PACK_VARIANT(
+            clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod, cpu_has_dotprod, lhs_quant_pack_qsi8d32p_f32,
+            rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)}}};
 // clang-format on
 
 using MatMulTestParams_f32_qsi8d32p_qsi4c32p =
@@ -540,6 +537,7 @@ static constexpr std::array shapes_k32{
     MatMulShape{77, 99, 256},
 };
 static constexpr std::array shapes_k64{
+    MatMulShape{1, 2, 64},     //
     MatMulShape{32, 64, 64},   //
     MatMulShape{16, 32, 64},   //
     MatMulShape{8, 32, 64},    //
@@ -560,6 +558,7 @@ static constexpr std::array shapes_k96{
     MatMulShape{77, 99, 288},
 };
 static constexpr std::array shapes_k128{
+    MatMulShape{1, 2, 128},    //
     MatMulShape{32, 64, 128},  //
     MatMulShape{16, 32, 128},  //
     MatMulShape{8, 32, 128},   //
@@ -568,6 +567,7 @@ static constexpr std::array shapes_k128{
     MatMulShape{77, 99, 256},
 };
 static constexpr std::array shapes_k256{
+    MatMulShape{1, 2, 256},    //
     MatMulShape{32, 64, 256},  //
     MatMulShape{16, 32, 256},  //
     MatMulShape{8, 32, 256},   //

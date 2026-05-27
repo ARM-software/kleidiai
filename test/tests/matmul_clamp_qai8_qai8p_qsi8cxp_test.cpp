@@ -6,6 +6,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -476,6 +477,32 @@ struct TestReference {
 
 constexpr int8_t padding_value = 0;
 
+// The bias values are generated independently from the LHS/RHS data. Some seeds
+// can therefore produce qsi32 bias values close to int32_t limits, leaving no
+// accumulator headroom for the RHS correction and raw dot-product accumulation.
+// Clamp the generated test bias to keep the randomized stimuli within the
+// accumulator domain expected by this test.
+void clamp_generated_bias_to_int32_headroom(Buffer& bias_qsi32, size_t k, size_t n) {
+    constexpr auto int32_min = static_cast<int64_t>(std::numeric_limits<int32_t>::min());
+    constexpr auto int32_max = static_cast<int64_t>(std::numeric_limits<int32_t>::max());
+
+    // Reserve headroom for raw dot-product accumulation and zero-point correction:
+    // zero_point * sum(rhs), where abs(zero_point) <= 128 and each abs(rhs) <= 128.
+    // The headroom is scaled by `k` since the bias is added after accumulating
+    // over `k` elements.
+    constexpr int64_t max_s8_prod_magnitude = 128 * 128;
+    constexpr int64_t max_raw_dot_and_rhs_correction_headroom = 2 * max_s8_prod_magnitude;
+    const int64_t headroom = static_cast<int64_t>(k) * max_raw_dot_and_rhs_correction_headroom;
+    KAI_ASSERT_ALWAYS(headroom <= int32_max);
+
+    const int32_t min_bias = static_cast<int32_t>(int32_min + headroom);
+    const int32_t max_bias = static_cast<int32_t>(int32_max - headroom);
+    for (size_t n_i = 0; n_i < n; ++n_i) {
+        const auto bias = read_array<int32_t>(bias_qsi32.data(), n_i);
+        write_array<int32_t>(bias_qsi32.data(), n_i, std::clamp(bias, min_bias, max_bias));
+    }
+}
+
 // Functionality for hashing generated test data.
 // This is particularly useful for portion testing
 // which reuses the exact same data for all portions
@@ -598,6 +625,7 @@ const TestReference& get_test_reference(const TestDataId& test_data_id) {
     // scale using RHS scales. This will scale each bias value indiviually
     auto bias_qsi32 =
         quantize_symmetric_per_block<float, int32_t, float>(bias_f32.data(), bias_scales.data(), shape.n, 1, 1);
+    clamp_generated_bias_to_int32_headroom(bias_qsi32, shape.k, shape.n);
 
     // Runs the reference implementation of matmul to produce floating-point result.
     const void* const* lhs_iptr = reinterpret_cast<const void* const*>(lhs_qai8_indirect.data());

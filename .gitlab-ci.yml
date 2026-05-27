@@ -131,6 +131,11 @@ workflow:
   auto_cancel:
     # Interrupt old pipeline when new one pushed for MR
     on_new_commit: interruptible
+  rules:
+    # Avoid starting pipelines for draft merge requests.
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event' && $CI_MERGE_REQUEST_DRAFT == "true"
+      when: never
+    - when: always
 
 # Purpose: Build library tests.
 build-clang:

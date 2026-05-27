@@ -1,0 +1,153 @@
+//
+// SPDX-FileCopyrightText: Copyright 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+
+#if defined(_MSC_VER)
+    #define KAI_ASM_GLOBAL(name) GLOBAL name
+    #define KAI_ASM_FUNCTION_TYPE(name)
+    #define KAI_ASM_FUNCTION_LABEL(name) name PROC
+    #define KAI_ASM_FUNCTION_END(name) ENDP
+
+    #define KAI_ASM_CODE(name) AREA name, CODE, READONLY
+    #define KAI_ASM_ALIGN
+    #define KAI_ASM_LABEL(name) name
+    #define KAI_ASM_INST(hex) DCD hex
+    #define KAI_ASM_END END
+#else
+    #if defined(__APPLE__)
+        #define KAI_ASM_GLOBAL(name) .globl _##name
+        #define KAI_ASM_FUNCTION_TYPE(name)
+        #define KAI_ASM_FUNCTION_LABEL(name) _##name:
+        #define KAI_ASM_FUNCTION_END(name)
+    #else
+        #define KAI_ASM_GLOBAL(name) .global name
+        #define KAI_ASM_FUNCTION_TYPE(name) .type name, %function
+        #define KAI_ASM_FUNCTION_LABEL(name) name:
+        #define KAI_ASM_FUNCTION_END(name) .size name, .-name
+    #endif
+
+    #define KAI_ASM_CODE(name) .text
+    #define KAI_ASM_ALIGN .p2align 4,,11
+    #define KAI_ASM_LABEL(name) name:
+    #define KAI_ASM_INST(hex) .inst hex
+    #define KAI_ASM_END
+#endif
+
+    KAI_ASM_CODE(matmul_clamp_f32_qsi8d32p1x8_qsi4c32p4x8_1x4x32_neon_dotprod)
+    KAI_ASM_ALIGN
+
+    KAI_ASM_GLOBAL(kai_kernel_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p4x8_1x4x32_neon_dotprod)
+
+KAI_ASM_FUNCTION_TYPE(kai_kernel_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p4x8_1x4x32_neon_dotprod)
+KAI_ASM_FUNCTION_LABEL(kai_kernel_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p4x8_1x4x32_neon_dotprod)
+    stp x19, x20, [sp, -96]!
+    stp x21, x22, [sp, 16]
+    stp x23, x24, [sp, 32]
+    stp x25, x26, [sp, 48]
+    stp x27, x28, [sp, 64]
+    ldr x9, [x0, #0x0]    // dst
+    ldr x27, [x0, #0x8]   // lhs_packed
+    ldr x28, [x0, #0x10]  // rhs_packed
+    ldr x16, [x0, #0x18]  // clamp_vals
+    ldr x22, [x0, #0x20]  // dst_stride_row
+    ldr x25, [x0, #0x28]  // m
+    ldr x23, [x0, #0x30]  // n
+    ldr x20, [x0, #0x38]  // num_blocks
+    ldr x8, [x0, #0x40]   // num_subblocks
+    mov x26, #0x2
+    add x26, x26, x8, lsl #5
+    movi v1.16b, #0xf0
+    mul x26, x20, x26
+    mov x15, x20
+KAI_ASM_LABEL(label_1)  // Row loop
+    mov x24, x28
+    mov x11, x23
+    add x14, x9, x22
+KAI_ASM_LABEL(label_2)  // Column loop
+    mov x21, x27
+    movi v0.16b, #0x0
+    mov x20, x15
+KAI_ASM_LABEL(label_3)  // Block loop
+    mov x6, x8
+    ldr d16, [x24, #0x0]
+    KAI_ASM_INST(0x4d40c6bf)  // ld1r { v31.8h }, [x21]
+    add x24, x24, #0x8
+    add x21, x21, #0x2
+    fcvtl v23.4s, v16.4h
+    fcvtl v31.4s, v31.4h
+    movi v27.4s, #0x0
+    movi v28.4s, #0x0
+    add x19, x21, x8, lsl #4
+KAI_ASM_LABEL(label_4)  // Subblock loop
+    ldr q30, [x24, #0x0]
+    ldr q29, [x24, #0x10]
+    KAI_ASM_INST(0x4ddfceba)  // ld1r { v26.2d }, [x21], #0x8
+    ldr q25, [x24, #0x20]
+    ldr q24, [x24, #0x30]
+    add x24, x24, #0x40
+    KAI_ASM_INST(0x4ddfceb6)  // ld1r { v22.2d }, [x21], #0x8
+    shl v21.16b, v30.16b, #0x4
+    shl v20.16b, v29.16b, #0x4
+    KAI_ASM_INST(0x4ddfce73)  // ld1r { v19.2d }, [x19], #0x8
+    KAI_ASM_INST(0x4ddfce72)  // ld1r { v18.2d }, [x19], #0x8
+    shl v17.16b, v25.16b, #0x4
+    and v30.16b, v30.16b, v1.16b
+    shl v16.16b, v24.16b, #0x4
+    and v29.16b, v29.16b, v1.16b
+    KAI_ASM_INST(0x4e9a96bc)  // sdot v28.4s, v21.16b, v26.16b
+    KAI_ASM_INST(0x4e9a969b)  // sdot v27.4s, v20.16b, v26.16b
+    and v25.16b, v25.16b, v1.16b
+    and v24.16b, v24.16b, v1.16b
+    KAI_ASM_INST(0x4e96963c)  // sdot v28.4s, v17.16b, v22.16b
+    KAI_ASM_INST(0x4e96961b)  // sdot v27.4s, v16.16b, v22.16b
+    KAI_ASM_INST(0x4e9397dc)  // sdot v28.4s, v30.16b, v19.16b
+    KAI_ASM_INST(0x4e9397bb)  // sdot v27.4s, v29.16b, v19.16b
+    KAI_ASM_INST(0x4e92973c)  // sdot v28.4s, v25.16b, v18.16b
+    KAI_ASM_INST(0x4e92971b)  // sdot v27.4s, v24.16b, v18.16b
+    subs x6, x6, #0x1
+    bgt label_4
+    mov x21, x19
+    subs x20, x20, #0x1
+    addp v28.4s, v28.4s, v27.4s
+    scvtf v28.4s, v28.4s, #0x4
+    fmul v23.4s, v23.4s, v31.4s
+    fmla v0.4s, v28.4s, v23.4s
+    bgt label_3
+    KAI_ASM_INST(0x4d40ca11)  // ld1r { v17.4s }, [x16]
+    add x20, x16, #0x4
+    cmp x11, #0x4
+    KAI_ASM_INST(0x4d40ca90)  // ld1r { v16.4s }, [x20]
+    fmax v0.4s, v0.4s, v17.4s
+    fmin v0.4s, v0.4s, v16.4s
+    blt label_5
+    str q0, [x9, #0x0]
+    b label_8
+KAI_ASM_LABEL(label_5)  // Partial output
+    mov x20, x9
+    tbz x11, #1, label_6
+    st1 { v0.d }[0], [x20], #0x8
+    tbz x11, #0, label_7
+    st1 { v0.s }[2], [x20]
+    b label_7
+KAI_ASM_LABEL(label_6)  // Output block 0: partial_1_0
+    st1 { v0.s }[0], [x20]
+KAI_ASM_LABEL(label_7)  // Output block 0: Done
+KAI_ASM_LABEL(label_8)  // Stores done
+    subs x11, x11, #0x4
+    add x9, x9, #0x10
+    bgt label_2
+    subs x25, x25, #0x1
+    add x27, x27, x26
+    mov x9, x14
+    bgt label_1
+    ldp x21, x22, [sp, 16]
+    ldp x23, x24, [sp, 32]
+    ldp x25, x26, [sp, 48]
+    ldp x27, x28, [sp, 64]
+    ldp x19, x20, [sp], 96
+    ret
+    KAI_ASM_FUNCTION_END(kai_kernel_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p4x8_1x4x32_neon_dotprod)
+
+    KAI_ASM_END
