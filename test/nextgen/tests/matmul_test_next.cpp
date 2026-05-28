@@ -45,7 +45,7 @@ struct MatMulFixtureParams {
     size_t shape_m;
     size_t shape_n;
     size_t shape_k;
-    MatMulBiasMode bias_mode;
+    MatMulBiasModeSet bias_formats;
     std::optional<float> clamp_ratio;
 
     const MatMulOperator* op;
@@ -55,7 +55,7 @@ struct MatMulFixtureParams {
     /// @return A unique name string used for test registration and caching.
     [[nodiscard]] std::string name() const {
         return std::string(op->name) + ",m=" + std::to_string(shape_m) + ",n=" + std::to_string(shape_n) +
-            ",k=" + std::to_string(shape_k) + ",bias=" + matmul_bias_mode_name(bias_mode) +
+            ",k=" + std::to_string(shape_k) + ",bias=" + matmul_bias_format_set_name(bias_formats) +
             ",clamp_ratio=" + (clamp_ratio.has_value() ? std::to_string(clamp_ratio.value()) : "noclamp") +
             ",iteration=" + std::to_string(iteration_no);
     }
@@ -107,7 +107,7 @@ protected:
 
         // Creates a new test if it hasn't been created.
         MatMulTb test(
-            m_fixture_params.shape_m, m_fixture_params.shape_n, m_fixture_params.shape_k, m_fixture_params.bias_mode,
+            m_fixture_params.shape_m, m_fixture_params.shape_n, m_fixture_params.shape_k, m_fixture_params.bias_formats,
             m_fixture_params.clamp_ratio, m_fixture_params.op);
 
         const std::string seed_key = "MatMulNext::testbench:" + name;
@@ -222,58 +222,59 @@ private:
 
 struct BiasSelector {
 public:
-    /// Builds a bias-mode selector for a given operator.
+    /// Builds a bias-format selector for a given operator.
     ///
-    /// @param[in] op The operator providing supported bias modes.
+    /// @param[in] op The operator providing supported bias format sets.
     explicit BiasSelector(const MatMulOperator& op) {
-        // Separates no-bias mode from the list of supported bias modes.
+        // Separates with-bias format sets from the list of supported bias format sets.
         //
         // Reason: no-bias and with-bias cases are chosen by a distribution,
-        // and if the with-bias case is chosen, each with-bias modes will be chosen
-        // by another distribution.
-        has_no_bias_mode =
-            std::find(op.supported_bias_modes.begin(), op.supported_bias_modes.end(), MatMulBiasMode::NO_BIAS) !=
-            op.supported_bias_modes.end();
+        // and if the with-bias case is chosen, each with-bias format set will be
+        // chosen by another distribution.
+        has_no_bias_format_set = std::any_of(
+            op.supported_bias_mode_sets.begin(), op.supported_bias_mode_sets.end(),
+            [](MatMulBiasModeSet bias_formats) { return bias_formats.is_empty(); });
 
         std::copy_if(
-            op.supported_bias_modes.begin(), op.supported_bias_modes.end(), std::back_inserter(with_bias_modes),
-            [](MatMulBiasMode bias_mode) { return bias_mode != MatMulBiasMode::NO_BIAS; });
-        has_with_bias_mode = !with_bias_modes.empty();
-        if (has_with_bias_mode) {
-            with_bias_dist = std::uniform_int_distribution<size_t>(0, with_bias_modes.size() - 1);
+            op.supported_bias_mode_sets.begin(), op.supported_bias_mode_sets.end(),
+            std::back_inserter(with_bias_format_sets), matmul_bias_format_set_has_bias_data);
+        has_with_bias_format_set = !with_bias_format_sets.empty();
+        if (has_with_bias_format_set) {
+            with_bias_dist = std::uniform_int_distribution<size_t>(0, with_bias_format_sets.size() - 1);
         }
 
-        KAI_TEST_ASSERT_MSG(has_no_bias_mode || has_with_bias_mode, "At least one bias mode is needed!");
+        KAI_TEST_ASSERT_MSG(
+            has_no_bias_format_set || has_with_bias_format_set, "At least one bias format set is needed!");
     }
 
-    /// Picks a bias mode based on the configured distributions.
+    /// Picks a bias format set based on the configured distributions.
     ///
     /// @param[in,out] dist_ctx The shared distribution context.
     ///
-    /// @return The selected bias mode.
-    MatMulBiasMode pick(MatMulDistribution& dist_ctx) {
-        // Bias mode:
+    /// @return The selected bias format set.
+    MatMulBiasModeSet pick(MatMulDistribution& dist_ctx) {
+        // Bias format set:
         //   * 70% of tests have bias.
         //   * 30% of tests have no bias.
         //
-        // If there is no bias mode, with bias mode is always chosen.
-        // If with bias mode is chosen, each bias modes (except no bias mode)
+        // If there is no no-bias format set, a with-bias format set is always chosen.
+        // If a with-bias format set is chosen, each format set (except no bias)
         // will be chosen uniformly.
         const float bias_prob = dist_ctx.m_probability_dist(dist_ctx.m_rng);
-        const bool with_bias = !has_no_bias_mode || (has_with_bias_mode && bias_prob < 0.7F);
+        const bool with_bias = has_with_bias_format_set && (!has_no_bias_format_set || bias_prob < 0.7F);
 
         if (with_bias) {
-            const size_t bias_mode_idx = with_bias_dist(dist_ctx.m_rng);
-            return with_bias_modes.at(bias_mode_idx);
+            const size_t bias_formats_idx = with_bias_dist(dist_ctx.m_rng);
+            return with_bias_format_sets.at(bias_formats_idx);
         }
 
-        return MatMulBiasMode::NO_BIAS;
+        return MatMulBiasModeSet{};
     }
 
 private:
-    bool has_no_bias_mode = false;
-    bool has_with_bias_mode = false;
-    std::vector<MatMulBiasMode> with_bias_modes;
+    bool has_no_bias_format_set = false;
+    bool has_with_bias_format_set = false;
+    std::vector<MatMulBiasModeSet> with_bias_format_sets;
     std::uniform_int_distribution<size_t> with_bias_dist;
 };
 
@@ -288,12 +289,19 @@ std::array<MatrixPortion, 3> make_output_portions() {
     };
 }
 
-/// Picks a clamp ratio following the configured probabilities.
+/// Picks a clamp ratio for the operator clamp mode.
 ///
+/// @param[in] op The operator to test.
 /// @param[in,out] dist_ctx The shared distribution context.
 ///
-/// @return A clamp ratio in the range [0, 1], where 1.0 means no clamping.
-std::optional<float> pick_clamp_ratio(MatMulDistribution& dist_ctx) {
+/// @return A clamp ratio if clamping arguments should be provided.
+std::optional<float> pick_clamp_ratio(const MatMulOperator& op, MatMulDistribution& dist_ctx) {
+    if (op.clamp_mode == MatMulClampMode::UNSUPPORTED) {
+        return std::nullopt;
+    }
+
+    KAI_TEST_ASSERT(op.clamp_mode == MatMulClampMode::OPTIONAL || op.clamp_mode == MatMulClampMode::REQUIRED);
+
     // Clamping range:
     //   * 50% of tests have no clamping.
     //   * 10% of tests have clamp to the full output range.
@@ -340,8 +348,6 @@ MatMulFixtureParams pick_fixture(
     size_t shape_m = 0;
     size_t shape_n = 0;
     size_t shape_k = 0;
-    MatMulBiasMode bias_mode = MatMulBiasMode::NO_BIAS;
-    std::optional<float> clamp_ratio = 0.0F;
 
     static constexpr uint32_t max_attempts = 10'000;
     uint32_t attempts = 0;
@@ -352,18 +358,16 @@ MatMulFixtureParams pick_fixture(
         shape_n = dist_ctx.m_shape_dist(dist_ctx.m_rng);
         shape_k = dist_ctx.m_shape_dist(dist_ctx.m_rng);
 
-        if (!op.is_shape_suitable(shape_m, shape_n, shape_k, portion)) {
-            continue;
+        if (op.is_shape_suitable(shape_m, shape_n, shape_k, portion)) {
+            break;
         }
-
-        bias_mode = bias_selector.pick(dist_ctx);
-        clamp_ratio = pick_clamp_ratio(dist_ctx);
-
-        break;
     }
 
+    const MatMulBiasModeSet bias_formats = bias_selector.pick(dist_ctx);
+    const std::optional<float> clamp_ratio = pick_clamp_ratio(op, dist_ctx);
+
     return {
-        shape_no, shape_m, shape_n, shape_k, bias_mode, clamp_ratio, &op,
+        shape_no, shape_m, shape_n, shape_k, bias_formats, clamp_ratio, &op,
     };
 }
 
@@ -396,7 +400,7 @@ void register_operator_test(
             test_params);
     }
 
-    if (op.matmul != nullptr) {
+    if (op.matmul.has_value()) {
         KAI_REGISTER_TEST(
             MatMulFixture, MatMulMatMulTest, test_suite_name.c_str(), ("MatMul/" + desc).c_str(), fixture_params,
             test_params);

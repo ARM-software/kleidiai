@@ -60,6 +60,7 @@ template Buffer cast<BFloat16<true>, float>(const void* src, size_t length);
 template Buffer cast<float, Float16>(const void* src, size_t length);
 template Buffer cast<float, BFloat16<false>>(const void* src, size_t length);
 template Buffer cast<float, BFloat16<true>>(const void* src, size_t length);
+template Buffer cast<float, int32_t>(const void* src, size_t length);
 
 Buffer cast(const void* src, kai::test::DataType src_dt, DataType dst_dt, size_t height, size_t width) {
     const auto length = height * width;
@@ -74,6 +75,8 @@ Buffer cast(const void* src, kai::test::DataType src_dt, DataType dst_dt, size_t
         return cast<Float16, float>(src, length);
     } else if (src_dt == DataType::FP16 && dst_dt == DataType::FP32) {
         return cast<float, Float16>(src, length);
+    } else if (src_dt == DataType::I32 && dst_dt == DataType::FP32) {
+        return cast<float, int32_t>(src, length);
     }
     KAI_ERROR("Unsupported cast data type!");
 }

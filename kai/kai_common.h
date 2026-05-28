@@ -212,8 +212,14 @@ inline static uint16_t kai_cast_f16_f32(float f32) {
 }
 #endif
 
+/// Divide a value, `a`, with a value `b` and round up the result
+inline static size_t kai_div_ceil(size_t a, size_t b) {
+    return (a + b - 1) / b;
+}
+
+/// Round up a value, `a` to a multiple of `b`
 inline static size_t kai_roundup(size_t a, size_t b) {
-    return ((a + b - 1) / b) * b;
+    return kai_div_ceil(a, b) * b;
 }
 
 #if defined(__ARM_FEATURE_SVE2) || defined(_M_ARM64)
