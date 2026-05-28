@@ -148,6 +148,7 @@ Micro-kernel categories:
 | Output type | LHS type | RHS type | LHS quantization | RHS quantization | Filter size | Block size | SIMD | Feature | Uarch | Micro-kernel | Packing micro-kernels |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | f32 | f32 | f32 | - | - | 3x3 stride 1 | 4 rows, planar | SME2 | mla | - | `kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla` | RHS: [`kai_rhs_dwconv_pack_x32p1vlx1b_x32_x32_sme`](#pack-kai-rhs-dwconv-pack-x32p1vlx1b-x32-x32-sme) |
+| f16 | f16 | f16 | - | - | 3x3 stride 1 | 4x4, indirect | SME2 | mla | - | `kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla` | RHS: [`kai_rhs_dwconv_pack_x16p1vlx1b_x16_x16_sme`](#pack-kai-rhs-dwconv-pack-x16p1vlx1b-x16-x16-sme) |
 
 ## Packing micro-kernels
 
@@ -207,6 +208,7 @@ Micro-kernel categories:
 | x32 | - | x32 | - | x32 | - | - | Advanced SIMD | <a id="pack-kai-rhs-pack-kxn-x32p16x1b-x32-x32-neon"></a>`kai_rhs_pack_kxn_x32p16x1b_x32_x32_neon` |
 | x32 | - | x32 | - | x32 | - | - | Advanced SIMD | <a id="pack-kai-rhs-pack-nxk-x32p16x1bx32-x32-x32-neon"></a>`kai_rhs_pack_nxk_x32p16x1bx32_x32_x32_neon` |
 | x32 | - | x32 | - | x32 | - | - | SME | <a id="pack-kai-rhs-dwconv-pack-x32p1vlx1b-x32-x32-sme"></a>`kai_rhs_dwconv_pack_x32p1vlx1b_x32_x32_sme` |
+| x16 | - | x16 | - | x16 | - | - | SME | <a id="pack-kai-rhs-dwconv-pack-x16p1vlx1b-x16-x16-sme"></a>`kai_rhs_dwconv_pack_x16p1vlx1b_x16_x16_sme` |
 | x32 | - | x32 | - | - | - | - | SME | <a id="pack-kai-matmul-pack-lhs-mxk-x32p4vsx1-x32-sme"></a>`kai_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme` |
 | x32 | - | x32 | - | x32 | - | - | SME | <a id="pack-kai-matmul-pack-rhs-kxn-x32p4vsx1bx32-x32-x32-sme"></a>`kai_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme` |
 | x32 | - | x32 | - | x32 | - | - | SME | <a id="pack-kai-matmul-pack-rhs-nxk-x32p4vsx1bx32-x32-x32-sme"></a>`kai_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme` |

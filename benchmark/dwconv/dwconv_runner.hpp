@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -59,8 +59,8 @@ public:
         // No-op
     }
 
-    // Uniform run call from benchmark layer. Implements common tiling and delegates kernel call.
-    void run(const void* src, void* dst) {
+    // Uniform run call from benchmark layer. Implements common tiling and delegates micro-kernel call.
+    virtual void run(const void* src, void* dst) {
         const size_t m_step = traits().get_m_step();
         const size_t filter_height = traits().get_filter_height();
 
@@ -118,8 +118,17 @@ protected:
     size_t input_height() const {
         return m_input_height;
     }
+    size_t input_width() const {
+        return m_input_width;
+    }
     size_t output_height() const {
         return m_output_height;
+    }
+    size_t output_width() const {
+        return m_output_width;
+    }
+    size_t num_channels() const {
+        return m_num_channels;
     }
     size_t pad_top() const {
         return m_pad_top;
@@ -185,6 +194,41 @@ protected:
 
 private:
     DwConvPackedFloatInterface m_iface{};
+    const void* m_rhs_packed{nullptr};
+};
+
+// Packed depth-first float runner
+class DwConvPackedDepthfirstFloatRunner : public DwConvRunner {
+public:
+    DwConvPackedDepthfirstFloatRunner(
+        const DwConvPackedDepthfirstFloatInterface& iface, const DwConvTraits& traits, DataType src_type,
+        DataType dst_type) :
+        DwConvRunner(traits, src_type, dst_type), m_iface(iface) {
+    }
+
+    void prepare(
+        const void* rhs_packed, const void* /* weights */, const void* /* bias */, const void* /* qp */) override {
+        m_rhs_packed = rhs_packed;
+    }
+
+    // Planar kernel requires different looping than depth-first, so we override here for depth-first.
+    void run(const void* src, void* dst) override {
+        m_iface.run_dwconv(
+            src, m_rhs_packed, dst, num_channels(), input_height(), input_width(), output_height(), output_width(),
+            pad_left(), pad_top(), in_stride_row_bytes(), in_stride_col_bytes(), dst_stride_row_bytes(),
+            dst_stride_col_bytes(), clamp_min(), clamp_max());
+    }
+
+protected:
+    // f16 Depth-first run bypasses the tiled planar path.
+    // f16 Depth-first the wrapper builds per-4x4 pointer tables and calls assembly internally.
+    // f32 Planar the caller supplies one planar row tile to call_kernel below.
+    void call_kernel(
+        const uint8_t*, uint8_t*, size_t, size_t, size_t, size_t, size_t, size_t, size_t, size_t) override {
+    }
+
+private:
+    DwConvPackedDepthfirstFloatInterface m_iface{};
     const void* m_rhs_packed{nullptr};
 };
 
