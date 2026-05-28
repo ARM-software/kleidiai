@@ -29,6 +29,7 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 - New Transposed-B RHS packing micro-kernel versions of kai_rhs_pack_kxn_x32p16x1b_x32_x32_neon and kai_rhs_pack_kxn_x16p32x1b_x16_x16_neon:
   - kai_rhs_pack_nxk_x16p32x1bx16_x16_x16_neon
   - kai_rhs_pack_nxk_x32p16x1bx32_x32_x32_neon
+- New SME2 FP32 GEMV micro-kernel with 4vsx1 RHS format
 
 ## v1.25.0
 

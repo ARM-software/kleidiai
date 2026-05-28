@@ -42,6 +42,22 @@ extern "C" {
 /// @return The micro-kernel API.
 struct kai_matmul_uker_api kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8vs_sme2_mopa(void);
 
+/// Single-precision floating-point vector-matrix multiplication using SME2 MLA instruction.
+///
+/// Required operands:
+///   * dst
+///   * lhs
+///   * rhs - rhs matrix and per-n accumulator bias vector.
+///
+/// Optional arguments:
+///   * clamp - F32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
+///
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_f32_f32_f32p4vsx1bf32_1x32vs_sme2_mla(void);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif
