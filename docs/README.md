@@ -36,6 +36,7 @@ The `examples` directory contains standalone C++ sample applications that demons
 
 ## Documentation and guides
 
+- [Coding standard and conventions](coding_conventions.md)
 - [KleidiAI micro-kernel tables](microkernel_tables.md)
 - [How to run the int4 matmul micro-kernels](matmul_qsi4cx/README.md)
 - [How to run the indirect matmul micro-kernels](imatmul/README.md)

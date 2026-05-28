@@ -254,6 +254,11 @@ inline constexpr MatMulStridedLhsInterface kai_matmul_clamp_f32_f32_f32p4vlx1b_6
     .run_matmul = kai_run_matmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla,
 };
 
+inline constexpr MatMulUkernelApiInterface kai_matmul_clamp_f32_f32_f32p4vsx1bf32_1x32vs_sme2_mla_interface{
+    .get_config = [] { return kai_matmul_uker_config{}; },
+    .get_api = kai_matmul_clamp_f32_f32_f32p4vsx1bf32_1x32vs_sme2_mla,
+};
+
 // matmul_clamp_f32_f32p_f32p
 inline constexpr MatMulUkernelApiInterface
     kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1b_8vsx8vs_elastic_sme2_mopa_interface{
@@ -742,6 +747,10 @@ inline const std::array matmul_benchmarks{
     RegisterBenchmark(
         "kai_matmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla", kai_benchmark_matmul<MatMulStridedLhsInterface>,
         kai_matmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla_interface, DataType::FP32, MatMulOp::GEMM, test::cpu_has_sve),
+    RegisterBenchmark(
+        "kai_matmul_clamp_f32_f32_f32p4vsx1bf32_1x32vs_sme2_mla", kai_benchmark_matmul<MatMulUkernelApiInterface>,
+        kai_matmul_clamp_f32_f32_f32p4vsx1bf32_1x32vs_sme2_mla_interface, DataType::FP32, MatMulOp::GEMV,
+        test::cpu_has_sme2),
 
     // matmul_clamp_f32_f32p_f32p
     RegisterBenchmark(

@@ -60,7 +60,7 @@ void add_output_stage_input_requirements(
 std::vector<MatMulSlot> MatMulUkerApiWrapper::run_inputs(ConstTensorSet tensors) const {
     const MatMulConfig& config = tensors.at(MatMulSlot::CONFIG).value<MatMulConfig>();
 
-    std::vector<MatMulSlot> inputs = {MatMulSlot::CONFIG, MatMulSlot::LHS_PACKED, MatMulSlot::RHS_PACKED};
+    std::vector<MatMulSlot> inputs = {MatMulSlot::CONFIG, m_lhs_input_slot, MatMulSlot::RHS_PACKED};
 
     if (m_clamp_config.support() != MatMulUkerClampConfig::Support::UNSUPPORTED) {
         inputs.emplace_back(MatMulSlot::MATMUL_ARGS);
@@ -129,7 +129,7 @@ void MatMulUkerApiWrapper::run(
     KAI_TEST_ASSERT_MSG(start_k == 0, "Only full K is supported.");
     KAI_TEST_ASSERT_MSG(size_k == full_k, "Only full K is supported.");
 
-    const Tensor& ref_packed_lhs = tensors.at(MatMulSlot::LHS_PACKED);
+    const Tensor& ref_packed_lhs = tensors.at(m_lhs_input_slot);
     const Tensor& ref_packed_rhs = tensors.at(MatMulSlot::RHS_PACKED);
     const MatMulConfig& config = tensors.at(MatMulSlot::CONFIG).value<MatMulConfig>();
     Tensor& imp_dst_data = tensors.at(MatMulSlot::DST_DATA_IMP);

@@ -20,6 +20,7 @@
 #include "test/nextgen/harness/kernel_wrapper.hpp"
 #include "test/nextgen/operators/matmul/matmul_bias_mode.hpp"
 #include "test/nextgen/operators/matmul/matmul_dims.hpp"
+#include "test/nextgen/operators/matmul/matmul_slots.hpp"
 
 namespace kai::test {
 
@@ -88,12 +89,14 @@ class MatMulUkerApiWrapper : public KernelWrapper<MatMulShape> {
 public:
     /// Creates a new wrapper.
     MatMulUkerApiWrapper(
-        std::string_view name, kai_matmul_uker_api api, const Poly<Format>& lhs_format, const Poly<Format>& rhs_format,
-        const Poly<Format>& dst_format, DataType acc_dtype, MatMulUkerClampConfig clamp_config,
-        MatMulUkerApiBiasDeliveryStage bias_delivery_stage, MatMulUkerOutputStageConfig output_stage_config = {}) :
+        std::string_view name, kai_matmul_uker_api api, MatMulSlot lhs_input_slot, const Poly<Format>& lhs_format,
+        const Poly<Format>& rhs_format, const Poly<Format>& dst_format, DataType acc_dtype,
+        MatMulUkerClampConfig clamp_config, MatMulUkerApiBiasDeliveryStage bias_delivery_stage,
+        MatMulUkerOutputStageConfig output_stage_config = {}) :
         m_name(name),
         m_uker_config(),
         m_ukernel(api),
+        m_lhs_input_slot(lhs_input_slot),
         m_lhs_format(lhs_format),
         m_rhs_format(rhs_format),
         m_dst_format(dst_format),
@@ -116,7 +119,8 @@ private:
     std::string m_name;                                    ///< Name of the matrix multiplication micro-kernel.
     kai_matmul_uker_config m_uker_config;                  ///< Micro-kernel configuration.
     kai_matmul_uker_api m_ukernel;                         ///< Micro-kernel API function table.
-    Poly<Format> m_lhs_format;                             ///< LHS packed data format consumed by the micro-kernel.
+    MatMulSlot m_lhs_input_slot;                           ///< LHS tensor consumed by the micro-kernel.
+    Poly<Format> m_lhs_format;                             ///< LHS data format consumed by the micro-kernel.
     Poly<Format> m_rhs_format;                             ///< RHS packed data format consumed by the micro-kernel.
     Poly<Format> m_dst_format;                             ///< Destination data format produced by the micro-kernel.
     DataType m_acc_dtype;                                  ///< Accumulation data type.

@@ -41,4 +41,7 @@ create_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa();
 [[nodiscard]] std::unique_ptr<KernelWrapper<MatMulShape>>
 create_matmul_clamp_f32_u8p4vsx4_u8p4vsx4_i32_i32_f32_f32_8vsx8vs_sme2_mopa();
 
+/// Creates a wrapper for matmul_clamp_f32_f32_f32p4vsx1b_1x32vs_sme2_mla kernel.
+[[nodiscard]] std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f32_f32_f32p4vsx1bf32_1x32vs_sme2_mla();
+
 }  // namespace kai::test
