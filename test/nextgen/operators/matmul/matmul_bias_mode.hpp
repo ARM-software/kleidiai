@@ -17,6 +17,7 @@ namespace kai::test {
 enum class MatMulBiasMode : uint8_t {
     ACCUMULATION_PER_M,  ///< Per-row bias applied at the accumulation stage.
     ACCUMULATION_PER_N,  ///< Per-column bias applied at the accumulation stage.
+    SCALE_BIAS_PER_N,    ///< Per-column bias applied after accumulation scaling.
 };
 
 /// Set of bias modes to describe all the different ways a matmul operator applies bias.

@@ -40,6 +40,10 @@ std::string matmul_bias_format_set_name(MatMulBiasModeSet bias_formats) {
         append_bias_format_name(name, "acc_n");
     }
 
+    if (bias_formats.has(MatMulBiasMode::SCALE_BIAS_PER_N)) {
+        append_bias_format_name(name, "scale_bias_n");
+    }
+
     KAI_TEST_ASSERT_MSG(!name.empty(), "Bias format set must contain a known bias format.");
     return name;
 }

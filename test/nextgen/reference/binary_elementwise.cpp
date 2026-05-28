@@ -22,10 +22,10 @@ namespace kai::test {
 
 namespace {
 
-template <typename T>
-[[nodiscard]] Buffer add(
+template <typename T, typename BinaryOp>
+[[nodiscard]] Buffer binary_elementwise_2d(
     size_t lhs_height, size_t lhs_width, Span<const std::byte> lhs_data, size_t rhs_height, size_t rhs_width,
-    Span<const std::byte> rhs_data) {
+    Span<const std::byte> rhs_data, BinaryOp op) {
     const size_t dst_height = std::max(lhs_height, rhs_height);
     KAI_TEST_ASSERT(lhs_height == rhs_height || lhs_height == 1 || rhs_height == 1);
 
@@ -49,13 +49,31 @@ template <typename T>
             const T lhs_value = read_array<T>(lhs_row_data, col % lhs_width);
             const T rhs_value = read_array<T>(rhs_row_data, col % rhs_width);
 
-            const T dst_value = lhs_value + rhs_value;
+            const T dst_value = op(lhs_value, rhs_value);
 
             write_array<T>(dst_row_data, col, dst_value);
         }
     }
 
     return dst;
+}
+
+template <typename T>
+[[nodiscard]] Buffer add(
+    size_t lhs_height, size_t lhs_width, Span<const std::byte> lhs_data, size_t rhs_height, size_t rhs_width,
+    Span<const std::byte> rhs_data) {
+    return binary_elementwise_2d<T>(
+        lhs_height, lhs_width, lhs_data, rhs_height, rhs_width, rhs_data,
+        [](T lhs_value, T rhs_value) { return lhs_value + rhs_value; });
+}
+
+template <typename T>
+[[nodiscard]] Buffer multiply(
+    size_t lhs_height, size_t lhs_width, Span<const std::byte> lhs_data, size_t rhs_height, size_t rhs_width,
+    Span<const std::byte> rhs_data) {
+    return binary_elementwise_2d<T>(
+        lhs_height, lhs_width, lhs_data, rhs_height, rhs_width, rhs_data,
+        [](T lhs_value, T rhs_value) { return lhs_value * rhs_value; });
 }
 
 }  // namespace
@@ -71,6 +89,19 @@ BinaryElementwiseFn make_add_2d(DataType dtype) {
         case DataType::U4:
         case DataType::I4:
             return add<Int4>;
+
+        default:
+            KAI_TEST_ERROR("Not supported.");
+    }
+}
+
+BinaryElementwiseFn make_multiply_2d(DataType dtype) {
+    switch (dtype) {
+        case DataType::FP32:
+            return multiply<float>;
+
+        case DataType::I32:
+            return multiply<int32_t>;
 
         default:
             KAI_TEST_ERROR("Not supported.");

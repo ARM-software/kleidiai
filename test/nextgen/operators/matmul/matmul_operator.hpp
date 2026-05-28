@@ -39,7 +39,7 @@ struct MatMulOperator {
     bool (*is_cpu_supported)();
     bool (*is_shape_suitable)(size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
-    std::vector<MatMulBiasModeSet> supported_bias_format_sets;
+    std::vector<MatMulBiasModeSet> supported_bias_mode_sets;
     MatMulClampMode clamp_mode;
 
     std::optional<std::unique_ptr<Quantizer>> lhs_quant;

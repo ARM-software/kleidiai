@@ -232,11 +232,11 @@ public:
         // and if the with-bias case is chosen, each with-bias format set will be
         // chosen by another distribution.
         has_no_bias_format_set = std::any_of(
-            op.supported_bias_format_sets.begin(), op.supported_bias_format_sets.end(),
+            op.supported_bias_mode_sets.begin(), op.supported_bias_mode_sets.end(),
             [](MatMulBiasModeSet bias_formats) { return bias_formats.is_empty(); });
 
         std::copy_if(
-            op.supported_bias_format_sets.begin(), op.supported_bias_format_sets.end(),
+            op.supported_bias_mode_sets.begin(), op.supported_bias_mode_sets.end(),
             std::back_inserter(with_bias_format_sets), matmul_bias_format_set_has_bias_data);
         has_with_bias_format_set = !with_bias_format_sets.empty();
         if (has_with_bias_format_set) {

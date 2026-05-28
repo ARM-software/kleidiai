@@ -8,6 +8,7 @@
 
 #include <array>
 #include <cstddef>
+#include <optional>
 #include <tuple>
 
 #include "test/nextgen/common/random.hpp"
@@ -87,10 +88,12 @@ private:
     /// or reference implementation.
     void determine_required_tensors();
 
-    void generate_lhs_data(Rng& rng);         ///< Generates the LHS data.
-    void generate_rhs_data(Rng& rng);         ///< Generates the RHS data.
-    void generate_acc_bias_m_data(Rng& rng);  ///< Generates the per-M accumulator bias data.
-    void generate_acc_bias_n_data(Rng& rng);  ///< Generates the per-N accumulator bias data.
+    void generate_lhs_data(Rng& rng);               ///< Generates the LHS data.
+    void generate_rhs_data(Rng& rng);               ///< Generates the RHS data.
+    void generate_acc_bias_m_data(Rng& rng);        ///< Generates the per-M accumulator bias data.
+    void generate_acc_bias_n_data(Rng& rng);        ///< Generates the per-N accumulator bias data.
+    void generate_acc_scale_global_data(Rng& rng);  ///< Generates the global accumulator scale data.
+    void generate_scale_bias_n_data(Rng& rng);      ///< Generates the per-N scaled-accumulator bias data.
 
     void compute_rhs_t_data();  ///< Computes the transposed RHS data.
     void quantize_lhs();        ///< Quantizes the LHS data.

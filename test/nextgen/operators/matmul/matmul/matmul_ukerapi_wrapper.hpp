@@ -10,9 +10,11 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include "kai/ukernels/matmul/kai_matmul_types.h"
 #include "test/common/data_type.hpp"
+#include "test/common/enum_utils.hpp"
 #include "test/nextgen/common/poly.hpp"
 #include "test/nextgen/format/format.hpp"
 #include "test/nextgen/harness/kernel_wrapper.hpp"
@@ -65,6 +67,22 @@ private:
     std::optional<DataType> m_data_type;  ///< Clamping argument data type.
 };
 
+/// Stage parameter layout for a matrix multiplication micro-kernel using the ukernel API.
+enum class MatMulUkerStageParameterLayout : uint8_t {
+    GLOBAL,  ///< Scalar stage parameter.
+    PER_M,   ///< Per-row stage parameters.
+    PER_N,   ///< Per-column stage parameters.
+};
+
+/// Set of stage parameter layouts.
+using MatMulUkerStageParameterLayoutSet = FlagSet<MatMulUkerStageParameterLayout>;
+
+/// Output stage configuration for a matrix multiplication micro-kernel using the ukernel API.
+struct MatMulUkerOutputStageConfig {
+    MatMulUkerStageParameterLayoutSet acc_scale;   ///< Accumulator scaling parameter layouts.
+    MatMulUkerStageParameterLayoutSet scale_bias;  ///< Scaled accumulator bias parameter layouts.
+};
+
 /// Wrapper for uker-api matrix multiplication micro-kernel.
 class MatMulUkerApiWrapper : public KernelWrapper<MatMulShape> {
 public:
@@ -72,7 +90,7 @@ public:
     MatMulUkerApiWrapper(
         std::string_view name, kai_matmul_uker_api api, const Poly<Format>& lhs_format, const Poly<Format>& rhs_format,
         const Poly<Format>& dst_format, DataType acc_dtype, MatMulUkerClampConfig clamp_config,
-        MatMulUkerApiBiasDeliveryStage bias_delivery_stage) :
+        MatMulUkerApiBiasDeliveryStage bias_delivery_stage, MatMulUkerOutputStageConfig output_stage_config = {}) :
         m_name(name),
         m_uker_config(),
         m_ukernel(api),
@@ -81,7 +99,8 @@ public:
         m_dst_format(dst_format),
         m_acc_dtype(acc_dtype),
         m_clamp_config(clamp_config),
-        m_bias_delivery_stage(bias_delivery_stage) {
+        m_bias_delivery_stage(bias_delivery_stage),
+        m_output_stage_config(output_stage_config) {
     }
 
     [[nodiscard]] std::string_view name() const override;
@@ -103,6 +122,7 @@ private:
     DataType m_acc_dtype;                                  ///< Accumulation data type.
     MatMulUkerClampConfig m_clamp_config;                  ///< Clamp argument configuration.
     MatMulUkerApiBiasDeliveryStage m_bias_delivery_stage;  ///< Stage where bias is delivered to the micro-kernel.
+    MatMulUkerOutputStageConfig m_output_stage_config;     ///< Output stage configuration.
 };
 
 }  // namespace kai::test

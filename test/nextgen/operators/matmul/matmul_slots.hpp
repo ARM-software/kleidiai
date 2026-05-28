@@ -6,9 +6,7 @@
 
 #pragma once
 
-#include <cstdint>
-
-#include "test/common/enum_utils.hpp"
+#include <cstddef>
 
 namespace kai::test {
 
@@ -52,8 +50,17 @@ enum class MatMulSlot : size_t {
     RHS_PACKED,            ///< Packed RHS.
     RHS_PACKED_IMP,        ///< Packed RHS from micro-kernel.
 
-    ACC_BIAS_M_DATA,  ///< Accumulator bias data per M.
-    ACC_BIAS_N_DATA,  ///< Accumulator bias data per N.
+    ACC_BIAS_GLOBAL_DATA,  ///< Accumulator bias data, global.
+    ACC_BIAS_M_DATA,       ///< Accumulator bias data per M.
+    ACC_BIAS_N_DATA,       ///< Accumulator bias data per N.
+
+    SCALE_BIAS_GLOBAL_DATA,  ///< Scaled accumulator bias data, global.
+    SCALE_BIAS_M_DATA,       ///< Scaled accumulator bias data per M.
+    SCALE_BIAS_N_DATA,       ///< Scaled accumulator bias data per N.
+
+    ACC_SCALE_GLOBAL_DATA,  ///< Accumulator scale data, global.
+    ACC_SCALE_M_DATA,       ///< Accumulator scale data per M.
+    ACC_SCALE_N_DATA,       ///< Accumulator scale data per N.
 
     DST_DATA,      ///< Output data (can be floating-point or quantized).
     DST_QSCALE,    ///< Output quantization scale.

@@ -155,6 +155,40 @@ inline void fill_random(
     fill_random_with_seed(shape, dtype, output, seed, range);
 }
 
+/// Fill an output buffer with random scale values whose magnitude is away from zero.
+///
+/// @param[in] shape The size of the multidimensional data.
+/// @param[in] dtype The data type of the elements.
+/// @param[out] output The output buffer to populate.
+/// @param[in, out] rng Random number generator.
+inline void fill_random_scale(Span<const size_t> shape, DataType dtype, Span<std::byte> output, Rng& rng) {
+    KAI_TEST_ASSERT_MSG(dtype != DataType::UNKNOWN, "Unknown data type for scale generator.");
+
+    const size_t count = element_count(shape);
+    if (count == 0) {
+        return;
+    }
+
+    const size_t size_needed = data_type_array_size_in_bytes(dtype, count);
+    KAI_TEST_ASSERT_MSG(output.size() >= size_needed, "Output buffer is too small for requested scale shape.");
+
+    std::bernoulli_distribution negative_dist(0.5);
+
+    if (data_type_is_float(dtype)) {
+        std::uniform_real_distribution<float> magnitude_dist(0.125F, 2.0F);
+        for (size_t i = 0; i < count; ++i) {
+            const float magnitude = magnitude_dist(rng);
+            const float value = negative_dist(rng) ? -magnitude : magnitude;
+            write_array(dtype, output.data(), i, value);
+        }
+    } else {
+        for (size_t i = 0; i < count; ++i) {
+            const int64_t value = data_type_is_signed(dtype) && negative_dist(rng) ? -1 : 1;
+            write_array(dtype, output.data(), i, static_cast<double>(value));
+        }
+    }
+}
+
 /// Fill an output buffer with sequential pattern values starting at a value.
 ///
 /// @param[in] shape The size of the multidimensional data.
