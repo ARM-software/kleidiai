@@ -205,6 +205,7 @@ inline void MatMulRunner<MatMulUkernelApiInterface>::run(const void* lhs, const 
     const auto api = matmul_interface_.get_api();
     const auto config = matmul_interface_.get_config();
 
+    const int32_t dst_bias_global = 0;
     const ClampArgs clamp_args{-FLT_MAX, FLT_MAX};
 
     const kai_matmul_uker_lhs_dim_args lhs_shape = {m_, k_};
@@ -225,6 +226,8 @@ inline void MatMulRunner<MatMulUkernelApiInterface>::run(const void* lhs, const 
 
     args.operand.dst.ptr = dst;
     args.operand.dst.stride.m = dst_stride_row_;
+
+    args.operand.dst_bias_global.ptr = &dst_bias_global;
 
     args.activation.clamp.min_ptr = &clamp_args.min;
     args.activation.clamp.max_ptr = &clamp_args.max;
