@@ -60,7 +60,7 @@ struct kai_matmul_uker_api kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8vs_
 ///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
 ///
 /// @return The micro-kernel API.
-struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8p4vsx4_qsi8p4vsx4bi32sf32_8vsx8vs_sme2_mopa(void);
+struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx8vs_sme2_mopa(void);
 
 /// Statically quantized INT8 vector-matrix multiplication using SME2 DOT instruction.
 ///
@@ -80,7 +80,7 @@ struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8p4vsx4_qsi8p4vsx4bi32sf32_8
 ///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
 ///
 /// @return The micro-kernel API.
-struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8_qsi8p4vsx4bi32sf32_1x32vs_sme2_dot(void);
+struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8_qsi8cxp4vsx4bi32sf32_1x32vs_sme2_dot(void);
 
 #ifdef __cplusplus
 }  // extern "C"

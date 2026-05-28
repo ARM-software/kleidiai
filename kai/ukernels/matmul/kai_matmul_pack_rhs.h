@@ -80,7 +80,7 @@ struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x3
 /// Supported flags: none.
 ///
 /// @return The micro-kernel API.
-struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_kxn_qsi8p4vsx4bi32sf32_qsi8_i32_f32_sme(void);
+struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme(void);
 
 #ifdef __cplusplus
 }  // extern "C"

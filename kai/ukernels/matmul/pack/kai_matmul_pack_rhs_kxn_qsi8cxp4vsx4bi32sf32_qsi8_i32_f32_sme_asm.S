@@ -35,13 +35,13 @@
     #define KAI_ASM_END
 #endif
 
-    KAI_ASM_CODE(matmul_pack_rhs_kxn_qsi8p4vsx4bi32sf32_qsi8_i32_f32_sme)
+    KAI_ASM_CODE(matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme)
     KAI_ASM_ALIGN
 
-    KAI_ASM_GLOBAL(kai_kernel_matmul_pack_rhs_kxn_qsi8p4vsx4bi32sf32_qsi8_i32_f32_sme)
+    KAI_ASM_GLOBAL(kai_kernel_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme)
 
-KAI_ASM_FUNCTION_TYPE(kai_kernel_matmul_pack_rhs_kxn_qsi8p4vsx4bi32sf32_qsi8_i32_f32_sme)
-KAI_ASM_FUNCTION_LABEL(kai_kernel_matmul_pack_rhs_kxn_qsi8p4vsx4bi32sf32_qsi8_i32_f32_sme)
+KAI_ASM_FUNCTION_TYPE(kai_kernel_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme)
+KAI_ASM_FUNCTION_LABEL(kai_kernel_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme)
     stp x20, x21, [sp, -144]!
     stp x22, x23, [sp, 16]
     stp x24, x25, [sp, 32]
@@ -216,6 +216,6 @@ KAI_ASM_LABEL(label_13)  // Bias: Done
     ldp d14, d15, [sp, 120]
     ldp x20, x21, [sp], 144
     ret
-    KAI_ASM_FUNCTION_END(kai_kernel_matmul_pack_rhs_kxn_qsi8p4vsx4bi32sf32_qsi8_i32_f32_sme)
+    KAI_ASM_FUNCTION_END(kai_kernel_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme)
 
     KAI_ASM_END

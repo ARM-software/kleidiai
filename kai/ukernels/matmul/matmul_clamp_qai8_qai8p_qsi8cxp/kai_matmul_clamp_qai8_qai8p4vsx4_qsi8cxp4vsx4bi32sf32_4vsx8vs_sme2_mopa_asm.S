@@ -35,13 +35,13 @@
     #define KAI_ASM_END
 #endif
 
-    KAI_ASM_CODE(matmul_clamp_qai8_qai8p4vsx4_qsi8p4vsx4bi32sf32_4vsx8vs_sme2_mopa)
+    KAI_ASM_CODE(matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_4vsx8vs_sme2_mopa)
     KAI_ASM_ALIGN
 
-    KAI_ASM_GLOBAL(kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8p4vsx4bi32sf32_4vsx8vs_sme2_mopa)
+    KAI_ASM_GLOBAL(kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_4vsx8vs_sme2_mopa)
 
-KAI_ASM_FUNCTION_TYPE(kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8p4vsx4bi32sf32_4vsx8vs_sme2_mopa)
-KAI_ASM_FUNCTION_LABEL(kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8p4vsx4bi32sf32_4vsx8vs_sme2_mopa)
+KAI_ASM_FUNCTION_TYPE(kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_4vsx8vs_sme2_mopa)
+KAI_ASM_FUNCTION_LABEL(kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_4vsx8vs_sme2_mopa)
     stp x20, x21, [sp, -144]!
     stp x22, x23, [sp, 16]
     stp x24, x25, [sp, 32]
@@ -287,6 +287,6 @@ KAI_ASM_LABEL(label_19)  // m_loop: n_loop: post_process_tile0 1 2 3: height_1: 
     ldp d14, d15, [sp, 120]
     ldp x20, x21, [sp], 144
     ret
-    KAI_ASM_FUNCTION_END(kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8p4vsx4bi32sf32_4vsx8vs_sme2_mopa)
+    KAI_ASM_FUNCTION_END(kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_4vsx8vs_sme2_mopa)
 
     KAI_ASM_END

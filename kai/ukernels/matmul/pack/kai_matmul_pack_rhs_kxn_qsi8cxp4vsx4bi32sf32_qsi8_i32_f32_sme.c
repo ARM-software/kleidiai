@@ -34,7 +34,7 @@ struct uker_args_t {
     const void* pad_row;
 };
 
-void kai_kernel_matmul_pack_rhs_kxn_qsi8p4vsx4bi32sf32_qsi8_i32_f32_sme(const struct uker_args_t* args);
+void kai_kernel_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme(const struct uker_args_t* args);
 
 static size_t get_nr(void) {
     return NR_VSCALE * kai_get_sme_vscale();
@@ -165,10 +165,10 @@ static void run(
         .pad_row = pad_row,
     };
 
-    kai_kernel_matmul_pack_rhs_kxn_qsi8p4vsx4bi32sf32_qsi8_i32_f32_sme(&uker_args);
+    kai_kernel_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme(&uker_args);
 }
 
-struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_kxn_qsi8p4vsx4bi32sf32_qsi8_i32_f32_sme(void) {
+struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme(void) {
     struct kai_matmul_pack_rhs_uker_api api = {
         .run = run,
 

@@ -42,7 +42,7 @@ struct kai_matmul_uker_args_internal {
     uint64_t flags;
 };
 
-void kai_kernel_matmul_clamp_qai8_qai8_qsi8p4vsx4bi32sf32_1x32vs_sme2_dot(
+void kai_kernel_matmul_clamp_qai8_qai8_qsi8cxp4vsx4bi32sf32_1x32vs_sme2_dot(
     const struct kai_matmul_uker_args_internal* args);
 
 static size_t get_mr(void) {
@@ -174,10 +174,10 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
         uker_args.flags |= 2;
     }
 
-    kai_kernel_matmul_clamp_qai8_qai8_qsi8p4vsx4bi32sf32_1x32vs_sme2_dot(&uker_args);
+    kai_kernel_matmul_clamp_qai8_qai8_qsi8cxp4vsx4bi32sf32_1x32vs_sme2_dot(&uker_args);
 }
 
-struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8_qsi8p4vsx4bi32sf32_1x32vs_sme2_dot(void) {
+struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8_qsi8cxp4vsx4bi32sf32_1x32vs_sme2_dot(void) {
     struct kai_matmul_uker_api api = {
         .run = run,
         .get_step = get_step,

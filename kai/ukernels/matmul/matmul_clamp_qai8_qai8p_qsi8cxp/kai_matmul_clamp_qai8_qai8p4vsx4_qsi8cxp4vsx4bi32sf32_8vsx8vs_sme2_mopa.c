@@ -56,17 +56,17 @@ struct kai_matmul_uker_args_internal {
     const void* clamp_args_ptr;  ///< Output clamping arguments.
 };
 
-void kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8p4vsx4bi32sf32_4vsx4vs_sme2_mopa(
+void kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_4vsx4vs_sme2_mopa(
     const struct kai_matmul_uker_args_internal* args);
-void kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8p4vsx4bi32sf32_4vsx8vs_sme2_mopa(
+void kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_4vsx8vs_sme2_mopa(
     const struct kai_matmul_uker_args_internal* args);
-void kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8p4vsx4bi32sf32_4vsx16vs_sme2_mopa(
+void kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_4vsx16vs_sme2_mopa(
     const struct kai_matmul_uker_args_internal* args);
-void kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8p4vsx4bi32sf32_8vsx4vs_sme2_mopa(
+void kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx4vs_sme2_mopa(
     const struct kai_matmul_uker_args_internal* args);
-void kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8p4vsx4bi32sf32_8vsx8vs_sme2_mopa(
+void kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx8vs_sme2_mopa(
     const struct kai_matmul_uker_args_internal* args);
-void kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8p4vsx4bi32sf32_16vsx4vs_sme2_mopa(
+void kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_16vsx4vs_sme2_mopa(
     const struct kai_matmul_uker_args_internal* args);
 
 inline static size_t kai_rounddown(size_t a, size_t b) {
@@ -225,7 +225,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
 
         uker_args.clamp_args_ptr = clamp_min_max;
 
-        kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8p4vsx4bi32sf32_8vsx8vs_sme2_mopa(&uker_args);
+        kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx8vs_sme2_mopa(&uker_args);
     }
 
     // Processes the right edge of the output.
@@ -267,7 +267,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
 
             uker_args.clamp_args_ptr = clamp_min_max;
 
-            kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8p4vsx4bi32sf32_16vsx4vs_sme2_mopa(&uker_args);
+            kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_16vsx4vs_sme2_mopa(&uker_args);
 
             leftover_m -= shape_m_16vs;
             lhs_ptr += shape_m_16vs / acc_vl * args->operand.lhs.stride.m;
@@ -301,7 +301,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
 
             uker_args.clamp_args_ptr = clamp_min_max;
 
-            kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8p4vsx4bi32sf32_8vsx4vs_sme2_mopa(&uker_args);
+            kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx4vs_sme2_mopa(&uker_args);
         }
     }
 
@@ -344,7 +344,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
 
             uker_args.clamp_args_ptr = clamp_min_max;
 
-            kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8p4vsx4bi32sf32_4vsx16vs_sme2_mopa(&uker_args);
+            kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_4vsx16vs_sme2_mopa(&uker_args);
 
             leftover_n -= shape_n_16vs;
             rhs_ptr += shape_n_16vs / acc_vl * args->operand.rhs.stride.n;
@@ -380,7 +380,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
 
             uker_args.clamp_args_ptr = clamp_min_max;
 
-            kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8p4vsx4bi32sf32_4vsx8vs_sme2_mopa(&uker_args);
+            kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_4vsx8vs_sme2_mopa(&uker_args);
 
             leftover_n -= shape_n_8vs;
             rhs_ptr += shape_n_8vs / acc_vl * args->operand.rhs.stride.n;
@@ -414,12 +414,12 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
 
             uker_args.clamp_args_ptr = clamp_min_max;
 
-            kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8p4vsx4bi32sf32_4vsx4vs_sme2_mopa(&uker_args);
+            kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_4vsx4vs_sme2_mopa(&uker_args);
         }
     }
 }
 
-struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8p4vsx4_qsi8p4vsx4bi32sf32_8vsx8vs_sme2_mopa(void) {
+struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx8vs_sme2_mopa(void) {
     struct kai_matmul_uker_api api = {
         .run = run,
         .get_step = get_step,
