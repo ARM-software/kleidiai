@@ -25,7 +25,7 @@ std::string_view MatMulUkerApiWrapper::name() const {
 }
 
 std::vector<MatMulSlot> MatMulUkerApiWrapper::run_inputs([[maybe_unused]] ConstTensorSet tensors) const {
-    return {MatMulSlot::LHS_PACKED, MatMulSlot::RHS_PACKED, MatMulSlot::MATMUL_ARGS};
+    return {m_lhs_input_slot, MatMulSlot::RHS_PACKED, MatMulSlot::MATMUL_ARGS};
 }
 
 std::vector<MatMulSlot> MatMulUkerApiWrapper::ref_inputs([[maybe_unused]] ConstTensorSet tensors) const {
@@ -72,7 +72,7 @@ void MatMulUkerApiWrapper::run(
     KAI_TEST_ASSERT_MSG(start_k == 0, "Only full K is supported.");
     KAI_TEST_ASSERT_MSG(size_k == full_k, "Only full K is supported.");
 
-    const Tensor& ref_packed_lhs = tensors.at(MatMulSlot::LHS_PACKED);
+    const Tensor& ref_packed_lhs = tensors.at(m_lhs_input_slot);
     const Tensor& ref_packed_rhs = tensors.at(MatMulSlot::RHS_PACKED);
     const Tensor& kernel_args = tensors.at(MatMulSlot::MATMUL_ARGS);
     Tensor& imp_dst_data = tensors.at(MatMulSlot::DST_DATA_IMP);
