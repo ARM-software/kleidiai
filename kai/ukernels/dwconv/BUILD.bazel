@@ -1,5 +1,5 @@
 #
-# SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -14,16 +14,22 @@ package(default_visibility = ["//visibility:private"])
 
 # buildifier: keep sorted
 SME2_KERNELS = [
+    "pack/kai_rhs_dwconv_pack_x16p1vlx1b_x16_x16_sme",
     "pack/kai_rhs_dwconv_pack_x32p1vlx1b_x32_x32_sme",
 ]
 
 # buildifier: keep sorted
 SME2_KERNELS_ASM = [
+    "dwconv_f16_f16_f16p/kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla",
     "dwconv_f32_f32_f32p/kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla",
 ]
 
 kai_c_library(
     name = "sme2_impl",
+    copts = [
+        "-Wno-error=overlength-strings",
+        "-Wno-overlength-strings",
+    ],
     cpu_uarch = kai_cpu_sme2(),
     kernels = SME2_KERNELS,
 )

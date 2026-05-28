@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -28,13 +28,18 @@
 #endif  // __GNUC__
 
 // Micro-kernels to register for benchmarking
+#include "kai/ukernels/dwconv/dwconv_f16_f16_f16p/kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla.h"
 #include "kai/ukernels/dwconv/dwconv_f32_f32_f32p/kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla.h"
+#include "kai/ukernels/dwconv/pack/kai_rhs_dwconv_pack_x16p1vlx1b_x16_x16_sme.h"
 #include "kai/ukernels/dwconv/pack/kai_rhs_dwconv_pack_x32p1vlx1b_x32_x32_sme.h"
 
 namespace kai::benchmark {
 using DataType = test::DataType;
 
-// Build interface + traits + RHS config for the packed FP32 kernel
+inline constexpr DwConvPackedDepthfirstFloatInterface kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla_iface{
+    .run_dwconv = kai_run_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla,
+};
+
 inline constexpr DwConvPackedFloatInterface kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla_iface{
     .run_dwconv = kai_run_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
 };
@@ -42,6 +47,13 @@ inline constexpr DwConvPackedFloatInterface kai_dwconv_clamp_f32_f32_f32p1vlx1b_
 struct DwConvBenchmarkCase {
     ::benchmark::internal::Benchmark* benchmark;
     const DwConvTraits* traits;
+};
+
+inline constexpr DwConvRhsConfig kai_dwconv_packed_fp16_rhs_cfg{
+    .layout = DwConvRhsLayout::Packed,
+    .weights_elem_bits = 16,
+    .bias_elem_bits = 16,
+    .get_packed_rhs_size = kai_rhs_get_dst_size_dwconv_pack_x16p1vlx1b_x16_x16_sme,
 };
 
 inline constexpr DwConvRhsConfig kai_dwconv_packed_fp32_rhs_cfg{
@@ -69,7 +81,21 @@ constexpr DwConvTraits BundleTraits(
     return traits;
 }
 
-// Usage: declare traits for the kernel
+template <typename GetFilterHeight, typename GetFilterWidth, typename GetDstSize>
+constexpr DwConvTraits BundleDepthfirstTraits(
+    GetFilterHeight get_filter_height, GetFilterWidth get_filter_width, GetDstSize get_dst_size) {
+    DwConvTraits traits{};
+    traits.get_filter_height = get_filter_height;
+    traits.get_filter_width = get_filter_width;
+    traits.get_dst_size = get_dst_size;
+    return traits;
+}
+
+inline constexpr DwConvTraits kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla_traits = BundleDepthfirstTraits(
+    kai_get_filter_height_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla,
+    kai_get_filter_width_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla,
+    kai_get_dst_size_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla);
+
 inline constexpr DwConvTraits kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla_traits = BundleTraits(
     kai_get_m_step_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
     kai_get_filter_height_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
@@ -79,7 +105,7 @@ inline constexpr DwConvTraits kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme
     kai_get_dst_offset_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
     kai_get_src_offset_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla);
 
-inline std::array<DwConvBenchmarkCase, 1> dwconv_benchmarks{{
+inline std::array<DwConvBenchmarkCase, 2> dwconv_benchmarks{{
     {
         ::benchmark::RegisterBenchmark(
             "kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla", kai_benchmark_dwconv,
@@ -90,6 +116,17 @@ inline std::array<DwConvBenchmarkCase, 1> dwconv_benchmarks{{
             kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla_traits, DataType::FP32, DataType::FP32,
             kai_dwconv_packed_fp32_rhs_cfg, test::cpu_has_sme2),
         &kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla_traits,
+    },
+    {
+        ::benchmark::RegisterBenchmark(
+            "kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla", kai_benchmark_dwconv,
+            RunnerFactory{[](const DwConvTraits& tr, DataType sdt, DataType ddt) {
+                return std::make_unique<DwConvPackedDepthfirstFloatRunner>(
+                    kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla_iface, tr, sdt, ddt);
+            }},
+            kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla_traits, DataType::FP16, DataType::FP16,
+            kai_dwconv_packed_fp16_rhs_cfg, test::cpu_has_sme2),
+        &kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla_traits,
     },
 }};
 
