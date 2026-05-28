@@ -81,6 +81,11 @@ struct kai_matmul_uker_dst_args {
     struct kai_matmul_uker_dst_stride_args stride;  ///< Strides in bytes.
 };
 
+/// Per-matrix output bias buffer for matrix multiplication micro-kernel.
+struct kai_matmul_uker_dst_bias_global_args {
+    const void* ptr;  ///< Per-matrix output bias buffer.
+};
+
 /// Clamping activation arguments for matrix multiplication micro-kernel.
 struct kai_matmul_uker_clamp_args {
     const void* min_ptr;  ///< Pointer to the minimum value.
@@ -89,9 +94,10 @@ struct kai_matmul_uker_clamp_args {
 
 /// Operands for matrix multiplication micro-kernel.
 struct kai_matmul_uker_operand_args {
-    struct kai_matmul_uker_dst_args dst;  ///< Output buffer.
-    struct kai_matmul_uker_lhs_args lhs;  ///< LHS buffer.
-    struct kai_matmul_uker_rhs_args rhs;  ///< RHS buffer.
+    struct kai_matmul_uker_dst_args dst;                          ///< Output buffer.
+    struct kai_matmul_uker_lhs_args lhs;                          ///< LHS buffer.
+    struct kai_matmul_uker_rhs_args rhs;                          ///< RHS buffer.
+    struct kai_matmul_uker_dst_bias_global_args dst_bias_global;  ///< Per-matrix output bias buffer.
 };
 
 /// Activation function arguments for matrix multiplication micro-kernel.

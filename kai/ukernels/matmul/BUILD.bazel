@@ -259,6 +259,8 @@ SME2_KERNELS = [
 # buildifier: keep sorted
 SME2_KERNELS_NOHDR = [
     "matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8vs_sme2_mopa",
+    "matmul_clamp_qai8_qai8_qsi8cxp/kai_matmul_clamp_qai8_qai8_qsi8p4vsx4bi32sf32_1x32vs_sme2_dot",
+    "matmul_clamp_qai8_qai8p_qsi8cxp/kai_matmul_clamp_qai8_qai8p4vsx4_qsi8p4vsx4bi32sf32_8vsx8vs_sme2_mopa",
 ]
 
 # buildifier: keep sorted
@@ -269,6 +271,13 @@ SME2_KERNELS_ASM_ONLY = [
     "matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_4vsx8vs_sme2_mopa",
     "matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx4vs_sme2_mopa",
     "matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8vs_sme2_mopa",
+    "matmul_clamp_qai8_qai8_qsi8cxp/kai_matmul_clamp_qai8_qai8_qsi8p4vsx4bi32sf32_1x32vs_sme2_dot",
+    "matmul_clamp_qai8_qai8p_qsi8cxp/kai_matmul_clamp_qai8_qai8p4vsx4_qsi8p4vsx4bi32sf32_16vsx4vs_sme2_mopa",
+    "matmul_clamp_qai8_qai8p_qsi8cxp/kai_matmul_clamp_qai8_qai8p4vsx4_qsi8p4vsx4bi32sf32_4vsx16vs_sme2_mopa",
+    "matmul_clamp_qai8_qai8p_qsi8cxp/kai_matmul_clamp_qai8_qai8p4vsx4_qsi8p4vsx4bi32sf32_4vsx4vs_sme2_mopa",
+    "matmul_clamp_qai8_qai8p_qsi8cxp/kai_matmul_clamp_qai8_qai8p4vsx4_qsi8p4vsx4bi32sf32_4vsx8vs_sme2_mopa",
+    "matmul_clamp_qai8_qai8p_qsi8cxp/kai_matmul_clamp_qai8_qai8p4vsx4_qsi8p4vsx4bi32sf32_8vsx4vs_sme2_mopa",
+    "matmul_clamp_qai8_qai8p_qsi8cxp/kai_matmul_clamp_qai8_qai8p4vsx4_qsi8p4vsx4bi32sf32_8vsx8vs_sme2_mopa",
 ]
 
 # buildifier: keep sorted
