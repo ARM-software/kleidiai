@@ -9,13 +9,12 @@
 #include <algorithm>
 #include <cstddef>
 #include <optional>
-#include <ostream>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "test/common/assert.hpp"
 #include "test/common/buffer.hpp"
+#include "test/common/enum_utils.hpp"
 #include "test/nextgen/common/poly.hpp"
 #include "test/nextgen/common/shape.hpp"
 #include "test/nextgen/format/format.hpp"

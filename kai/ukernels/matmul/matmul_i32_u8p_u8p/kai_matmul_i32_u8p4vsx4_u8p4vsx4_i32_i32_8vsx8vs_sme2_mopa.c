@@ -1,0 +1,209 @@
+//
+// SPDX-FileCopyrightText: Copyright 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+
+#if (!defined(__aarch64__) || !defined(__ARM_FEATURE_SVE2)) && !defined(_M_ARM64)
+#error This file must be compiled for AArch64, FEAT_SVE2.
+#else  // Architectural features check.
+
+#include <float.h>
+#include <stddef.h>
+#include <stdint.h>
+
+#include "kai/kai_common.h"
+#include "kai/ukernels/matmul/kai_matmul.h"
+#include "kai/ukernels/matmul/kai_matmul_types.h"
+
+enum {
+    DST_ELEM_BYTES = 4,
+    LHS_ELEM_BYTES = 1,
+    RHS_ELEM_BYTES = 1,
+    BIAS_ELEM_BYTES = 4,
+
+    MR_VSCALE = 4,
+    NR_VSCALE = 4,
+    M_STEP_VSCALE = 8,
+    N_STEP_VSCALE = 8,
+    KR = 4,
+
+    SUPPORTED_FLAGS = 0,
+};
+
+typedef struct {
+    uint64_t flags;
+    size_t m;
+    size_t n;
+    size_t k;
+    const void* lhs_ptr;
+    size_t lhs_stride_row;
+    const void* rhs_ptr;
+    size_t rhs_stride_row;
+    void* dst_ptr;
+    size_t dst_stride_row;
+    void* acc_ptr;
+    const void* acc_bias_m_ptr;
+    const void* acc_bias_n_ptr;
+    const void* dst_bias_n_ptr;
+    const void* dst_scale_1_ptr;
+    const void* min_ptr;
+    const void* max_ptr;
+} kai_matmul_uker_args_internal;
+
+void kai_kernel_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa(const kai_matmul_uker_args_internal* args);
+
+static size_t get_mr(void) {
+    return MR_VSCALE * kai_get_sme_vscale();
+}
+
+static size_t get_nr(void) {
+    return NR_VSCALE * kai_get_sme_vscale();
+}
+
+static size_t get_m_step(void) {
+    return M_STEP_VSCALE * kai_get_sme_vscale();
+}
+
+static size_t get_n_step(void) {
+    return N_STEP_VSCALE * kai_get_sme_vscale();
+}
+
+static struct kai_matmul_uker_dim_args get_step(const struct kai_matmul_uker_config* config) {
+    KAI_UNUSED(config);
+
+    const struct kai_matmul_uker_dim_args step = {
+        .m = get_m_step(),
+        .n = get_n_step(),
+        .k = 0,
+    };
+
+    return step;
+}
+
+static struct kai_matmul_uker_lhs_stride_args get_lhs_stride(
+    const struct kai_matmul_uker_config* config, const struct kai_matmul_uker_lhs_dim_args* shape) {
+    KAI_UNUSED(config);
+
+    const struct kai_matmul_uker_lhs_stride_args stride = {
+        .m = get_mr() * kai_roundup(shape->k, KR) * LHS_ELEM_BYTES,
+    };
+
+    return stride;
+}
+
+static size_t get_lhs_offset(
+    const struct kai_matmul_uker_config* config, const struct kai_matmul_uker_lhs_dim_args* index,
+    const struct kai_matmul_uker_lhs_stride_args* stride) {
+    KAI_UNUSED(config);
+    KAI_ASSUME(index->m % get_mr() == 0);
+    KAI_ASSUME(index->k == 0);
+
+    return index->m / get_mr() * stride->m;
+}
+
+static struct kai_matmul_uker_rhs_stride_args get_rhs_stride(
+    const struct kai_matmul_uker_config* config, const struct kai_matmul_uker_rhs_dim_args* shape) {
+    KAI_UNUSED(config);
+
+    const struct kai_matmul_uker_rhs_stride_args stride = {
+        .n = get_nr() * (kai_roundup(shape->k, KR) * RHS_ELEM_BYTES),
+    };
+    return stride;
+}
+
+static size_t get_rhs_offset(
+    const struct kai_matmul_uker_config* config, const struct kai_matmul_uker_rhs_dim_args* index,
+    const struct kai_matmul_uker_rhs_stride_args* stride) {
+    KAI_UNUSED(config);
+    KAI_ASSUME(index->n % get_nr() == 0);
+    KAI_ASSUME(index->k == 0);
+
+    return index->n / get_nr() * stride->n;
+}
+
+static struct kai_matmul_uker_dst_stride_args get_dst_stride(
+    const struct kai_matmul_uker_config* config, const struct kai_matmul_uker_dst_dim_args* shape) {
+    KAI_UNUSED(config);
+
+    const struct kai_matmul_uker_dst_stride_args stride = {
+        .m = shape->n * DST_ELEM_BYTES,
+    };
+
+    return stride;
+}
+
+static size_t get_dst_offset(
+    const struct kai_matmul_uker_config* config, const struct kai_matmul_uker_dst_dim_args* index,
+    const struct kai_matmul_uker_dst_stride_args* stride) {
+    KAI_UNUSED(config);
+    KAI_ASSUME(index->m % get_mr() == 0);
+    KAI_ASSUME(index->n % get_nr() == 0);
+
+    return index->m * stride->m + index->n * DST_ELEM_BYTES;
+}
+
+static size_t get_dst_size(
+    const struct kai_matmul_uker_config* config, const struct kai_matmul_uker_dst_dim_args* shape,
+    const struct kai_matmul_uker_dst_stride_args* stride) {
+    KAI_UNUSED(config);
+
+    return shape->m * stride->m;
+}
+
+static void run(const struct kai_matmul_uker_config* config, const struct kai_matmul_uker_args* run_args) {
+    KAI_UNUSED(config);
+    KAI_ASSUME_MSG((run_args->flags & ~((size_t)SUPPORTED_FLAGS)) == 0, "Only supported flags are accepted!");
+
+    KAI_ASSUME(run_args->operand.lhs.ptr != NULL);
+    KAI_ASSUME(run_args->operand.rhs.ptr != NULL);
+    KAI_ASSUME(run_args->operand.dst.ptr != NULL);
+
+    kai_matmul_uker_args_internal args = {0};
+    args.flags = run_args->flags;
+
+    args.m = run_args->shape.m;
+    args.n = run_args->shape.n;
+    args.k = run_args->shape.k;
+
+    args.lhs_ptr = run_args->operand.lhs.ptr;
+    args.lhs_stride_row = run_args->operand.lhs.stride.m;
+
+    args.rhs_ptr = run_args->operand.rhs.ptr;
+    args.rhs_stride_row = run_args->operand.rhs.stride.n;
+
+    args.dst_ptr = run_args->operand.dst.ptr;
+    args.dst_stride_row = run_args->operand.dst.stride.m;
+
+    args.acc_bias_m_ptr = run_args->operand.bias.acc_bias_m.ptr;
+    args.acc_bias_n_ptr = run_args->operand.bias.acc_bias_n.ptr;
+    args.dst_bias_n_ptr = NULL;
+    args.dst_scale_1_ptr = NULL;
+
+    args.min_ptr = NULL;
+    args.max_ptr = NULL;
+
+    kai_commit_za();
+    kai_kernel_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa(&args);
+}
+
+struct kai_matmul_uker_api kai_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa(void) {
+    struct kai_matmul_uker_api api = {
+        .run = run,
+        .get_step = get_step,
+
+        .get_lhs_stride = get_lhs_stride,
+        .get_lhs_offset = get_lhs_offset,
+
+        .get_rhs_stride = get_rhs_stride,
+        .get_rhs_offset = get_rhs_offset,
+
+        .get_dst_stride = get_dst_stride,
+        .get_dst_offset = get_dst_offset,
+        .get_dst_size = get_dst_size,
+    };
+
+    return api;
+}
+
+#endif  // Architectural features check.

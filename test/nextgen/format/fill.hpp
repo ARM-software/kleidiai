@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <random>
@@ -13,7 +15,7 @@
 #include "test/common/assert.hpp"
 #include "test/common/data_type.hpp"
 #include "test/common/memory.hpp"
-#include "test/common/round.hpp"
+#include "test/common/range.hpp"
 #include "test/common/span.hpp"
 #include "test/nextgen/common/random.hpp"
 
@@ -37,38 +39,67 @@ inline size_t element_count(Span<const size_t> shape) {
     return count;
 }
 
-/// Computes the minimum buffer size in bytes for the given shape and data type.
-///
-/// @param[in] shape The size of the multidimensional data.
-/// @param[in] dtype The data type of the elements.
-///
-/// @return The required buffer size in bytes.
-inline size_t required_bytes(Span<const size_t> shape, DataType dtype) {
-    const size_t bits = data_type_size_in_bits(dtype);
-    KAI_TEST_ASSERT_MSG(bits > 0, "Data type size must be greater than 0 bits.");
-    KAI_TEST_ASSERT_MSG(bits < 64, "Data type size must be less than 64 bits.");
-    const size_t count = element_count(shape);
-    return round_up_division(count * bits, static_cast<size_t>(8));
-}
-
-/// Represents the inclusive integer range for a data type.
-struct IntegerRange {
-    int64_t min;
-    int64_t max;
-};
-
 /// Computes the integer range for the provided data type.
-inline IntegerRange integer_range_for_dtype(DataType dtype) {
+inline Range<double> integer_range_for_dtype(DataType dtype) {
     const size_t bits = data_type_size_in_bits(dtype);
-    KAI_TEST_ASSERT_MSG(bits > 0, "Data type size must be greater than 0 bits.");
-    KAI_TEST_ASSERT_MSG(bits < 64, "Data type size must be less than 64 bits.");
+    KAI_TEST_ASSERT_MSG(bits <= 32, "Data type size must be at most 32 bits.");
 
     const bool is_signed = data_type_is_signed(dtype);
     const int64_t max_unsigned = static_cast<int64_t>((1ULL << bits) - 1);
     const int64_t max_signed = static_cast<int64_t>((1ULL << (bits - 1)) - 1);
     const int64_t min_signed = -static_cast<int64_t>(1ULL << (bits - 1));
 
-    return is_signed ? IntegerRange{min_signed, max_signed} : IntegerRange{0, max_unsigned};
+    return is_signed ? Range<double>{static_cast<double>(min_signed), static_cast<double>(max_signed)}
+                     : Range<double>{0.0, static_cast<double>(max_unsigned)};
+}
+
+/// Fill an output buffer with random integer values from the requested range using the provided seed.
+///
+/// The requested range is clamped to the integer range representable by the
+/// data type, which allows callers to use one generation policy across
+/// different integer storage types.
+///
+/// @param[in] shape The size of the multidimensional data.
+/// @param[in] dtype The data type of the elements.
+/// @param[out] output The output buffer to populate.
+/// @param[in] seed Seed for the local RNG.
+/// @param[in] range The requested inclusive value range.
+inline void fill_random_with_seed(
+    Span<const size_t> shape, DataType dtype, Span<std::byte> output, uint32_t seed, Range<double> range) {
+    KAI_TEST_ASSERT_MSG(dtype != DataType::UNKNOWN, "Unknown data type for generator.");
+
+    const size_t count = element_count(shape);
+    if (count == 0) {
+        return;
+    }
+
+    const size_t size_needed = data_type_array_size_in_bytes(dtype, count);
+    KAI_TEST_ASSERT_MSG(output.size() >= size_needed, "Output buffer is too small for requested shape.");
+
+    KAI_TEST_ASSERT_MSG(range.is_valid(), "Range minimum must not exceed the maximum.");
+
+    std::mt19937 local_rng(seed);
+    if (data_type_is_integral(dtype)) {
+        const Range<double> dtype_range = integer_range_for_dtype(dtype);
+        const double min_bound = std::max(dtype_range.min, range.min);
+        const double max_bound = std::min(dtype_range.max, range.max);
+        KAI_TEST_ASSERT_MSG(min_bound <= max_bound, "Requested range must overlap the data type range.");
+
+        const int64_t min_value = static_cast<int64_t>(std::ceil(min_bound));
+        const int64_t max_value = static_cast<int64_t>(std::floor(max_bound));
+        KAI_TEST_ASSERT_MSG(min_value <= max_value, "Requested range contains no representable integer values.");
+
+        std::uniform_int_distribution<int64_t> dist(min_value, max_value);
+        for (size_t i = 0; i < count; ++i) {
+            write_array(dtype, output.data(), i, static_cast<double>(dist(local_rng)));
+        }
+        return;
+    }
+
+    std::uniform_real_distribution<double> dist(range.min, range.max);
+    for (size_t i = 0; i < count; ++i) {
+        write_array(dtype, output.data(), i, dist(local_rng));
+    }
 }
 
 /// Fill an output buffer with random values using the provided seed.
@@ -80,26 +111,23 @@ inline IntegerRange integer_range_for_dtype(DataType dtype) {
 inline void fill_random_with_seed(Span<const size_t> shape, DataType dtype, Span<std::byte> output, uint32_t seed) {
     KAI_TEST_ASSERT_MSG(dtype != DataType::UNKNOWN, "Unknown data type for generator.");
 
+    if (data_type_is_integral(dtype)) {
+        fill_random_with_seed(shape, dtype, output, seed, integer_range_for_dtype(dtype));
+        return;
+    }
+
     const size_t count = element_count(shape);
     if (count == 0) {
         return;
     }
 
-    const size_t size_needed = required_bytes(shape, dtype);
+    const size_t size_needed = data_type_array_size_in_bytes(dtype, count);
     KAI_TEST_ASSERT_MSG(output.size() >= size_needed, "Output buffer is too small for requested shape.");
 
     std::mt19937 local_rng(seed);
-    if (data_type_is_float(dtype)) {
-        std::uniform_real_distribution<float> dist;
-        for (size_t i = 0; i < count; ++i) {
-            write_array(dtype, output.data(), i, static_cast<double>(dist(local_rng)));
-        }
-    } else {
-        const IntegerRange range = integer_range_for_dtype(dtype);
-        std::uniform_int_distribution<int64_t> dist(range.min, range.max);
-        for (size_t i = 0; i < count; ++i) {
-            write_array(dtype, output.data(), i, static_cast<double>(dist(local_rng)));
-        }
+    std::uniform_real_distribution<float> dist;
+    for (size_t i = 0; i < count; ++i) {
+        write_array(dtype, output.data(), i, static_cast<double>(dist(local_rng)));
     }
 }
 
@@ -112,6 +140,53 @@ inline void fill_random_with_seed(Span<const size_t> shape, DataType dtype, Span
 inline void fill_random(Span<const size_t> shape, DataType dtype, Span<std::byte> output, Rng& rng) {
     const uint32_t seed = std::uniform_int_distribution<uint32_t>()(rng);
     fill_random_with_seed(shape, dtype, output, seed);
+}
+
+/// Fill an output buffer with random integer values from the requested range using the provided RNG.
+///
+/// @param[in] shape The size of the multidimensional data.
+/// @param[in] dtype The data type of the elements.
+/// @param[out] output The output buffer to populate.
+/// @param[in, out] rng Random number generator.
+/// @param[in] range The requested inclusive value range.
+inline void fill_random(
+    Span<const size_t> shape, DataType dtype, Span<std::byte> output, Rng& rng, Range<double> range) {
+    const uint32_t seed = std::uniform_int_distribution<uint32_t>()(rng);
+    fill_random_with_seed(shape, dtype, output, seed, range);
+}
+
+/// Fill an output buffer with random scale values whose magnitude is away from zero.
+///
+/// @param[in] shape The size of the multidimensional data.
+/// @param[in] dtype The data type of the elements.
+/// @param[out] output The output buffer to populate.
+/// @param[in, out] rng Random number generator.
+inline void fill_random_scale(Span<const size_t> shape, DataType dtype, Span<std::byte> output, Rng& rng) {
+    KAI_TEST_ASSERT_MSG(dtype != DataType::UNKNOWN, "Unknown data type for scale generator.");
+
+    const size_t count = element_count(shape);
+    if (count == 0) {
+        return;
+    }
+
+    const size_t size_needed = data_type_array_size_in_bytes(dtype, count);
+    KAI_TEST_ASSERT_MSG(output.size() >= size_needed, "Output buffer is too small for requested scale shape.");
+
+    std::bernoulli_distribution negative_dist(0.5);
+
+    if (data_type_is_float(dtype)) {
+        std::uniform_real_distribution<float> magnitude_dist(0.125F, 2.0F);
+        for (size_t i = 0; i < count; ++i) {
+            const float magnitude = magnitude_dist(rng);
+            const float value = negative_dist(rng) ? -magnitude : magnitude;
+            write_array(dtype, output.data(), i, value);
+        }
+    } else {
+        for (size_t i = 0; i < count; ++i) {
+            const int64_t value = data_type_is_signed(dtype) && negative_dist(rng) ? -1 : 1;
+            write_array(dtype, output.data(), i, static_cast<double>(value));
+        }
+    }
 }
 
 /// Fill an output buffer with sequential pattern values starting at a value.
@@ -130,7 +205,7 @@ inline void fill_sequential(
         return;
     }
 
-    const size_t size_needed = required_bytes(shape, dtype);
+    const size_t size_needed = data_type_array_size_in_bytes(dtype, count);
     KAI_TEST_ASSERT_MSG(output.size() >= size_needed, "Output buffer is too small for requested shape.");
 
     const bool is_float = data_type_is_float(dtype);

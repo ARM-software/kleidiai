@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -26,13 +26,15 @@ namespace kai::test {
 using MatMulFn =
     Buffer (*)(size_t shape_m, size_t shape_n, size_t shape_k, Span<const std::byte> lhs, Span<const std::byte> rhs);
 
-/// Creates a matrix multiplication function for the specified data type.
+/// Creates a matrix multiplication function for the specified data types.
 ///
 /// The LHS matrix is non-transposed and the RHS matrix is transposed.
 ///
-/// @param[in] dtype The data type.
+/// @param[in] lhs_dtype The LHS data type.
+/// @param[in] rhs_dtype The RHS data type.
+/// @param[in] acc_dtype The accumulator data type.
 ///
 /// @return The function pointer.
-[[nodiscard]] MatMulFn make_matmul_nt_t(DataType dtype);
+[[nodiscard]] MatMulFn make_matmul_nt_t(DataType lhs_dtype, DataType rhs_dtype, DataType acc_dtype);
 
 }  // namespace kai::test
