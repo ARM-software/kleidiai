@@ -220,7 +220,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
         uker_args.acc_ptr = NULL;
         uker_args.acc_bias_m_ptr = NULL;
         uker_args.acc_bias_n_ptr = NULL;
-        uker_args.dst_bias_n_ptr = args->operand.dst_bias_global.ptr;
+        uker_args.dst_bias_n_ptr = args->operand.bias.scale_bias_global.ptr;
         uker_args.dst_scale_1_ptr = NULL;
 
         uker_args.clamp_args_ptr = clamp_min_max;
@@ -262,7 +262,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
             uker_args.acc_ptr = NULL;
             uker_args.acc_bias_m_ptr = NULL;
             uker_args.acc_bias_n_ptr = NULL;
-            uker_args.dst_bias_n_ptr = args->operand.dst_bias_global.ptr;
+            uker_args.dst_bias_n_ptr = args->operand.bias.scale_bias_global.ptr;
             uker_args.dst_scale_1_ptr = NULL;
 
             uker_args.clamp_args_ptr = clamp_min_max;
@@ -296,7 +296,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
             uker_args.acc_ptr = NULL;
             uker_args.acc_bias_m_ptr = NULL;
             uker_args.acc_bias_n_ptr = NULL;
-            uker_args.dst_bias_n_ptr = args->operand.dst_bias_global.ptr;
+            uker_args.dst_bias_n_ptr = args->operand.bias.scale_bias_global.ptr;
             uker_args.dst_scale_1_ptr = NULL;
 
             uker_args.clamp_args_ptr = clamp_min_max;
@@ -339,7 +339,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
             uker_args.acc_ptr = NULL;
             uker_args.acc_bias_m_ptr = NULL;
             uker_args.acc_bias_n_ptr = NULL;
-            uker_args.dst_bias_n_ptr = args->operand.dst_bias_global.ptr;
+            uker_args.dst_bias_n_ptr = args->operand.bias.scale_bias_global.ptr;
             uker_args.dst_scale_1_ptr = NULL;
 
             uker_args.clamp_args_ptr = clamp_min_max;
@@ -375,7 +375,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
             uker_args.acc_ptr = NULL;
             uker_args.acc_bias_m_ptr = NULL;
             uker_args.acc_bias_n_ptr = NULL;
-            uker_args.dst_bias_n_ptr = args->operand.dst_bias_global.ptr;
+            uker_args.dst_bias_n_ptr = args->operand.bias.scale_bias_global.ptr;
             uker_args.dst_scale_1_ptr = NULL;
 
             uker_args.clamp_args_ptr = clamp_min_max;
@@ -409,7 +409,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
             uker_args.acc_ptr = NULL;
             uker_args.acc_bias_m_ptr = NULL;
             uker_args.acc_bias_n_ptr = NULL;
-            uker_args.dst_bias_n_ptr = args->operand.dst_bias_global.ptr;
+            uker_args.dst_bias_n_ptr = args->operand.bias.scale_bias_global.ptr;
             uker_args.dst_scale_1_ptr = NULL;
 
             uker_args.clamp_args_ptr = clamp_min_max;

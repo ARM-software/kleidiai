@@ -157,7 +157,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
     kai_commit_za();
 
     struct kai_matmul_uker_args_internal uker_args = {
-        .c_offset = *(const int32_t*)args->operand.dst_bias_global.ptr,
+        .c_offset = *(const int32_t*)args->operand.bias.scale_bias_global.ptr,
         .maxval = 0,
         .minval = 0,
         .A_ptr = args->operand.lhs.ptr,

@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <optional>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -25,24 +26,26 @@
 #include "test/nextgen/harness/kernel_wrapper.hpp"
 #include "test/nextgen/operators/matmul/matmul_config.hpp"
 #include "test/nextgen/operators/matmul/matmul_dims.hpp"
+#include "test/nextgen/operators/matmul/matmul_main_args.hpp"
 #include "test/nextgen/operators/matmul/matmul_slots.hpp"
 #include "test/nextgen/quantization/quantizer.hpp"
 #include "test/nextgen/reference/binary_elementwise.hpp"
-#include "test/nextgen/reference/clamp.hpp"
 #include "test/nextgen/reference/matmul.hpp"
 #include "test/nextgen/reference/reduce.hpp"
 #include "test/nextgen/reference/unary_elementwise.hpp"
+#include "test/reference/cast.hpp"
+#include "test/reference/clamp.hpp"
 #include "test/reference/transpose.hpp"
 
 namespace kai::test {
 
 MatMulTb::MatMulTb(
-    size_t shape_m, size_t shape_n, size_t shape_k, MatMulBiasMode bias_mode, std::optional<float> clamp_ratio,
+    size_t shape_m, size_t shape_n, size_t shape_k, MatMulBiasModeSet bias_modes, std::optional<float> clamp_ratio,
     const MatMulOperator* op) :
     m_shape_m(shape_m),
     m_shape_n(shape_n),
     m_shape_k(shape_k),
-    m_bias_mode(bias_mode),
+    m_bias_modes(bias_modes),
     m_clamp_ratio(clamp_ratio),
     m_op(op),
     m_tensors_required() {
@@ -54,22 +57,25 @@ void MatMulTb::generate_test_data(Rng& rng) {
     determine_required_tensors();
 
     // Populates the constant information.
-    m_op->matmul->populate_constant_info(m_tensors);
-
-    if (m_op->pack_lhs.has_value()) {
-        const KernelWrapper<MatShape>& pack_lhs = *m_op->pack_lhs.value();
-        pack_lhs.populate_constant_info(m_tensors);
+    if (const std::optional<MatMulKernelPtr>& matmul = m_op->matmul) {
+        (*matmul)->populate_constant_info(m_tensors);
     }
 
-    if (m_op->pack_rhs.has_value()) {
-        const KernelWrapper<MatShape>& pack_rhs = *m_op->pack_rhs.value();
-        pack_rhs.populate_constant_info(m_tensors);
+    if (const std::optional<MatPackKernelPtr>& pack_lhs = m_op->pack_lhs) {
+        (*pack_lhs)->populate_constant_info(m_tensors);
+    }
+
+    if (const std::optional<MatPackKernelPtr>& pack_rhs = m_op->pack_rhs) {
+        (*pack_rhs)->populate_constant_info(m_tensors);
     }
 
     // Generates the non-quantized inputs.
     generate_lhs_data(rng);
     generate_rhs_data(rng);
-    generate_bias_data(rng);
+    generate_acc_bias_m_data(rng);
+    generate_acc_bias_n_data(rng);
+    generate_acc_scale_global_data(rng);
+    generate_scale_bias_n_data(rng);
 
     compute_rhs_t_data();  // The transposed RHS data is always needed for reference packing.
 
@@ -108,11 +114,13 @@ void MatMulTb::generate_test_data(Rng& rng) {
         compute_ref_packed_rhs();
     }
 
-    compute_ref_matmul();
+    if (m_op->matmul.has_value()) {
+        compute_ref_matmul();
+    }
 }
 
 void MatMulTb::populate_config() {
-    get_tensor(MatMulSlot::CONFIG).set_value(MatMulConfig{m_bias_mode});
+    get_tensor(MatMulSlot::CONFIG).set_value(MatMulConfig{m_bias_modes});
 }
 
 void MatMulTb::determine_required_tensors() {
@@ -131,7 +139,9 @@ void MatMulTb::determine_required_tensors() {
         }
     };
 
-    add_required_tensors(m_op->matmul.get());
+    if (m_op->matmul.has_value()) {
+        add_required_tensors(m_op->matmul.value().get());
+    }
 
     if (m_op->pack_lhs.has_value()) {
         add_required_tensors(m_op->pack_lhs.value().get());
@@ -166,12 +176,64 @@ void MatMulTb::generate_rhs_data(Rng& rng) {
         }));
 }
 
-void MatMulTb::generate_bias_data(Rng& rng) {
-    const std::array shape{m_shape_n};
-    const Poly<Format> format(std::in_place_type<PlainFormat>, m_op->bias_dtype);
-    Tensor& tensor = get_tensor(MatMulSlot::BIAS_DATA);
+void MatMulTb::generate_acc_bias_m_data(Rng& rng) {
+    if (!is_tensor_required(MatMulSlot::ACC_BIAS_M_DATA)) {
+        return;
+    }
 
-    // For deterministic debug inputs call fill_sequential or fill_constant
+    const Poly<Format> format(std::in_place_type<PlainFormat>, m_op->bias_dtype);
+    const auto fill_bias = [&](Span<const size_t> gen_shape, DataType dtype, Span<std::byte> output) {
+        // Limit the bias to something that is very unlikely to overflow
+        fill_random(gen_shape, dtype, output, rng, integer_range_for_dtype(DataType::I8));
+    };
+
+    const std::array shape{m_shape_m};
+    Tensor& tensor = get_tensor(MatMulSlot::ACC_BIAS_M_DATA);
+
+    tensor.set_shape(shape).set_format(format).set_data(format->generate(shape, fill_bias));
+}
+
+void MatMulTb::generate_acc_bias_n_data(Rng& rng) {
+    if (!is_tensor_required(MatMulSlot::ACC_BIAS_N_DATA)) {
+        return;
+    }
+
+    const Poly<Format> format(std::in_place_type<PlainFormat>, m_op->bias_dtype);
+    const auto fill_bias = [&](Span<const size_t> gen_shape, DataType dtype, Span<std::byte> output) {
+        // Limit the bias to something that is very unlikely to overflow
+        fill_random(gen_shape, dtype, output, rng, integer_range_for_dtype(DataType::I8));
+    };
+
+    const std::array shape{m_shape_n};
+    Tensor& tensor = get_tensor(MatMulSlot::ACC_BIAS_N_DATA);
+
+    tensor.set_shape(shape).set_format(format).set_data(format->generate(shape, fill_bias));
+}
+
+void MatMulTb::generate_acc_scale_global_data(Rng& rng) {
+    if (!is_tensor_required(MatMulSlot::ACC_SCALE_GLOBAL_DATA)) {
+        return;
+    }
+
+    const Poly<Format> format(std::in_place_type<PlainFormat>, m_op->dst_dtype);
+    const std::array shape{size_t{1}};
+    Tensor& tensor = get_tensor(MatMulSlot::ACC_SCALE_GLOBAL_DATA);
+
+    tensor.set_shape(shape).set_format(format).set_data(
+        format->generate(shape, [&](Span<const size_t> gen_shape, DataType gen_dtype, Span<std::byte> output) {
+            fill_random_scale(gen_shape, gen_dtype, output, rng);
+        }));
+}
+
+void MatMulTb::generate_scale_bias_n_data(Rng& rng) {
+    if (!is_tensor_required(MatMulSlot::SCALE_BIAS_N_DATA)) {
+        return;
+    }
+
+    const Poly<Format> format(std::in_place_type<PlainFormat>, m_op->dst_dtype);
+    const std::array shape{m_shape_n};
+    Tensor& tensor = get_tensor(MatMulSlot::SCALE_BIAS_N_DATA);
+
     tensor.set_shape(shape).set_format(format).set_data(
         format->generate(shape, [&](Span<const size_t> gen_shape, DataType dtype, Span<std::byte> output) {
             fill_random(gen_shape, dtype, output, rng);
@@ -290,7 +352,8 @@ void MatMulTb::compute_ref_matmul() {
     const Tensor& rhs_t_data = get_tensor(MatMulSlot::RHS_T_DATA);
     const Tensor& rhs_t_qdata = get_tensor(MatMulSlot::RHS_T_QDATA);
     const Tensor& rhs_t_qscale = get_tensor(MatMulSlot::RHS_T_QSCALE);
-    const Tensor& bias_data = get_tensor(MatMulSlot::BIAS_DATA);
+    const Tensor& acc_bias_m_data = get_tensor(MatMulSlot::ACC_BIAS_M_DATA);
+    const Tensor& acc_bias_n_data = get_tensor(MatMulSlot::ACC_BIAS_N_DATA);
     Tensor& kernel_args = get_tensor(MatMulSlot::MATMUL_ARGS);
     Tensor& ref_dst_data = get_tensor(MatMulSlot::DST_DATA);
 
@@ -298,8 +361,10 @@ void MatMulTb::compute_ref_matmul() {
 
     Buffer tmp_mm_lhs;
     Span<const std::byte> mm_lhs_view;
+    DataType mm_lhs_dtype = m_op->lhs_dtype;
     Buffer tmp_mm_rhs_t;
     Span<const std::byte> mm_rhs_t_view;
+    DataType mm_rhs_dtype = m_op->rhs_dtype;
 
     // Prepares the input data for the reference matrix multiplication.
     //   * If the input data is floating-point, converts it to the accumulator type.
@@ -309,9 +374,8 @@ void MatMulTb::compute_ref_matmul() {
         tmp_mm_lhs = lhs_quant.dequantize(
             m_op->acc_dtype, {m_shape_m, m_shape_k}, lhs_qdata.data(), lhs_qscale.data(), lhs_qzp.data());
         mm_lhs_view = tmp_mm_lhs.view();
+        mm_lhs_dtype = m_op->acc_dtype;
     } else {
-        KAI_TEST_ASSERT_MSG(
-            m_op->lhs_dtype == m_op->acc_dtype, "Having different LHS and accumulator types is not supported yet!");
         mm_lhs_view = lhs_data.data();
     }
 
@@ -320,49 +384,96 @@ void MatMulTb::compute_ref_matmul() {
         tmp_mm_rhs_t =
             rhs_quant.dequantize(m_op->acc_dtype, {m_shape_n, m_shape_k}, rhs_t_qdata.data(), rhs_t_qscale.data(), {});
         mm_rhs_t_view = tmp_mm_rhs_t.view();
+        mm_rhs_dtype = m_op->acc_dtype;
     } else {
-        KAI_TEST_ASSERT_MSG(
-            m_op->lhs_dtype == m_op->acc_dtype, "Having different LHS and accumulator types is not supported yet!");
         mm_rhs_t_view = rhs_t_data.data();
     }
 
     // Runs the reference matrix multiplication.
-    const MatMulFn matmul_fn = make_matmul_nt_t(m_op->acc_dtype);
-    Buffer dst = matmul_fn(m_shape_m, m_shape_n, m_shape_k, mm_lhs_view, mm_rhs_t_view);
+    const MatMulFn matmul_fn = make_matmul_nt_t(mm_lhs_dtype, mm_rhs_dtype, m_op->acc_dtype);
+    Buffer ref_dst = matmul_fn(m_shape_m, m_shape_n, m_shape_k, mm_lhs_view, mm_rhs_t_view);
 
-    switch (config.bias_mode) {
-        case MatMulBiasMode::NO_BIAS:
-            break;
+    const bool has_acc_bias = config.bias_modes.has(MatMulBiasMode::ACCUMULATION_PER_M) ||
+        config.bias_modes.has(MatMulBiasMode::ACCUMULATION_PER_N);
+    if (has_acc_bias) {
+        KAI_TEST_ASSERT_MSG(
+            m_op->bias_dtype == m_op->acc_dtype, "Only support the accumulator and bias type being the same.");
+    }
 
-        case MatMulBiasMode::PER_N: {
-            KAI_TEST_ASSERT_MSG(
-                m_op->bias_dtype == m_op->acc_dtype, "Only support the accumulator and bias type being the same.");
-            const BinaryElementwiseFn add_fn = make_add_2d(m_op->acc_dtype);
-            dst = add_fn(m_shape_m, m_shape_n, dst, 1, m_shape_n, bias_data.data());
-            break;
+    const BinaryElementwiseFn add_fn = make_add_2d(m_op->acc_dtype);
+
+    if (config.bias_modes.has(MatMulBiasMode::ACCUMULATION_PER_M)) {
+        ref_dst = add_fn(m_shape_m, m_shape_n, ref_dst, m_shape_m, 1, acc_bias_m_data.data());
+    }
+    if (config.bias_modes.has(MatMulBiasMode::ACCUMULATION_PER_N)) {
+        ref_dst = add_fn(m_shape_m, m_shape_n, ref_dst, 1, m_shape_n, acc_bias_n_data.data());
+    }
+
+    const bool has_acc_scaling_stage =                            //
+        is_tensor_required(MatMulSlot::ACC_SCALE_GLOBAL_DATA) ||  //
+        is_tensor_required(MatMulSlot::ACC_SCALE_M_DATA) ||       //
+        is_tensor_required(MatMulSlot::ACC_SCALE_N_DATA);
+    if (m_op->acc_dtype != m_op->dst_dtype) {
+        ref_dst = cast(ref_dst.data(), m_op->acc_dtype, m_op->dst_dtype, m_shape_m, m_shape_n);
+    }
+
+    if (has_acc_scaling_stage) {
+        const BinaryElementwiseFn multiply_fn = make_multiply_2d(m_op->dst_dtype);
+
+        if (is_tensor_required(MatMulSlot::ACC_SCALE_GLOBAL_DATA)) {
+            ref_dst =
+                multiply_fn(m_shape_m, m_shape_n, ref_dst, 1, 1, get_tensor(MatMulSlot::ACC_SCALE_GLOBAL_DATA).data());
         }
 
-        default:
-            KAI_TEST_ERROR("Not supported.");
+        if (is_tensor_required(MatMulSlot::ACC_SCALE_M_DATA)) {
+            ref_dst = multiply_fn(
+                m_shape_m, m_shape_n, ref_dst, m_shape_m, 1, get_tensor(MatMulSlot::ACC_SCALE_M_DATA).data());
+        }
+
+        if (is_tensor_required(MatMulSlot::ACC_SCALE_N_DATA)) {
+            ref_dst = multiply_fn(
+                m_shape_m, m_shape_n, ref_dst, 1, m_shape_n, get_tensor(MatMulSlot::ACC_SCALE_N_DATA).data());
+        }
     }
 
-    KAI_TEST_ASSERT_MSG(
-        m_op->dst_dtype == m_op->acc_dtype, "Only support the accumulator and output type being the same.");
+    const bool has_scale_bias_stage =                              //
+        is_tensor_required(MatMulSlot::SCALE_BIAS_GLOBAL_DATA) ||  //
+        is_tensor_required(MatMulSlot::SCALE_BIAS_M_DATA) ||       //
+        is_tensor_required(MatMulSlot::SCALE_BIAS_N_DATA);
+    if (has_scale_bias_stage) {
+        const BinaryElementwiseFn add_fn = make_add_2d(m_op->dst_dtype);
 
-    Buffer clamp_args(sizeof(std::optional<ClampLimits<float>>), 0);
+        if (is_tensor_required(MatMulSlot::SCALE_BIAS_GLOBAL_DATA)) {
+            ref_dst =
+                add_fn(m_shape_m, m_shape_n, ref_dst, 1, 1, get_tensor(MatMulSlot::SCALE_BIAS_GLOBAL_DATA).data());
+        }
 
-    if (m_clamp_ratio.has_value()) {
-        const DynamicClampFn dynamic_clamp_fn = make_dynamic_clamp(m_op->acc_dtype);
-        auto [clamp_range, clamped_dst] = dynamic_clamp_fn(m_clamp_ratio.value(), {m_shape_m, m_shape_n}, dst);
-        ref_dst_data.set_data(std::move(clamped_dst));
-        *reinterpret_cast<std::optional<ClampLimits<float>>*>(clamp_args.data()) = {
-            reinterpret_cast<ClampLimits<float>*>(clamp_range.data())->min_value,
-            reinterpret_cast<ClampLimits<float>*>(clamp_range.data())->max_value};
-    } else {
-        *reinterpret_cast<std::optional<ClampLimits<float>>*>(clamp_args.data()) = std::nullopt;
-        ref_dst_data.set_data(std::move(dst));
+        if (is_tensor_required(MatMulSlot::SCALE_BIAS_M_DATA)) {
+            ref_dst =
+                add_fn(m_shape_m, m_shape_n, ref_dst, m_shape_m, 1, get_tensor(MatMulSlot::SCALE_BIAS_M_DATA).data());
+        }
+
+        if (config.bias_modes.has(MatMulBiasMode::SCALE_BIAS_PER_N)) {
+            ref_dst =
+                add_fn(m_shape_m, m_shape_n, ref_dst, 1, m_shape_n, get_tensor(MatMulSlot::SCALE_BIAS_N_DATA).data());
+        }
     }
-    kernel_args.set_shape({clamp_args.size()}).set_data(std::move(clamp_args));
+
+    std::optional<MatMulClampArgsF32> clamp_args = std::nullopt;
+
+    if (m_op->clamp_mode != MatMulClampMode::UNSUPPORTED &&
+        (m_clamp_ratio.has_value() || m_op->clamp_mode == MatMulClampMode::REQUIRED)) {
+        const size_t dst_size = m_shape_m * m_shape_n;
+        const auto [clamp_min, clamp_max] = find_clamp_range(m_op->dst_dtype, ref_dst.data(), dst_size, m_clamp_ratio);
+
+        clamp_args = MatMulClampArgsF32{clamp_min, clamp_max};
+
+        if (m_clamp_ratio.has_value()) {
+            ref_dst = clamp(m_op->dst_dtype, ref_dst.data(), dst_size, clamp_min, clamp_max);
+        }
+    }
+    kernel_args.set_value(std::move(clamp_args));
+    ref_dst_data.set_data(std::move(ref_dst));
 }
 
 std::tuple<size_t, size_t> MatMulTb::lhs_packing_steps() const {
@@ -416,11 +527,14 @@ void MatMulTb::test_rhs_packing(size_t start_n, size_t start_k, size_t size_n, s
 }
 
 std::tuple<size_t, size_t> MatMulTb::matmul_steps() const {
-    const std::vector<size_t> steps = m_op->matmul->steps({m_shape_m, m_shape_n, m_shape_k}, m_tensors);
+    const KernelWrapper<MatMulShape>& matmul = *m_op->matmul.value();
+    const std::vector<size_t> steps = matmul.steps({m_shape_m, m_shape_n, m_shape_k}, m_tensors);
     return {steps.at(as_idx(MatMulDim::M)), steps.at(as_idx(MatMulDim::N))};
 }
 
 void MatMulTb::test_matmul(size_t start_m, size_t start_n, size_t size_m, size_t size_n) {
+    const KernelWrapper<MatMulShape>& matmul = *m_op->matmul.value();
+
     const std::array matmul_full_shape{m_shape_m, m_shape_n, m_shape_k};
     const std::array matmul_tile_coords{start_m, start_n, static_cast<size_t>(0)};
     const std::array matmul_tile_shape{size_m, size_n, m_shape_k};
@@ -429,7 +543,7 @@ void MatMulTb::test_matmul(size_t start_m, size_t start_n, size_t size_m, size_t
     const std::array dst_tile_coords{start_m, start_n};
     const std::array dst_tile_shape{size_m, size_n};
 
-    m_op->matmul->run(matmul_full_shape, matmul_tile_coords, matmul_tile_shape, m_tensors);
+    matmul.run(matmul_full_shape, matmul_tile_coords, matmul_tile_shape, m_tensors);
 
     const Tensor& ref_dst_data = get_tensor(MatMulSlot::DST_DATA);
     const Tensor& imp_dst_data = get_tensor(MatMulSlot::DST_DATA_IMP);

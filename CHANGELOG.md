@@ -10,6 +10,13 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+- New SME micro-kernels
+  - Added an x8 matmul pack micro-kernel family with 4vsx4 blocked layout, without packing bias.
+  - Added SME RHS depthwise packing kernel for FP16
+- New SME2 micro-kernels
+  - Added SME2 depthwise indirect micro-kernel for FP16.
+  - kai_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa.
+  - kai_matmul_clamp_f32_u8p4vsx4_u8p4vsx4_i32_i32_f32_f32_8vsx8vs_sme2_mopa.
 - Extended the following micro-kernels to support variable block length
   - kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod
   - kai_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p4x8_1x4x32_neon_dotprod
@@ -26,6 +33,10 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 - Documentation
   - Contribution policy updates as part of third party contribution enablement
   - Added coding standard and conventions
+- New Transposed-B RHS packing micro-kernel versions of kai_rhs_pack_kxn_x32p16x1b_x32_x32_neon and kai_rhs_pack_kxn_x16p32x1b_x16_x16_neon:
+  - kai_rhs_pack_nxk_x16p32x1bx16_x16_x16_neon
+  - kai_rhs_pack_nxk_x32p16x1bx32_x32_x32_neon
+- New SME2 FP32 GEMV micro-kernel with 4vsx1 RHS format
 
 ## v1.25.0
 
