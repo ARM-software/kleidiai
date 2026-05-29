@@ -1279,7 +1279,7 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0.75, 0.75,    1,    1), // Bottom-right corner.
             // clang-format on
         }),
-        testing::ValuesIn(std::initializer_list<float>{0.0F, 0.1F, 0.5F}),
+        testing::ValuesIn(std::initializer_list<float>{1.0F, 0.9F, 0.5F}),  // clamp_keep_ratio
         testing::ValuesIn(std::initializer_list<float>{0.9F})),
     [](const auto& info) -> std::string { return test_description(info.param); });
 
@@ -1313,8 +1313,7 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0, .25, 1, .5)  // Middle half
             // clang-format on
         }),
-        // Clamp range
-        testing::ValuesIn(std::initializer_list<float>{1.0f, 0.9f, 0.5f}),
+        testing::ValuesIn(std::initializer_list<float>{1.0f, 0.9f, 0.5f}),  // clamp_keep_ratio
         // Scale range
         testing::ValuesIn(std::initializer_list<float>{0.9F})),
     [](const auto& info) -> std::string { return test_description(info.param); });
@@ -1356,7 +1355,7 @@ INSTANTIATE_TEST_SUITE_P(
         testing::ValuesIn(std::initializer_list<size_t>{1}),  //
         testing::Values(MatrixPortion(0, 0, 1, 1)),           //
         // Clamp range
-        testing::ValuesIn(std::initializer_list<float>{0.0F, 0.1F, 0.5F}),  // clamp_keep_ratio
+        testing::ValuesIn(std::initializer_list<float>{1.0F, 0.9F, 0.5F}),  // clamp_keep_ratio
         testing::ValuesIn(std::initializer_list<float>{0.9F})),             // Scale ratio
     testing::PrintToStringParamName());
 
