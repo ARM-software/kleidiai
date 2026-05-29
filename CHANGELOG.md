@@ -37,6 +37,10 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
   - kai_rhs_pack_nxk_x16p32x1bx16_x16_x16_neon
   - kai_rhs_pack_nxk_x32p16x1bx32_x32_x32_neon
 - New SME2 FP32 GEMV micro-kernel with 4vsx1 RHS format
+- New SME2 static Int8 GEMM/GEMV kernels and the RHS packing kernel.
+  - kai_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx8vs_sme2_mopa
+  - kai_matmul_clamp_qai8_qai8_qsi8cxp4vsx4bi32sf32_1x32vs_sme2_dot
+  - kai_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme
 
 ## v1.25.0
 
