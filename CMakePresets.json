@@ -3,6 +3,7 @@
   "configurePresets": [
     {
       "name": "default-config",
+      "description": "Default configuration, used by tooling for simple build checks",
       "binaryDir": "build",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
@@ -11,12 +12,32 @@
         "KLEIDIAI_BUILD_TESTS": "ON",
         "KLEIDIAI_BUILD_BENCHMARK": "ON"
       }
+    },
+    {
+      "name": "default-debug",
+      "description": "Default debug configuration which enables minimal set of sanitizers",
+      "inherits": "default-config",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_FLAGS":
+            "-g -fsanitize=address,undefined -fno-sanitize-address-use-odr-indicator -fno-omit-frame-pointer -fno-common",
+        "CMAKE_CXX_FLAGS":
+            "-g -fsanitize=address,undefined -fno-sanitize-address-use-odr-indicator -fno-omit-frame-pointer -fno-common",
+        "CMAKE_EXE_LINKER_FLAGS":
+            "-fsanitize=address,undefined -fno-sanitize-address-use-odr-indicator -Wlto-type-mismatch"
+      }
     }
   ],
   "buildPresets": [
     {
       "name": "default-build",
-      "configurePreset": "default-config"
+      "configurePreset": "default-config",
+      "configuration": "Release"
+    },
+    {
+      "name": "default-debug",
+      "configurePreset": "default-debug",
+      "configuration": "Debug"
     }
   ]
 }
