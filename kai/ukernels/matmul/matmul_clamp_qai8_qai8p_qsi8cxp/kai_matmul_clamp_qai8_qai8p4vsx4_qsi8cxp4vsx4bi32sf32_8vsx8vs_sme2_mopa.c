@@ -180,7 +180,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
     KAI_ASSUME(args->operand.rhs.ptr != NULL);
     KAI_ASSUME(args->operand.dst.ptr != NULL);
 
-    int32_t clamp_min_max[2];
+    int32_t clamp_min_max[2] = {INT32_MIN, INT32_MAX};
 
     if (args->flags & KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP) {
         KAI_ASSUME(args->activation.clamp.min_ptr != NULL);
