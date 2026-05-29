@@ -28,6 +28,7 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 - Fixes
   - Added ZA lazy save to kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme_dot
   - Fix QAI8/QSI8CXP matmul test failures by constraining generated qsi32 bias values to preserve int32 accumulator headroom.
+  - Fix a clamping issue in matmul_clamp_qai8_qai8p_qai8p_test.cpp
 - New Advanced SIMD micro-kernels
   - Matrix Multiplication MxN and 1xN Micro-Kernels of QAI8DXP LHS and QSU2CXP RHS with F32 output, optimized for FEAT_DotProd, along with RHS packing kernel.
 - Documentation
