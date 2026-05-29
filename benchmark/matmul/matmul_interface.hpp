@@ -20,6 +20,7 @@ enum : uint32_t {
     KAI_BENCHMARK_MATMUL_UKER_ARGS_ACC_BIAS_N = 1U << 1,
     KAI_BENCHMARK_MATMUL_UKER_ARGS_SCALE_BIAS_N = 1U << 2,
     KAI_BENCHMARK_MATMUL_UKER_ARGS_ACC_SCALE_GLOBAL = 1U << 3,
+    KAI_BENCHMARK_MATMUL_UKER_ARGS_SCALE_BIAS_GLOBAL = 1U << 4,
 };
 
 /// Abstraction for the unspecialized Matrix Multiplication microkernel interface

@@ -88,6 +88,46 @@ struct kai_matmul_uker_api kai_matmul_clamp_f32_u8p4vsx4_u8p4vsx4_i32_i32_f32_f3
 /// @return The micro-kernel API.
 struct kai_matmul_uker_api kai_matmul_clamp_f32_f32_f32p4vsx1bf32_1x32vs_sme2_mla(void);
 
+/// Statically quantized INT8 matrix multiplication using SME2 MOPA instruction.
+///
+/// Required CPU features:
+///   * FEAT_SME2
+///
+/// Required operands:
+///   * dst
+///   * lhs
+///   * rhs - RHS matrix with per-N bias and per-N scale.
+///   * dst_bias_global
+///
+/// Optional arguments:
+///   * clamp - INT32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
+///
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx8vs_sme2_mopa(void);
+
+/// Statically quantized INT8 vector-matrix multiplication using SME2 DOT instruction.
+///
+/// Required CPU features:
+///   * FEAT_SME2
+///
+/// Required operands:
+///   * dst
+///   * lhs
+///   * rhs - RHS matrix with per-N bias and per-N scale.
+///   * dst_bias_global
+///
+/// Optional arguments:
+///   * clamp - INT32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
+///
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8_qsi8cxp4vsx4bi32sf32_1x32vs_sme2_dot(void);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif
