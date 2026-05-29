@@ -88,6 +88,7 @@ private:
     std::vector<std::byte> acc_bias_n_;
     std::vector<std::byte> scale_bias_n_;
     std::vector<std::byte> acc_scale_global_;
+    std::vector<std::byte> scale_bias_global_;
 };
 
 /// Prepares auxiliary data required by the matrix multiplication micro-kernel.
@@ -263,6 +264,10 @@ inline void MatMulRunner<MatMulUkernelApiInterface>::run(const void* lhs, const 
         args.operand.scale.acc_scale_global.ptr = acc_scale_global_.data();
     }
 
+    if ((matmul_interface_.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_SCALE_BIAS_GLOBAL) != 0) {
+        args.operand.bias.scale_bias_global.ptr = scale_bias_global_.data();
+    }
+
     api.run(&config, &args);
 }
 
@@ -273,6 +278,7 @@ inline void MatMulRunner<MatMulUkernelApiInterface>::prepare() {
     acc_bias_n_.clear();
     scale_bias_n_.clear();
     acc_scale_global_.clear();
+    scale_bias_global_.clear();
 
     // Allocate row bias for accumulation stage
     if ((matmul_interface_.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_ACC_BIAS_M) != 0) {
@@ -296,6 +302,12 @@ inline void MatMulRunner<MatMulUkernelApiInterface>::prepare() {
     if ((matmul_interface_.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_SCALE_BIAS_N) != 0) {
         KAI_ASSUME(matmul_interface_.scale_bias_elem_size != 0);
         scale_bias_n_.resize(n_ * matmul_interface_.scale_bias_elem_size);
+    }
+
+    // Allocate global bias for the scaled accumulation stage
+    if ((matmul_interface_.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_SCALE_BIAS_GLOBAL) != 0) {
+        KAI_ASSUME(matmul_interface_.scale_bias_elem_size != 0);
+        scale_bias_global_.resize(matmul_interface_.scale_bias_elem_size);
     }
 }
 
