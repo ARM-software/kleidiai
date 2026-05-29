@@ -180,14 +180,20 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
     KAI_ASSUME(args->operand.rhs.ptr != NULL);
     KAI_ASSUME(args->operand.dst.ptr != NULL);
 
-    int32_t clamp_min_max[2] = {INT32_MIN, INT32_MAX};
+    int32_t clamp_min_max[2];
+    uint64_t flags = args->flags;
 
-    if (args->flags & KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP) {
+    if (flags & KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP) {
         KAI_ASSUME(args->activation.clamp.min_ptr != NULL);
         KAI_ASSUME(args->activation.clamp.max_ptr != NULL);
 
         clamp_min_max[0] = *(const int32_t*)args->activation.clamp.min_ptr;
         clamp_min_max[1] = *(const int32_t*)args->activation.clamp.max_ptr;
+    } else {
+        // Enables clamping by default.
+        flags |= KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP;
+        clamp_min_max[0] = INT8_MIN;
+        clamp_min_max[1] = INT8_MAX;
     }
 
     kai_commit_za();
@@ -202,7 +208,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
     if (main_m > 0 && main_n > 0) {
         struct kai_matmul_uker_args_internal uker_args = {0};
 
-        uker_args.flags = args->flags;
+        uker_args.flags = flags;
 
         uker_args.m = main_m;
         uker_args.n = main_n;
@@ -244,7 +250,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
         if (shape_m_16vs > 0) {
             struct kai_matmul_uker_args_internal uker_args = {0};
 
-            uker_args.flags = args->flags;
+            uker_args.flags = flags;
 
             uker_args.m = shape_m_16vs;
             uker_args.n = leftover_n;
@@ -278,7 +284,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
         if (leftover_m > 0) {
             struct kai_matmul_uker_args_internal uker_args = {0};
 
-            uker_args.flags = args->flags;
+            uker_args.flags = flags;
 
             uker_args.m = leftover_m;
             uker_args.n = leftover_n;
@@ -321,7 +327,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
         if (shape_n_16vs > 0) {
             struct kai_matmul_uker_args_internal uker_args = {0};
 
-            uker_args.flags = args->flags;
+            uker_args.flags = flags;
 
             uker_args.m = leftover_m;
             uker_args.n = shape_n_16vs;
@@ -357,7 +363,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
         if (shape_n_8vs > 0) {
             struct kai_matmul_uker_args_internal uker_args = {0};
 
-            uker_args.flags = args->flags;
+            uker_args.flags = flags;
 
             uker_args.m = leftover_m;
             uker_args.n = shape_n_8vs;
@@ -391,7 +397,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
         if (leftover_n > 0) {
             struct kai_matmul_uker_args_internal uker_args = {0};
 
-            uker_args.flags = args->flags;
+            uker_args.flags = flags;
 
             uker_args.m = leftover_m;
             uker_args.n = leftover_n;

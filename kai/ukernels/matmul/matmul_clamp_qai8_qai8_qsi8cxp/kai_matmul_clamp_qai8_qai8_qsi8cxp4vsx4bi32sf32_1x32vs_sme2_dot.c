@@ -158,14 +158,14 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
 
     struct kai_matmul_uker_args_internal uker_args = {
         .c_offset = *(const int32_t*)args->operand.bias.scale_bias_global.ptr,
-        .maxval = INT32_MAX,
-        .minval = INT32_MIN,
+        .maxval = INT8_MAX,
+        .minval = INT8_MIN,
         .A_ptr = args->operand.lhs.ptr,
         .B_ptr = args->operand.rhs.ptr,
         .N = args->shape.n,
         .K = args->shape.k,
         .output_ptr = args->operand.dst.ptr,
-        .flags = 0,
+        .flags = 2,  // Always enable clamping by default.
     };
 
     if (args->flags & KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP) {

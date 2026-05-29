@@ -108,7 +108,7 @@ struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme(void
 ///     * RHS matrix: INT8 data in plain format, non-transposed.
 ///   * bias_n - The per-N quantized bias vector.
 ///     * Per-N bias vector: INT32 data.
-///   * sum_scale_global - The per-matrix row sum scale value.
+///   * k_sum_scale_global - The per-matrix row sum scale value.
 ///     * Per-matrix row sum scale value: INT32 data.
 ///   * scale_n - The per-N quantization scale vector.
 ///     * Per-N scale vector: FP32 data.
