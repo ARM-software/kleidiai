@@ -44,6 +44,7 @@
 #include "test/common/matrix_portion.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/round.hpp"
+#include "test/common/seed.hpp"
 #include "test/common/test_suite.hpp"
 #include "test/reference/cast.hpp"
 #include "test/reference/clamp.hpp"
@@ -297,7 +298,7 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsi4cx) {
         GTEST_SKIP() << "Wrong type. This test for NxK";
     }
 
-    const uint32_t seed = 0;
+    auto& feed = seed_stream(current_test_key());
 
     const size_t M = matmul_shape.m;
     const size_t N = matmul_shape.n;
@@ -309,11 +310,11 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsi4cx) {
     const auto sr = ukernel_variant.interface.get_sr();
 
     // Generates input data.
-    const auto ref_lhs = fill_random<float>(M * K, seed + 0);
-    const auto ref_biases = fill_random<float>(N, seed + 2);
+    const auto ref_lhs = fill_random<float>(M * K, feed());
+    const auto ref_biases = fill_random<float>(N, feed());
 
     std::uniform_real_distribution<float> dist(-10.0, 1.0);
-    std::mt19937 rnd(seed + 1);
+    std::mt19937 rnd(feed());
     const auto ref_rhs = fill_matrix_raw<float>(1, N * K, [&dist, &rnd](size_t, size_t) { return dist(rnd); });
 
     // Runs the reference implementation.
@@ -432,7 +433,7 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsu4cx) {
         GTEST_SKIP() << "Wrong type. This test for NxK";
     }
 
-    const uint32_t seed = 0;
+    auto& feed = seed_stream(current_test_key());
 
     const size_t M = matmul_shape.m;
     const size_t N = matmul_shape.n;
@@ -444,13 +445,13 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsu4cx) {
     const auto sr = ukernel_variant.interface.get_sr();
 
     // Generates input data.
-    const auto ref_lhs = fill_random<float>(M * K, seed + 0);
+    const auto ref_lhs = fill_random<float>(M * K, feed());
 
     std::uniform_real_distribution<float> dist(-10.0, 1.0);
-    std::mt19937 rnd(seed + 1);
+    std::mt19937 rnd(feed());
     const auto ref_rhs = fill_matrix_raw<float>(1, N * K, [&dist, &rnd](size_t, size_t) { return dist(rnd); });
 
-    const auto ref_biases = fill_random<float>(N, seed + 2);
+    const auto ref_biases = fill_random<float>(N, feed());
 
     // Runs the reference implementation.
     //   * Quantizes the LHS matrix using 8-bit asymmetric quantization.
@@ -567,7 +568,7 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsi4cx) {
         GTEST_SKIP() << "Wrong type. This test for KxN";
     }
 
-    const uint32_t seed = 0;
+    auto& feed = seed_stream(current_test_key());
 
     const size_t M = matmul_shape.m;
     const size_t N = matmul_shape.n;
@@ -579,13 +580,13 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsi4cx) {
     const auto sr = ukernel_variant.interface.get_sr();
 
     // Generates input data.
-    const auto ref_lhs = fill_random<float>(M * K, seed + 0);
+    const auto ref_lhs = fill_random<float>(M * K, feed());
 
     std::uniform_real_distribution<float> dist(-10.0, 1.0);
-    std::mt19937 rnd(seed + 1);
+    std::mt19937 rnd(feed());
     const auto ref_rhs = fill_matrix_raw<float>(1, N * K, [&dist, &rnd](size_t, size_t) { return dist(rnd); });
 
-    const auto ref_biases = fill_random<float>(N, seed + 2);
+    const auto ref_biases = fill_random<float>(N, feed());
 
     // Transposed(nxk) RHS dimensions
     const size_t ref_rhs_qsi4_nxk_stride = K;
@@ -705,7 +706,7 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsu4cx) {
         GTEST_SKIP() << "Wrong type. This test for KxN";
     }
 
-    const uint32_t seed = 0;
+    auto& feed = seed_stream(current_test_key());
 
     const size_t M = matmul_shape.m;
     const size_t N = matmul_shape.n;
@@ -717,13 +718,13 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsu4cx) {
     const auto sr = ukernel_variant.interface.get_sr();
 
     // Generates input data.
-    const auto ref_lhs = fill_random<float>(M * K, seed + 0);
+    const auto ref_lhs = fill_random<float>(M * K, feed());
 
     std::uniform_real_distribution<float> dist(-10.0, 1.0);
-    std::mt19937 rnd(seed + 1);
+    std::mt19937 rnd(feed());
     const auto ref_rhs = fill_matrix_raw<float>(1, N * K, [&dist, &rnd](size_t, size_t) { return dist(rnd); });
 
-    const auto ref_biases = fill_random<float>(N, seed + 2);
+    const auto ref_biases = fill_random<float>(N, feed());
 
     // Transposed(nxk) RHS dimensions
     const size_t ref_rhs_qsi4_nxk_stride = K;
