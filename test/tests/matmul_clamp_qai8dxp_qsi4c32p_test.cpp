@@ -925,7 +925,7 @@ BF16TestData ReferenceGenerator<BF16QMatMulRefKey, BF16TestData>::generate_refer
     return ref;
 }
 
-/// Verifies RHS packed offsets (KxN vs NxK) match each other and the matmul interface at n_step.
+/// Verifies RHS packed offsets (KxN vs NxK) match each other and the matmul interface at nr.
 TEST_P(QMatMulClampF32Test, OffsetRHS) {
     const auto& p = GetParams();
     const auto fn_supported = p.variant->ukernel.fn_is_supported;
@@ -940,27 +940,26 @@ TEST_P(QMatMulClampF32Test, OffsetRHS) {
     const auto nr = ukernel.interface.get_nr();
     const auto kr = ukernel.interface.get_kr();
     const auto sr = ukernel.interface.get_sr();
-    const auto n_step = ukernel.interface.get_n_step();
+    const auto n_idx = nr;
 
     const auto rhs_packed_offset_kxn =
-        kai_get_rhs_packed_offset_rhs_pack_kxn_qsi4c32p_qsu4c32s1s0(n_step, K, nr, kr, sr, bl, kai_dt_bf16);
-    const auto rhs_packed_offset_kxn_ps1s0 = kai_get_rhs_packed_offset_rhs_pack_kxn_qsi4c32ps1s0nrx4_qsu4c32s1s0_neon(
-        n_step, K, nr, kr, sr, bl, kai_dt_bf16);
+        kai_get_rhs_packed_offset_rhs_pack_kxn_qsi4c32p_qsu4c32s1s0(n_idx, K, nr, kr, sr, bl, kai_dt_bf16);
+    const auto rhs_packed_offset_kxn_ps1s0 =
+        kai_get_rhs_packed_offset_rhs_pack_kxn_qsi4c32ps1s0nrx4_qsu4c32s1s0_neon(n_idx, K, nr, kr, sr, bl, kai_dt_bf16);
     const auto rhs_packed_offset_nxk =
-        kai_get_rhs_packed_offset_rhs_pack_nxk_qsi4c32p_qsu4c32s1s0(n_step, K, nr, kr, sr, bl, kai_dt_bf16);
+        kai_get_rhs_packed_offset_rhs_pack_nxk_qsi4c32p_qsu4c32s1s0(n_idx, K, nr, kr, sr, bl, kai_dt_bf16);
     const auto rhs_packed_offset_nxk_ps1s0_nrx4 =
-        kai_get_rhs_packed_offset_rhs_pack_nxk_qsi4c32ps1s0nrx4_qsu4c32s1s0_neon(
-            n_step, K, nr, kr, sr, bl, kai_dt_bf16);
+        kai_get_rhs_packed_offset_rhs_pack_nxk_qsi4c32ps1s0nrx4_qsu4c32s1s0_neon(n_idx, K, nr, kr, sr, bl, kai_dt_bf16);
 
     ASSERT_EQ(rhs_packed_offset_kxn, rhs_packed_offset_kxn_ps1s0);
     ASSERT_EQ(rhs_packed_offset_kxn_ps1s0, rhs_packed_offset_nxk);
     ASSERT_EQ(rhs_packed_offset_nxk, rhs_packed_offset_nxk_ps1s0_nrx4);
 
-    const auto rhs_matmul_offset = ukernel.interface.get_rhs_packed_offset(n_step, K, bl);
+    const auto rhs_matmul_offset = ukernel.interface.get_rhs_packed_offset(n_idx, K, bl);
     ASSERT_EQ(rhs_packed_offset_kxn, rhs_matmul_offset);
 }
 
-/// Verifies LHS packed offset matches the matmul interface at m_step.
+/// Verifies LHS packed offset matches the matmul interface at mr.
 TEST_P(QMatMulClampF32Test, OffsetLHS) {
     const auto& p = GetParams();
     const auto fn_supported = p.variant->ukernel.fn_is_supported;
@@ -974,10 +973,10 @@ TEST_P(QMatMulClampF32Test, OffsetLHS) {
     const auto mr = ukernel.interface.get_mr();
     const auto kr = ukernel.interface.get_kr();
     const auto sr = ukernel.interface.get_sr();
-    const auto m_step = ukernel.interface.get_m_step();
+    const auto m_idx = mr;
 
-    const auto lhs_packed_offset = kai_get_lhs_packed_offset_lhs_quant_pack_qai8dxp_f32(m_step, K, mr, kr, sr);
-    const auto lhs_matmul_offset = ukernel.interface.get_lhs_packed_offset(m_step, K);
+    const auto lhs_packed_offset = kai_get_lhs_packed_offset_lhs_quant_pack_qai8dxp_f32(m_idx, K, mr, kr, sr);
+    const auto lhs_matmul_offset = ukernel.interface.get_lhs_packed_offset(m_idx, K);
 
     ASSERT_EQ(lhs_packed_offset, lhs_matmul_offset);
 }
@@ -1060,11 +1059,10 @@ TEST_P(QMatMulClampF32Test, RhsStrideByDifference) {
     const size_t K = p.matmul_shape.k;
     const size_t bl = p.bl;
     const auto nr = ukernel.interface.get_nr();
-    const auto n_step = ukernel.interface.get_n_step();
 
-    // Stride by difference using kernel offsets at 0 and n_step.
+    // Stride by difference using kernel offsets at 0 and nr.
     const size_t off0 = ukernel.interface.get_rhs_packed_offset(0, K, bl);
-    const size_t off1 = ukernel.interface.get_rhs_packed_offset(n_step, K, bl);
+    const size_t off1 = ukernel.interface.get_rhs_packed_offset(nr, K, bl);
     const size_t stride_by_diff = off1 - off0;
 
     // Expected stride formula for qsi4c32p with BF16 scales:
