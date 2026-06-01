@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -113,7 +113,7 @@ size_t kai_get_sr_matmul_clamp_f16_qsi8d32p1x4_qai4c32p4x4_1x4_neon_dotprod(void
 
 size_t kai_get_lhs_packed_offset_matmul_clamp_f16_qsi8d32p1x4_qai4c32p4x4_1x4_neon_dotprod(
     size_t m_idx, size_t k, size_t bl) {
-    KAI_ASSUME((m_idx % kai_m_step) == 0);
+    KAI_ASSUME((m_idx % kai_mr) == 0);
 
     return (m_idx / kai_mr) * kai_get_lhs_packed_stride(k, bl);
 }
@@ -121,7 +121,7 @@ size_t kai_get_lhs_packed_offset_matmul_clamp_f16_qsi8d32p1x4_qai4c32p4x4_1x4_ne
 size_t kai_get_rhs_packed_offset_matmul_clamp_f16_qsi8d32p1x4_qai4c32p4x4_1x4_neon_dotprod(
     size_t n_idx, size_t k, size_t bl) {
     KAI_ASSUME((k % bl) == 0);
-    KAI_ASSUME((n_idx % kai_n_step) == 0);
+    KAI_ASSUME((n_idx % kai_nr) == 0);
 
     return (n_idx / kai_nr) * kai_get_rhs_packed_stride(k, bl);
 }

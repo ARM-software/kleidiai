@@ -99,22 +99,20 @@ size_t kai_get_sr_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot(voi
 
 size_t kai_get_lhs_packed_offset_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot(
     size_t m_idx, size_t k, size_t bl) {
-    const size_t m_step = kai_get_m_step_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot();
     const size_t mr = kai_get_mr_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot();
 
-    KAI_ASSUME((m_idx % m_step) == 0);
+    KAI_ASSUME((m_idx % mr) == 0);
 
     return (m_idx / mr) * kai_get_lhs_packed_stride(k, bl);
 }
 
 size_t kai_get_rhs_packed_offset_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot(
     size_t n_idx, size_t k, size_t bl) {
-    const size_t n_step = kai_get_n_step_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot();
     const size_t nr = kai_get_nr_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot();
 
     KAI_ASSUME((n_idx % nr) == 0);
 
-    return (n_idx / n_step) * kai_get_rhs_packed_stride(k, bl);
+    return (n_idx / nr) * kai_get_rhs_packed_stride(k, bl);
 }
 
 size_t kai_get_dst_offset_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot(

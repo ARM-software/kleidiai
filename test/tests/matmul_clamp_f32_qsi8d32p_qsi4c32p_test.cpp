@@ -6,6 +6,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -207,13 +208,16 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, Offset_RHS) {
 
     ASSERT_TRUE(K % bl == 0);
 
+    const auto mr = ukernel_variant.ukernel.interface.get_mr();
     const auto nr = ukernel_variant.ukernel.interface.get_nr();
     const auto kr = ukernel_variant.ukernel.interface.get_kr();
 
-    auto n_step = ukernel_variant.ukernel.interface.get_n_step();
-    auto m_step = ukernel_variant.ukernel.interface.get_m_step();
+    const auto m_step = ukernel_variant.ukernel.interface.get_m_step();
+    const auto n_step = ukernel_variant.ukernel.interface.get_n_step();
+    const auto tile_m = std::max(m_step, mr);
+    const auto tile_n = std::max(n_step, nr);
 
-    const auto rect = portion.compute_portion(M, N, m_step, n_step);
+    const auto rect = portion.compute_portion(M, N, tile_m, tile_n);
     if (rect.height() == 0 || rect.width() == 0) {
         GTEST_SKIP() << "Empty dimension of matrix(" << rect.width() << "," << rect.height() << ")";
     }
@@ -239,13 +243,16 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, Offset_LHS) {
     ASSERT_TRUE(K % bl == 0);
 
     const auto mr = ukernel_variant.ukernel.interface.get_mr();
+    const auto nr = ukernel_variant.ukernel.interface.get_nr();
     const auto kr = ukernel_variant.ukernel.interface.get_kr();
     const auto sr = ukernel_variant.ukernel.interface.get_sr();
 
-    auto m_step = ukernel_variant.ukernel.interface.get_m_step();
-    auto n_step = ukernel_variant.ukernel.interface.get_n_step();
+    const auto m_step = ukernel_variant.ukernel.interface.get_m_step();
+    const auto n_step = ukernel_variant.ukernel.interface.get_n_step();
+    const auto tile_m = std::max(m_step, mr);
+    const auto tile_n = std::max(n_step, nr);
 
-    const auto rect = portion.compute_portion(M, N, m_step, n_step);
+    const auto rect = portion.compute_portion(M, N, tile_m, tile_n);
     if (rect.height() == 0 || rect.width() == 0) {
         GTEST_SKIP() << "Empty dimension of matrix(" << rect.width() << "," << rect.height() << ")";
     }

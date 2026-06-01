@@ -96,7 +96,7 @@ size_t kai_get_lhs_packed_offset_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p4x8_1x4x32
     KAI_ASSUME((k % 2) == 0);
     KAI_ASSUME((k % kai_kr) == 0);
     KAI_ASSUME((k % bl) == 0);
-    KAI_ASSUME((m_idx % kai_m_step) == 0);
+    KAI_ASSUME((m_idx % kai_mr) == 0);
 
     return (m_idx / kai_mr) * kai_lhs_packed_stride(k, bl);
 }
@@ -107,7 +107,7 @@ size_t kai_get_rhs_packed_offset_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p4x8_1x4x32
     KAI_ASSUME((k % 2) == 0);
     KAI_ASSUME((k % kai_kr) == 0);
     KAI_ASSUME((k % bl) == 0);
-    KAI_ASSUME((n_idx % kai_n_step) == 0);
+    KAI_ASSUME((n_idx % kai_nr) == 0);
 
     return (n_idx / kai_nr) * kai_rhs_packed_stride(k, bl);
 }
