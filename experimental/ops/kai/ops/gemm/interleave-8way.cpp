@@ -139,10 +139,12 @@ void a64_interleave_1x4(uint8_t *out, const uint8_t *in, long width, long in_str
             // Create and set up input row pointers.  The idea is that these
             // should entirely fit in the register file, so we don't have to
             // repeatedly load them (or perform the padding check)
+#ifndef __COVERITY__
             const uint8_t *in_ptrs[loop_interleave_depth];
             Unroll<loop_interleave_depth>::run( [&](unsigned y) {
                 in_ptrs[y] = (y+y0 < height) ? in + ((y+y0) * in_stride) : pad_row;
             });
+#endif
 
             long bytes_left = width;
             // Process full vectors using transpose_block_32_full()

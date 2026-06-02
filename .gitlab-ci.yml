@@ -80,6 +80,9 @@ variables:
   # Fixed seed for test reproducibility
   GLOBAL_TEST_SEED: 42
 
+  # Enable experimental ops in top-level CMake builds.
+  KLEIDIAI_BUILD_EXPERIMENTAL_OPS: "ON"
+
 default:
   image: registry.gitlab.arm.com/kleidi/kleidiai/image:latest
   tags:

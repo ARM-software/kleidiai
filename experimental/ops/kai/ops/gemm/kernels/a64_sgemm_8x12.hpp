@@ -84,6 +84,8 @@ public:
                     return { 7.99, 5.06, 7.32 };
             }
         }
+
+        return { 1.0 };
     }
 
     kern_type kernel=a64_sgemm_asimd_8x12;

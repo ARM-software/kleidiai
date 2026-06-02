@@ -78,6 +78,8 @@ public:
                     return { 31.82, 3.51, 8.03 };
             }
         }
+
+        return { 1.0 };
     }
 
     kern_type kernel = a64_gemm_s8_8x12;

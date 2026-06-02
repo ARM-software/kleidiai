@@ -362,7 +362,7 @@ public:
 template<typename strategy, bool FixedFormat>
 struct get_stripe_width {
     static unsigned int get() {
-        return 0;
+        return strategy::out_width();
     }
 };
 

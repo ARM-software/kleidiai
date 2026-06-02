@@ -29,6 +29,15 @@ set(KLEIDIAI_OPS_BIN_INSTALL_DIR ${CMAKE_INSTALL_BINDIR})
 
 # -------------------------------------------------------------------------------------------------
 
+# Preserve MTE support when parent builds pass -fsanitize=memtag.
+if((CMAKE_C_FLAGS MATCHES "(^| )-fsanitize=[^ ]*memtag" OR CMAKE_CXX_FLAGS MATCHES
+                                                           "(^| )-fsanitize=[^ ]*memtag")
+   AND NOT KLEIDIAI_OPS_ARCH MATCHES "\\+memtag")
+    string(APPEND KLEIDIAI_OPS_ARCH +memtag)
+    string(APPEND KLEIDIAI_OPS_FP16_ARCH +memtag)
+    string(APPEND KLEIDIAI_OPS_SVE_ARCH +memtag)
+endif()
+
 # Add -march to architecture values
 string(PREPEND KLEIDIAI_OPS_ARCH -march=)
 string(PREPEND KLEIDIAI_OPS_FP16_ARCH -march=)
@@ -59,8 +68,6 @@ if(CMAKE_CONFIGURATION_TYPES)
 elseif(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release")
     message(STATUS "CMAKE_BUILD_TYPE not set -- assuming Release")
-elseif(NOT CMAKE_BUILD_TYPE MATCHES "(Debug|Release)")
-    message(FATAL_ERROR "Only Debug and Release build configurations are supported")
 endif()
 
 # -------------------------------------------------------------------------------------------------
