@@ -69,6 +69,10 @@ You can still use the micro-kernels without compiler support, but not within a c
 At the moment this is not automatically detected, and you need to build with `KLEIDIAI_INTERNAL_EXTRA_ARCH=+sme` to
 enable this support.
 
+## API Compatibility
+
+In order to cater for any future changes in content and structure, it is advised integrators should use the KleidiAI build system provided.
+
 ## Filename convention
 
 The `kai/ukernels` directory is the home for all micro-kernels. The micro-kernels are grouped in separate directories based on the performed operation. For example, all the matrix-multiplication micro-kernels are held in the `matmul/` operator directory.
