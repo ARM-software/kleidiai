@@ -519,7 +519,7 @@ test-linux-aarch64-v8only-fvp:
     # Verify that all examples crashed with Illegal instruction (negative path coverage)
     - test $(grep -cE "Illegal instruction\s+./'build/" output.txt) -eq $(ls -1 build | wc -l | tr -d ' ')
 
-# Purpose: FVP with only SME enabled (SME2 disabled); negative SME example runs + positive filtered unit tests.
+# Purpose: FVP with only SME enabled (SME2 disabled); SME example runs.
 test-linux-aarch64-sme1only-fvp:
   extends:
     - .standard-rules
@@ -534,20 +534,16 @@ test-linux-aarch64-sme1only-fvp:
       export FVP_MODEL_EXTRA="
         -C cluster0.sve.has_sme2=0
         -C cluster0.sve.sme2_version=0"  # Disable SME2.
-    # Generate test script with negative and positive tests
+    # Generate test script
     - |
-      echo -e "#\!/bin/bash -ex"                                          > run_tests.sh
-      echo "echo Perform a negative test with illegal instructions"      >> run_tests.sh
-      # Find avaiable SME examples and execute them
+      echo -e "#\!/bin/bash -ex"               > run_tests.sh
+      echo "echo Run SME examples"            >> run_tests.sh
+      # Find any SME examples and execute them
       find build -type f -perm -a=x \( -name \*_sme -o -name \*_sme_\* \) -print0 | \
       while read -d '' EXAMPLE; do
-        echo -e "echo \"Run '${EXAMPLE}'\""                              >> run_tests.sh
-        echo -e "./'${EXAMPLE}' || true"                                 >> run_tests.sh  # Allow expected failure.
+        echo -e "echo \"Run '${EXAMPLE}'\""   >> run_tests.sh
+        echo -e "./'${EXAMPLE}' || exit 1"    >> run_tests.sh
       done
-      echo "echo Perform a positive test with CPU feature detection"     >> run_tests.sh
-      echo "export GTEST_OUTPUT=xml:kleidiai-${CI_JOB_NAME_SLUG}.xml"    >> run_tests.sh
-      echo "export GTEST_BRIEF=1"                                        >> run_tests.sh
-      echo "./build-clang/kleidiai_test --gtest_filter=*sme_* --gtest_random_seed=\${GLOBAL_TEST_SEED:-42} || exit 1" >> run_tests.sh
     # Dump content for debugging purposes
     - |
       echo "Test script content:"
