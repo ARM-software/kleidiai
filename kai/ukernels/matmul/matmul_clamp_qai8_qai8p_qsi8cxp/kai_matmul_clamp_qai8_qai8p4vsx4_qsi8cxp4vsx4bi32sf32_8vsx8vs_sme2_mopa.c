@@ -47,11 +47,11 @@ struct kai_matmul_uker_args_internal {
     void* dst_ptr;          ///< Output buffer.
     size_t dst_stride_row;  ///< Row or packed row stride in bytes of the output buffer.
 
-    void* acc_ptr;                ///< Accumulator buffer.
-    const void* acc_bias_m_ptr;   ///< Accumulator per-M bias buffer.
-    const void* acc_bias_n_ptr;   ///< Accumulator per-N bias buffer.
-    const void* dst_bias_n_ptr;   ///< Output per-N bias buffer.
-    const void* dst_scale_1_ptr;  ///< Output per-matrix scale buffer.
+    void* acc_ptr;                          ///< Accumulator buffer.
+    const void* acc_bias_m_ptr;             ///< Accumulator per-M bias buffer.
+    const void* acc_bias_n_ptr;             ///< Accumulator per-N bias buffer.
+    const void* dst_scale_bias_global_ptr;  ///< Scalar output offset applied after scaling.
+    const void* dst_scale_1_ptr;            ///< Output per-matrix scale buffer.
 
     const void* clamp_args_ptr;  ///< Output clamping arguments.
 };
@@ -226,7 +226,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
         uker_args.acc_ptr = NULL;
         uker_args.acc_bias_m_ptr = NULL;
         uker_args.acc_bias_n_ptr = NULL;
-        uker_args.dst_bias_n_ptr = args->operand.bias.scale_bias_global.ptr;
+        uker_args.dst_scale_bias_global_ptr = args->operand.bias.scale_bias_global.ptr;
         uker_args.dst_scale_1_ptr = NULL;
 
         uker_args.clamp_args_ptr = clamp_min_max;
@@ -268,7 +268,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
             uker_args.acc_ptr = NULL;
             uker_args.acc_bias_m_ptr = NULL;
             uker_args.acc_bias_n_ptr = NULL;
-            uker_args.dst_bias_n_ptr = args->operand.bias.scale_bias_global.ptr;
+            uker_args.dst_scale_bias_global_ptr = args->operand.bias.scale_bias_global.ptr;
             uker_args.dst_scale_1_ptr = NULL;
 
             uker_args.clamp_args_ptr = clamp_min_max;
@@ -302,7 +302,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
             uker_args.acc_ptr = NULL;
             uker_args.acc_bias_m_ptr = NULL;
             uker_args.acc_bias_n_ptr = NULL;
-            uker_args.dst_bias_n_ptr = args->operand.bias.scale_bias_global.ptr;
+            uker_args.dst_scale_bias_global_ptr = args->operand.bias.scale_bias_global.ptr;
             uker_args.dst_scale_1_ptr = NULL;
 
             uker_args.clamp_args_ptr = clamp_min_max;
@@ -345,7 +345,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
             uker_args.acc_ptr = NULL;
             uker_args.acc_bias_m_ptr = NULL;
             uker_args.acc_bias_n_ptr = NULL;
-            uker_args.dst_bias_n_ptr = args->operand.bias.scale_bias_global.ptr;
+            uker_args.dst_scale_bias_global_ptr = args->operand.bias.scale_bias_global.ptr;
             uker_args.dst_scale_1_ptr = NULL;
 
             uker_args.clamp_args_ptr = clamp_min_max;
@@ -381,7 +381,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
             uker_args.acc_ptr = NULL;
             uker_args.acc_bias_m_ptr = NULL;
             uker_args.acc_bias_n_ptr = NULL;
-            uker_args.dst_bias_n_ptr = args->operand.bias.scale_bias_global.ptr;
+            uker_args.dst_scale_bias_global_ptr = args->operand.bias.scale_bias_global.ptr;
             uker_args.dst_scale_1_ptr = NULL;
 
             uker_args.clamp_args_ptr = clamp_min_max;
@@ -415,7 +415,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
             uker_args.acc_ptr = NULL;
             uker_args.acc_bias_m_ptr = NULL;
             uker_args.acc_bias_n_ptr = NULL;
-            uker_args.dst_bias_n_ptr = args->operand.bias.scale_bias_global.ptr;
+            uker_args.dst_scale_bias_global_ptr = args->operand.bias.scale_bias_global.ptr;
             uker_args.dst_scale_1_ptr = NULL;
 
             uker_args.clamp_args_ptr = clamp_min_max;

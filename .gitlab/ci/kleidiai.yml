@@ -615,6 +615,9 @@ test-examples-sme-fvp:
   stage: test
   needs:
     - build-examples
+  variables:
+    # Enable MOP4 for SME2.1 examples.
+    FVP_MODEL_EXTRA: "-C cluster0.sve.has_sme_mop4=1"
   script:
     # Generate test script with negative and positive tests
     - |
