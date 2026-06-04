@@ -8,7 +8,7 @@
 
 KleidiAI follows the [Semantic Versioning](https://semver.org/) specification for releases.
 
-## Upcoming Release
+## v1.26.0
 
 - New SME micro-kernels
   - Added an x8 matmul pack micro-kernel family with 4vsx4 blocked layout, without packing bias.
