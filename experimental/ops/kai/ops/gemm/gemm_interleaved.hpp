@@ -958,7 +958,7 @@ public:
                             // Only do activation on the last pass, and accumulation on any non-first pass.
                             (last_pass ? _act : Activation()), (!first_pass || _accumulate),
                             // Pass in quantization parameters for requantizing kernels (others will ignore)
-                            _os, col_bias + (multi * _Nsize),
+                            _os, (col_bias ? col_bias + (multi * _Nsize) : nullptr),
                             // Accumulation buffer
                             get_accumulation_buffer(accumulation_buffer, start_row, start_x, batch, multi));
 
@@ -1109,7 +1109,7 @@ public:
                             // Only do activation on the last pass, and accumulation on any non-first pass.
                             (last_pass ? _act : Activation()), (!first_pass || _accumulate),
                             // Pass in quantization parameters for requantizing kernels (others will ignore)
-                            _os, col_bias + (current.multi() * _Nsize),
+                            _os, col_bias ? col_bias + (current.multi() * _Nsize) : nullptr,
                             // Accumulation buffer
                             get_accumulation_buffer(accumulation_buffer, y, current.x0(), batch, current.multi()) );
 
