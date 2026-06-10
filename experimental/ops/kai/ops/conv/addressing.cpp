@@ -13,18 +13,25 @@ namespace kai {
 namespace ops {
 namespace addressing {
 
+/* fill_pointer_array() is used for both inputs (which are const) and
+ * outputs (which are non-const).
+ *
+ * To support this without having to cast away the constness, this code is
+ * templated on a type which will always be `char *` or `const char *`.
+ *
+ * addressing.hpp will cast the actual datatype to one or other of these
+ * according to constness.
+ */
+template<typename T>
 void fill_pointer_array(
   size_t element_size,
-  void **dest_raw, const unsigned int array_rows, const unsigned int array_cols,
-  void *base_ptr_raw, size_t ld_row, size_t ld_col,
-  void *pad_buffer_raw,
+  T *dest, const unsigned int array_rows, const unsigned int array_cols,
+  T base_ptr, size_t ld_row, size_t ld_col,
+  T pad_buffer,
   const unsigned int pad_top, const unsigned int valid_rows,
   const unsigned int pad_left, const unsigned int valid_cols
 )
 {
-  auto dest = reinterpret_cast<char **>(dest_raw);
-  auto base_ptr = reinterpret_cast<char *>(base_ptr_raw);
-  auto pad_buffer = reinterpret_cast<char *>(pad_buffer_raw);
   ld_row *= element_size;
   ld_col *= element_size;
 
@@ -68,23 +75,41 @@ void fill_pointer_array(
   }
 }
 
+// Explicitly instantiate `const char *` and `char *` versions as described above.
+template void fill_pointer_array<const char *>(
+  size_t element_size,
+  const char **dest, const unsigned int array_rows, const unsigned int array_cols,
+  const char *base_ptr, size_t ld_row, size_t ld_col,
+  const char *pad_buffer,
+  const unsigned int pad_top, const unsigned int valid_rows,
+  const unsigned int pad_left, const unsigned int valid_cols
+);
+
+template void fill_pointer_array<char *>(
+  size_t element_size,
+  char **dest, const unsigned int array_rows, const unsigned int array_cols,
+  char *base_ptr, size_t ld_row, size_t ld_col,
+  char *pad_buffer,
+  const unsigned int pad_top, const unsigned int valid_rows,
+  const unsigned int pad_left, const unsigned int valid_cols
+);
 
 void fill_pointer_array_generic_kernel(
   const size_t element_size,
-  void **dest_raw,
+  const void **dest_raw,
   const unsigned int output_rows, const unsigned int output_cols,
   const unsigned int kernel_rows, const unsigned int kernel_cols,
   const unsigned int stride_rows, const unsigned int stride_cols,
-  void *base_ptr_raw, size_t ld_row, size_t ld_col,
-  void *pad_buffer_raw,
+  const void *base_ptr_raw, size_t ld_row, size_t ld_col,
+  const void *pad_buffer_raw,
   const unsigned int pad_top, const unsigned int valid_rows,
   const unsigned int pad_left, const unsigned int valid_cols
 )
 {
-  auto dest = reinterpret_cast<char **>(dest_raw);
-  auto base_ptr = reinterpret_cast<char *>(base_ptr_raw);
-  auto pad_buffer = reinterpret_cast<char *>(pad_buffer_raw);
-  ld_row *= element_size;
+  auto dest = reinterpret_cast<const char **>(dest_raw);
+  auto base_ptr = reinterpret_cast<const char *>(base_ptr_raw);
+  auto pad_buffer = reinterpret_cast<const char *>(pad_buffer_raw);  ld_row *= element_size;
+
   ld_col *= element_size;
 
   const auto last_valid_row = pad_top + valid_rows;

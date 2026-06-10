@@ -231,7 +231,7 @@ class DepthwiseDepthfirstGeneric : public DepthwiseDepthfirstCommon<TInput, TWei
   protected:
   void fill_inptr_array(const DepthwiseArgs &args,
     const TensorSpec<const TInput *> &input,
-    const TInput **inptr_array, TInput *input_buffer,
+    const TInput **inptr_array, const TInput *input_buffer,
     const unsigned int input_i, const unsigned int input_j,
     const unsigned int input_pad_top, const unsigned int input_pad_left) const override
   {

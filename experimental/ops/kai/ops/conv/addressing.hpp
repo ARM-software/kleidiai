@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstddef>
+#include <type_traits>
 
 namespace kai {
 namespace ops {
@@ -40,11 +41,12 @@ namespace addressing {
  * edge of the image (that is `valid_rows` may be greater than `array_rows` and
  * likewise for the columns).
  */
+template <typename T>
 void fill_pointer_array(
   size_t element_size,
-  void **dest, unsigned int array_rows, unsigned int array_cols,
-  void *base_ptr, size_t ld_row, size_t ld_col,
-  void *pad_buffer,
+  T *dest, unsigned int array_rows, unsigned int array_cols,
+  T base_ptr, size_t ld_row, size_t ld_col,
+  T pad_buffer,
   unsigned int pad_top, unsigned int valid_rows,
   unsigned int pad_left, unsigned int valid_cols
 );
@@ -69,12 +71,12 @@ void fill_pointer_array(
  */
 void fill_pointer_array_generic_kernel(
   size_t element_size,
-  void **dest,
+  const void **dest,
   unsigned int output_rows, unsigned int output_cols,
   unsigned int kernel_rows, unsigned int kernel_cols,
   unsigned int stride_rows, unsigned int stride_cols,
-  void *base_ptr, size_t ld_row, size_t ld_col,
-  void *pad_buffer,
+  const void *base_ptr, size_t ld_row, size_t ld_col,
+  const void *pad_buffer,
   unsigned int pad_top, unsigned int valid_rows,
   unsigned int pad_left, unsigned int valid_cols
 );
@@ -152,10 +154,11 @@ inline void fill_pointer_array(
   unsigned int pad_left, unsigned int valid_cols
 )
 {
+  using P = typename std::conditional<std::is_const<T>::value, const char *, char *>::type;
   addressing::fill_pointer_array(
-    sizeof(T), (void **) dest, array_rows, array_cols,
-    (void *) base_ptr, ld_row, ld_col,
-    (void *) pad_buffer,
+    sizeof(T), reinterpret_cast<P*>(dest), array_rows, array_cols,
+    reinterpret_cast<P>(base_ptr), ld_row, ld_col,
+    reinterpret_cast<P>(pad_buffer),
     pad_top, valid_rows,
     pad_left, valid_cols
   );
@@ -171,24 +174,24 @@ inline void fill_pointer_array(
  */
 template <typename T>
 inline void fill_pointer_array_generic_kernel(
-  T **dest,
+  const T **dest,
   unsigned int output_rows, unsigned int output_cols,
   unsigned int kernel_rows, unsigned int kernel_cols,
   unsigned int stride_rows, unsigned int stride_cols,
-  T *base_ptr, size_t ld_row, size_t ld_col,
-  T *pad_buffer,
+  const T *base_ptr, size_t ld_row, size_t ld_col,
+  const T *pad_buffer,
   unsigned int pad_top, unsigned int valid_rows,
   unsigned int pad_left, unsigned int valid_cols
 )
 {
   addressing::fill_pointer_array_generic_kernel(
     sizeof(T),
-    (void **) dest,
+    reinterpret_cast<const void **>(dest),
     output_rows, output_cols,
     kernel_rows, kernel_cols,
     stride_rows, stride_cols,
-    (void *) base_ptr, ld_row, ld_col,
-    (void *) pad_buffer,
+    reinterpret_cast<const void *>(base_ptr), ld_row, ld_col,
+    reinterpret_cast<const void *>(pad_buffer),
     pad_top, valid_rows,
     pad_left, valid_cols
   );

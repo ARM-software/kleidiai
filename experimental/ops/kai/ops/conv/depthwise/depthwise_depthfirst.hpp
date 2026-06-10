@@ -148,14 +148,14 @@ class DepthwiseDepthfirstCommon : public DepthfirstDriver<TInput, TWeight, TOutp
 
   virtual void fill_inptr_array(const DepthwiseArgs &args,
     const TensorSpec<const TInput *> &input,
-    const TInput **inptr_array, TInput *input_buffer,
+    const TInput **inptr_array, const TInput *input_buffer,
     const unsigned int input_i, const unsigned int input_j,
     const unsigned int input_pad_top, const unsigned int input_pad_left) const = 0;
 
   void initialise_inptr_array(const DepthwiseArgs &args,
       unsigned int output_channel_start, unsigned int output_channel_end,
       const TensorSpec<const TInput *> &input,
-      const TInput **inptr_array, TInput *input_buffer, TInput *intermediate_buffer,
+      const TInput **inptr_array, const TInput *input_buffer, TInput *intermediate_buffer,
       const unsigned int input_i, const unsigned int input_j,
       const unsigned int input_pad_top, const unsigned int input_pad_left,
       Tile<TInput> &multiplied_input
@@ -411,7 +411,7 @@ class DepthwiseDepthfirst
 
   void fill_inptr_array(const DepthwiseArgs &args,
     const TensorSpec<const TInput *> &input,
-    const TInput **inptr_array, TInput *input_buffer,
+    const TInput **inptr_array, const TInput *input_buffer,
     const unsigned int input_i, const unsigned int input_j,
     const unsigned int input_pad_top, const unsigned int input_pad_left) const override
   {

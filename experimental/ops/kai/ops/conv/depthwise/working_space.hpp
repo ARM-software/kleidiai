@@ -194,7 +194,7 @@ class InputBufferElement
   public:
   struct Workspace
   {
-    T *input_buffer;
+    const T *input_buffer;
   };
 
   template <typename StratType, typename OutputStage>
@@ -206,8 +206,9 @@ class InputBufferElement
   template <class WorkspaceType, typename StratType, typename OutputStage>
   static void *initialise(WorkspaceType *ws, void *buffer, const WorkspaceArgs<StratType, OutputStage> &args)
   {
-    ws->input_buffer = reinterpret_cast<T*>(buffer);
-    memset(ws->input_buffer, get_input_buffer_fill_value(args.output_stage), get_element_size(args));
+    ws->input_buffer = reinterpret_cast<const T*>(buffer);
+    T *working_buffer = reinterpret_cast<T*>(buffer); // To initialise this now we need a non-const version.
+    memset(working_buffer, get_input_buffer_fill_value(args.output_stage), get_element_size(args));
     return reinterpret_cast<char *>(buffer) + get_element_size(args);
   }
 };
