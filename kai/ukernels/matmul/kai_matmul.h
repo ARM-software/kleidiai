@@ -140,6 +140,25 @@ struct kai_matmul_uker_api kai_matmul_clamp_f32_f32_f32p4vsx1bf32_1x32vs_sme2_ml
 /// @return The micro-kernel API.
 struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx8vs_sme2_mopa(void);
 
+/// Statically quantized INT8 GEMM using SME MOPA instruction.
+///
+/// Dispatches across 6 tile-size sub-kernels (4vsx4vs, 4vsx8vs, 4vsx16vs,
+/// 8vsx4vs, 8vsx8vs, 16vsx4vs) to cover arbitrary M×N output shapes.
+///
+/// Required operands:
+///   * lhs, rhs, dst
+///   * bias
+///     * scale_bias_global
+///
+/// Optional arguments:
+///   * clamp - I8 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
+///
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamping output data.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx8vs_qmx_mopa(void);
+
 /// Statically quantized INT8 vector-matrix multiplication using SME2 DOT instruction.
 ///
 /// Required CPU features:
