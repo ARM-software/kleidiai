@@ -13,6 +13,7 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 - New SME micro-kernels
   - Added an x8 matmul pack micro-kernel family with 4vsx4 blocked layout, without packing bias.
   - Added SME RHS depthwise packing kernel for FP16
+  - kai_matmul_clamp_qai8_qai8_qsi8cxp4vsx4bi32sf32_1x32vs_qmx_dot: QMX-optimized GEMV micro-kernel for static Int8 quantization.
 - New SME2 micro-kernels
   - Added SME2 depthwise indirect micro-kernel for FP16.
   - kai_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa.
