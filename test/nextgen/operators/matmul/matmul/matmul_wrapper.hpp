@@ -38,4 +38,7 @@ create_matmul_clamp_f32_f32p4vsx1_f32p4vsx1b_8vsx8vs_elastic_sme2_mopa();
 create_matmul_clamp_f32_f32p4vsx1_f32p4vsx1b_8vsx8vs_elastic_qmx_mopa();
 
 
+/// Creates a wrapper for matmul_clamp_f32_f32_f32p4vsx1b_1x32vs_qmx_mla kernel.
+[[nodiscard]] std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f32_f32_f32p4vsx1bf32_1x32vs_qmx_mla();
+
 }  // namespace kai::test
