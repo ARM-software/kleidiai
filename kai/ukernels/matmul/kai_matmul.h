@@ -40,6 +40,8 @@ extern "C" {
 ///     If this flag is set, clamp operand is required.
 ///
 /// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8vs_qmx_mopa(void);
+
 struct kai_matmul_uker_api kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8vs_sme2_mopa(void);
 
 #ifdef __cplusplus

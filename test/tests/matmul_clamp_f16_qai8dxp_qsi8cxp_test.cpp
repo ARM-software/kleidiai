@@ -16,6 +16,8 @@
 
 #include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi8cxp/kai_matmul_clamp_f16_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi8cxp/kai_matmul_clamp_f16_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot.h"
+#include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi8cxp/kai_matmul_clamp_f16_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_qmx_mopa.h"
+#include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi8cxp/kai_matmul_clamp_f16_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_qmx_dot.h"
 #include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi8cxp/kai_matmul_clamp_f16_qai8dxp1x4_qsi8cxp4x4_1x4_neon_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi8cxp/kai_matmul_clamp_f16_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi8cxp/kai_matmul_clamp_f16_qai8dxp4x4_qsi8cxp4x4_16x4_neon_dotprod.h"
@@ -120,7 +122,7 @@ F16Qai8Qsi8CacheData ReferenceGenerator<F16Qai8Qsi8CacheDataId, F16Qai8Qsi8Cache
     return out;
 }
 
-static const std::array<UkernelVariant<kai_matmul_clamp_f16_qai8dxp_qsi8cxp_ukernel>, 6>
+static const std::array<UkernelVariant<kai_matmul_clamp_f16_qai8dxp_qsi8cxp_ukernel>, 8>
     variants_kai_matmul_clamp_f16_qai8dxp_qsi8cxp = {
         {{UKERNEL_MATMUL_VARIANT(clamp_f16_qai8dxp1x4_qsi8cxp4x4_1x4_neon_dotprod),
           "kai_matmul_clamp_f16_qai8dxp1x4_qsi8cxp4x4_1x4_neon_dotprod", cpu_has_dotprod_and_fp16},
@@ -133,7 +135,14 @@ static const std::array<UkernelVariant<kai_matmul_clamp_f16_qai8dxp_qsi8cxp_uker
          {UKERNEL_MATMUL_VARIANT(clamp_f16_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa),
           "kai_matmul_clamp_f16_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa", cpu_has_sme2},
          {UKERNEL_MATMUL_VARIANT(clamp_f16_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot),
-          "kai_matmul_clamp_f16_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot", cpu_has_sme2}}};
+          "kai_matmul_clamp_f16_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot", cpu_has_sme2},
+         {UKERNEL_MATMUL_VARIANT(clamp_f16_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_qmx_mopa),
+          "kai_matmul_clamp_f16_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_qmx_mopa", cpu_has_sme},
+         {UKERNEL_MATMUL_VARIANT(clamp_f16_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_qmx_dot),
+          "kai_matmul_clamp_f16_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_qmx_dot", cpu_has_sme}          
+          
+          
+          }};
 
 class MatMulTest_f16_qai8dxp_qsi8cxp : public ::testing::TestWithParam<MatMulClampTestPortionedParamsWithBias> {};
 
@@ -236,7 +245,7 @@ TEST_P(MatMulTest_f16_qai8dxp_qsi8cxp, EndToEnd) {
     ASSERT_TRUE(success);
 }
 INSTANTIATE_TEST_SUITE_P(
-    MatMul, MatMulTest_f16_qai8dxp_qsi8cxp,
+    MatMul_z_, MatMulTest_f16_qai8dxp_qsi8cxp,
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f16_qai8dxp_qsi8cxp.size()),
         testing::Values(

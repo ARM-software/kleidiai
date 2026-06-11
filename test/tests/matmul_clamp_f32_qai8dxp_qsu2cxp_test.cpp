@@ -17,7 +17,9 @@
 
 #include "kai/kai_common.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsu2cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsu2cxp4vlx4_1vlx4vl_sme2_mopa.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsu2cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsu2cxp4vlx4_1vlx4vl_qmx_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsu2cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsu2cxp4vlx4_1x4vl_sme2_dot.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsu2cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsu2cxp4vlx4_1x4vl_qmx_dot.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsu2cxp/kai_matmul_clamp_f32_qai8dxp_qsu2cxp_interface.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp_f32.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsu2cxp4vlx4_qsu2cx_neon.h"
@@ -48,9 +50,12 @@ namespace {
 const auto& get_qsi2cx_gemm_variants() noexcept {
     using Variant = UkernelVariant<kai_matmul_clamp_f32_qai8dxp_qsu2cxp_ukernel>;
     static const std::array<Variant, 1> variants = {
+        // Variant{
+            // UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp1vlx4_qsu2cxp4vlx4_1vlx4vl_sme2_mopa),
+            // "kai_matmul_clamp_f32_qai8dxp1vlx4_qsu2cxp4vlx4_1vlx4vl_sme2_mopa__RHS_NxK__", cpu_has_sme2},
         Variant{
-            UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp1vlx4_qsu2cxp4vlx4_1vlx4vl_sme2_mopa),
-            "kai_matmul_clamp_f32_qai8dxp1vlx4_qsu2cxp4vlx4_1vlx4vl_sme2_mopa__RHS_NxK__", cpu_has_sme2},
+            UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp1vlx4_qsu2cxp4vlx4_1vlx4vl_qmx_mopa),
+            "kai_matmul_clamp_f32_qai8dxp1vlx4_qsu2cxp4vlx4_1vlx4vl_qmx_mopa__RHS_NxK__", cpu_has_sme},
     };
     return variants;
 }
@@ -58,10 +63,12 @@ const auto& get_qsi2cx_gemm_variants() noexcept {
 const auto& get_qsi2cx_gemv_variants() noexcept {
     using Variant = UkernelVariant<kai_matmul_clamp_f32_qai8dxp_qsu2cxp_ukernel>;
     static const std::array<Variant, 1> variants = {
+        // Variant{
+            // UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp1x4_qsu2cxp4vlx4_1x4vl_sme2_dot),
+            // "kai_matmul_clamp_f32_qai8dxp1x4_qsu2cxp4vlx4_1x4vl_sme2_dot__RHS_NxK__", cpu_has_sme2},
         Variant{
-            UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp1x4_qsu2cxp4vlx4_1x4vl_sme2_dot),
-            "kai_matmul_clamp_f32_qai8dxp1x4_qsu2cxp4vlx4_1x4vl_sme2_dot__RHS_NxK__", cpu_has_sme2},
-    };
+            UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp1x4_qsu2cxp4vlx4_1x4vl_qmx_dot),
+            "kai_matmul_clamp_f32_qai8dxp1x4_qsu2cxp4vlx4_1x4vl_qmx_dot__RHS_NxK__", cpu_has_sme},    };
     return variants;
 }
 
@@ -336,7 +343,7 @@ TEST_P(MatMulTest_f32_qai8dxp_qsu2cxp, EndToEnd) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMulGemm, MatMulTest_f32_qai8dxp_qsu2cxp,
+    MatMul_a_Gemm, MatMulTest_f32_qai8dxp_qsu2cxp,
     testing::Combine(
         testing::Range<size_t>(0, get_qsi2cx_gemm_variants().size()), testing::Values(true),
         testing::Values(
@@ -368,7 +375,7 @@ INSTANTIATE_TEST_SUITE_P(
     });
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMulGemv, MatMulTest_f32_qai8dxp_qsu2cxp,
+    MatMul_a_Gemv, MatMulTest_f32_qai8dxp_qsu2cxp,
     testing::Combine(
         testing::Range<size_t>(0, get_qsi2cx_gemv_variants().size()), testing::Values(false),
         testing::Values(

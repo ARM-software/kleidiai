@@ -21,6 +21,8 @@
 #include "kai/ukernels/matmul/matmul_clamp_bf16_qai8dxp_qsi4c32p/kai_matmul_clamp_bf16_qai8dxp_qsi4c32p_interface.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4c32p/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4c32p/kai_matmul_clamp_f32_qai8dxp1x4_qsi4c32p4vlx4_1x4vl_sme2_dot.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4c32p/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi4c32p4vlx4_1vlx4vl_qmx_mopa.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4c32p/kai_matmul_clamp_f32_qai8dxp1x4_qsi4c32p4vlx4_1x4vl_qmx_dot.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4c32p/kai_matmul_clamp_f32_qai8dxp1x4_qsi4c32p4x4_1x4_neon_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4c32p/kai_matmul_clamp_f32_qai8dxp1x4_qsi4c32p8x4_1x8_neon_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4c32p/kai_matmul_clamp_f32_qai8dxp1x8_qsi4c32p4x8_1x4x32_neon_dotprod.h"
@@ -99,7 +101,8 @@ const auto& get_f32_gemm_variants() noexcept {
     using Variant = UkernelMatmulPackVariant<
         kai_matmul_clamp_f32_qai8dxp_qsi4c32p_ukernel, kai_qai8dxp_pack_functions, kai_qsi4c32p_pack_functions>;
 
-    static const std::array<Variant, 12> variants = {{
+
+    static const std::array<Variant, 13> variants = {{
         UKERNEL_MATMUL_PACK_VARIANT(
             clamp_f32_qai8dxp1x4_qsi4c32p4x4_1x4_neon_dotprod, cpu_has_dotprod, lhs_quant_pack_qai8dxp_f32,
             rhs_pack_nxk_qsi4c32p_qsu4c32s1s0,
@@ -138,23 +141,31 @@ const auto& get_f32_gemm_variants() noexcept {
         UKERNEL_MATMUL_PACK_VARIANT(
             clamp_f32_qai8dxp1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa, cpu_has_sme2, lhs_quant_pack_qai8dxp_f32,
             rhs_pack_nxk_qsi4c32ps1s0nrx4_qsu4c32s1s0_neon, false),
+        UKERNEL_MATMUL_PACK_VARIANT(
+            clamp_f32_qai8dxp1vlx4_qsi4c32p4vlx4_1vlx4vl_qmx_mopa, cpu_has_sme, lhs_quant_pack_qai8dxp_f32,
+            rhs_pack_nxk_qsi4c32ps1s0nrx4_qsu4c32s1s0_neon, false)
     }};
 
     return variants;
 }
+
 
 const auto& get_f32_gemv_variants() noexcept {
     using Variant = UkernelMatmulPackVariant<
         kai_matmul_clamp_f32_qai8dxp_qsi4c32p_ukernel, kai_qai8dxp_pack_functions, kai_qsi4c32p_pack_functions>;
 
-    static const std::array<Variant, 1> variants = {{
+    static const std::array<Variant, 2> variants = {{
         UKERNEL_MATMUL_PACK_VARIANT(
             clamp_f32_qai8dxp1x4_qsi4c32p4vlx4_1x4vl_sme2_dot, cpu_has_sme2, lhs_quant_pack_qai8dxp_f32,
             rhs_pack_nxk_qsi4c32ps1s0nrx4_qsu4c32s1s0_neon, false),
-    }};
+        UKERNEL_MATMUL_PACK_VARIANT(
+            clamp_f32_qai8dxp1x4_qsi4c32p4vlx4_1x4vl_qmx_dot, cpu_has_sme, lhs_quant_pack_qai8dxp_f32,
+            rhs_pack_nxk_qsi4c32ps1s0nrx4_qsu4c32s1s0_neon, false)
+            }};
 
     return variants;
 }
+
 
 const auto& get_bf16_gemm_variants() noexcept {
     using Variant = UkernelVariant<kai_matmul_clamp_bf16_qai8dxp_qsi4c32p_ukernel>;
@@ -178,7 +189,7 @@ const auto& get_f32_neon_gemm_variants_only() {
         const auto& all = get_f32_gemm_variants();
         for (const auto& v : all) {
             const char* n = v.ukernel.name.data();
-            if (n == nullptr || std::strstr(n, "sme2") == nullptr) {
+            if (n == nullptr || (std::strstr(n, "sme")== nullptr && std::strstr(n, "qmx")== nullptr)) {
                 filtered.push_back(v);
             }
         }
@@ -535,7 +546,7 @@ class QMatMulClampF32Test : public ::testing::TestWithParam<QMatmulClampF32Param
         RhsPackType rhs_pack_type;
         Rect rect;
         float clamp_keep_ratio;
-        bool is_sme2;
+        bool is_sme;
 
         TestParams() :
             variant(nullptr),
@@ -546,7 +557,7 @@ class QMatMulClampF32Test : public ::testing::TestWithParam<QMatmulClampF32Param
             rhs_pack_type(RhsPackType::NxK),
             rect(0, 0, 0, 0),
             clamp_keep_ratio(0.8F),
-            is_sme2(false) {
+            is_sme(false) {
         }
 
         TestParams(
@@ -563,7 +574,7 @@ class QMatMulClampF32Test : public ::testing::TestWithParam<QMatmulClampF32Param
             rhs_pack_type(r),
             rect(rect),
             clamp_keep_ratio(clamp_keep_ratio),
-            is_sme2(false) {
+            is_sme(false) {
         }
     };
 
@@ -640,8 +651,8 @@ protected:
         params.rhs_pack_type = rhs_dir;
         params.rect = rect;
         params.clamp_keep_ratio = clamp_keep_ratio;
-        params.is_sme2 =
-            (variant.ukernel.name.data() != nullptr && std::strstr(variant.ukernel.name.data(), "sme2") != nullptr);
+        params.is_sme =
+            (variant.ukernel.name.data() != nullptr && (std::strstr(variant.ukernel.name.data(), "sme") != nullptr || std::strstr(variant.ukernel.name.data(), "qmx") != nullptr));
     }
 };
 
@@ -1234,7 +1245,7 @@ TEST_P(QMatMulClampF32Test, EndToEnd) {
         }
         std::tie(imp_packed_rhs, rhs_packed_offset) = pack_rhs_qsi4c32p_kxn(
             data.N, data.K, nr, kr, sr, bl, data.rhs_quant, data.bias, bias_offset_bytes, data.rhs_scales,
-            rhs_start_col, rect.width(), p.is_sme2);
+            rhs_start_col, rect.width(), p.is_sme);
     }
 
     ASSERT_EQ(rhs_packed_offset, ukernel.interface.get_rhs_packed_offset(rhs_start_col, data.K, bl));
@@ -1504,7 +1515,7 @@ static constexpr std::array<float, 3> clamp_keep_ratios_sweep{
 };
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMulGemm_SmallOdd, QMatMulClampF32Test,
+    MatMul_j_Gemm_SmallOdd, QMatMulClampF32Test,
     testing::Combine(
         testing::Range<size_t>(0, get_f32_gemm_variants().size()),
         testing::Values(true),
@@ -1516,7 +1527,7 @@ INSTANTIATE_TEST_SUITE_P(
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMulGemm_Aligned, QMatMulClampF32Test,
+    MatMul_j_Gemm_Aligned, QMatMulClampF32Test,
     testing::Combine(
         testing::Range<size_t>(0, get_f32_gemm_variants().size()),
         testing::Values(true),
@@ -1528,7 +1539,7 @@ INSTANTIATE_TEST_SUITE_P(
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMulGemm_Rect, QMatMulClampF32Test,
+    MatMul_j_Gemm_Rect, QMatMulClampF32Test,
     testing::Combine(
         testing::Range<size_t>(0, get_f32_gemm_variants().size()),
         testing::Values(true),
@@ -1540,7 +1551,7 @@ INSTANTIATE_TEST_SUITE_P(
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMulGemm_Large, QMatMulClampF32Test,
+    MatMul_j_Gemm_Large, QMatMulClampF32Test,
     testing::Combine(
         testing::Range<size_t>(0, get_f32_gemm_variants().size()),
         testing::Values(true),
@@ -1552,7 +1563,7 @@ INSTANTIATE_TEST_SUITE_P(
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMulGemv_Small, QMatMulClampF32Test,
+    MatMul_j_Gemv_Small, QMatMulClampF32Test,
     testing::Combine(
         testing::Range<size_t>(0, get_f32_gemv_variants().size()),
         testing::Values(false),
@@ -1564,7 +1575,7 @@ INSTANTIATE_TEST_SUITE_P(
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMulGemv_Large, QMatMulClampF32Test,
+    MatMul_j_Gemv_Large, QMatMulClampF32Test,
     testing::Combine(
         testing::Range<size_t>(0, get_f32_gemv_variants().size()),
         testing::Values(false),
@@ -1576,7 +1587,7 @@ INSTANTIATE_TEST_SUITE_P(
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMulNeonRhsPackGemm_SmallOdd, NeonRhsPackF32Test,
+    MatMul_j_NeonRhsPackGemm_SmallOdd, NeonRhsPackF32Test,
     testing::Combine(
         testing::Range<size_t>(0, get_f32_neon_gemm_variants_only().size()),
         testing::Values(true),
@@ -1588,7 +1599,7 @@ INSTANTIATE_TEST_SUITE_P(
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMulNeonRhsPackGemm_Aligned, NeonRhsPackF32Test,
+    MatMul_j_NeonRhsPackGemm_Aligned, NeonRhsPackF32Test,
     testing::Combine(
         testing::Range<size_t>(0, get_f32_neon_gemm_variants_only().size()),
         testing::Values(true),
@@ -1605,7 +1616,7 @@ static constexpr std::array clamp_sweep_shapes{
 };
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMulGemm_ClampSweep, QMatMulClampF32Test,
+    MatMul_j_Gemm_ClampSweep, QMatMulClampF32Test,
     testing::Combine(
         testing::Range<size_t>(0, get_f32_gemm_variants().size()),
         testing::Values(true),
@@ -1617,7 +1628,7 @@ INSTANTIATE_TEST_SUITE_P(
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMulBF16_SingleSet, QMatMulClampBF16Test,
+    MatMul_j_BF16_SingleSet, QMatMulClampBF16Test,
     testing::Combine(
         testing::Range<size_t>(0, get_bf16_gemm_variants().size()),
         testing::ValuesIn(bf16_shapes),

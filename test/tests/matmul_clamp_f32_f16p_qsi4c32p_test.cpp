@@ -16,6 +16,7 @@
 #include <tuple>
 
 #include "kai/ukernels/matmul/matmul_clamp_f32_f16p_qsi4c32p/kai_matmul_clamp_f32_f16p1vlx2_qsi4c32p4vlx2_1vlx4vl_sme2_mopa.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_f16p_qsi4c32p/kai_matmul_clamp_f32_f16p1vlx2_qsi4c32p4vlx2_1vlx4vl_qmx_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_f16p_qsi4c32p/kai_matmul_clamp_f32_f16p_qsi4c32p_interface.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_pack_f16pmrx2_f32_neon.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon.h"
@@ -138,10 +139,13 @@ struct kai_qsi4c32p_pack_functions {
 using Variant = UkernelMatmulPackVariant<
     kai_matmul_clamp_f32_f16p_qsi4c32p_ukernel, kai_f16p_pack_functions, kai_qsi4c32p_pack_functions>;
 
-const std::array<Variant, 1> variants_kai_matmul_clamp_f32_f16p_qsi4c32p = {
+const std::array<Variant, 2> variants_kai_matmul_clamp_f32_f16p_qsi4c32p = {
     {
         UKERNEL_MATMUL_PACK_VARIANT(
             clamp_f32_f16p1vlx2_qsi4c32p4vlx2_1vlx4vl_sme2_mopa, (cpu_check<cpu_has_sme2, cpu_has_fp16>),
+            lhs_pack_f16pmrx2_f32_neon, rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false),
+        UKERNEL_MATMUL_PACK_VARIANT(
+            clamp_f32_f16p1vlx2_qsi4c32p4vlx2_1vlx4vl_qmx_mopa, (cpu_check<cpu_has_sme, cpu_has_fp16>),
             lhs_pack_f16pmrx2_f32_neon, rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false),
     },
 };
@@ -428,7 +432,7 @@ static constexpr std::array shapes_k256{
 };
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMul_bl32, MatMulTest_f32_f16p_qsi4c32p,
+    MatMul_y_bl32, MatMulTest_f32_f16p_qsi4c32p,
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_f16p_qsi4c32p.size()),  //
         testing::ValuesIn(shapes_k32),                                                  //
@@ -438,7 +442,7 @@ INSTANTIATE_TEST_SUITE_P(
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMul_bl64, MatMulTest_f32_f16p_qsi4c32p,
+    MatMul_y_bl64, MatMulTest_f32_f16p_qsi4c32p,
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_f16p_qsi4c32p.size()),  //
         testing::ValuesIn(shapes_k64),                                                  //
@@ -448,7 +452,7 @@ INSTANTIATE_TEST_SUITE_P(
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMul_bl128, MatMulTest_f32_f16p_qsi4c32p,
+    MatMul_y_bl128, MatMulTest_f32_f16p_qsi4c32p,
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_f16p_qsi4c32p.size()),  //
         testing::ValuesIn(shapes_k128),                                                 //
@@ -458,7 +462,7 @@ INSTANTIATE_TEST_SUITE_P(
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMul_bl256, MatMulTest_f32_f16p_qsi4c32p,
+    MatMul_y_bl256, MatMulTest_f32_f16p_qsi4c32p,
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_f16p_qsi4c32p.size()),  //
         testing::ValuesIn(shapes_k256),                                                 //

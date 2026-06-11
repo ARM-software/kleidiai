@@ -15,7 +15,9 @@
 #include <string>
 #include <tuple>
 
+#include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_qmx_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_qmx_sdot.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p8x4_1x8_sve_dotprod.h"
@@ -101,6 +103,19 @@ static const std::array<UKernelVariants, 11>
          {UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot, cpu_has_sme2, lhs_quant_pack_qsi8d32p_f32_neon,
              rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)},
+             
+             // clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_qmx_mopa, cpu_has_sme, lhs_quant_pack_qsi8d32p_f32_neon,
+             // rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)},
+         // {UKERNEL_MATMUL_PACK_VARIANT(
+             // clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_qmx_sdot, cpu_has_sme, lhs_quant_pack_qsi8d32p_f32_neon,
+             // rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)},
+             // {UKERNEL_MATMUL_PACK_VARIANT(
+             // clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa, cpu_has_sme2, lhs_quant_pack_qsi8d32p_f32_neon,
+             // rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)},
+         // {UKERNEL_MATMUL_PACK_VARIANT(
+             // clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot, cpu_has_sme2, lhs_quant_pack_qsi8d32p_f32_neon,
+             // rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)},
+
          {UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p4x8_qsi4c32p4x8_8x4x32_neon_i8mm, cpu_has_i8mm, lhs_quant_pack_qsi8d32p_f32,
              rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
@@ -133,7 +148,22 @@ static const std::array<UKernelVariants, 2>
             clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot, cpu_has_sme2, lhs_quant_pack_qsi8d32p_f32_neon,
             rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)}}};
 // clang-format on
-
+            // {UKERNEL_MATMUL_PACK_VARIANT(
+            // clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_qmx_mopa, cpu_has_sme, lhs_quant_pack_qsi8d32p_f32_neon,
+            // rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)},
+         // {UKERNEL_MATMUL_PACK_VARIANT(
+            // clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_qmx_sdot, cpu_has_sme, lhs_quant_pack_qsi8d32p_f32_neon,
+            // rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)}}};
+// // clang-format on
+         // {UKERNEL_MATMUL_PACK_VARIANT(
+            // clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa, cpu_has_sme2, lhs_quant_pack_qsi8d32p_f32_neon,
+            // rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)},
+         // {UKERNEL_MATMUL_PACK_VARIANT(
+            // clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot, cpu_has_sme2, lhs_quant_pack_qsi8d32p_f32_neon,
+            // rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)},
+            
+            
+            
 using MatMulTestParams_f32_qsi8d32p_qsi4c32p = std::tuple<size_t, MatMulShape, MatrixPortion, float, size_t, bool>;
 
 [[maybe_unused]] static void PrintTo(const MatMulTestParams_f32_qsi8d32p_qsi4c32p& param, std::ostream* os) {
@@ -346,7 +376,7 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, EndToEnd) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMul, MatMulTest_f32_qsi8d32p_qsi4c32p,
+    MatMul_i_, MatMulTest_f32_qsi8d32p_qsi4c32p,
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p.size()),
         testing::Values(
