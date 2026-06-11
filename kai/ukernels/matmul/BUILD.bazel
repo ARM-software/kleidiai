@@ -241,6 +241,7 @@ SME_KERNELS_ASM = [
 
 # buildifier: keep sorted
 SME_KERNELS_ASM_NOHDR = [
+    "matmul_i32_u8p_u8p/kai_kernel_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_qmx_mopa",
     "pack/kai_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme",
     "pack/kai_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme",
     "pack/kai_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme",
@@ -249,6 +250,7 @@ SME_KERNELS_ASM_NOHDR = [
 
 # buildifier: keep sorted
 SME_KERNELS_NOHDR = [
+    "matmul_i32_u8p_u8p/kai_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_qmx_mopa",
     "pack/kai_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme",
     "pack/kai_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme",
     "pack/kai_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme",
