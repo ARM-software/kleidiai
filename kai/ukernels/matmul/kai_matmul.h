@@ -84,6 +84,26 @@ struct kai_matmul_uker_api kai_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_qmx_
 /// @return The micro-kernel API.
 struct kai_matmul_uker_api kai_matmul_clamp_f32_u8p4vsx4_u8p4vsx4_i32_i32_f32_f32_8vsx8vs_sme2_mopa(void);
 
+/// Matrix multiplication with 32-bit integer accumulation and FP32 output using SME MOPA instruction.
+///
+/// Required operands:
+///   * lhs, dst, rhs
+///   * bias
+///     * acc_bias_m, acc_bias_n, scale_bias_n
+///   * scale
+///     * acc_scale_global
+///
+/// Optional arguments:
+///   * clamp - F32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
+///
+/// Accumulation: I32, then converted to F32 using global scaling and per column bias
+///
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamping output data.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_f32_u8p4vsx4_u8p4vsx4_i32_i32_f32_f32_8vsx8vs_qmx_mopa(void);
+
 /// Single-precision floating-point vector-matrix multiplication using SME2 MLA instruction.
 ///
 /// Required operands:
