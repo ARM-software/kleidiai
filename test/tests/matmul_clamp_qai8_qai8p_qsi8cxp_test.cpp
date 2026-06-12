@@ -1225,9 +1225,9 @@ TEST_P(MatMulQuantizedTest, EndToEnd) {
         output_portion.compute_portion(shape.m, shape.n, variant.acc_step.m, variant.acc_step.n);
 
     auto test_kernel = [pack_portion, matmul_portion](
-                           MatMulShape shape, const MatMulVariant& variant, float clamp_ratio, float scale_ratio,
+                           MatMulShape shape, const MatMulVariant& variant, float clamp_keep_ratio, float scale_ratio,
                            bool saturated) -> void {
-        const TestDataId test_data_id{shape, variant.acc_pack, shape.k, false, clamp_ratio, scale_ratio};
+        const TestDataId test_data_id{shape, variant.acc_pack, shape.k, false, clamp_keep_ratio, scale_ratio};
         const TestReference& reference = get_test_reference(test_data_id);
 
         if (variant.lhs_pack.has_value()) {
@@ -1441,7 +1441,10 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0.75, 0.75,    1,    1), // Bottom-right corner.
             // clang-format on
         }),
-        testing::ValuesIn(std::initializer_list<float>{1.0F, 0.9F, 0.5F}),  // clamp_keep_ratio
+        testing::ValuesIn(std::initializer_list<float>{
+            1.0F,    // Clamp to full range
+            0.9F,    // Clamp to 90% range
+            0.5F}),  // Clamp to 50% range
         testing::ValuesIn(std::initializer_list<float>{0.9F})),
     [](const auto& info) -> std::string { return test_description(info.param); });
 
@@ -1475,7 +1478,10 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0, .25, 1, .5)  // Middle half
             // clang-format on
         }),
-        testing::ValuesIn(std::initializer_list<float>{1.0f, 0.9f, 0.5f}),  // clamp_keep_ratio
+        testing::ValuesIn(std::initializer_list<float>{
+            1.0f,    // Clamp to full range
+            0.9f,    // Clamp to 90% range
+            0.5f}),  // Clamp to 50% range
         // Scale range
         testing::ValuesIn(std::initializer_list<float>{0.9F})),
     [](const auto& info) -> std::string { return test_description(info.param); });
@@ -1488,7 +1494,7 @@ INSTANTIATE_TEST_SUITE_P(
         // k_chunk_len
         testing::ValuesIn(std::initializer_list<size_t>{1, 2, 3, 4, 8, 11}),  //
         testing::ValuesIn(portions),                                          //
-        // Clamp range
+        // Clamp keep ratio
         testing::Values(0.1F),
         // Scale ratio
         testing::Values(0.9F)),
@@ -1502,7 +1508,7 @@ INSTANTIATE_TEST_SUITE_P(
         // k_chunk_len
         testing::ValuesIn(std::initializer_list<size_t>{32}),  //
         testing::ValuesIn(portions),                           //
-        // Clamp range
+        // Clamp keep ratio
         testing::Values(0.1F),
         // Scale ratio
         testing::Values(0.9F)),
@@ -1516,9 +1522,11 @@ INSTANTIATE_TEST_SUITE_P(
         // k_chunk_len
         testing::ValuesIn(std::initializer_list<size_t>{1}),  //
         testing::Values(MatrixPortion(0, 0, 1, 1)),           //
-        // Clamp range
-        testing::ValuesIn(std::initializer_list<float>{1.0F, 0.9F, 0.5F}),  // clamp_keep_ratio
-        testing::ValuesIn(std::initializer_list<float>{0.9F})),             // Scale ratio
+        testing::ValuesIn(std::initializer_list<float>{
+            1.0F,                                                // Clamp to full range
+            0.9F,                                                // Clamp to 90% range
+            0.5F}),                                              // Clamp to 50% range
+        testing::ValuesIn(std::initializer_list<float>{0.9F})),  // Scale ratio
     testing::PrintToStringParamName());
 
 }  // namespace kai::test

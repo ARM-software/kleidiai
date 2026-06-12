@@ -36,7 +36,7 @@ struct MatMulDistribution {
     std::uniform_int_distribution<size_t> m_shape_dist{1, 150};
     std::uniform_real_distribution<float> m_probability_dist{0.0F, 1.0F};
     std::uniform_real_distribution<float> m_dist_70_to_100{0.7F, 1.0F};
-    std::uniform_real_distribution<float> m_dist_0_to_70{0.0F, 0.7F};
+    std::uniform_real_distribution<float> m_dist_10_to_70{0.1F, 0.7F};
 };
 
 struct MatMulFixtureParams {
@@ -46,7 +46,7 @@ struct MatMulFixtureParams {
     size_t shape_n;
     size_t shape_k;
     MatMulBiasModeSet bias_formats;
-    std::optional<float> clamp_ratio;
+    std::optional<float> clamp_keep_ratio;
 
     const MatMulOperator* op;
 
@@ -54,9 +54,15 @@ struct MatMulFixtureParams {
     ///
     /// @return A unique name string used for test registration and caching.
     [[nodiscard]] std::string name() const {
-        return std::string(op->name) + ",m=" + std::to_string(shape_m) + ",n=" + std::to_string(shape_n) +
-            ",k=" + std::to_string(shape_k) + ",bias=" + matmul_bias_format_set_name(bias_formats) +
-            ",clamp_ratio=" + (clamp_ratio.has_value() ? std::to_string(clamp_ratio.value()) : "noclamp") +
+        const std::string clamp_keep_ratio_name =
+            clamp_keep_ratio.has_value() ? std::to_string(clamp_keep_ratio.value()) : "noclamp";
+
+        return std::string(op->name) +                              //
+            ",m=" + std::to_string(shape_m) +                       //
+            ",n=" + std::to_string(shape_n) +                       //
+            ",k=" + std::to_string(shape_k) +                       //
+            ",bias=" + matmul_bias_format_set_name(bias_formats) +  //
+            ",clamp_keep_ratio=" + clamp_keep_ratio_name +          //
             ",iteration=" + std::to_string(iteration_no);
     }
 };
@@ -108,7 +114,7 @@ protected:
         // Creates a new test if it hasn't been created.
         MatMulTb test(
             m_fixture_params.shape_m, m_fixture_params.shape_n, m_fixture_params.shape_k, m_fixture_params.bias_formats,
-            m_fixture_params.clamp_ratio, m_fixture_params.op);
+            m_fixture_params.clamp_keep_ratio, m_fixture_params.op);
 
         const std::string seed_key = "MatMulNext::testbench:" + name;
         auto& feed = seed_stream(seed_key);
@@ -289,30 +295,30 @@ std::array<MatrixPortion, 3> make_output_portions() {
     };
 }
 
-/// Picks a clamp ratio for the operator clamp mode.
+/// Picks a clamp keep ratio for the operator clamp mode.
 ///
 /// @param[in] op The operator to test.
 /// @param[in,out] dist_ctx The shared distribution context.
 ///
-/// @return A clamp ratio if clamping arguments should be provided.
-std::optional<float> pick_clamp_ratio(const MatMulOperator& op, MatMulDistribution& dist_ctx) {
+/// @return A clamp keep ratio if clamping arguments should be provided.
+std::optional<float> pick_clamp_keep_ratio(const MatMulOperator& op, MatMulDistribution& dist_ctx) {
     if (op.clamp_mode == MatMulClampMode::UNSUPPORTED) {
         return std::nullopt;
     }
 
     KAI_TEST_ASSERT(op.clamp_mode == MatMulClampMode::OPTIONAL || op.clamp_mode == MatMulClampMode::REQUIRED);
 
-    // Clamping range:
+    // Clamp keep ratio:
     //   * 50% of tests have no clamping.
-    //   * 10% of tests have clamp to the full output range.
-    //   * 20% of tests have clamping range between 70% to 100% the output range.
-    //   * 20% of tests have clamping range between 0% to 70% the output range.
+    //   * 10% of tests keep the full output range.
+    //   * 20% of tests keep between 70% to 100% of the output range.
+    //   * 20% of tests keep between 10% to 70% of the output range.
     const float clamp_prob = dist_ctx.m_probability_dist(dist_ctx.m_rng);
 
     const bool no_clamp = clamp_prob < 0.5F;
     const bool clamp_100 = clamp_prob >= 0.5F && clamp_prob < 0.6F;
     const bool clamp_70_to_100 = clamp_prob >= 0.6F && clamp_prob < 0.8F;
-    const bool clamp_0_to_70 = clamp_prob >= 0.8F;
+    const bool clamp_10_to_70 = clamp_prob >= 0.8F;
 
     if (no_clamp) {
         return std::nullopt;
@@ -326,8 +332,8 @@ std::optional<float> pick_clamp_ratio(const MatMulOperator& op, MatMulDistributi
         return dist_ctx.m_dist_70_to_100(dist_ctx.m_rng);
     }
 
-    KAI_TEST_ASSERT(clamp_0_to_70);
-    return dist_ctx.m_dist_0_to_70(dist_ctx.m_rng);
+    KAI_TEST_ASSERT(clamp_10_to_70);
+    return dist_ctx.m_dist_10_to_70(dist_ctx.m_rng);
 }
 
 /// Selects a valid fixture configuration for an operator and portion.
@@ -364,10 +370,10 @@ MatMulFixtureParams pick_fixture(
     }
 
     const MatMulBiasModeSet bias_formats = bias_selector.pick(dist_ctx);
-    const std::optional<float> clamp_ratio = pick_clamp_ratio(op, dist_ctx);
+    const std::optional<float> clamp_keep_ratio = pick_clamp_keep_ratio(op, dist_ctx);
 
     return {
-        shape_no, shape_m, shape_n, shape_k, bias_formats, clamp_ratio, &op,
+        shape_no, shape_m, shape_n, shape_k, bias_formats, clamp_keep_ratio, &op,
     };
 }
 

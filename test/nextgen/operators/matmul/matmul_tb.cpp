@@ -40,13 +40,13 @@
 namespace kai::test {
 
 MatMulTb::MatMulTb(
-    size_t shape_m, size_t shape_n, size_t shape_k, MatMulBiasModeSet bias_modes, std::optional<float> clamp_ratio,
+    size_t shape_m, size_t shape_n, size_t shape_k, MatMulBiasModeSet bias_modes, std::optional<float> clamp_keep_ratio,
     const MatMulOperator* op) :
     m_shape_m(shape_m),
     m_shape_n(shape_n),
     m_shape_k(shape_k),
     m_bias_modes(bias_modes),
-    m_clamp_ratio(clamp_ratio),
+    m_clamp_keep_ratio(clamp_keep_ratio),
     m_op(op),
     m_tensors_required() {
     std::fill(m_tensors_required.begin(), m_tensors_required.end(), false);
@@ -462,13 +462,14 @@ void MatMulTb::compute_ref_matmul() {
     std::optional<MatMulClampArgsF32> clamp_args = std::nullopt;
 
     if (m_op->clamp_mode != MatMulClampMode::UNSUPPORTED &&
-        (m_clamp_ratio.has_value() || m_op->clamp_mode == MatMulClampMode::REQUIRED)) {
+        (m_clamp_keep_ratio.has_value() || m_op->clamp_mode == MatMulClampMode::REQUIRED)) {
         const size_t dst_size = m_shape_m * m_shape_n;
-        const auto [clamp_min, clamp_max] = find_clamp_range(m_op->dst_dtype, ref_dst.data(), dst_size, m_clamp_ratio);
+        const auto [clamp_min, clamp_max] =
+            find_clamp_range(m_op->dst_dtype, ref_dst.data(), dst_size, m_clamp_keep_ratio);
 
         clamp_args = MatMulClampArgsF32{clamp_min, clamp_max};
 
-        if (m_clamp_ratio.has_value()) {
+        if (m_clamp_keep_ratio.has_value()) {
             ref_dst = clamp(m_op->dst_dtype, ref_dst.data(), dst_size, clamp_min, clamp_max);
         }
     }

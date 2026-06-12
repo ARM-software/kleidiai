@@ -1501,10 +1501,10 @@ static constexpr std::array bf16_shapes {
 
 /// Dedicated clamp sweep ratios
 static constexpr std::array<std::optional<float>, 4> clamp_keep_ratios_sweep{
-    std::nullopt,   // no clamp
-    1.0F,           // clamp to full reference range
-    0.5F,           // clamp away 50% of reference range
-    0.1F,           // clamp away 90% of reference range
+    std::nullopt,   // Disable clamping
+    1.0F,           // Clamp to full range
+    0.5F,           // Clamp to 50% range
+    0.1F,           // Clamp to 10% range
 };
 
 INSTANTIATE_TEST_SUITE_P(

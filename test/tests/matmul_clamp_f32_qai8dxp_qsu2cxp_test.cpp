@@ -402,10 +402,13 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0, 0, 1, 0.25),        // Leftmost portion.
             MatrixPortion(0, 0.75, 1, 1),        // Rightmost portion.
             MatrixPortion(0.4, 0.5, 0.6, 0.8)),  // Somewhere Middle block
-        testing::ValuesIn(
-            std::initializer_list<std::optional<float>>({std::nullopt, 1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
-        testing::Bool(),                                                                     // Bias
-        testing::Bool()),                                                                    // Look up table argument
+        testing::ValuesIn(std::initializer_list<std::optional<float>>{
+            std::nullopt,  // Disable clamping
+            1.0f,          // Clamp to full range
+            0.9f,          // Clamp to 90% range
+            0.5f}),        // Clamp to 50% range
+        testing::Bool(),   // Bias
+        testing::Bool()),  // Look up table argument
     [](const auto& info) {
         const auto variant_idx = std::get<0>(info.param);
         const std::string name{get_qsi2cx_gemm_variants().at(variant_idx).ukernel.name};
@@ -438,10 +441,13 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0, 0, 1, 0.25),        // Leftmost portion.
             MatrixPortion(0, 0.75, 1, 1),        // Rightmost portion.
             MatrixPortion(0.4, 0.5, 0.6, 0.8)),  // Somewhere Middle block
-        testing::ValuesIn(
-            std::initializer_list<std::optional<float>>({std::nullopt, 1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
-        testing::Bool(),                                                                     // Bias
-        testing::Bool()),                                                                    // Look up table argument
+        testing::ValuesIn(std::initializer_list<std::optional<float>>{
+            std::nullopt,  // Disable clamping
+            1.0f,          // Clamp to full range
+            0.9f,          // Clamp to 90% range
+            0.5f}),        // Clamp to 50% range
+        testing::Bool(),   // Bias
+        testing::Bool()),  // Look up table argument
     [](const auto& info) {
         const auto variant_idx = std::get<0>(info.param);
         const std::string name{get_qsi2cx_gemv_variants().at(variant_idx).ukernel.name};

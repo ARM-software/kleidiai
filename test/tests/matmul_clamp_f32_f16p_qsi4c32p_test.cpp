@@ -97,15 +97,16 @@ using MatMulTestParams_f32_f16p_qsi4c32p = std::tuple<size_t, MatMulShape, Matri
     const auto variant_idx = std::get<0>(param);
     const auto shape = std::get<1>(param);
     const auto portion = std::get<2>(param);
-    const auto clamp_ratio = std::get<3>(param);
+    const auto clamp_keep_ratio = std::get<3>(param);
     const auto bl = std::get<4>(param);
 
     *os << "variant_" << variant_idx << "__";
     PrintTo(shape, os);
     *os << "__";
     PrintTo(portion, os);
-    *os << "__clamp_ratio_"
-        << (clamp_ratio.has_value() ? std::to_string(static_cast<int>(clamp_ratio.value() * 100)) : "noclamp");
+    *os << "__clamp_keep_ratio_"
+        << (clamp_keep_ratio.has_value() ? std::to_string(static_cast<int>(clamp_keep_ratio.value() * 100))
+                                         : "noclamp");
     *os << "__Bias";
     *os << "__bl_" << bl;
 }
@@ -183,7 +184,7 @@ Buffer pack_f16pmrx2_ref(const void* src, size_t nb_rows, size_t nb_cols, size_t
 }
 
 TEST_P(MatMulTest_f32_f16p_qsi4c32p, Offset_RHS_LHS) {
-    const auto& [variant_index, matmul_shape, portion, clamp_ratio, bl] = GetParam();
+    const auto& [variant_index, matmul_shape, portion, clamp_keep_ratio, bl] = GetParam();
     const auto& ukernel_variant = variants_kai_matmul_clamp_f32_f16p_qsi4c32p.at(variant_index);
 
     if (!ukernel_variant.ukernel.fn_is_supported()) {
@@ -221,7 +222,7 @@ TEST_P(MatMulTest_f32_f16p_qsi4c32p, Offset_RHS_LHS) {
 }
 
 TEST_P(MatMulTest_f32_f16p_qsi4c32p, LHS) {
-    const auto& [variant_index, matmul_shape, portion, clamp_ratio, bl] = GetParam();
+    const auto& [variant_index, matmul_shape, portion, clamp_keep_ratio, bl] = GetParam();
     const auto& ukernel_variant = variants_kai_matmul_clamp_f32_f16p_qsi4c32p.at(variant_index);
 
     if (!ukernel_variant.ukernel.fn_is_supported()) {
@@ -269,7 +270,7 @@ TEST_P(MatMulTest_f32_f16p_qsi4c32p, LHS) {
 }
 
 TEST_P(MatMulTest_f32_f16p_qsi4c32p, EndToEnd) {
-    const auto& [variant_index, matmul_shape, portion, clamp_ratio, bl] = GetParam();
+    const auto& [variant_index, matmul_shape, portion, clamp_keep_ratio, bl] = GetParam();
     const auto& ukernel_variant = variants_kai_matmul_clamp_f32_f16p_qsi4c32p.at(variant_index);
 
     if (!ukernel_variant.ukernel.fn_is_supported()) {
@@ -347,7 +348,7 @@ TEST_P(MatMulTest_f32_f16p_qsi4c32p, EndToEnd) {
     ASSERT_EQ(dst_offset, ref_dst_offset);
 
     // Clamp reference output
-    const auto [min, max] = find_clamp_range(DataType::FP32, test_data.ref_dst.data(), M * N, clamp_ratio);
+    const auto [min, max] = find_clamp_range(DataType::FP32, test_data.ref_dst.data(), M * N, clamp_keep_ratio);
     const auto out_clamped = clamp(DataType::FP32, test_data.ref_dst.data(), M * N, min, max);
 
     // Runs the GEMM micro-kernel.
@@ -439,10 +440,10 @@ INSTANTIATE_TEST_SUITE_P(
         testing::ValuesIn(shapes_k32),                                                  //
         testing::ValuesIn(portions),                                                    //
         testing::ValuesIn(std::initializer_list<std::optional<float>>{
-            std::nullopt,  //
-            1.0F,          //
-            0.9F,          //
-            0.5F,          // clamp_keep_ratio
+            std::nullopt,  // Disable clamping
+            1.0F,          // Clamp to full range
+            0.9F,          // Clamp to 90% range
+            0.5F,          // Clamp to 50% range
         }),
         testing::Values(32)),  //
     testing::PrintToStringParamName());
@@ -454,10 +455,10 @@ INSTANTIATE_TEST_SUITE_P(
         testing::ValuesIn(shapes_k64),                                                  //
         testing::ValuesIn(portions),                                                    //
         testing::ValuesIn(std::initializer_list<std::optional<float>>{
-            std::nullopt,  //
-            1.0F,          //
-            0.9F,          //
-            0.5F,          // clamp_keep_ratio
+            std::nullopt,  // Disable clamping
+            1.0F,          // Clamp to full range
+            0.9F,          // Clamp to 90% range
+            0.5F,          // Clamp to 50% range
         }),
         testing::Values(64)),  //
     testing::PrintToStringParamName());
@@ -469,10 +470,10 @@ INSTANTIATE_TEST_SUITE_P(
         testing::ValuesIn(shapes_k128),                                                 //
         testing::ValuesIn(portions),                                                    //
         testing::ValuesIn(std::initializer_list<std::optional<float>>{
-            std::nullopt,  //
-            1.0F,          //
-            0.9F,          //
-            0.5F,          // clamp_keep_ratio
+            std::nullopt,  // Disable clamping
+            1.0F,          // Clamp to full range
+            0.9F,          // Clamp to 90% range
+            0.5F,          // Clamp to 50% range
         }),
         testing::Values(128)),  //
     testing::PrintToStringParamName());
@@ -484,10 +485,10 @@ INSTANTIATE_TEST_SUITE_P(
         testing::ValuesIn(shapes_k256),                                                 //
         testing::ValuesIn(portions),                                                    //
         testing::ValuesIn(std::initializer_list<std::optional<float>>{
-            std::nullopt,  //
-            1.0F,          //
-            0.9F,          //
-            0.5F,          // clamp_keep_ratio
+            std::nullopt,  // Disable clamping
+            1.0F,          // Clamp to full range
+            0.9F,          // Clamp to 90% range
+            0.5F,          // Clamp to 50% range
         }),
         testing::Values(128)),  //
     testing::PrintToStringParamName());
