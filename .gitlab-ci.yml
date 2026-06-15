@@ -652,6 +652,7 @@ test-examples-sme-fvp:
       -DCMAKE_C_COMPILER=${EXPERIMENTAL_OPS_C_COMPILER}
       -DCMAKE_CXX_COMPILER=${EXPERIMENTAL_OPS_CXX_COMPILER}
       -DKLEIDIAI_OPS_ENABLE_BUILD_BENCHMARK=ON
+      ${EXPERIMENTAL_OPS_CMAKE_EXTRA:-}
       -S experimental/ops
       -B ${CI_JOB_NAME_SLUG}
     - cmake --build ${CI_JOB_NAME_SLUG} -j${PARALLEL_JOBS} --verbose
@@ -670,6 +671,10 @@ test-examples-sme-fvp:
   variables:
     RUNNER_SCRIPT_TIMEOUT: 2h
   script:
+    - |
+      if [ -n "${EXPERIMENTAL_OPS_ASAN_OPTIONS:-}" ]; then
+        export ASAN_OPTIONS="${EXPERIMENTAL_OPS_ASAN_OPTIONS}"
+      fi
     - chmod +x ${EXPERIMENTAL_OPS_BUILD_DIR}/benchmark/gemm
     - echo "Running soak tests with ${PARALLEL_JOBS} threads"
     - |
@@ -679,6 +684,7 @@ test-examples-sme-fvp:
         --run_test_plan \
         --conv \
         --threads ${PARALLEL_JOBS} \
+        ${EXPERIMENTAL_OPS_SOAK_EXTRA_ARGS:-} \
         --binary ${EXPERIMENTAL_OPS_BUILD_DIR}/benchmark/gemm 2>&1 \
         | tee conv_tests.log
     - |
@@ -689,6 +695,7 @@ test-examples-sme-fvp:
         --conv \
         --kernel_filter depthwise \
         --threads ${PARALLEL_JOBS} \
+        ${EXPERIMENTAL_OPS_SOAK_EXTRA_ARGS:-} \
         --binary ${EXPERIMENTAL_OPS_BUILD_DIR}/benchmark/gemm 2>&1 \
         | tee depthwise_tests.log
     - |
@@ -697,6 +704,7 @@ test-examples-sme-fvp:
         --test_plan_file experimental/ops/tests/configs/gemm_tests.cfg \
         --run_test_plan \
         --threads ${PARALLEL_JOBS} \
+        ${EXPERIMENTAL_OPS_SOAK_EXTRA_ARGS:-} \
         --binary ${EXPERIMENTAL_OPS_BUILD_DIR}/benchmark/gemm 2>&1 \
         | tee gemm_tests.log
   artifacts:
@@ -716,6 +724,18 @@ build-experimental-ops-clang-linux-aarch64:
     EXPERIMENTAL_OPS_CXX_COMPILER: clang++
     EXPERIMENTAL_OPS_TOOLCHAIN_FILE: experimental/ops/toolchains/native/native-linux-aarch64-gnu.cmake
 
+build-experimental-ops-clang-asan-linux-aarch64:
+  extends:
+    - .build-experimental-ops-native
+  variables:
+    EXPERIMENTAL_OPS_C_COMPILER: clang
+    EXPERIMENTAL_OPS_CXX_COMPILER: clang++
+    EXPERIMENTAL_OPS_TOOLCHAIN_FILE: experimental/ops/toolchains/native/native-linux-aarch64-gnu.cmake
+    EXPERIMENTAL_OPS_CMAKE_EXTRA: >-
+      -DCMAKE_BUILD_TYPE=Debug
+      -DKLEIDIAI_OPS_CCXX_FLAGS_INIT:STRING=-g;-fsanitize=address;-fno-omit-frame-pointer;-fno-common
+      -DKLEIDIAI_OPS_LINKER_FLAGS_INIT:STRING=-fsanitize=address
+
 build-experimental-ops-gcc-linux-aarch64:
   extends:
     - .build-experimental-ops-native
@@ -733,6 +753,20 @@ build-experimental-ops-clang-macos:
     EXPERIMENTAL_OPS_C_COMPILER: clang
     EXPERIMENTAL_OPS_CXX_COMPILER: clang++
     EXPERIMENTAL_OPS_TOOLCHAIN_FILE: experimental/ops/toolchains/native/native-macos-aarch64-clang.cmake
+
+build-experimental-ops-clang-asan-macos:
+  extends:
+    - .build-experimental-ops-native
+  tags:
+    - apple_silicon
+  variables:
+    EXPERIMENTAL_OPS_C_COMPILER: clang
+    EXPERIMENTAL_OPS_CXX_COMPILER: clang++
+    EXPERIMENTAL_OPS_TOOLCHAIN_FILE: experimental/ops/toolchains/native/native-macos-aarch64-clang.cmake
+    EXPERIMENTAL_OPS_CMAKE_EXTRA: >-
+      -DCMAKE_BUILD_TYPE=Debug
+      -DKLEIDIAI_OPS_CCXX_FLAGS_INIT:STRING=-g;-fsanitize=address;-fno-omit-frame-pointer;-fno-common
+      -DKLEIDIAI_OPS_LINKER_FLAGS_INIT:STRING=-fsanitize=address
 
 build-experimental-ops-android-arm64-v8a:
   extends:
@@ -758,6 +792,19 @@ test-experimental-ops-clang-linux-aarch64:
   variables:
     EXPERIMENTAL_OPS_BUILD_DIR: build-experimental-ops-clang-linux-aarch64
 
+test-experimental-ops-clang-asan-linux-aarch64:
+  extends:
+    - .test-experimental-ops-native
+  needs:
+    - build-experimental-ops-clang-asan-linux-aarch64
+  variables:
+    EXPERIMENTAL_OPS_BUILD_DIR: build-experimental-ops-clang-asan-linux-aarch64
+    EXPERIMENTAL_OPS_ASAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+    EXPERIMENTAL_OPS_SOAK_EXTRA_ARGS: --case_limit 20
+    KUBERNETES_CPU_REQUEST: 8
+    KUBERNETES_CPU_LIMIT: 12
+    PARALLEL_JOBS: 4
+
 test-experimental-ops-gcc-linux-aarch64:
   extends:
     - .test-experimental-ops-native
@@ -765,9 +812,9 @@ test-experimental-ops-gcc-linux-aarch64:
     - build-experimental-ops-gcc-linux-aarch64
   variables:
     EXPERIMENTAL_OPS_BUILD_DIR: build-experimental-ops-gcc-linux-aarch64
-    KUBERNETES_CPU_REQUEST: "32"
-    KUBERNETES_CPU_LIMIT: "48"
-    PARALLEL_JOBS: "32"
+    KUBERNETES_CPU_REQUEST: 32
+    KUBERNETES_CPU_LIMIT: 48
+    PARALLEL_JOBS: 32
 
 test-experimental-ops-clang-macos:
   extends:
@@ -778,6 +825,18 @@ test-experimental-ops-clang-macos:
     - apple_silicon
   variables:
     EXPERIMENTAL_OPS_BUILD_DIR: build-experimental-ops-clang-macos
+
+test-experimental-ops-clang-asan-macos:
+  extends:
+    - .test-experimental-ops-native
+  needs:
+    - build-experimental-ops-clang-asan-macos
+  tags:
+    - apple_silicon
+  variables:
+    EXPERIMENTAL_OPS_BUILD_DIR: build-experimental-ops-clang-asan-macos
+    EXPERIMENTAL_OPS_ASAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+    EXPERIMENTAL_OPS_SOAK_EXTRA_ARGS: --case_limit 20
 
 # Purpose: Resolve and lock gcovr version for consistent coverage reporting.
 resolve-gcovr:
