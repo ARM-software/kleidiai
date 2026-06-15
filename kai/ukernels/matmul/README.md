@@ -34,22 +34,20 @@ details are described below.
 
 ## Micro-kernel naming
 
-The naming of micro-kernels must follow the convention below. Unless explicitly
-specified, arguments are mandatory.
-
+The naming of micro-kernels must follow the convention below.
 `kai_<op>_<fused_ops>_<dst_info>_<input_0_info, input_1_info, ...>_<m_block x n_block>_<simd_engine>_<feature>_<instruction>_<uarch>`
 
 | Syntax                          | Description                                                                                                                        | Example                                                                                                                                                                      |
 |---------------------------------|------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | op                              | The primary operation of the micro-kernel                                                                                          | `matmul`, `imatmul `                                                                                                                                                         |
-| fused_ops                       | (Optional) Information on applied fused operations, e.g., activation functions                                                     | `clamp`                                                                                                                                                                      |
+| fused_ops                       | Information on applied fused operations, e.g., activation functions                                                                | `clamp`                                                                                                                                                                      |
 | dst_info                        | Description of the destination buffer                                                                                              | See Buffer descriptors section                                                                                                                                               |
 | input_0_info, input_1_info, ... | Description of input buffers to the micro-kernel                                                                                   | In `matmul` routines, the LHS precedes the  RHS                                                                                                                              |
 | m_block x n_block               | Primary tile size computed by the micro-kernel.                                                                                    | `6x32` where the tile size is 6 rows by 32 columns; `2vlx2vl` where the tile size is equivalent to twice the hardware-defined vector length in the row and column dimensions |
 | simd_engine                     | SIMD engine used to drive the computation                                                                                          | `neon`, `sve`, `sve2`, `sme`, `sme2`                                                                                                                                         |
-| feature                         | (Optional) Further information about the Arm architecture feature used, often referred to as `FEAT_<feature>` in the specification | `dotprod`, `i8mm `                                                                                                                                                           |
-| instruction                     | (Optional) Predominant SIMD instruction used in the micro-kernel                                                                   | `mla`, `mmla`, `mopa`, `dot`                                                                                                                                                 |
-| uarch                           | (Optional) Microarchitecture for which the micro-kernel has been optimized for                                                     | `cortexa55` to represent the Arm® Cortex®-A55 processor                                                                                                                      |
+| feature                         | Further information about the Arm architecture feature used, often referred to as `FEAT_<feature>` in the specification            | `dotprod`, `i8mm `                                                                                                                                                           |
+| instruction                     | Predominant SIMD instruction used in the micro-kernel                                                                              | `mla`, `mmla`, `mopa`, `dot`                                                                                                                                                 |
+| uarch                           | Microarchitecture for which the micro-kernel has been optimized for                                                                | `cortexa55` to represent the Arm® Cortex®-A55 processor                                                                                                                      |
 
 ## Block
 
@@ -59,33 +57,29 @@ specified, arguments are mandatory.
 
 Input and output buffers can be described using the following form:
 
-| Syntax   | Description                                                                                       |
-|----------|---------------------------------------------------------------------------------------------------|
-| f32      | Single-precision floating-point                                                                   |
-| f16      | Half-precision floating-point                                                                     |
-| bf16     | Brain floating-point                                                                              |
-| x        | Data type agnostic. Usually used when describing moving data around like in packing micro-kernels |
-| qs       | Quantized symmetric                                                                               |
-| qa       | Quantized asymmetric                                                                              |
-| i        | Signed integer                                                                                    |
-| u        | Unsigned integer                                                                                  |
-| 4        | 4-bit quantized                                                                                   |
-| 8        | 8-bit quantized                                                                                   |
-| dx       | Per dimension quantized                                                                           |
-| cx       | Per channel quantized                                                                             |
-| d32      | Per-dimension block quantization, with block length multiple of 32                                |
-| c32      | Per block quantization, with block length multiple of 32                                          |
-| scalef16 | **Deprecated** Scale factors stored as floating-point 16-bit                                      |
-| p        | Indicates data is packed                                                                          |
-| s16s0    | Packing order of data is interleaved                                                              |
-| s4s0     | Packing order of data is interleaved with nibble distance of 4                                    |
-| s1s0     | Packing order of data is sequential                                                               |
-| s<type>  | Scale factors of type `<type>` are packed into buffer                                             |
-| b<type>  | Bias values of type `<type>` are packed into buffer                                               |
-| biasf32  | **Deprecated** Bias values are packed into buffer as `f32`                                        |
+| Syntax                | Description                                                                                       |
+|-----------------------|---------------------------------------------------------------------------------------------------|
+| f32                   | Single-precision floating-point                                                                   |
+| f16                   | Half-precision floating-point                                                                     |
+| bf16                  | Brain floating-point                                                                              |
+| x                     | Data type agnostic. Usually used when describing moving data around like in packing micro-kernels |
+| qs                    | Quantized symmetric                                                                               |
+| qa                    | Quantized asymmetric                                                                              |
+| i                     | Signed integer                                                                                    |
+| u                     | Unsigned integer                                                                                  |
+| 4                     | 4-bit quantized                                                                                   |
+| 8                     | 8-bit quantized                                                                                   |
+| dx                    | Per dimension quantized                                                                           |
+| cx                    | Per channel quantized                                                                             |
+| d32                   | Per-dimension block quantization, with block length multiple of 32                                |
+| c32                   | Per block quantization, with block length multiple of 32                                          |
+| p\[<width>x<height>\] | Indicates data is packed, see _Packing description_ for details                                   |
 
 Example: `qsi4cxp` which means quantized symmetric (`qs`) signed integer 4-bit
 data (`i4`) with per channel quantization (`cx`) that has been packed (`p`).
+
+For high level naming, the above is sufficient. This is used to name
+directories. For the specific files the packing format must also be specified.
 
 ### Packing description
 
@@ -97,11 +91,24 @@ would be `<type>p<NR>x<BD>`. `BD`, block depth, equals `KR / SR`. The `MR`,
 `NR` and `KR` can be written as:
 
 | Symbol                  | example         | Description                                                                                                            |
-| ----------------------- | --------------- | ------------------------------------------------------                                                                 |
+|-------------------------|-----------------|------------------------------------------------------------------------------------------------------------------------|
 | _Integer literal_       | `1`, `2`, `4`   | Constant value                                                                                                         |
 | `mr`/`nr`/`kr`          | `mr`            | Parametric size, given as argument to micro kernel                                                                     |
 | `<Integer literal>vl`   | `1vl`, `4vl`    | Accumulator _vector length_ multiple. Assuming 32-bit accumulation on a 512-bit configuration, `4vl` means 64 elements |
 | `<Integer literal>vs`   | `1vs`, `4vs`    | _Vector scale_ multiplier, assuming a vector length of 128 bits. For a 512-bit configuration, `4vs` means 16 elements  |
+
+In addition to the packing width and height there is additional information that
+is encoded in the extended pack
+
+| Syntax   | Description                                                    |
+|----------|----------------------------------------------------------------|
+| s16s0    | Packing order of data is interleaved                           |
+| s4s0     | Packing order of data is interleaved with nibble distance of 4 |
+| s1s0     | Packing order of data is sequential                            |
+| s<type>  | Scale factors of type `<type>` are packed into buffer          |
+| b<type>  | Bias values of type `<type>` are packed into buffer            |
+| scalef16 | **Deprecated** Scale factors stored as floating-point 16-bit   |
+| biasf32  | **Deprecated** Bias values are packed into buffer as `f32`     |
 
 ## Known naming issues
 
