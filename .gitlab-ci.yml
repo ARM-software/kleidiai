@@ -308,9 +308,7 @@ test-verify-microkernel-tables:
     - python3 tools/check_microkernel_tables.py
 
 # Purpose: Build current sources against tests/benchmarks from latest semver tag to detect API breakage.
-# This job is temporarily disabled until after the first release which contains the
-# CMakeLsists split for test and benchmark wrt KLEIDIAI-1177
-.test-api-compat:
+test-api-compat:
   extends:
     - .standard-rules
   stage: test
