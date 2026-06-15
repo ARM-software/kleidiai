@@ -387,6 +387,9 @@ test-remote:
   - echo "Run unit test from ${UT_BINARY_PATH:-./build-${UT_VARIANT_NAME}}"
   - export GTEST_TOTAL_SHARDS=${UT_PARALLEL:-4}
   - |
+    : "${KAI_TEST_BUFFER_POLICY:?KAI_TEST_BUFFER_POLICY must be set}"
+    echo "KAI_TEST_BUFFER_POLICY=${KAI_TEST_BUFFER_POLICY}"
+  - |
     for GTEST_SHARD_INDEX in `seq 0 $((GTEST_TOTAL_SHARDS - 1))` ; do
       # Export index variable to child process
       export GTEST_SHARD_INDEX
@@ -411,7 +414,10 @@ test-linux-aarch64:
     - build-clang
     - build-clang-bazel
   script:
+    # Explicitly configure overflow protection for public unit tests.
+    # The shared unit-test runner requires this variable to be set.
     - |
+      export KAI_TEST_BUFFER_POLICY=PROTECT_OVERFLOW
       UT_VARIANT_NAME=$BUILD_JOB_PROVIDER
       UT_REPORT_PATH=kleidiai_test_results-${BUILD_JOB_PROVIDER}
       # Export UT_REPORT_PATH to CI env to use in artifacts
