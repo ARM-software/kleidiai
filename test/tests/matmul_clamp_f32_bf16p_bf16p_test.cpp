@@ -46,6 +46,7 @@
 // SME files here.
 #include "kai/ukernels/matmul/matmul_clamp_fp32_bf16p_bf16p/kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_pack_bf16p2vlx2_f32_sme.h"
+#include "kai/ukernels/matmul/pack/kai_lhs_pack_bf16p2vlx2_f32_sme2.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_bf16p2vlx2b_f32_x32_sme.h"
 
 namespace kai::test {
@@ -53,8 +54,8 @@ namespace kai::test {
 /// List of supported matrix multiplication methods.
 namespace {
 
-static const std::array<MatMulMethod, 5>& get_gemm_methods() {
-    static std::array<MatMulMethod, 5> gemm_methods{};
+static const std::array<MatMulMethod, 6>& get_gemm_methods() {
+    static std::array<MatMulMethod, 6> gemm_methods{};
     gemm_methods[0].name = "matmul_nt_nt_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa";
     gemm_methods[0].m0 = 2 * get_sme_vector_length<float>();
     gemm_methods[0].n0 = 2 * get_sme_vector_length<float>();
@@ -77,11 +78,11 @@ static const std::array<MatMulMethod, 5>& get_gemm_methods() {
     gemm_methods[0].fn_get_main_m_step = kai_get_m_step_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa;
     gemm_methods[0].fn_get_pack_rhs_n_step = kai_get_n_step_rhs_pack_kxn_bf16p2vlx2b_f32_x32_sme;
     gemm_methods[0].fn_get_main_n_step = kai_get_n_step_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa;
-    gemm_methods[0].fn_get_lhs_offset = kai_get_lhs_offset_lhs_pack_bf16p2vlx2_f32_sme;
-    gemm_methods[0].fn_get_packed_lhs_size = kai_get_lhs_packed_size_lhs_pack_bf16p2vlx2_f32_sme;
+    gemm_methods[0].fn_get_lhs_offset = kai_get_lhs_offset_lhs_pack_bf16p2vlx2_f32_sme2;
+    gemm_methods[0].fn_get_packed_lhs_size = kai_get_lhs_packed_size_lhs_pack_bf16p2vlx2_f32_sme2;
     gemm_methods[0].fn_get_packed_lhs_offset =
         kai_get_lhs_packed_offset_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa;
-    gemm_methods[0].fn_pack_lhs = kai_run_lhs_pack_bf16p2vlx2_f32_sme;
+    gemm_methods[0].fn_pack_lhs = kai_run_lhs_pack_bf16p2vlx2_f32_sme2;
     gemm_methods[0].fn_get_rhs_offset = kai_get_rhs_offset_rhs_pack_kxn_bf16p2vlx2b_f32_x32_sme;
     gemm_methods[0].fn_get_packed_rhs_size = kai_get_rhs_packed_size_rhs_pack_kxn_bf16p2vlx2b_f32_x32_sme;
     gemm_methods[0].fn_get_main_packed_rhs_offset =
@@ -233,6 +234,12 @@ static const std::array<MatMulMethod, 5>& get_gemm_methods() {
     gemm_methods[4].fn_get_dst_offset = kai_get_dst_offset_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla;
     gemm_methods[4].fn_get_dst_size = kai_get_dst_size_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla;
     gemm_methods[4].fn_matmul_f32_bf16p_bf16p = kai_run_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla;
+
+    gemm_methods[5] = gemm_methods[0];
+    gemm_methods[5].name = "matmul_nt_nt_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa_lhs_pack_sme";
+    gemm_methods[5].fn_get_lhs_offset = kai_get_lhs_offset_lhs_pack_bf16p2vlx2_f32_sme;
+    gemm_methods[5].fn_get_packed_lhs_size = kai_get_lhs_packed_size_lhs_pack_bf16p2vlx2_f32_sme;
+    gemm_methods[5].fn_pack_lhs = kai_run_lhs_pack_bf16p2vlx2_f32_sme;
 
     return gemm_methods;
 }

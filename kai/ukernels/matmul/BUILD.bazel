@@ -200,7 +200,6 @@ SVE_KERNELS_ASM = [
 
 # buildifier: keep sorted
 SME_KERNELS = [
-    "pack/kai_lhs_pack_bf16p2vlx2_f32_sme",
     "pack/kai_rhs_pack_kxn_bf16p2vlx2b_f32_x32_sme",
 ]
 
@@ -225,6 +224,7 @@ SME_KERNELS_ASM = [
     "pack/kai_lhs_imatmul_pack_x16p2vlx2_x16p_sme",
     "pack/kai_lhs_imatmul_pack_x32p2vlx1_x32p_sme",
     "pack/kai_lhs_imatmul_pack_x8p2vlx4_x8p_sme",
+    "pack/kai_lhs_pack_bf16p2vlx2_f32_sme",
     "pack/kai_lhs_pack_f32p2vlx1_f32_sme",
     "pack/kai_lhs_pack_x16p2vlx2_x16_sme",
     "pack/kai_lhs_pack_x8p2vlx4_x8_sme",
@@ -322,6 +322,7 @@ SME2_KERNELS_ASM = [
     "matmul_clamp_fp32_bf16p_bf16p/kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa",
     "matmul_clamp_qai8_qai8_qsi8cxp/kai_matmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_sme2_dot",
     "matmul_clamp_qai8_qai8p_qsi8cxp/kai_matmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa",
+    "pack/kai_lhs_pack_bf16p2vlx2_f32_sme2",
 ]
 
 kai_c_library(

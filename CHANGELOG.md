@@ -8,6 +8,13 @@
 
 KleidiAI follows the [Semantic Versioning](https://semver.org/) specification for releases.
 
+## Upcoming Release
+
+- New SME2 micro-kernels
+  - Added `kai_lhs_pack_bf16p2vlx2_f32_sme2`, which is renaming of the `kai_lhs_pack_bf16p2vlx2_f32_sme` SME2 implementation.
+- Fixes
+  - Updated `kai_lhs_pack_bf16p2vlx2_f32_sme` to avoid SME2-only instructions.
+
 ## v1.26.0
 
 - New SME micro-kernels

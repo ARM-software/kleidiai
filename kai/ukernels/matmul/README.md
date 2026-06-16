@@ -119,7 +119,6 @@ now we don't change the name as that would break API.
 | ---------------------------------------------------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------|
 | `imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa`        | `imatmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme2_mopa`       | Missing bias `b`                                                    |
 | `imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa` | `imatmul_clamp_qai8_qai8p2vlx4_qsi8cxp2vlx4sb_2vlx2vl_sme2_mopa` | Misplaced scaling+bias `sb`                                         |
-| `lhs_pack_bf16p2vlx2_f32_sme`                                    | `lhs_pack_bf16p2vlx2_f32_sme2`                                   | Incorrectly indicating SME                                          |
 | `lhs_pack_f32p2vlx1_f32_sme`                                     | `lhs_pack_x32p2vlx1_x32_sme`                                     | Legacy naming                                                       |
 | `matmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa`         | `kai_matmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme2_mopa`    | Missing bias `b`                                                    |
 | `matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa`       | `matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2b_2vlx2vl_sme2_mopa`      | Also placed in incorrect directory (`fp32_...` should be `f32_...`) |
