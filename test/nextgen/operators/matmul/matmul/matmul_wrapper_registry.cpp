@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-#include "test/nextgen/operators/matmul/matmul/matmul_wrapper.hpp"
+#include "test/nextgen/operators/matmul/matmul/matmul_wrapper_registry.hpp"
 
 #include <array>
 #include <memory>

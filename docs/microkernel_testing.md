@@ -23,7 +23,7 @@ The test suite is built around a small set of components and entry points:
   subdirectories of `test/nextgen/operators/matmul`. The files here adapt the
   micro-kernel C API into the common test harness API. Micro-kernel factory
   declarations are listed in wrapper interface headers, e.g.,
-  `test/nextgen/operators/matmul/matmul/matmul_wrapper.hpp`.
+  `test/nextgen/operators/matmul/matmul/matmul_wrapper_registry.hpp`.
 - A test bench in `test/nextgen/operators/matmul/matmul_tb.cpp` that generates
   inputs, runs the implementation, and compares to a reference.
 
@@ -164,7 +164,7 @@ For a simple F16 example, with no LHS packing:
 As an example, the matmul factory can be implemented as follows:
 
 ```cpp
-// test/nextgen/operators/matmul/matmul/matmul_wrapper.cpp
+// test/nextgen/operators/matmul/matmul/matmul_wrapper_registry.cpp
 std::unique_ptr<KernelWrapper<MatMulShape>>
 create_matmul_clamp_f16_f16_f16p_neon() {
     return std::make_unique<MatMulFpWrapper>(
@@ -186,25 +186,25 @@ create_matmul_clamp_f16_f16_f16p_neon() {
 
 For this example, the matmul wrapper uses unpacked FP16 LHS, packed FP16 RHS
 with block size of $16 ⨯ 1$, and a plain FP16 destination format. Use existing
-factories in `matmul_wrapper.cpp` and packer wrappers as a model.
+factories in `matmul_wrapper_registry.cpp` and packer wrappers as a model.
 
 Make sure there is a `create_matmul_...` factory declaration added to
-`test/nextgen/operators/matmul/matmul/matmul_wrapper.hpp` for the new micro-kernel.
+`test/nextgen/operators/matmul/matmul/matmul_wrapper_registry.hpp` for the new micro-kernel.
 
 ### Step 2: Add packing micro-kernel wrapper factories
 
 For the F16 example, only RHS packing is needed. Add or reuse the RHS
 packer wrapper in:
 
-- `test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_wrapper.cpp`
+- `test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_wrapper_registry.cpp`
 
 If another micro-kernel also packs the LHS, add or reuse a packer wrapper in
-`test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_wrapper.cpp`.
+`test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_wrapper_registry.cpp`.
 
 Example skeleton for RHS packing:
 
 ```cpp
-// test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_wrapper.cpp
+// test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_wrapper_registry.cpp
 std::unique_ptr<KernelWrapper<MatShape>>
 create_matmul_rhs_pack_kxn_f16p16x1biasf16_f16_f16_neon() {
     return std::make_unique<MatMulPackRhsFpNtWrapper>(

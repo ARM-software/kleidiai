@@ -61,14 +61,14 @@ add_library(kleidiai_test_framework
     test/nextgen/format/block2d_row_format.cpp
     test/nextgen/quantization/asymm_linear_quantizer.cpp
     test/nextgen/quantization/symm_linear_quantizer.cpp
-    test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_wrapper.cpp
+    test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_wrapper_registry.cpp
     test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_dq_wrapper.cpp
     test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_fp_wrapper.cpp
     test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_ukerapi_wrapper.cpp
-    test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_wrapper.cpp
+    test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_wrapper_registry.cpp
     test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_quant_wrapper.cpp
     test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_fp_nt_wrapper.cpp
-    test/nextgen/operators/matmul/matmul/matmul_wrapper.cpp
+    test/nextgen/operators/matmul/matmul/matmul_wrapper_registry.cpp
     test/nextgen/operators/matmul/matmul/matmul_dq_wrapper.cpp
     test/nextgen/operators/matmul/matmul/matmul_fp_wrapper.cpp
     test/nextgen/operators/matmul/matmul/matmul_ukerapi_wrapper.cpp
