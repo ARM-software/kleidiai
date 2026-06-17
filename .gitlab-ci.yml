@@ -6,6 +6,8 @@
 # Summary:
 #   Run builds using different compilers, runs unit & example tests, performs static analysis,
 #   gathers multi-variant coverage and publishes HTML/JUnit/Cobertura reports.
+#   Stable jobs validate the top-level tree, while experimental jobs validate experimental/ops
+#   separately when that subtree changes or on release-style pipelines.
 # Purpose and scope:
 #   - Provide public-facing CI validating portability and feature coverage of the library.
 #   - Ensure all warnings are treated as errors across compilers.
@@ -78,6 +80,9 @@ variables:
   # Fixed seed for test reproducibility
   GLOBAL_TEST_SEED: 42
 
+  # Enable experimental ops in top-level CMake builds.
+  KLEIDIAI_BUILD_EXPERIMENTAL_OPS: "ON"
+
 default:
   image: registry.gitlab.arm.com/kleidi/kleidiai/image:latest
   tags:
@@ -104,6 +109,31 @@ default:
     # Run a job for protected tags (release and rc ones)
     - if: $CI_COMMIT_TAG && $CI_COMMIT_REF_PROTECTED == "true"
 
+# Base template: .stable-rules
+# Purpose: Run top-level project checks only when core project files change in MRs,
+#          and always on default branch/protected tags.
+.stable-rules:
+  timeout: 30m
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+      changes: &stable_changes
+        - "*"
+        - ".*"
+        - benchmark/**/*
+        - cmake/**/*
+        - docker/**/*
+        - docs/**/*
+        - examples/**/*
+        - kai/**/*
+        - LICENSES/**/*
+        - test/**/*
+        - third_party/**/*
+        - tools/**/*
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      variables:
+        CACHE_POLICY: pull-push
+    - if: $CI_COMMIT_TAG && $CI_COMMIT_REF_PROTECTED == "true"
+
 # Base template: .main-branch-verification-rules
 # Purpose: Common opt-out rules for jobs validating main branch state
 .main-branch-verification-rules:
@@ -117,6 +147,7 @@ default:
       $DISABLE_MAIN_BRANCH_VERIFICATION_JOBS != "true" &&
       $CI_PIPELINE_SOURCE == 'merge_request_event' &&
       $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'main'
+    changes: *stable_changes
   - if: >
       $DISABLE_MAIN_BRANCH_VERIFICATION_JOBS != "true" &&
       $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -140,7 +171,7 @@ workflow:
 # Purpose: Build library tests.
 build-clang:
   extends:
-    - .standard-rules
+    - .stable-rules
   stage: build
   script:
     # Enforce strict warning-as-error policy
@@ -156,7 +187,7 @@ build-clang:
 # Purpose: Build library tests.
 build-gcc:
   extends:
-    - .standard-rules
+    - .stable-rules
   stage: build
   script:
     # Enforce strict warning-as-error policy
@@ -172,7 +203,7 @@ build-gcc:
 # Purpose: Build library tests.
 build-gcc-bazel:
   extends:
-    - .standard-rules
+    - .stable-rules
   stage: build
   variables:
     # Cache Bazelisk files in local folder
@@ -197,7 +228,7 @@ build-gcc-bazel:
 # Purpose: Build library tests
 build-clang-bazel:
   extends:
-    - .standard-rules
+    - .stable-rules
   stage: build
   variables:
     # Cache Bazelisk files in local folder
@@ -224,7 +255,7 @@ build-clang-bazel:
 build-examples:
   stage: build
   extends:
-    - .standard-rules
+    - .stable-rules
   script:
     - mkdir -p build
     - |
@@ -254,7 +285,7 @@ build-examples:
 test-examples:
   stage: test
   extends:
-    - .standard-rules
+    - .stable-rules
   needs:
     - build-examples
   script:
@@ -276,7 +307,7 @@ test-examples:
 # Purpose: clang-tidy static analysis of library C/C++ sources.
 test-clang-tidy:
   extends:
-    - .standard-rules
+    - .stable-rules
   stage: test
   needs: []
   script:
@@ -288,7 +319,7 @@ test-clang-tidy:
 # Purpose: Verify that all micro-kernels are registered for benchmarking.
 test-verify-benchmark-registration:
   extends:
-    - .standard-rules
+    - .stable-rules
   stage: test
   needs: []
   rules:
@@ -299,7 +330,7 @@ test-verify-benchmark-registration:
 # Purpose: Verify that all micro-kernels are documented in docs/microkernel_tables.md.
 test-verify-microkernel-tables:
   extends:
-    - .standard-rules
+    - .stable-rules
   stage: test
   needs: []
   rules:
@@ -321,7 +352,7 @@ test-verify-microkernel-header-includes:
 # Purpose: Build current sources against tests/benchmarks from latest semver tag to detect API breakage.
 test-api-compat:
   extends:
-    - .standard-rules
+    - .stable-rules
   stage: test
   needs: []
   rules:
@@ -409,7 +440,7 @@ test-remote:
 # Purpose: Sharded unit tests for each build provider.
 test-linux-aarch64:
   extends:
-    - .standard-rules
+    - .stable-rules
   stage: test
   parallel:
     matrix:
@@ -454,7 +485,7 @@ test-linux-aarch64-sve256:
 # Disabled at the moment due to huge amount of SME/SME2 kernels
 .test-linux-aarch64-fvp-nosve:
   extends:
-    - .standard-rules
+    - .stable-rules
   stage: test
   parallel:
     matrix:
@@ -483,7 +514,7 @@ test-linux-aarch64-sve256:
 # Purpose: FVP v8-only model; expect Illegal instruction for examples; validates CPU feature detection path.
 test-linux-aarch64-v8only-fvp:
   extends:
-    - .standard-rules
+    - .stable-rules
   stage: test
   needs:
     - build-clang
@@ -536,7 +567,7 @@ test-linux-aarch64-v8only-fvp:
 # Purpose: FVP with only SME enabled (SME2 disabled); SME example runs.
 test-linux-aarch64-sme1only-fvp:
   extends:
-    - .standard-rules
+    - .stable-rules
   timeout: 1h
   stage: test
   needs:
@@ -578,7 +609,7 @@ test-linux-aarch64-sme1only-fvp:
 # Purpose: Execute all SME examples under FVP; consolidate output into single log.
 test-examples-sme-fvp:
   extends:
-    - .standard-rules
+    - .stable-rules
   stage: test
   needs:
     - build-examples
@@ -605,9 +636,226 @@ test-examples-sme-fvp:
     paths:
       - example.log
 
+# Base template: .experimental-ops-rules
+# Purpose: Run experimental/ops checks only when relevant in MRs, and always on default branch/protected tags.
+.experimental-ops-rules:
+  timeout: 1h
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+      changes:
+        - .gitlab-ci.yml
+        - experimental/ops/**/*
+      exists:
+        - experimental/ops/CMakeLists.txt
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      exists:
+        - experimental/ops/CMakeLists.txt
+      variables:
+        CACHE_POLICY: pull-push
+    - if: $CI_COMMIT_TAG && $CI_COMMIT_REF_PROTECTED == "true"
+      exists:
+        - experimental/ops/CMakeLists.txt
+
+# Base template: .build-experimental-ops-native
+# Purpose: Build the experimental/ops benchmark executable for native test jobs.
+.build-experimental-ops-native:
+  extends:
+    - .experimental-ops-rules
+  stage: build
+  script:
+    - cmake -G Ninja
+      --toolchain ${CI_PROJECT_DIR}/${EXPERIMENTAL_OPS_TOOLCHAIN_FILE}
+      -DCMAKE_C_COMPILER=${EXPERIMENTAL_OPS_C_COMPILER}
+      -DCMAKE_CXX_COMPILER=${EXPERIMENTAL_OPS_CXX_COMPILER}
+      -DKLEIDIAI_OPS_ENABLE_BUILD_BENCHMARK=ON
+      ${EXPERIMENTAL_OPS_CMAKE_EXTRA:-}
+      -S experimental/ops
+      -B ${CI_JOB_NAME_SLUG}
+    - cmake --build ${CI_JOB_NAME_SLUG} -j${PARALLEL_JOBS} --verbose
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - ${CI_JOB_NAME_SLUG}/benchmark/gemm
+
+# Base template: .test-experimental-ops-native
+# Purpose: Run the native GEMM, convolution, and depthwise test plans.
+.test-experimental-ops-native:
+  extends:
+    - .experimental-ops-rules
+  stage: test
+  timeout: 2h
+  variables:
+    RUNNER_SCRIPT_TIMEOUT: 2h
+  script:
+    - |
+      if [ -n "${EXPERIMENTAL_OPS_ASAN_OPTIONS:-}" ]; then
+        export ASAN_OPTIONS="${EXPERIMENTAL_OPS_ASAN_OPTIONS}"
+      fi
+    - echo "Running soak tests with ${PARALLEL_JOBS} threads"
+    - |
+      set -o pipefail
+      python3 experimental/ops/scripts/soak-full.py \
+        --test_plan_file experimental/ops/tests/configs/conv_tests.cfg \
+        --run_test_plan \
+        --conv \
+        --threads ${PARALLEL_JOBS} \
+        ${EXPERIMENTAL_OPS_SOAK_EXTRA_ARGS:-} \
+        --binary ${EXPERIMENTAL_OPS_BUILD_DIR}/benchmark/gemm 2>&1 \
+        | tee conv_tests.log
+    - |
+      set -o pipefail
+      python3 experimental/ops/scripts/soak-full.py \
+        --test_plan_file experimental/ops/tests/configs/depthwise_tests.cfg \
+        --run_test_plan \
+        --conv \
+        --kernel_filter depthwise \
+        --threads ${PARALLEL_JOBS} \
+        ${EXPERIMENTAL_OPS_SOAK_EXTRA_ARGS:-} \
+        --binary ${EXPERIMENTAL_OPS_BUILD_DIR}/benchmark/gemm 2>&1 \
+        | tee depthwise_tests.log
+    - |
+      set -o pipefail
+      python3 experimental/ops/scripts/soak-full.py \
+        --test_plan_file experimental/ops/tests/configs/gemm_tests.cfg \
+        --run_test_plan \
+        --threads ${PARALLEL_JOBS} \
+        ${EXPERIMENTAL_OPS_SOAK_EXTRA_ARGS:-} \
+        --binary ${EXPERIMENTAL_OPS_BUILD_DIR}/benchmark/gemm 2>&1 \
+        | tee gemm_tests.log
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - conv_tests.log
+      - depthwise_tests.log
+      - gemm_tests.log
+      - soak-*/
+
+build-experimental-ops-clang-linux-aarch64:
+  extends:
+    - .build-experimental-ops-native
+  variables:
+    EXPERIMENTAL_OPS_C_COMPILER: clang
+    EXPERIMENTAL_OPS_CXX_COMPILER: clang++
+    EXPERIMENTAL_OPS_TOOLCHAIN_FILE: experimental/ops/toolchains/native/native-linux-aarch64-gnu.cmake
+
+build-experimental-ops-clang-asan-linux-aarch64:
+  extends:
+    - .build-experimental-ops-native
+  variables:
+    EXPERIMENTAL_OPS_C_COMPILER: clang
+    EXPERIMENTAL_OPS_CXX_COMPILER: clang++
+    EXPERIMENTAL_OPS_TOOLCHAIN_FILE: experimental/ops/toolchains/native/native-linux-aarch64-gnu.cmake
+    EXPERIMENTAL_OPS_CMAKE_EXTRA: >-
+      -DCMAKE_BUILD_TYPE=Debug
+      -DKLEIDIAI_OPS_CCXX_FLAGS_INIT:STRING=-g;-fsanitize=address;-fno-omit-frame-pointer;-fno-common
+      -DKLEIDIAI_OPS_LINKER_FLAGS_INIT:STRING=-fsanitize=address
+
+build-experimental-ops-gcc-linux-aarch64:
+  extends:
+    - .build-experimental-ops-native
+  variables:
+    EXPERIMENTAL_OPS_C_COMPILER: gcc
+    EXPERIMENTAL_OPS_CXX_COMPILER: g++
+    EXPERIMENTAL_OPS_TOOLCHAIN_FILE: experimental/ops/toolchains/native/native-linux-aarch64-gnu.cmake
+
+build-experimental-ops-clang-macos:
+  extends:
+    - .build-experimental-ops-native
+  tags:
+    - apple_silicon
+  variables:
+    EXPERIMENTAL_OPS_C_COMPILER: clang
+    EXPERIMENTAL_OPS_CXX_COMPILER: clang++
+    EXPERIMENTAL_OPS_TOOLCHAIN_FILE: experimental/ops/toolchains/native/native-macos-aarch64-clang.cmake
+
+build-experimental-ops-clang-asan-macos:
+  extends:
+    - .build-experimental-ops-native
+  tags:
+    - apple_silicon
+  variables:
+    EXPERIMENTAL_OPS_C_COMPILER: clang
+    EXPERIMENTAL_OPS_CXX_COMPILER: clang++
+    EXPERIMENTAL_OPS_TOOLCHAIN_FILE: experimental/ops/toolchains/native/native-macos-aarch64-clang.cmake
+    EXPERIMENTAL_OPS_CMAKE_EXTRA: >-
+      -DCMAKE_BUILD_TYPE=Debug
+      -DKLEIDIAI_OPS_CCXX_FLAGS_INIT:STRING=-g;-fsanitize=address;-fno-omit-frame-pointer;-fno-common
+      -DKLEIDIAI_OPS_LINKER_FLAGS_INIT:STRING=-fsanitize=address
+
+build-experimental-ops-android-arm64-v8a:
+  extends:
+    - .experimental-ops-rules
+  stage: build
+  needs: []
+  variables:
+    # Android NDK is installed only in the amd64 CI image.
+    KUBERNETES_NODE_SELECTOR_ARCH: "kubernetes.io/arch=amd64"
+  script:
+    - cmake -G Ninja
+      --toolchain ${CI_PROJECT_DIR}/experimental/ops/toolchains/cross/cross-android-arm64-v8a.cmake
+      -DKLEIDIAI_OPS_ENABLE_BUILD_BENCHMARK=ON
+      -S experimental/ops
+      -B ${CI_JOB_NAME_SLUG}
+    - cmake --build ${CI_JOB_NAME_SLUG} -j${PARALLEL_JOBS} --verbose
+
+test-experimental-ops-clang-linux-aarch64:
+  extends:
+    - .test-experimental-ops-native
+  needs:
+    - build-experimental-ops-clang-linux-aarch64
+  variables:
+    EXPERIMENTAL_OPS_BUILD_DIR: build-experimental-ops-clang-linux-aarch64
+
+test-experimental-ops-clang-asan-linux-aarch64:
+  extends:
+    - .test-experimental-ops-native
+  needs:
+    - build-experimental-ops-clang-asan-linux-aarch64
+  variables:
+    EXPERIMENTAL_OPS_BUILD_DIR: build-experimental-ops-clang-asan-linux-aarch64
+    EXPERIMENTAL_OPS_ASAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+    EXPERIMENTAL_OPS_SOAK_EXTRA_ARGS: --case_limit 20
+    KUBERNETES_CPU_REQUEST: 8
+    KUBERNETES_CPU_LIMIT: 12
+    PARALLEL_JOBS: 4
+
+test-experimental-ops-gcc-linux-aarch64:
+  extends:
+    - .test-experimental-ops-native
+  needs:
+    - build-experimental-ops-gcc-linux-aarch64
+  variables:
+    EXPERIMENTAL_OPS_BUILD_DIR: build-experimental-ops-gcc-linux-aarch64
+    KUBERNETES_CPU_REQUEST: 32
+    KUBERNETES_CPU_LIMIT: 48
+    PARALLEL_JOBS: 32
+
+test-experimental-ops-clang-macos:
+  extends:
+    - .test-experimental-ops-native
+  needs:
+    - build-experimental-ops-clang-macos
+  tags:
+    - apple_silicon
+  variables:
+    EXPERIMENTAL_OPS_BUILD_DIR: build-experimental-ops-clang-macos
+
+test-experimental-ops-clang-asan-macos:
+  extends:
+    - .test-experimental-ops-native
+  needs:
+    - build-experimental-ops-clang-asan-macos
+  tags:
+    - apple_silicon
+  variables:
+    EXPERIMENTAL_OPS_BUILD_DIR: build-experimental-ops-clang-asan-macos
+    EXPERIMENTAL_OPS_ASAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+    EXPERIMENTAL_OPS_SOAK_EXTRA_ARGS: --case_limit 20
+
 # Purpose: Resolve and lock gcovr version for consistent coverage reporting.
 resolve-gcovr:
-  extends: .standard-rules
+  extends: .stable-rules
   stage: analyze
   needs: []
   variables:
@@ -702,7 +950,7 @@ resolve-gcovr:
 # Purpose: Instrumented build & diversified benchmark/test execution producing per-job JSON coverage trace.
 .coverage-base:
   extends:
-    - .standard-rules
+    - .stable-rules
   needs: []
   variables:
     GCOV_EXECUTABLE: ""
@@ -793,7 +1041,7 @@ coverage-clang:
 # Purpose: Aggregate all JSON coverage traces into Cobertura & HTML reports for publication.
 coverage:
   extends:
-    - .standard-rules
+    - .stable-rules
     - .gcovr-install
   stage: deploy
   needs:

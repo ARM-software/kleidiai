@@ -1,5 +1,5 @@
 #
-# SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2024, 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -30,4 +30,8 @@ indent_size = 2
 
 # Override settings.
 [LICENSES/*]
+indent_size = unset
+
+# Override settings.
+[experimental/ops/**/{CMakeLists.txt,*.cmake,*.cmake.in}]
 indent_size = unset

@@ -1,0 +1,155 @@
+//
+// SPDX-FileCopyrightText: Copyright 2021, 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+
+// clang-format off
+
+
+#include <cstddef>
+#include <cstdint>
+
+#if defined(__aarch64__)
+
+namespace kai {
+namespace ops {
+namespace depthwise {
+
+void sme_fp32_nhwc_generic_output9_mla_depthfirst_impl(
+  const float *const *const inptrs,
+  float *const *const outptrs,
+  const void *params,
+  const void *bias,
+  const unsigned int n_points,
+  const unsigned int n_channels,
+  const float activation_min,
+  const float activation_max
+)
+{
+  const float minmax_vals[2] = { activation_min, activation_max };
+
+  __asm__ __volatile__(
+    ".inst 0xd503477f  // SMSTART ZA\n"
+    "mov x9, #0\n"
+    "ptrue p1.b\n"
+    "whilelt p0.s, x9, %x[n_channels]\n"
+    "ld1rw { z2.s }, p1/Z, [%x[minmax_vals]]\n"
+    "ld1rw { z1.s }, p1/Z, [%x[minmax_vals], #4]\n"
+    "1:"  // Channel loop
+    "fmov z23.s, #0\n"
+    "cbz %x[bias], 2f\n"
+    "ld1w { z23.s }, p0/Z, [%x[bias], x9, LSL #2]\n"
+    "2:"  // Channel loop: Load bias: Done
+    "mov x25, %x[inptrs]\n"
+    "subs x24, %x[n_points], #0x1\n"
+    "mov z24.d, z23.d\n"
+    "mov z25.d, z23.d\n"
+    "ldp x23, x20, [x25], #0x10\n"
+    "mov z26.d, z23.d\n"
+    "mov z27.d, z23.d\n"
+    "ld1w { z0.s }, p1/Z, [%x[params]]\n"
+    "mov z28.d, z23.d\n"
+    "mov z29.d, z23.d\n"
+    "addvl %x[params], %x[params], #1\n"
+    "mov z30.d, z23.d\n"
+    "mov z31.d, z23.d\n"
+    "ldp x22, x21, [x25], #0x10\n"
+    "ld1w { z14.s }, p0/Z, [x23, x9, LSL #2]\n"
+    "ld1w { z15.s }, p0/Z, [x20, x9, LSL #2]\n"
+    "ldp x23, x20, [x25], #0x10\n"
+    "ld1w { z16.s }, p0/Z, [x22, x9, LSL #2]\n"
+    "ld1w { z17.s }, p0/Z, [x21, x9, LSL #2]\n"
+    "ldp x22, x21, [x25], #0x10\n"
+    "ld1w { z18.s }, p0/Z, [x23, x9, LSL #2]\n"
+    "ld1w { z19.s }, p0/Z, [x20, x9, LSL #2]\n"
+    "ldr x20, [x25], #0x8\n"
+    "ld1w { z20.s }, p0/Z, [x22, x9, LSL #2]\n"
+    "ld1w { z21.s }, p0/Z, [x21, x9, LSL #2]\n"
+    "ld1w { z22.s }, p0/Z, [x20, x9, LSL #2]\n"
+    "ble 4f\n"
+    "3:"  // Channel loop: Planar loop
+    "ldp x23, x20, [x25], #0x10\n"
+    "subs x24, x24, #0x1\n"
+    "fmla z23.s, p1/M, z14.s, z0.s\n"
+    "fmla z24.s, p1/M, z15.s, z0.s\n"
+    "fmla z25.s, p1/M, z16.s, z0.s\n"
+    "fmla z26.s, p1/M, z17.s, z0.s\n"
+    "fmla z27.s, p1/M, z18.s, z0.s\n"
+    "fmla z28.s, p1/M, z19.s, z0.s\n"
+    "ldp x22, x21, [x25], #0x10\n"
+    "fmla z29.s, p1/M, z20.s, z0.s\n"
+    "fmla z30.s, p1/M, z21.s, z0.s\n"
+    "ld1w { z14.s }, p0/Z, [x23, x9, LSL #2]\n"
+    "fmla z31.s, p1/M, z22.s, z0.s\n"
+    "ld1w { z0.s }, p1/Z, [%x[params]]\n"
+    "addvl %x[params], %x[params], #1\n"
+    "ld1w { z15.s }, p0/Z, [x20, x9, LSL #2]\n"
+    "ldp x23, x20, [x25], #0x10\n"
+    "ld1w { z16.s }, p0/Z, [x22, x9, LSL #2]\n"
+    "ld1w { z17.s }, p0/Z, [x21, x9, LSL #2]\n"
+    "ldp x22, x21, [x25], #0x10\n"
+    "ld1w { z18.s }, p0/Z, [x23, x9, LSL #2]\n"
+    "ld1w { z19.s }, p0/Z, [x20, x9, LSL #2]\n"
+    "ldr x20, [x25], #0x8\n"
+    "ld1w { z20.s }, p0/Z, [x22, x9, LSL #2]\n"
+    "ld1w { z21.s }, p0/Z, [x21, x9, LSL #2]\n"
+    "ld1w { z22.s }, p0/Z, [x20, x9, LSL #2]\n"
+    "bgt 3b\n"
+    "4:"  // Channel loop: Planar tail
+    "fmla z23.s, p1/M, z14.s, z0.s\n"
+    "fmla z24.s, p1/M, z15.s, z0.s\n"
+    "ldp x28, x27, [%x[outptrs], #0]\n"
+    "fmla z25.s, p1/M, z16.s, z0.s\n"
+    "fmla z26.s, p1/M, z17.s, z0.s\n"
+    "ldp x26, x25, [%x[outptrs], #0x10]\n"
+    "fmla z27.s, p1/M, z18.s, z0.s\n"
+    "fmla z28.s, p1/M, z19.s, z0.s\n"
+    "ldp x24, x23, [%x[outptrs], #0x20]\n"
+    "fmla z29.s, p1/M, z20.s, z0.s\n"
+    "fmla z30.s, p1/M, z21.s, z0.s\n"
+    "ldp x22, x21, [%x[outptrs], #0x30]\n"
+    "fmla z31.s, p1/M, z22.s, z0.s\n"
+    "fmax z23.s, p1/M, z23.s, z2.s\n"
+    "ldr x20, [%x[outptrs], #0x40]\n"
+    "fmax z24.s, p1/M, z24.s, z2.s\n"
+    "fmax z25.s, p1/M, z25.s, z2.s\n"
+    "fmax z26.s, p1/M, z26.s, z2.s\n"
+    "fmax z27.s, p1/M, z27.s, z2.s\n"
+    "fmax z28.s, p1/M, z28.s, z2.s\n"
+    "fmax z29.s, p1/M, z29.s, z2.s\n"
+    "fmax z30.s, p1/M, z30.s, z2.s\n"
+    "fmax z31.s, p1/M, z31.s, z2.s\n"
+    "fmin z23.s, p1/M, z23.s, z1.s\n"
+    "fmin z24.s, p1/M, z24.s, z1.s\n"
+    "fmin z25.s, p1/M, z25.s, z1.s\n"
+    "fmin z26.s, p1/M, z26.s, z1.s\n"
+    "fmin z27.s, p1/M, z27.s, z1.s\n"
+    "fmin z28.s, p1/M, z28.s, z1.s\n"
+    "fmin z29.s, p1/M, z29.s, z1.s\n"
+    "fmin z30.s, p1/M, z30.s, z1.s\n"
+    "fmin z31.s, p1/M, z31.s, z1.s\n"
+    "st1w { z23.s }, p0, [x28, x9, LSL #2]\n"
+    "st1w { z24.s }, p0, [x27, x9, LSL #2]\n"
+    "st1w { z25.s }, p0, [x26, x9, LSL #2]\n"
+    "st1w { z26.s }, p0, [x25, x9, LSL #2]\n"
+    "st1w { z27.s }, p0, [x24, x9, LSL #2]\n"
+    "st1w { z28.s }, p0, [x23, x9, LSL #2]\n"
+    "st1w { z29.s }, p0, [x22, x9, LSL #2]\n"
+    "st1w { z30.s }, p0, [x21, x9, LSL #2]\n"
+    "st1w { z31.s }, p0, [x20, x9, LSL #2]\n"
+    "incw x9\n"
+    "whilelt p0.s, x9, %x[n_channels]\n"
+    "b.ne 1b\n"
+    ".inst 0xd503467f  // SMSTOP\n"
+    : [params] "+&r" (params)
+    : [bias] "r" (bias), [inptrs] "r" (inptrs), [minmax_vals] "r" (minmax_vals), [n_channels] "r" ((uint64_t) n_channels), [n_points] "r" ((uint64_t) n_points), [outptrs] "r" (outptrs)
+    : "cc", "memory", "p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9", "p10", "p11", "p12", "p13", "p14", "p15", "x9", "x20", "x21", "x22", "x23", "x24", "x25", "x26", "x27", "x28", "z0", "z1", "z2", "z3", "z4", "z5", "z6", "z7", "z8", "z9", "z10", "z11", "z12", "z13", "z14", "z15", "z16", "z17", "z18", "z19", "z20", "z21", "z22", "z23", "z24", "z25", "z26", "z27", "z28", "z29", "z30", "z31"
+  );
+}
+
+}  // namespace depthwise
+}  // namespace ops
+}  // namespace kai
+
+#endif  // defined(__aarch64__)

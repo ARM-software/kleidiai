@@ -204,6 +204,10 @@ Please refer to [examples/matmul_clamp_f32_qsi8d32p_qsi4c32p](/examples/matmul_c
 
 Note that dynamically generated source archives can result in changed hash digests. If you want something unchanging, then use released source archives. These are listed under _Packages_ on the [official release page](https://gitlab.arm.com/kleidi/kleidiai/-/releases), or have a hash digest (e.g.,`SHA256`) on GitHub.
 
+## Experimental code
+
+Disclaimer: the `experimental` directory holds experimental features. Do not expect production quality. Note that API might change at any point in time for any file in `experimental`.
+
 ## License
 
 KleidiAI is distributed under the software licenses in LICENSES directory.
