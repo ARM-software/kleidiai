@@ -675,7 +675,6 @@ test-examples-sme-fvp:
       if [ -n "${EXPERIMENTAL_OPS_ASAN_OPTIONS:-}" ]; then
         export ASAN_OPTIONS="${EXPERIMENTAL_OPS_ASAN_OPTIONS}"
       fi
-    - chmod +x ${EXPERIMENTAL_OPS_BUILD_DIR}/benchmark/gemm
     - echo "Running soak tests with ${PARALLEL_JOBS} threads"
     - |
       set -o pipefail

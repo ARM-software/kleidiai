@@ -7,17 +7,6 @@
 default_install_hook_types: [ pre-commit, pre-push ]
 fail_fast: false
 repos:
-  # Requires pip install cmake-format==0.6.13
-  - repo: local
-    hooks:
-      - id: cmake-format
-        name: cmake-format
-        entry: cmake-format
-        language: python
-        additional_dependencies: [ "cmake-format==0.6.13" ]
-        args: ["--config-files", "./experimental/ops/.cmake-format.py", "--in-place"]
-        files: '^experimental/ops/.*(?:CMakeLists\.txt|\.cmake(?:\.in)?)$'
-        stages: [ pre-commit ]
   - repo: https://github.com/fsfe/reuse-tool
     rev: v5.0.2
     hooks:
