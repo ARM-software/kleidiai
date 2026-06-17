@@ -10,6 +10,8 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+## v1.27.0
+
 - New SME micro-kernels:
   - Matrix multiplication (MxN) for BF16 inputs with F32 output.
 - New SME2 micro-kernels
