@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -21,10 +21,12 @@ namespace kai::test {
 /// be requested using the familiar @ref Buffer::data() method and interacted with using @ref
 /// kai::test::read_array<T>() and @ref kai::test::write_array<T>() utilities.
 ///
-/// Buffer comes with protection mechanisms defined by @ref BufferProtectionPolicy. These are enabled by setting the
-/// KAI_TEST_BUFFER_POLICY environment variable, for example:
+/// Buffer comes with protection mechanisms defined by @ref BufferProtectionPolicy. When guard-page protection is
+/// supported, overflow protection is enabled by default. This can be overridden by setting the KAI_TEST_BUFFER_POLICY
+/// environment variable, for example:
 ///     KAI_TEST_BUFFER_POLICY=PROTECT_UNDERFLOW to enable @ref BufferProtectionPolicy::ProtectUnderflow.
 ///     KAI_TEST_BUFFER_POLICY=PROTECT_OVERFLOW to enable @ref BufferProtectionPolicy::ProtectOverflow.
+///     KAI_TEST_BUFFER_POLICY=NONE to disable protection.
 ///
 class Buffer {
     // Handle to the underlying memory resource and its deleter
@@ -79,11 +81,25 @@ public:
         return m_user_buffer_size;
     }
 
+    [[nodiscard]] bool has_no_protection() const {
+        return m_protection_policy == BufferProtectionPolicy::None;
+    }
+
+    [[nodiscard]] bool protects_underflow() const {
+        return m_protection_policy == BufferProtectionPolicy::ProtectUnderflow;
+    }
+
+    [[nodiscard]] bool protects_overflow() const {
+        return m_protection_policy == BufferProtectionPolicy::ProtectOverflow;
+    }
+
     static constexpr const char* buffer_policy_env_name = "KAI_TEST_BUFFER_POLICY";
 
 private:
     /// Buffer can be protected with one of the following protection policies:
-    ///   - @ref BufferProtectionPolicy::None              No protection mechanisms are enabled.
+    ///   - @ref BufferProtectionPolicy::None              No protection mechanisms are enabled. This is selected with
+    ///                                                    KAI_TEST_BUFFER_POLICY=NONE, or by default when guard-page
+    ///                                                    protection is not supported.
     ///   - @ref BufferProtectionPolicy::ProtectUnderflow  Memory equal to the size of the user buffer rounded to the
     ///                                                    nearest whole page plus adjacent guard pages is allocated,
     ///                                                    and the user buffer is aligned to the end of the head guard

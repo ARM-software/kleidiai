@@ -19,7 +19,7 @@ namespace kai::test {
 ///
 /// @param[in] src The data buffer.
 /// @param[in] len The number of values.
-/// @param[in] keep_ratio The ratio of values that are unaffected by clamping.
+/// @param[in] keep_ratio The ratio of the input dynamic range to keep unclamped.
 ///
 /// @return The minimum value and the maximum value.
 template <typename T>
@@ -30,7 +30,7 @@ std::tuple<T, T> find_clamp_range(const void* src, size_t len, std::optional<flo
 /// @param[in] type Array element data type.
 /// @param[in] src The data buffer.
 /// @param[in] len The number of values.
-/// @param[in] keep_ratio The ratio of values that are unaffected by clamping.
+/// @param[in] keep_ratio The ratio of the input dynamic range to keep unclamped.
 ///
 /// @return The minimum value and the maximum value.
 std::tuple<float, float> find_clamp_range(DataType type, const void* src, size_t len, std::optional<float> keep_ratio);

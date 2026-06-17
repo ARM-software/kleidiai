@@ -58,7 +58,7 @@ std::tuple<float, float> find_clamp_range(DataType type, const void* src, size_t
     auto max = std::numeric_limits<float>::lowest();
     auto min = std::numeric_limits<float>::max();
 
-    KAI_ASSUME_ALWAYS(keep_ratio.value() > 0.0F);  // Avoid total clamping.
+    KAI_ASSUME_ALWAYS(keep_ratio.value() > 0.0F);  // Require a positive kept range.
     for (size_t i = 0; i < len; i += 1) {
         const float value = read_array(type, src, i);
         max = std::max(value, max);

@@ -6,6 +6,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -23,6 +24,12 @@
 #include "kai/ukernels/matmul/imatmul_clamp_qai8_qai8p_qsi8cxp/kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxp2vlx4sb_2vlx2vl_sme_mopa.h"
 #include "kai/ukernels/matmul/imatmul_clamp_qai8_qai8p_qsi8cxp/kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/imatmul_clamp_qai8_qai8p_qsi8cxp/kai_imatmul_clamp_qai8_qai8p_qsi8cxp_interface.h"
+#include "kai/ukernels/matmul/kai_matmul.h"
+#include "kai/ukernels/matmul/kai_matmul_pack_lhs.h"
+#include "kai/ukernels/matmul/kai_matmul_pack_lhs_types.h"
+#include "kai/ukernels/matmul/kai_matmul_pack_rhs.h"
+#include "kai/ukernels/matmul/kai_matmul_pack_rhs_types.h"
+#include "kai/ukernels/matmul/kai_matmul_types.h"
 #include "kai/ukernels/matmul/matmul_clamp_qai8_qai8_qsi8cxp/kai_matmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_sme2_dot.h"
 #include "kai/ukernels/matmul/matmul_clamp_qai8_qai8_qsi8cxp/kai_matmul_clamp_qai8_qai8_qsi8cxp_interface.h"
 #include "kai/ukernels/matmul/matmul_clamp_qai8_qai8p_qsi8cxp/kai_matmul_clamp_qai8_qai8p2vlx4_qsi8cxp2vlx4sb_2vlx2vl_sme_mopa.h"
@@ -33,8 +40,10 @@
 #include "kai/ukernels/matmul/pack/kai_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme.h"
 #include "test/common/abi_checker.hpp"
+#include "test/common/assert.hpp"
 #include "test/common/buffer.hpp"
 #include "test/common/cpu_info.hpp"
+#include "test/common/data_type.hpp"
 #include "test/common/matmul_test_common.hpp"
 #include "test/common/matrix_portion.hpp"
 #include "test/common/memory.hpp"
@@ -138,6 +147,277 @@ struct MatMulIndirectKernel {
         void* dst, size_t dst_stride_row, const kai_matmul_requantize32_params* params)>
         imatmul;
 };
+
+const LhsPackKernel& get_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme() {
+    static const kai_matmul_pack_lhs_uker_config config{};
+    static const kai_matmul_pack_lhs_uker_api api = kai_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme();
+
+    static LhsPackKernel uker;
+
+    uker.get_m_step = []([[maybe_unused]] size_t mr) -> size_t {
+        const kai_matmul_pack_lhs_uker_dim_args step = api.get_step(&config);
+        return step.m;
+    };
+
+    uker.get_lhs_offset = [](size_t m_idx, size_t lhs_stride_row) -> size_t {
+        const kai_matmul_pack_lhs_uker_lhs_dim_args index = {m_idx, 0};
+        const kai_matmul_pack_lhs_uker_lhs_stride_args stride = {lhs_stride_row};
+        return api.get_lhs_offset(&config, &index, &stride);
+    };
+
+    uker.get_packed_lhs_offset = [](size_t m_idx, size_t k, [[maybe_unused]] size_t mr, [[maybe_unused]] size_t kr,
+                                    [[maybe_unused]] size_t sr) -> size_t {
+        const kai_matmul_pack_lhs_uker_lhs_packed_dim_args shape = {1, k};
+        const kai_matmul_pack_lhs_uker_lhs_packed_stride_args stride = api.get_lhs_packed_stride(&config, &shape);
+        const kai_matmul_pack_lhs_uker_lhs_packed_dim_args index = {m_idx, 0};
+        return api.get_lhs_packed_offset(&config, &index, &stride);
+    };
+
+    uker.get_packed_lhs_size = [](size_t m, size_t k, [[maybe_unused]] size_t mr, [[maybe_unused]] size_t kr,
+                                  [[maybe_unused]] size_t sr) -> size_t {
+        const kai_matmul_pack_lhs_uker_lhs_packed_dim_args shape = {m, k};
+        const kai_matmul_pack_lhs_uker_lhs_packed_stride_args stride = api.get_lhs_packed_stride(&config, &shape);
+        return api.get_lhs_packed_size(&config, &shape, &stride);
+    };
+
+    uker.pack = [](size_t m, size_t k, [[maybe_unused]] size_t mr, [[maybe_unused]] size_t kr,
+                   [[maybe_unused]] size_t sr, [[maybe_unused]] size_t m_idx_start, const void* lhs,
+                   size_t lhs_stride_row, void* lhs_packed) -> void {
+        KAI_TEST_ASSERT(m_idx_start == 0);
+
+        const kai_matmul_pack_lhs_uker_lhs_packed_dim_args lhs_packed_shape = {m, k};
+
+        kai_matmul_pack_lhs_uker_args args{};
+
+        args.flags = 0;
+        args.shape = {m, k};
+        args.operand.lhs.ptr = lhs;
+        args.operand.lhs.stride = {lhs_stride_row};
+        args.operand.lhs_packed.ptr = lhs_packed;
+        args.operand.lhs_packed.stride = api.get_lhs_packed_stride(&config, &lhs_packed_shape);
+
+        api.run(&config, &args);
+    };
+
+    return uker;
+}
+
+const RhsPackKernel& get_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme() {
+    static const kai_matmul_pack_rhs_uker_config config{};
+    static const kai_matmul_pack_rhs_uker_api api = kai_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme();
+
+    static RhsPackKernel uker;
+
+    uker.get_n_step = []() -> size_t {
+        const kai_matmul_pack_rhs_uker_dim_args step = api.get_step(&config);
+        return step.n;
+    };
+
+    uker.get_rhs_offset = [](size_t n_idx) -> size_t {
+        const kai_matmul_pack_rhs_uker_rhs_dim_args shape = {0, 0};
+        const kai_matmul_pack_rhs_uker_rhs_stride_args stride = api.get_rhs_stride(&config, &shape);
+        const kai_matmul_pack_rhs_uker_rhs_dim_args index = {n_idx, 0};
+        return api.get_rhs_offset(&config, &index, &stride);
+    };
+
+    uker.get_bias_offset = [](size_t n_idx) -> size_t {
+        const kai_matmul_pack_rhs_uker_bias_n_dim_args index = {n_idx};
+        return api.get_bias_n_offset(&config, &index);
+    };
+
+    uker.get_scale_offset = [](size_t n_idx) -> size_t {
+        const kai_matmul_pack_rhs_uker_scale_n_dim_args index = {n_idx};
+        return api.get_scale_n_offset(&config, &index);
+    };
+
+    uker.get_packed_rhs_offset = [](size_t n_idx, size_t k) -> size_t {
+        const kai_matmul_pack_rhs_uker_rhs_packed_dim_args shape = {1, k};
+        const kai_matmul_pack_rhs_uker_rhs_packed_stride_args stride = api.get_rhs_packed_stride(&config, &shape);
+        const kai_matmul_pack_rhs_uker_rhs_packed_dim_args index = {n_idx, 0};
+        return api.get_rhs_packed_offset(&config, &index, &stride);
+    };
+
+    uker.get_packed_rhs_size = [](size_t n, size_t k) -> size_t {
+        const kai_matmul_pack_rhs_uker_rhs_packed_dim_args shape = {n, k};
+        const kai_matmul_pack_rhs_uker_rhs_packed_stride_args stride = api.get_rhs_packed_stride(&config, &shape);
+        return api.get_rhs_packed_size(&config, &shape, &stride);
+    };
+
+    uker.pack = [](size_t num_groups, size_t n, size_t k, [[maybe_unused]] size_t nr, [[maybe_unused]] size_t kr,
+                   [[maybe_unused]] size_t sr, size_t rhs_stride_row, const void* rhs, const void* bias,
+                   const void* scale, void* rhs_packed, size_t extra_bytes,
+                   const struct kai_rhs_pack_qsi8cx_params* params) -> void {
+        KAI_TEST_ASSERT(num_groups == 1);
+        KAI_TEST_ASSERT(extra_bytes == 0);
+
+        const int32_t neg_lhs_zp = -params->lhs_zero_point;
+
+        const kai_matmul_pack_rhs_uker_rhs_packed_dim_args rhs_packed_shape = {n, k};
+
+        kai_matmul_pack_rhs_uker_args args{};
+
+        args.flags = 0;
+        args.shape = {n, k};
+        args.operand.rhs.ptr = rhs;
+        args.operand.rhs.stride = {0, rhs_stride_row};
+        args.operand.bias_n.ptr = bias;
+        args.operand.k_sum_scale_global.ptr = &neg_lhs_zp;
+        args.operand.scale_n.ptr = scale;
+        args.operand.scale_global.ptr = &params->scale_multiplier;
+        args.operand.rhs_packed.ptr = rhs_packed;
+        args.operand.rhs_packed.stride = api.get_rhs_packed_stride(&config, &rhs_packed_shape);
+
+        api.run(&config, &args);
+    };
+
+    return uker;
+}
+
+const MatMulKernel& get_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx8vs_sme2_mopa() {
+    static const kai_matmul_uker_config config{};
+    static const kai_matmul_uker_api api = kai_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx8vs_sme2_mopa();
+
+    static MatMulKernel uker{};
+
+    uker.get_m_step = []() -> size_t {
+        const kai_matmul_uker_dim_args step = api.get_step(&config);
+        return step.m;
+    };
+
+    uker.get_n_step = []() -> size_t {
+        const kai_matmul_uker_dim_args step = api.get_step(&config);
+        return step.n;
+    };
+
+    uker.get_mr = []() -> size_t { return 4 * get_sme_vector_scale(); };
+    uker.get_nr = []() -> size_t { return 4 * get_sme_vector_scale(); };
+    uker.get_kr = []() -> size_t { return 4; };
+    uker.get_sr = []() -> size_t { return 1; };
+
+    uker.get_packed_lhs_offset = [](size_t m_idx, size_t k) -> size_t {
+        const kai_matmul_uker_lhs_dim_args shape = {1, k};
+        const kai_matmul_uker_lhs_stride_args stride = api.get_lhs_stride(&config, &shape);
+        const kai_matmul_uker_lhs_dim_args index = {m_idx, 0};
+        return api.get_lhs_offset(&config, &index, &stride);
+    };
+
+    uker.get_packed_rhs_offset = [](size_t n_idx, size_t k) -> size_t {
+        const kai_matmul_uker_rhs_dim_args shape = {1, k};
+        const kai_matmul_uker_rhs_stride_args stride = api.get_rhs_stride(&config, &shape);
+        const kai_matmul_uker_rhs_dim_args index = {n_idx, 0};
+        return api.get_rhs_offset(&config, &index, &stride);
+    };
+
+    uker.get_dst_offset = [](size_t m_idx, size_t n_idx, size_t dst_stride_row) -> size_t {
+        const kai_matmul_uker_dst_dim_args index = {m_idx, n_idx};
+        const kai_matmul_uker_dst_stride_args stride = {dst_stride_row};
+        return api.get_dst_offset(&config, &index, &stride);
+    };
+
+    uker.get_dst_size = [](size_t m, size_t n) -> size_t {
+        const kai_matmul_uker_dst_dim_args shape = {m, n};
+        const kai_matmul_uker_dst_stride_args stride = api.get_dst_stride(&config, &shape);
+        return api.get_dst_size(&config, &shape, &stride);
+    };
+
+    uker.matmul = [](size_t m, size_t n, size_t k, const void* lhs_packed, const void* rhs_packed, void* dst,
+                     size_t dst_stride_row, [[maybe_unused]] size_t dst_stride_col,
+                     const struct kai_matmul_requantize32_params* params) -> void {
+        const kai_matmul_uker_lhs_dim_args lhs_shape = {m, k};
+        const kai_matmul_uker_rhs_dim_args rhs_shape = {n, k};
+
+        kai_matmul_uker_args args{};
+
+        args.flags = KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP;
+        args.shape = {m, n, k};
+        args.operand.lhs.ptr = lhs_packed;
+        args.operand.lhs.stride = api.get_lhs_stride(&config, &lhs_shape);
+        args.operand.rhs.ptr = rhs_packed;
+        args.operand.rhs.stride = api.get_rhs_stride(&config, &rhs_shape);
+        args.operand.bias.scale_bias_global.ptr = &params->output_zero_point;
+        args.operand.dst.ptr = dst;
+        args.operand.dst.stride = {dst_stride_row};
+        args.activation.clamp.min_ptr = &params->min_value;
+        args.activation.clamp.max_ptr = &params->max_value;
+
+        api.run(&config, &args);
+    };
+
+    return uker;
+}
+
+const MatMulKernel& get_matmul_clamp_qai8_qai8_qsi8cxp4vsx4bi32sf32_1x32vs_sme2_dot() {
+    static const kai_matmul_uker_config config{};
+    static const kai_matmul_uker_api api = kai_matmul_clamp_qai8_qai8_qsi8cxp4vsx4bi32sf32_1x32vs_sme2_dot();
+
+    static MatMulKernel uker{};
+
+    uker.get_m_step = []() -> size_t {
+        const kai_matmul_uker_dim_args step = api.get_step(&config);
+        return step.m;
+    };
+
+    uker.get_n_step = []() -> size_t {
+        const kai_matmul_uker_dim_args step = api.get_step(&config);
+        return step.n;
+    };
+
+    uker.get_mr = []() -> size_t { return 1; };
+    uker.get_nr = []() -> size_t { return 4 * get_sme_vector_scale(); };
+    uker.get_kr = []() -> size_t { return 4; };
+    uker.get_sr = []() -> size_t { return 1; };
+
+    uker.get_packed_lhs_offset = [](size_t m_idx, size_t k) -> size_t {
+        const kai_matmul_uker_lhs_dim_args shape = {1, k};
+        const kai_matmul_uker_lhs_stride_args stride = api.get_lhs_stride(&config, &shape);
+        const kai_matmul_uker_lhs_dim_args index = {m_idx, 0};
+        return api.get_lhs_offset(&config, &index, &stride);
+    };
+
+    uker.get_packed_rhs_offset = [](size_t n_idx, size_t k) -> size_t {
+        const kai_matmul_uker_rhs_dim_args shape = {1, k};
+        const kai_matmul_uker_rhs_stride_args stride = api.get_rhs_stride(&config, &shape);
+        const kai_matmul_uker_rhs_dim_args index = {n_idx, 0};
+        return api.get_rhs_offset(&config, &index, &stride);
+    };
+
+    uker.get_dst_offset = [](size_t m_idx, size_t n_idx, size_t dst_stride_row) -> size_t {
+        const kai_matmul_uker_dst_dim_args index = {m_idx, n_idx};
+        const kai_matmul_uker_dst_stride_args stride = {dst_stride_row};
+        return api.get_dst_offset(&config, &index, &stride);
+    };
+
+    uker.get_dst_size = [](size_t m, size_t n) -> size_t {
+        const kai_matmul_uker_dst_dim_args shape = {m, n};
+        const kai_matmul_uker_dst_stride_args stride = api.get_dst_stride(&config, &shape);
+        return api.get_dst_size(&config, &shape, &stride);
+    };
+
+    uker.matmul = [](size_t m, size_t n, size_t k, const void* lhs_packed, const void* rhs_packed, void* dst,
+                     size_t dst_stride_row, [[maybe_unused]] size_t dst_stride_col,
+                     const struct kai_matmul_requantize32_params* params) -> void {
+        const kai_matmul_uker_lhs_dim_args lhs_shape = {m, k};
+        const kai_matmul_uker_rhs_dim_args rhs_shape = {n, k};
+
+        kai_matmul_uker_args args{};
+
+        args.flags = KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP;
+        args.shape = {m, n, k};
+        args.operand.lhs.ptr = lhs_packed;
+        args.operand.lhs.stride = api.get_lhs_stride(&config, &lhs_shape);
+        args.operand.rhs.ptr = rhs_packed;
+        args.operand.rhs.stride = api.get_rhs_stride(&config, &rhs_shape);
+        args.operand.bias.scale_bias_global.ptr = &params->output_zero_point;
+        args.operand.dst.ptr = dst;
+        args.operand.dst.stride = {dst_stride_row};
+        args.activation.clamp.min_ptr = &params->min_value;
+        args.activation.clamp.max_ptr = &params->max_value;
+
+        api.run(&config, &args);
+    };
+
+    return uker;
+}
 
 /// Make sure that interface matches for qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa
 const kai_matmul_clamp_qai8_qai8p_qsi8cxpsb_ukernel&
@@ -289,7 +569,7 @@ struct IndirectMatMulVariant {
 };
 
 const auto& get_gemm_variants() {
-    static std::array<MatMulVariant, 2> variants;
+    static std::array<MatMulVariant, 3> variants;
     static const kai_matmul_clamp_qai8_qai8p_qsi8cxpsb_ukernel& ukernel_sme2 =
         get_matmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa_interface();
     static const kai_matmul_clamp_qai8_qai8p_qsi8cxpsb_ukernel& ukernel_sme =
@@ -338,6 +618,18 @@ const auto& get_gemm_variants() {
     variants[1].matmul.get_dst_offset = ukernel_sme2.get_dst_offset;
     variants[1].matmul.get_dst_size = ukernel_sme2.get_dst_size;
     variants[1].matmul.matmul = ukernel_sme2.run_matmul;
+
+    variants[2].name = "matmul_clamp_qai8_qai8p4vsx4_qai8p4vsx4bi32sf32_8vsx8vs_sme2_mopa";
+    variants[2].acc_pack.m = 4 * get_sme_vector_scale();
+    variants[2].acc_pack.n = 4 * get_sme_vector_scale();
+    variants[2].acc_pack.k = 4;
+    variants[2].acc_step.m = 4 * get_sme_vector_scale();
+    variants[2].acc_step.n = 4 * get_sme_vector_scale();
+    variants[2].acc_step.k = 4;
+    variants[2].is_supported = cpu_has_sme2;
+    variants[2].lhs_pack = get_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme();
+    variants[2].rhs_pack = get_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme();
+    variants[2].matmul = get_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx8vs_sme2_mopa();
 
     return variants;
 }
@@ -411,7 +703,7 @@ const auto& get_indirect_gemm_variants() {
 }
 
 const auto& get_gemv_variants() {
-    static std::array<MatMulVariant, 1> variants;
+    static std::array<MatMulVariant, 2> variants;
     static const kai_matmul_clamp_qai8_qai8p_qsi8cxp_ukernel& ukernel =
         get_matmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_sme2_dot_interface();
 
@@ -436,6 +728,18 @@ const auto& get_gemv_variants() {
     variants[0].matmul.get_dst_offset = ukernel.get_dst_offset;
     variants[0].matmul.get_dst_size = ukernel.get_dst_size;
     variants[0].matmul.matmul = ukernel.run_matmul;
+
+    variants[1].name = "matmul_clamp_qai8_qai8_qsi8cxp4vsx4bi32sf32_1x32vs_sme2_dot";
+    variants[1].acc_pack.m = 1;
+    variants[1].acc_pack.n = 4 * get_sme_vector_scale();
+    variants[1].acc_pack.k = 4;
+    variants[1].acc_step.m = 1;
+    variants[1].acc_step.n = 4 * get_sme_vector_scale();
+    variants[1].acc_step.k = 4;
+    variants[1].is_supported = cpu_has_sme2;
+    variants[1].lhs_pack = std::nullopt;
+    variants[1].rhs_pack = get_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme();
+    variants[1].matmul = get_matmul_clamp_qai8_qai8_qsi8cxp4vsx4bi32sf32_1x32vs_sme2_dot();
 
     return variants;
 }
@@ -475,6 +779,32 @@ struct TestReference {
 };
 
 constexpr int8_t padding_value = 0;
+
+// The bias values are generated independently from the LHS/RHS data. Some seeds
+// can therefore produce qsi32 bias values close to int32_t limits, leaving no
+// accumulator headroom for the RHS correction and raw dot-product accumulation.
+// Clamp the generated test bias to keep the randomized stimuli within the
+// accumulator domain expected by this test.
+void clamp_generated_bias_to_int32_headroom(Buffer& bias_qsi32, size_t k, size_t n) {
+    constexpr auto int32_min = static_cast<int64_t>(std::numeric_limits<int32_t>::min());
+    constexpr auto int32_max = static_cast<int64_t>(std::numeric_limits<int32_t>::max());
+
+    // Reserve headroom for raw dot-product accumulation and zero-point correction:
+    // zero_point * sum(rhs), where abs(zero_point) <= 128 and each abs(rhs) <= 128.
+    // The headroom is scaled by `k` since the bias is added after accumulating
+    // over `k` elements.
+    constexpr int64_t max_s8_prod_magnitude = 128 * 128;
+    constexpr int64_t max_raw_dot_and_rhs_correction_headroom = 2 * max_s8_prod_magnitude;
+    const int64_t headroom = static_cast<int64_t>(k) * max_raw_dot_and_rhs_correction_headroom;
+    KAI_ASSERT_ALWAYS(headroom <= int32_max);
+
+    const int32_t min_bias = static_cast<int32_t>(int32_min + headroom);
+    const int32_t max_bias = static_cast<int32_t>(int32_max - headroom);
+    for (size_t n_i = 0; n_i < n; ++n_i) {
+        const auto bias = read_array<int32_t>(bias_qsi32.data(), n_i);
+        write_array<int32_t>(bias_qsi32.data(), n_i, std::clamp(bias, min_bias, max_bias));
+    }
+}
 
 // Functionality for hashing generated test data.
 // This is particularly useful for portion testing
@@ -598,6 +928,7 @@ const TestReference& get_test_reference(const TestDataId& test_data_id) {
     // scale using RHS scales. This will scale each bias value indiviually
     auto bias_qsi32 =
         quantize_symmetric_per_block<float, int32_t, float>(bias_f32.data(), bias_scales.data(), shape.n, 1, 1);
+    clamp_generated_bias_to_int32_headroom(bias_qsi32, shape.k, shape.n);
 
     // Runs the reference implementation of matmul to produce floating-point result.
     const void* const* lhs_iptr = reinterpret_cast<const void* const*>(lhs_qai8_indirect.data());
@@ -894,9 +1225,9 @@ TEST_P(MatMulQuantizedTest, EndToEnd) {
         output_portion.compute_portion(shape.m, shape.n, variant.acc_step.m, variant.acc_step.n);
 
     auto test_kernel = [pack_portion, matmul_portion](
-                           MatMulShape shape, const MatMulVariant& variant, float clamp_ratio, float scale_ratio,
+                           MatMulShape shape, const MatMulVariant& variant, float clamp_keep_ratio, float scale_ratio,
                            bool saturated) -> void {
-        const TestDataId test_data_id{shape, variant.acc_pack, shape.k, false, clamp_ratio, scale_ratio};
+        const TestDataId test_data_id{shape, variant.acc_pack, shape.k, false, clamp_keep_ratio, scale_ratio};
         const TestReference& reference = get_test_reference(test_data_id);
 
         if (variant.lhs_pack.has_value()) {
@@ -1110,7 +1441,10 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0.75, 0.75,    1,    1), // Bottom-right corner.
             // clang-format on
         }),
-        testing::ValuesIn(std::initializer_list<float>{0.0F, 0.1F, 0.5F}),
+        testing::ValuesIn(std::initializer_list<float>{
+            1.0F,    // Clamp to full range
+            0.9F,    // Clamp to 90% range
+            0.5F}),  // Clamp to 50% range
         testing::ValuesIn(std::initializer_list<float>{0.9F})),
     [](const auto& info) -> std::string { return test_description(info.param); });
 
@@ -1144,8 +1478,10 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0, .25, 1, .5)  // Middle half
             // clang-format on
         }),
-        // Clamp range
-        testing::ValuesIn(std::initializer_list<float>{1.0f, 0.9f, 0.5f}),
+        testing::ValuesIn(std::initializer_list<float>{
+            1.0f,    // Clamp to full range
+            0.9f,    // Clamp to 90% range
+            0.5f}),  // Clamp to 50% range
         // Scale range
         testing::ValuesIn(std::initializer_list<float>{0.9F})),
     [](const auto& info) -> std::string { return test_description(info.param); });
@@ -1158,7 +1494,7 @@ INSTANTIATE_TEST_SUITE_P(
         // k_chunk_len
         testing::ValuesIn(std::initializer_list<size_t>{1, 2, 3, 4, 8, 11}),  //
         testing::ValuesIn(portions),                                          //
-        // Clamp range
+        // Clamp keep ratio
         testing::Values(0.1F),
         // Scale ratio
         testing::Values(0.9F)),
@@ -1172,7 +1508,7 @@ INSTANTIATE_TEST_SUITE_P(
         // k_chunk_len
         testing::ValuesIn(std::initializer_list<size_t>{32}),  //
         testing::ValuesIn(portions),                           //
-        // Clamp range
+        // Clamp keep ratio
         testing::Values(0.1F),
         // Scale ratio
         testing::Values(0.9F)),
@@ -1186,9 +1522,11 @@ INSTANTIATE_TEST_SUITE_P(
         // k_chunk_len
         testing::ValuesIn(std::initializer_list<size_t>{1}),  //
         testing::Values(MatrixPortion(0, 0, 1, 1)),           //
-        // Clamp range
-        testing::ValuesIn(std::initializer_list<float>{0.0F, 0.1F, 0.5F}),  // clamp_keep_ratio
-        testing::ValuesIn(std::initializer_list<float>{0.9F})),             // Scale ratio
+        testing::ValuesIn(std::initializer_list<float>{
+            1.0F,                                                // Clamp to full range
+            0.9F,                                                // Clamp to 90% range
+            0.5F}),                                              // Clamp to 50% range
+        testing::ValuesIn(std::initializer_list<float>{0.9F})),  // Scale ratio
     testing::PrintToStringParamName());
 
 }  // namespace kai::test

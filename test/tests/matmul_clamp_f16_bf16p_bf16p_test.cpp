@@ -354,9 +354,9 @@ const auto matmul_tests_setup = kai::test::TestRegistry::register_setup([]() {
     for (const auto& method : get_matmul_methods()) {
         for (const auto& shape : shapes) {
             for (const auto& portion : portions) {
-                for (const auto& clamp_ratio : clamp) {
-                    MatMulClampTestParams params{method, shape, portion, BiasMode::PROVIDED, clamp_ratio};
-                    const std::string name = test_description(method.name, shape, portion, true, clamp_ratio);
+                for (const auto& clamp_keep_ratio : clamp) {
+                    MatMulClampTestParams params{method, shape, portion, BiasMode::PROVIDED, clamp_keep_ratio};
+                    const std::string name = test_description(method.name, shape, portion, true, clamp_keep_ratio);
                     KAI_REGISTER_TEST(MatMulTestBf16OutFp16, MatMulTestBf16OutFp16, "MatMul", name.c_str(), params);
                 }
             }

@@ -173,14 +173,14 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi8cxp, Offset_RHS) {
     const auto kr = ukernel_variant.interface.get_kr();
     const auto sr = ukernel_variant.interface.get_sr();
 
-    auto n_step = ukernel_variant.interface.get_n_step();
+    const auto n_idx = nr;
 
-    auto rhs_packed_offset_kxn = kai_get_rhs_packed_offset_rhs_pack_kxn_qsi8cxp_qsi8cx_neon(n_step, K, nr, kr, sr);
-    auto rhs_packed_offset_nxk = kai_get_rhs_packed_offset_rhs_pack_nxk_qsi8cxp_qsi8cx_neon(n_step, K, nr, kr, sr);
+    auto rhs_packed_offset_kxn = kai_get_rhs_packed_offset_rhs_pack_kxn_qsi8cxp_qsi8cx_neon(n_idx, K, nr, kr, sr);
+    auto rhs_packed_offset_nxk = kai_get_rhs_packed_offset_rhs_pack_nxk_qsi8cxp_qsi8cx_neon(n_idx, K, nr, kr, sr);
 
     ASSERT_EQ(rhs_packed_offset_kxn, rhs_packed_offset_nxk);
 
-    auto rhs_matmul_offset = ukernel_variant.interface.get_rhs_packed_offset(n_step, K);
+    auto rhs_matmul_offset = ukernel_variant.interface.get_rhs_packed_offset(n_idx, K);
     ASSERT_EQ(rhs_packed_offset_kxn, rhs_matmul_offset);
 }
 
@@ -197,10 +197,10 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi8cxp, Offset_LHS) {
     const auto kr = ukernel_variant.interface.get_kr();
     const auto sr = ukernel_variant.interface.get_sr();
 
-    auto m_step = ukernel_variant.interface.get_m_step();
+    const auto m_idx = mr;
 
-    auto lhs_packed_offset = kai_get_lhs_packed_offset_lhs_quant_pack_qai8dxp_f32(m_step, K, mr, kr, sr);
-    auto lhs_matmul_offset = ukernel_variant.interface.get_lhs_packed_offset(m_step, K);
+    auto lhs_packed_offset = kai_get_lhs_packed_offset_lhs_quant_pack_qai8dxp_f32(m_idx, K, mr, kr, sr);
+    auto lhs_matmul_offset = ukernel_variant.interface.get_lhs_packed_offset(m_idx, K);
 
     ASSERT_EQ(lhs_packed_offset, lhs_matmul_offset);
 }
@@ -424,8 +424,11 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0.75, 0, 1, 1),      // Partial rows
             MatrixPortion(0.4, 0.5, 0.6, 0.8)  // Somewhere Middle
             ),
-        testing::ValuesIn(
-            std::initializer_list<std::optional<float>>({std::nullopt, 1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
+        testing::ValuesIn(std::initializer_list<std::optional<float>>{
+            std::nullopt,  // Disable clamping
+            1.0f,          // Clamp to full range
+            0.9f,          // Clamp to 90% range
+            0.5f})),       // Clamp to 50% range
     [](const auto& info) {
         const auto variant_idx = std::get<0>(info.param);
         const std::string name{variants_kai_matmul_clamp_f32_qai8dxp_qsi8cxp.at(variant_idx).name};

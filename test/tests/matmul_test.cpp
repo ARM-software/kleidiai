@@ -43,6 +43,7 @@
 #include "kai/ukernels/matmul/matmul_clamp_f16_f16_f16p/kai_matmul_clamp_f16_f16_f16p32x1b_6x32_neon_mla_cortexa55.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_f16p16x1biasf16_f16_f16_neon.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_x16p32x1b_x16_x16_neon.h"
+#include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_x16p32x1bx16_x16_x16_neon.h"
 
 // matmul_clamp_f16_f16p_f16p
 #include "kai/ukernels/matmul/matmul_clamp_f16_f16p_f16p/kai_matmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa.h"
@@ -63,6 +64,7 @@
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_f32p8x1biasf32_f32_f32_neon.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_x32p16x1b_x32_x32_neon.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_x32p4vlx1b_x32_x32_sve.h"
+#include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_x32p16x1bx32_x32_x32_neon.h"
 
 // matmul_clamp_f32_f32p_f32p
 #include "kai/ukernels/matmul/matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa.h"
@@ -692,6 +694,16 @@ static const auto& get_nullbias_matmul_methods() {
     nullbias_matmul_methods[0].fn_get_main_packed_rhs_offset =
         kai_get_rhs_packed_offset_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla;
     nullbias_matmul_methods[0].fn_pack_rhs = kai_run_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
+    nullbias_matmul_methods[0].fn_pack_rhs_nxk_get_n_step = kai_get_n_step_rhs_pack_nxk_x32p16x1bx32_x32_x32_neon;
+    nullbias_matmul_methods[0].fn_pack_rhs_nxk_get_rhs_offset =
+        kai_get_rhs_offset_rhs_pack_nxk_x32p16x1bx32_x32_x32_neon;
+    nullbias_matmul_methods[0].fn_pack_rhs_nxk_get_bias_offset =
+        kai_get_bias_offset_rhs_pack_nxk_x32p16x1bx32_x32_x32_neon;
+    nullbias_matmul_methods[0].fn_pack_rhs_nxk_get_packed_rhs_offset =
+        kai_get_rhs_packed_offset_rhs_pack_nxk_x32p16x1bx32_x32_x32_neon;
+    nullbias_matmul_methods[0].fn_pack_rhs_nxk_get_packed_rhs_size =
+        kai_get_rhs_packed_size_rhs_pack_nxk_x32p16x1bx32_x32_x32_neon;
+    nullbias_matmul_methods[0].fn_pack_rhs_nxk = kai_run_rhs_pack_nxk_x32p16x1bx32_x32_x32_neon;
     nullbias_matmul_methods[0].fn_get_bias_offset = kai_get_bias_offset_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
     nullbias_matmul_methods[0].fn_get_dst_offset = kai_get_dst_offset_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla;
     nullbias_matmul_methods[0].fn_get_dst_size = kai_get_dst_size_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla;
@@ -738,6 +750,16 @@ static const auto& get_nullbias_matmul_methods() {
     nullbias_matmul_methods[1].fn_get_main_packed_rhs_offset =
         kai_get_rhs_packed_offset_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55;
     nullbias_matmul_methods[1].fn_pack_rhs = kai_run_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
+    nullbias_matmul_methods[1].fn_pack_rhs_nxk_get_n_step = kai_get_n_step_rhs_pack_nxk_x32p16x1bx32_x32_x32_neon;
+    nullbias_matmul_methods[1].fn_pack_rhs_nxk_get_rhs_offset =
+        kai_get_rhs_offset_rhs_pack_nxk_x32p16x1bx32_x32_x32_neon;
+    nullbias_matmul_methods[1].fn_pack_rhs_nxk_get_bias_offset =
+        kai_get_bias_offset_rhs_pack_nxk_x32p16x1bx32_x32_x32_neon;
+    nullbias_matmul_methods[1].fn_pack_rhs_nxk_get_packed_rhs_offset =
+        kai_get_rhs_packed_offset_rhs_pack_nxk_x32p16x1bx32_x32_x32_neon;
+    nullbias_matmul_methods[1].fn_pack_rhs_nxk_get_packed_rhs_size =
+        kai_get_rhs_packed_size_rhs_pack_nxk_x32p16x1bx32_x32_x32_neon;
+    nullbias_matmul_methods[1].fn_pack_rhs_nxk = kai_run_rhs_pack_nxk_x32p16x1bx32_x32_x32_neon;
     nullbias_matmul_methods[1].fn_get_bias_offset = kai_get_bias_offset_rhs_pack_kxn_x32p16x1b_x32_x32_neon;
     nullbias_matmul_methods[1].fn_get_dst_offset =
         kai_get_dst_offset_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55;
@@ -783,6 +805,16 @@ static const auto& get_nullbias_matmul_methods() {
     nullbias_matmul_methods[2].fn_get_main_packed_rhs_offset =
         kai_get_rhs_packed_offset_matmul_clamp_f16_f16_f16p32x1b_6x32_neon_mla;
     nullbias_matmul_methods[2].fn_pack_rhs = kai_run_rhs_pack_kxn_x16p32x1b_x16_x16_neon;
+    nullbias_matmul_methods[2].fn_pack_rhs_nxk_get_n_step = kai_get_n_step_rhs_pack_nxk_x16p32x1bx16_x16_x16_neon;
+    nullbias_matmul_methods[2].fn_pack_rhs_nxk_get_rhs_offset =
+        kai_get_rhs_offset_rhs_pack_nxk_x16p32x1bx16_x16_x16_neon;
+    nullbias_matmul_methods[2].fn_pack_rhs_nxk_get_bias_offset =
+        kai_get_bias_offset_rhs_pack_nxk_x16p32x1bx16_x16_x16_neon;
+    nullbias_matmul_methods[2].fn_pack_rhs_nxk_get_packed_rhs_offset =
+        kai_get_rhs_packed_offset_rhs_pack_nxk_x16p32x1bx16_x16_x16_neon;
+    nullbias_matmul_methods[2].fn_pack_rhs_nxk_get_packed_rhs_size =
+        kai_get_rhs_packed_size_rhs_pack_nxk_x16p32x1bx16_x16_x16_neon;
+    nullbias_matmul_methods[2].fn_pack_rhs_nxk = kai_run_rhs_pack_nxk_x16p32x1bx16_x16_x16_neon;
     nullbias_matmul_methods[2].fn_get_bias_offset = kai_get_bias_offset_rhs_pack_kxn_x16p32x1b_x16_x16_neon;
     nullbias_matmul_methods[2].fn_get_dst_offset = kai_get_dst_offset_matmul_clamp_f16_f16_f16p32x1b_6x32_neon_mla;
     nullbias_matmul_methods[2].fn_get_dst_size = kai_get_dst_size_matmul_clamp_f16_f16_f16p32x1b_6x32_neon_mla;
@@ -829,6 +861,16 @@ static const auto& get_nullbias_matmul_methods() {
     nullbias_matmul_methods[3].fn_get_main_packed_rhs_offset =
         kai_get_rhs_packed_offset_matmul_clamp_f16_f16_f16p32x1b_6x32_neon_mla_cortexa55;
     nullbias_matmul_methods[3].fn_pack_rhs = kai_run_rhs_pack_kxn_x16p32x1b_x16_x16_neon;
+    nullbias_matmul_methods[3].fn_pack_rhs_nxk_get_n_step = kai_get_n_step_rhs_pack_nxk_x16p32x1bx16_x16_x16_neon;
+    nullbias_matmul_methods[3].fn_pack_rhs_nxk_get_rhs_offset =
+        kai_get_rhs_offset_rhs_pack_nxk_x16p32x1bx16_x16_x16_neon;
+    nullbias_matmul_methods[3].fn_pack_rhs_nxk_get_bias_offset =
+        kai_get_bias_offset_rhs_pack_nxk_x16p32x1bx16_x16_x16_neon;
+    nullbias_matmul_methods[3].fn_pack_rhs_nxk_get_packed_rhs_offset =
+        kai_get_rhs_packed_offset_rhs_pack_nxk_x16p32x1bx16_x16_x16_neon;
+    nullbias_matmul_methods[3].fn_pack_rhs_nxk_get_packed_rhs_size =
+        kai_get_rhs_packed_size_rhs_pack_nxk_x16p32x1bx16_x16_x16_neon;
+    nullbias_matmul_methods[3].fn_pack_rhs_nxk = kai_run_rhs_pack_nxk_x16p32x1bx16_x16_x16_neon;
     nullbias_matmul_methods[3].fn_get_bias_offset = kai_get_bias_offset_rhs_pack_kxn_x16p32x1b_x16_x16_neon;
     nullbias_matmul_methods[3].fn_get_dst_offset =
         kai_get_dst_offset_matmul_clamp_f16_f16_f16p32x1b_6x32_neon_mla_cortexa55;
@@ -1067,8 +1109,11 @@ TEST_P(MatMulTest, PackedRhs) {
         method.packed_rhs_format.default_offset_in_bytes(rhs_start_row, rhs_start_col, rhs_full_height);
     ASSERT_EQ(packed_rhs_offset, ref_packed_rhs_offset);
 
-    const auto scale_type = method.packed_rhs_format.scale_data_type();
-    const auto ref_rhs_scales_offset = rhs_start_row * data_type_size_in_bits(scale_type) / 8;
+    size_t ref_rhs_scales_offset = 0;
+    if (data.rhs_scales.size() != 0) {
+        const auto scale_type = method.packed_rhs_format.scale_data_type();
+        ref_rhs_scales_offset = rhs_start_row * data_type_size_in_bits(scale_type) / 8;
+    }
 
     const auto bias_offset = method.fn_get_bias_offset(rhs_start_row);
     const auto ref_bias_offset =
@@ -1133,8 +1178,11 @@ TEST_P(MatMulTest, PackedTransposedRhs) {
         method.packed_rhs_format.default_offset_in_bytes(rect.start_row(), rect.start_col(), info.k);
     ASSERT_EQ(packed_rhs_offset, ref_packed_rhs_offset);
 
-    const auto ref_rhs_scales_offset =
-        rect.start_row() * data_type_size_in_bits(method.packed_rhs_format.scale_data_type()) / 8;
+    size_t ref_rhs_scales_offset = 0;
+    if (data.rhs_scales.size() != 0) {
+        ref_rhs_scales_offset =
+            rect.start_row() * data_type_size_in_bits(method.packed_rhs_format.scale_data_type()) / 8;
+    }
 
     const auto bias_offset = method.fn_get_bias_offset(rect.start_row());
     const auto ref_bias_offset =
@@ -1281,8 +1329,11 @@ INSTANTIATE_TEST_SUITE_P(
         testing::ValuesIn(MatMulShapes),          //
         testing::ValuesIn(MatrixPortions),        //
         testing::Values(BiasMode::PROVIDED),      //
-        testing::ValuesIn(
-            std::initializer_list<std::optional<float>>({std::nullopt, 1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
+        testing::ValuesIn(std::initializer_list<std::optional<float>>{
+            std::nullopt,  // Disable clamping
+            1.0f,          // Clamp to full range
+            0.9f,          // Clamp to 90% range
+            0.5f})),       // Clamp to 50% range
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
@@ -1292,8 +1343,11 @@ INSTANTIATE_TEST_SUITE_P(
         testing::ValuesIn(MatMulShapes),                          //
         testing::ValuesIn(MatrixPortions),                        //
         testing::Values(BiasMode::INTERNAL, BiasMode::PROVIDED),  //
-        testing::ValuesIn(
-            std::initializer_list<std::optional<float>>({std::nullopt, 1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
+        testing::ValuesIn(std::initializer_list<std::optional<float>>{
+            std::nullopt,  // Disable clamping
+            1.0f,          // Clamp to full range
+            0.9f,          // Clamp to 90% range
+            0.5f})),       // Clamp to 50% range
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
@@ -1322,8 +1376,11 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0, 0.75, 1, .25)  // right row section
             ),
         testing::Values(BiasMode::PROVIDED),  //
-        testing::ValuesIn(
-            std::initializer_list<std::optional<float>>({std::nullopt, 1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
+        testing::ValuesIn(std::initializer_list<std::optional<float>>{
+            std::nullopt,  // Disable clamping
+            1.0f,          // Clamp to full range
+            0.9f,          // Clamp to 90% range
+            0.5f})),       // Clamp to 50% range
     testing::PrintToStringParamName());
 
 }  // namespace kai::test

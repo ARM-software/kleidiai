@@ -21,10 +21,10 @@ extern "C" {
 ///
 /// Operands:
 ///   * rhs_packed - The packed RHS matrix.
-///     * RHS matrix: 32-bit data in 4vsx1 blocked format.
+///     * RHS matrix: 32-bit data in 4vsx1 blocked layout.
 ///     * Per-n bias vector: 32-bit data.
 ///   * rhs - The RHS matrix.
-///     * RHS matrix: 32-bit data in plain format, non-transposed.
+///     * RHS matrix: 32-bit data in KxN layout.
 ///   * bias_n - The per-N bias vector.
 ///     * Per-N bias vector: 32-bit data.
 ///
@@ -42,10 +42,10 @@ struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x3
 ///
 /// Operands:
 ///   * rhs_packed - The packed RHS matrix.
-///     * RHS matrix: 32-bit data in 4vsx1 blocked format.
+///     * RHS matrix: 32-bit data in 4vsx1 blocked layout.
 ///     * Per-n bias vector: 32-bit data.
 ///   * rhs - The RHS matrix.
-///     * RHS matrix: 32-bit data in plain format, transposed.
+///     * RHS matrix: 32-bit data in NxK layout.
 ///   * bias_n - The per-N bias vector.
 ///     * Per-N bias vector: 32-bit data.
 ///
@@ -53,6 +53,72 @@ struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x3
 ///
 /// @return The micro-kernel API.
 struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme(void);
+
+/// Transposed RHS packing micro-kernel for 8-bit data.
+///
+/// Required CPU features:
+///   * FEAT_SME
+///
+/// Configuration parameters: none.
+///
+/// Operands:
+///   * rhs_packed - The packed RHS matrix.
+///     * RHS matrix: 8-bit data in 4vsx4 blocked layout.
+///   * rhs - The RHS matrix.
+///     * RHS matrix: 8-bit data in NxK layout.
+///   * bias_n - Unused by this micro-kernel.
+///
+/// Supported flags: none.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme(void);
+
+/// Non-transposed RHS packing micro-kernel for 8-bit data.
+///
+/// Required CPU features:
+///   * FEAT_SME
+///
+/// Configuration parameters: none.
+///
+/// Operands:
+///   * rhs_packed - The packed RHS matrix.
+///     * RHS matrix: 8-bit data in 4vsx4 blocked layout.
+///   * rhs - The RHS matrix.
+///     * RHS matrix: 8-bit data in KxN layout.
+///   * bias_n - Unused by this micro-kernel.
+///
+/// Supported flags: none.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme(void);
+
+/// Non-transposed RHS packing micro-kernel for static quantized INT8 data.
+///
+/// Required CPU features:
+///   * FEAT_SME
+///
+/// Configuration parameters: none.
+///
+/// Operands:
+///   * rhs_packed - The packed RHS matrix.
+///     * Per-N bias vector: INT32 data.
+///     * RHS matrix: INT8 data in 4vsx4 blocked format.
+///     * Per-N scale vector: FP32 data.
+///   * rhs - The RHS matrix.
+///     * RHS matrix: INT8 data in plain format, non-transposed.
+///   * bias_n - The per-N quantized bias vector.
+///     * Per-N bias vector: INT32 data.
+///   * k_sum_scale_global - The per-matrix row sum scale value.
+///     * Per-matrix row sum scale value: INT32 data.
+///   * scale_n - The per-N quantization scale vector.
+///     * Per-N scale vector: FP32 data.
+///   * scale_global - The per-matrix scale value.
+///     * Per-matrix scale value: FP32 data.
+///
+/// Supported flags: none.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme(void);
 
 #ifdef __cplusplus
 }  // extern "C"

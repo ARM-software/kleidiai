@@ -6,6 +6,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -291,13 +292,16 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, Offset_RHS) {
 
     ASSERT_TRUE(K % bl == 0);
 
+    const auto mr = ukernel_variant.ukernel.interface.get_mr();
     const auto nr = ukernel_variant.ukernel.interface.get_nr();
     const auto kr = ukernel_variant.ukernel.interface.get_kr();
 
-    auto n_step = ukernel_variant.ukernel.interface.get_n_step();
-    auto m_step = ukernel_variant.ukernel.interface.get_m_step();
+    const auto m_step = ukernel_variant.ukernel.interface.get_m_step();
+    const auto n_step = ukernel_variant.ukernel.interface.get_n_step();
+    const auto tile_m = std::max(m_step, mr);
+    const auto tile_n = std::max(n_step, nr);
 
-    const auto rect = portion.compute_portion(M, N, m_step, n_step);
+    const auto rect = portion.compute_portion(M, N, tile_m, tile_n);
     if (rect.height() == 0 || rect.width() == 0) {
         GTEST_SKIP() << "Empty dimension of matrix(" << rect.width() << "," << rect.height() << ")";
     }
@@ -323,13 +327,16 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, Offset_LHS) {
     ASSERT_TRUE(K % bl == 0);
 
     const auto mr = ukernel_variant.ukernel.interface.get_mr();
+    const auto nr = ukernel_variant.ukernel.interface.get_nr();
     const auto kr = ukernel_variant.ukernel.interface.get_kr();
     const auto sr = ukernel_variant.ukernel.interface.get_sr();
 
-    auto m_step = ukernel_variant.ukernel.interface.get_m_step();
-    auto n_step = ukernel_variant.ukernel.interface.get_n_step();
+    const auto m_step = ukernel_variant.ukernel.interface.get_m_step();
+    const auto n_step = ukernel_variant.ukernel.interface.get_n_step();
+    const auto tile_m = std::max(m_step, mr);
+    const auto tile_n = std::max(n_step, nr);
 
-    const auto rect = portion.compute_portion(M, N, m_step, n_step);
+    const auto rect = portion.compute_portion(M, N, tile_m, tile_n);
     if (rect.height() == 0 || rect.width() == 0) {
         GTEST_SKIP() << "Empty dimension of matrix(" << rect.width() << "," << rect.height() << ")";
     }
@@ -509,8 +516,11 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0, 0.75, 1, 1),  // Rightmost portion.
             MatrixPortion(0, 0.5, 1, 0.8)  // Somewhere Middle
             ),
-        testing::ValuesIn(
-            std::initializer_list<std::optional<float>>({std::nullopt, 1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
+        testing::ValuesIn(std::initializer_list<std::optional<float>>{
+            std::nullopt,  // Disable clamping
+            1.0f,          // Clamp to full range
+            0.9f,          // Clamp to 90% range
+            0.5f}),        // Clamp to 50% range
         testing::Values(32), testing::Values(false)),
     [](const auto& info) {
         const auto variant_idx = std::get<0>(info.param);
@@ -585,10 +595,10 @@ INSTANTIATE_TEST_SUITE_P(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.size()),
         testing::ValuesIn(shapes_k32), testing::ValuesIn(portions),
         testing::ValuesIn(std::initializer_list<std::optional<float>>{
-            std::nullopt,  //
-            1.0F,          //
-            0.9F,          //
-            0.5F,          // clamp_keep_ratio
+            std::nullopt,  // Disable clamping
+            1.0F,          // Clamp to full range
+            0.9F,          // Clamp to 90% range
+            0.5F,          // Clamp to 50% range
         }),
         testing::Values(32), testing::Values(true)),
     testing::PrintToStringParamName());
@@ -599,10 +609,10 @@ INSTANTIATE_TEST_SUITE_P(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.size()),
         testing::ValuesIn(shapes_k64), testing::ValuesIn(portions),
         testing::ValuesIn(std::initializer_list<std::optional<float>>{
-            std::nullopt,  //
-            1.0F,          //
-            0.9F,          //
-            0.5F,          // clamp_keep_ratio
+            std::nullopt,  // Disable clamping
+            1.0F,          // Clamp to full range
+            0.9F,          // Clamp to 90% range
+            0.5F,          // Clamp to 50% range
         }),
         testing::Values(64), testing::Values(true)),
     testing::PrintToStringParamName());
@@ -613,10 +623,10 @@ INSTANTIATE_TEST_SUITE_P(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.size()),
         testing::ValuesIn(shapes_k96), testing::ValuesIn(portions),
         testing::ValuesIn(std::initializer_list<std::optional<float>>{
-            std::nullopt,  //
-            1.0F,          //
-            0.9F,          //
-            0.5F,          // clamp_keep_ratio
+            std::nullopt,  // Disable clamping
+            1.0F,          // Clamp to full range
+            0.9F,          // Clamp to 90% range
+            0.5F,          // Clamp to 50% range
         }),
         testing::Values(96), testing::Values(true)),
     testing::PrintToStringParamName());
@@ -627,10 +637,10 @@ INSTANTIATE_TEST_SUITE_P(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.size()),
         testing::ValuesIn(shapes_k128), testing::ValuesIn(portions),
         testing::ValuesIn(std::initializer_list<std::optional<float>>{
-            std::nullopt,  //
-            1.0F,          //
-            0.9F,          //
-            0.5F,          // clamp_keep_ratio
+            std::nullopt,  // Disable clamping
+            1.0F,          // Clamp to full range
+            0.9F,          // Clamp to 90% range
+            0.5F,          // Clamp to 50% range
         }),
         testing::Values(128), testing::Values(true)),
     testing::PrintToStringParamName());
@@ -640,8 +650,11 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.size()),
         testing::ValuesIn(shapes_k256), testing::ValuesIn(portions),
-        testing::ValuesIn(
-            std::initializer_list<std::optional<float>>({std::nullopt, 1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
+        testing::ValuesIn(std::initializer_list<std::optional<float>>{
+            std::nullopt,  // Disable clamping
+            1.0f,          // Clamp to full range
+            0.9f,          // Clamp to 90% range
+            0.5f}),        // Clamp to 50% range
         testing::Values(256), testing::Values(true)),
     testing::PrintToStringParamName());
 

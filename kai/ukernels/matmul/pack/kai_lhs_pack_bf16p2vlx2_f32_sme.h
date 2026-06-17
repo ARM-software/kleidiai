@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -16,7 +16,7 @@ extern "C" {
 ///
 /// The starting row index must be divisible by `m_step`.
 ///
-/// @param[in] mr Number of rows to be interleaved.
+/// @param[in] mr Unused.
 ///
 /// @return The m step value.
 size_t kai_get_m_step_lhs_pack_bf16p2vlx2_f32_sme(size_t mr);
@@ -33,9 +33,9 @@ size_t kai_get_lhs_offset_lhs_pack_bf16p2vlx2_f32_sme(size_t m_idx, size_t lhs_s
 ///
 /// @param[in] m_idx Row index in the unpacked LHS matrix.
 /// @param[in] k Number of columns in the unpacked LHS matrix.
-/// @param[in] mr Number of rows to be interleaved.
-/// @param[in] kr Unused. Must be 2.
-/// @param[in] sr Unused. Must be 1.
+/// @param[in] mr Unused.
+/// @param[in] kr Unused.
+/// @param[in] sr Unused.
 ///
 /// @return The offset in bytes to the data element.
 size_t kai_get_lhs_packed_offset_lhs_pack_bf16p2vlx2_f32_sme(size_t m_idx, size_t k, size_t mr, size_t kr, size_t sr);
@@ -44,9 +44,9 @@ size_t kai_get_lhs_packed_offset_lhs_pack_bf16p2vlx2_f32_sme(size_t m_idx, size_
 ///
 /// @param[in] m Number of rows in the unpacked LHS matrix.
 /// @param[in] k Number of columns in the unpacked LHS matrix.
-/// @param[in] mr Number of rows to be interleaved.
-/// @param[in] kr Unused. Must be 2.
-/// @param[in] sr Unused. Must be 1.
+/// @param[in] mr Unused.
+/// @param[in] kr Unused.
+/// @param[in] sr Unused.
 ///
 /// @return The size in bytes of the packed LHS buffer.
 size_t kai_get_lhs_packed_size_lhs_pack_bf16p2vlx2_f32_sme(size_t m, size_t k, size_t mr, size_t kr, size_t sr);
@@ -61,10 +61,10 @@ size_t kai_get_lhs_packed_size_lhs_pack_bf16p2vlx2_f32_sme(size_t m, size_t k, s
 ///
 /// @param[in] m Number of rows of the unpacked LHS matrix.
 /// @param[in] k Number of columns in the unpacked LHS matrix.
-/// @param[in] mr Block size in M dimension. It must be kai_get_m_step_lhs_pack_bf16p2vlx2_f32_sme().
-/// @param[in] kr Block size in K dimension. It must be 2.
-/// @param[in] sr Number of kr splits. It must be 1.
-/// @param[in] m_idx_start Unused. Must be 0.
+/// @param[in] mr Unused.
+/// @param[in] kr Unused.
+/// @param[in] sr Unused.
+/// @param[in] m_idx_start Unused.
 /// @param[in] lhs LHS matrix data buffer.
 /// @param[in] lhs_stride_row Row stride in bytes of the LHS matrix.
 /// @param[out] lhs_packed Packed LHS matrix.

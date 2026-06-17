@@ -9,6 +9,8 @@
 #include <cmath>
 #include <ostream>
 
+#include "test/common/float16.hpp"
+
 namespace kai::test {
 
 std::ostream& operator<<(std::ostream& os, const Padding2D& pad) {
@@ -30,8 +32,6 @@ Buffer depthwise_reference(
     const size_t out_width = in_width + pad.left + pad.right + 1 - filter_width;
     const size_t out_size = out_height * out_width * batches * channels;
 
-    // NOTE: We accumulate in datatype provided - this may need to change in the future.
-    std::vector<T> acc(out_size, 0.0f);
     Buffer dst(out_size * size_in_bits<T> / 8);
 
     for (size_t b = 0; b < batches; ++b) {
@@ -41,7 +41,7 @@ Buffer depthwise_reference(
 
                 // Apply filter to feature map.
                 for (size_t ic = 0; ic < channels; ++ic) {
-                    float sum = static_cast<T>(read_array<T>(bias, ic));
+                    float sum = static_cast<float>(read_array<T>(bias, ic));
 
                     for (size_t kernel_w = 0; kernel_w < filter_width; ++kernel_w) {
                         // Determine if in input width bounds, if not this is padding.
@@ -56,8 +56,8 @@ Buffer depthwise_reference(
                             auto in_idx = ((b * in_height + in_y) * in_width + in_x) * channels + ic;
                             auto weights_idx = ((kernel_h * filter_width) + kernel_w) * channels + ic;
 
-                            auto wei_value = read_array<T>(weights, weights_idx);
-                            auto in_value = read_array<T>(feature_map, in_idx);
+                            const float wei_value = static_cast<float>(read_array<T>(weights, weights_idx));
+                            const float in_value = static_cast<float>(read_array<T>(feature_map, in_idx));
 
                             // Perform actual accumulation and store in output vector
                             sum = std::fma(in_value, wei_value, sum);
@@ -65,7 +65,7 @@ Buffer depthwise_reference(
                     }
 
                     auto out_idx = out_base + ic;
-                    write_array<T>(dst.data(), out_idx, sum);
+                    write_array<T>(dst.data(), out_idx, static_cast<T>(sum));
                 }
             }
         }
@@ -75,6 +75,12 @@ Buffer depthwise_reference(
 
 // Explicit template
 template Buffer depthwise_reference<float>(
+    const size_t batches, const size_t in_height, const size_t in_width, const size_t channels,
+    const size_t filter_height, const size_t filter_width, const void* feature_map, const void* weights,
+    const void* bias, const Padding2D& pad);
+
+// Explicit template
+template Buffer depthwise_reference<Float16>(
     const size_t batches, const size_t in_height, const size_t in_width, const size_t channels,
     const size_t filter_height, const size_t filter_width, const void* feature_map, const void* weights,
     const void* bias, const Padding2D& pad);

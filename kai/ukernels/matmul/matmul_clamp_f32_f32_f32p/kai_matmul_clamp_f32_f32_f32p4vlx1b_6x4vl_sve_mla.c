@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -67,10 +67,10 @@ size_t kai_get_lhs_offset_matmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla(size_t m
 }
 
 size_t kai_get_rhs_packed_offset_matmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla(size_t n_idx, size_t k) {
-    KAI_ASSUME(n_idx % kai_get_n_step_matmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla() == 0);
+    KAI_ASSUME(n_idx % kai_get_nr_matmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla() == 0);
 
-    const size_t block_idx = n_idx / kai_get_n_step_matmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla();
-    return block_idx * kai_get_n_step_matmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla() *
+    const size_t block_idx = n_idx / kai_get_nr_matmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla();
+    return block_idx * kai_get_nr_matmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla() *
         (kai_roundup(k, kai_kr) * sizeof(float) + sizeof(float));
 }
 

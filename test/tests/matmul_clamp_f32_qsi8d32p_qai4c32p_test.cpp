@@ -375,7 +375,11 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0.75, 0, 1, 1),      // Partial rows
             MatrixPortion(0.4, 0.5, 0.6, 0.8)  // Somewhere Middle
             ),
-        testing::ValuesIn(std::initializer_list<std::optional<float>>{std::nullopt, 1.0f, 0.9f, 0.5f}),  //
+        testing::ValuesIn(std::initializer_list<std::optional<float>>{
+            std::nullopt,  // Disable clamping
+            1.0f,          // Clamp to full range
+            0.9f,          // Clamp to 90% range
+            0.5f}),        // Clamp to 50% range
         testing::Bool()),
     [](const auto& info) {
         const auto variant_idx = std::get<0>(info.param);

@@ -14,8 +14,6 @@
 #include "test/common/assert.hpp"
 #include "test/common/span.hpp"
 #include "test/nextgen/harness/tensor.hpp"
-#include "test/nextgen/operators/matmul/matmul_bias_mode.hpp"
-#include "test/nextgen/operators/matmul/matmul_config.hpp"
 #include "test/nextgen/operators/matmul/matmul_dims.hpp"
 #include "test/nextgen/operators/matmul/matmul_main_args.hpp"
 #include "test/nextgen/operators/matmul/matmul_pack_args.hpp"
@@ -32,8 +30,9 @@ std::vector<MatMulSlot> MatMulDqWrapper::run_inputs([[maybe_unused]] ConstTensor
 }
 
 std::vector<MatMulSlot> MatMulDqWrapper::ref_inputs([[maybe_unused]] ConstTensorSet tensors) const {
-    return {MatMulSlot::LHS_QDATA,   MatMulSlot::LHS_QSCALE,   MatMulSlot::LHS_QZP,
-            MatMulSlot::RHS_T_QDATA, MatMulSlot::RHS_T_QSCALE, MatMulSlot::BIAS_DATA};
+    return {
+        MatMulSlot::LHS_QDATA, MatMulSlot::LHS_QSCALE, MatMulSlot::LHS_QZP, MatMulSlot::RHS_T_QDATA,
+        MatMulSlot::RHS_T_QSCALE};
 }
 
 std::vector<size_t> MatMulDqWrapper::steps(MatMulShape shape, [[maybe_unused]] ConstTensorSet tensorsf) const {

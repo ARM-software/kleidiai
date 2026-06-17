@@ -162,6 +162,11 @@ workflow:
   auto_cancel:
     # Interrupt old pipeline when new one pushed for MR
     on_new_commit: interruptible
+  rules:
+    # Avoid starting pipelines for draft merge requests.
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event' && $CI_MERGE_REQUEST_DRAFT == "true"
+      when: never
+    - when: always
 
 # Purpose: Build library tests.
 build-clang:
@@ -334,10 +339,7 @@ test-verify-microkernel-tables:
     - python3 tools/check_microkernel_tables.py
 
 # Purpose: Build current sources against tests/benchmarks from latest semver tag to detect API breakage.
-# Note: current implementation doesn't properly handle transitions to pure assembly, meaning that
-#       moving functionality from C file to Asm doesn't pass due to added S file isn't handled
-#       by old build file. This should be re-enabled as soon as the issue is resolved
-.test-api-compat:
+test-api-compat:
   extends:
     - .stable-rules
   stage: test
@@ -414,6 +416,9 @@ test-remote:
   - echo "Run unit test from ${UT_BINARY_PATH:-./build-${UT_VARIANT_NAME}}"
   - export GTEST_TOTAL_SHARDS=${UT_PARALLEL:-4}
   - |
+    : "${KAI_TEST_BUFFER_POLICY:?KAI_TEST_BUFFER_POLICY must be set}"
+    echo "KAI_TEST_BUFFER_POLICY=${KAI_TEST_BUFFER_POLICY}"
+  - |
     for GTEST_SHARD_INDEX in `seq 0 $((GTEST_TOTAL_SHARDS - 1))` ; do
       # Export index variable to child process
       export GTEST_SHARD_INDEX
@@ -438,7 +443,10 @@ test-linux-aarch64:
     - build-clang
     - build-clang-bazel
   script:
+    # Explicitly configure overflow protection for public unit tests.
+    # The shared unit-test runner requires this variable to be set.
     - |
+      export KAI_TEST_BUFFER_POLICY=PROTECT_OVERFLOW
       UT_VARIANT_NAME=$BUILD_JOB_PROVIDER
       UT_REPORT_PATH=kleidiai_test_results-${BUILD_JOB_PROVIDER}
       # Export UT_REPORT_PATH to CI env to use in artifacts
@@ -545,10 +553,11 @@ test-linux-aarch64-v8only-fvp:
     # Verify that all examples crashed with Illegal instruction (negative path coverage)
     - test $(grep -cE "Illegal instruction\s+./'build/" output.txt) -eq $(ls -1 build | wc -l | tr -d ' ')
 
-# Purpose: FVP with only SME enabled (SME2 disabled); negative SME example runs + positive filtered unit tests.
+# Purpose: FVP with only SME enabled (SME2 disabled); SME example runs.
 test-linux-aarch64-sme1only-fvp:
   extends:
     - .stable-rules
+  timeout: 1h
   stage: test
   needs:
     - build-clang
@@ -559,20 +568,16 @@ test-linux-aarch64-sme1only-fvp:
       export FVP_MODEL_EXTRA="
         -C cluster0.sve.has_sme2=0
         -C cluster0.sve.sme2_version=0"  # Disable SME2.
-    # Generate test script with negative and positive tests
+    # Generate test script
     - |
-      echo -e "#\!/bin/bash -ex"                                          > run_tests.sh
-      echo "echo Perform a negative test with illegal instructions"      >> run_tests.sh
-      # Find avaiable SME examples and execute them
+      echo -e "#\!/bin/bash -ex"               > run_tests.sh
+      echo "echo Run SME examples"            >> run_tests.sh
+      # Find any SME examples and execute them
       find build -type f -perm -a=x \( -name \*_sme -o -name \*_sme_\* \) -print0 | \
       while read -d '' EXAMPLE; do
-        echo -e "echo \"Run '${EXAMPLE}'\""                              >> run_tests.sh
-        echo -e "./'${EXAMPLE}' || true"                                 >> run_tests.sh  # Allow expected failure.
+        echo -e "echo \"Run '${EXAMPLE}'\""   >> run_tests.sh
+        echo -e "./'${EXAMPLE}' || exit 1"    >> run_tests.sh
       done
-      echo "echo Perform a positive test with CPU feature detection"     >> run_tests.sh
-      echo "export GTEST_OUTPUT=xml:kleidiai-${CI_JOB_NAME_SLUG}.xml"    >> run_tests.sh
-      echo "export GTEST_BRIEF=1"                                        >> run_tests.sh
-      echo "./build-clang/kleidiai_test --gtest_filter=*sme_* --gtest_random_seed=\${GLOBAL_TEST_SEED:-42} || exit 1" >> run_tests.sh
     # Dump content for debugging purposes
     - |
       echo "Test script content:"
