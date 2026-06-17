@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -43,16 +43,16 @@ inline static size_t kai_get_num_bytes_per_block_lhs(size_t bl) {
 }
 
 inline static size_t kai_get_num_bytes_per_block_rhs(size_t bl) {
-    KAI_ASSUME(bl == kai_bl);
+    KAI_ASSUME((bl % kai_bl) == 0);
     size_t num_bytes_per_block_rhs = (bl / kai_recip_num_bytes_qvalue_rhs) + kai_num_bytes_multiplier_rhs;
     return num_bytes_per_block_rhs;
 }
 
 inline static size_t kai_get_num_blocks_per_row(size_t k, size_t bl) {
-    KAI_ASSUME(bl == kai_bl);
-    KAI_ASSUME((k % kai_bl) == 0);
+    KAI_ASSUME((bl % kai_bl) == 0);
+    KAI_ASSUME((k % bl) == 0);
 
-    return kai_roundup(k, bl) / bl;
+    return k / bl;
 }
 
 inline static size_t kai_get_lhs_packed_stride(size_t k, size_t bl) {
@@ -61,8 +61,8 @@ inline static size_t kai_get_lhs_packed_stride(size_t k, size_t bl) {
 }
 
 inline static size_t kai_get_rhs_packed_stride(size_t k, size_t bl) {
-    KAI_ASSUME(bl == kai_bl);
-    KAI_ASSUME((k % kai_bl) == 0);
+    KAI_ASSUME((bl % kai_bl) == 0);
+    KAI_ASSUME((k % bl) == 0);
 
     const size_t num_blocks_per_row = kai_get_num_blocks_per_row(k, bl);
     const size_t num_bytes_per_block = kai_get_num_bytes_per_block_rhs(bl);
@@ -145,15 +145,21 @@ void kai_run_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot(
     float scalar_max) {
     KAI_ASSUME(dst_stride_col == sizeof(float));
     KAI_ASSUME(m == 1);
+    KAI_ASSUME((bl % kai_bl) == 0);
 
     KAI_UNUSED(dst_stride_row);
-    KAI_UNUSED(scalar_min);
-    KAI_UNUSED(scalar_max);
 
     if (m == 0) {
         return;
     }
+    typedef struct {
+        float scalar_min;
+        float scalar_max;
+    } KernelArgs;
 
+    KernelArgs ka;
+    ka.scalar_min = scalar_min;
+    ka.scalar_max = scalar_max;
     const size_t lhs_packed_stride = kai_get_lhs_packed_stride(k, bl);
     const size_t rhs_packed_stride = kai_get_rhs_packed_stride(k, bl);
     const size_t num_blocks = kai_get_num_blocks_per_row(k, bl);
@@ -180,6 +186,10 @@ void kai_run_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot(
         // Initialize ZT0 (Lookup table)
         " mov x9, %[lut] \n"
         " .inst 0xe11f8120 // ldr zt0, [x9] \n"
+
+        // Initialise min and max
+        " ld1rw z20.s, p2/z, [%x[args_ptr], %[min]] \n"  // min
+        " ld1rw z21.s, p2/z, [%x[args_ptr], %[max]] \n"  // max
 
         // Initialize the RHS packed and scale pointers
         " mov x0, %[rhs_packed] \n"
@@ -324,6 +334,7 @@ void kai_run_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot(
         " 4: //.LOOP_K_END%=: \n"
 
         // Store the results into memory
+        " .inst 0xc1b5ca98 // fclamp  { z24.s - z27.s }, z20.s, z21.s \n"
         " .inst 0xa060c4b8 // st1w { z24.s-z27.s }, pn9, [x5] \n"
         " incb  x4, all \n"
         " addvl x5, x5, #4 \n"
@@ -349,7 +360,8 @@ void kai_run_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot(
         :
         : [lut] "r"(lut), [dst] "r"(dst), [rhs_packed] "r"(rhs_packed), [rhs_scales] "r"(rhs_scales),
           [lhs_packed] "r"(lhs_packed), [lhs_scales] "r"(lhs_scales), [rhs_packed_stride] "r"(rhs_packed_stride),
-          [n] "r"((int64_t)n), [k] "r"(k), [bl] "i"(kai_bl)
+          [n] "r"((int64_t)n), [k] "r"(k), [bl] "r"(bl), [args_ptr] "r"(&ka),
+          [min] "I"(offsetof(KernelArgs, scalar_min)), [max] "I"(offsetof(KernelArgs, scalar_max))
         : "p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9", "p10", "p11", "p12", "p13", "p14", "p15", "z0",
           "z1", "z2", "z3", "z4", "z5", "z6", "z7", "z8", "z9", "z10", "z11", "z12", "z13", "z14", "z15", "z16", "z17",
           "z18", "z19", "z20", "z21", "z22", "z23", "z24", "z25", "z26", "z27", "z28", "z29", "z30", "z31", "x0", "x1",

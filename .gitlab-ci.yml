@@ -75,6 +75,9 @@ variables:
   # Default cache policy is to pull only
   CACHE_POLICY: pull
 
+  # Fixed seed for test reproducibility
+  GLOBAL_TEST_SEED: 42
+
 default:
   image: registry.gitlab.arm.com/kleidi/kleidiai/image:latest
   tags:
@@ -100,6 +103,29 @@ default:
         CACHE_POLICY: pull-push
     # Run a job for protected tags (release and rc ones)
     - if: $CI_COMMIT_TAG && $CI_COMMIT_REF_PROTECTED == "true"
+
+# Base template: .main-branch-verification-rules
+# Purpose: Common opt-out rules for jobs validating main branch state
+.main-branch-verification-rules:
+  rules:
+  - if: >
+      $DISABLE_MAIN_BRANCH_VERIFICATION_JOBS != "true" &&
+      $CI_PIPELINE_SOURCE == 'merge_request_event' &&
+      $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != 'main'
+    when: never
+  - if: >
+      $DISABLE_MAIN_BRANCH_VERIFICATION_JOBS != "true" &&
+      $CI_PIPELINE_SOURCE == 'merge_request_event' &&
+      $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'main'
+  - if: >
+      $DISABLE_MAIN_BRANCH_VERIFICATION_JOBS != "true" &&
+      $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    variables:
+      CACHE_POLICY: pull-push
+  - if: >
+      $DISABLE_MAIN_BRANCH_VERIFICATION_JOBS != "true" &&
+      $CI_COMMIT_TAG &&
+      $CI_COMMIT_REF_PROTECTED == "true"
 
 workflow:
   auto_cancel:
@@ -260,8 +286,32 @@ test-verify-benchmark-registration:
     - .standard-rules
   stage: test
   needs: []
+  rules:
+    - !reference [.main-branch-verification-rules, rules]
   script:
     - python3 tools/check_benchmark_microkernels.py
+
+# Purpose: Verify that all micro-kernels are documented in docs/microkernel_tables.md.
+test-verify-microkernel-tables:
+  extends:
+    - .standard-rules
+  stage: test
+  needs: []
+  rules:
+    - !reference [.main-branch-verification-rules, rules]
+  script:
+    - python3 tools/check_microkernel_tables.py
+
+# Purpose: Build current sources against tests/benchmarks from latest semver tag to detect API breakage.
+test-api-compat:
+  extends:
+    - .standard-rules
+  stage: test
+  needs: []
+  rules:
+    - !reference [.main-branch-verification-rules, rules]
+  script:
+    - ./tools/check_api_compat.py
 
 # Purpose: Run pre-commit hooks (formatting, linting) with cached tool downloads.
 pre-commit-hooks:
@@ -278,6 +328,15 @@ pre-commit-hooks:
       policy: $CACHE_POLICY
   script:
     - PRE_COMMIT_HOME=$PRE_COMMIT_HOME pre-commit run --all-files
+
+# Purpose: Validate MR metadata used as the squash/merge commit message.
+test-verify-squash-commit-message:
+  stage: test
+  needs: []
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  script:
+    - python3 tools/check_squash_commit_message.py
 
 # Purpose: Manual gate job to record external pipeline status.
 test-remote:
@@ -325,7 +384,7 @@ test-remote:
       # Export index variable to child process
       export GTEST_SHARD_INDEX
       echo "Running iteration $GTEST_SHARD_INDEX of $GTEST_TOTAL_SHARDS"
-      ${UT_BINARY_PATH:-./build-${UT_VARIANT_NAME}}/kleidiai_test --gtest_brief=1 --gtest_output=xml:${UT_REPORT_PATH:-kleidiai_results-${UT_VARIANT_NAME}}${GTEST_SHARD_INDEX}.xml ${UT_EXTRA_ARGS:-}
+      ${UT_BINARY_PATH:-./build-${UT_VARIANT_NAME}}/kleidiai_test --gtest_brief=1 --gtest_output=xml:${UT_REPORT_PATH:-kleidiai_results-${UT_VARIANT_NAME}}${GTEST_SHARD_INDEX}.xml --gtest_random_seed=${GLOBAL_TEST_SEED:-42} ${UT_EXTRA_ARGS:-}
     done
 
 # Purpose: Sharded unit tests for each build provider.
@@ -359,35 +418,6 @@ test-linux-aarch64:
     reports:
       junit: ${UT_REPORT_PATH}*.xml
 
-test-benchmark-dry-run:
-  extends:
-    - .standard-rules
-  stage: test
-  parallel:
-    matrix:
-      - BUILD_JOB_PROVIDER: [ clang, gcc ]
-  needs:
-    - build-clang
-    - build-gcc
-  script:
-    - BENCHMARK_LOG_FILE="benchmark_dry_run_${BUILD_JOB_PROVIDER}.log"
-    - BENCHMARK_BINARY="build-${BUILD_JOB_PROVIDER}/kleidiai_benchmark"
-    - test -x "${BENCHMARK_BINARY}"
-    - (${BENCHMARK_BINARY} --benchmark_dry_run=true -m 1 -n 30 -k 64) |& tee ${BENCHMARK_LOG_FILE}
-    - (${BENCHMARK_BINARY} matmul --benchmark_dry_run=true -m 1 -n 30 -k 64) |& tee -a ${BENCHMARK_LOG_FILE}
-    - (${BENCHMARK_BINARY} imatmul --benchmark_dry_run=true -m 1 -n 30 -c 4 -l 15) |& tee -a ${BENCHMARK_LOG_FILE}
-    - (${BENCHMARK_BINARY} --benchmark_list_tests) |& tee -a ${BENCHMARK_LOG_FILE}
-    - (${BENCHMARK_BINARY} matmul --benchmark_list_tests) |& tee -a ${BENCHMARK_LOG_FILE}
-    - (${BENCHMARK_BINARY} imatmul --benchmark_list_tests) |& tee -a ${BENCHMARK_LOG_FILE}
-    - (${BENCHMARK_BINARY} || true) |& tee -a ${BENCHMARK_LOG_FILE}
-    - (${BENCHMARK_BINARY} matmul || true) |& tee -a ${BENCHMARK_LOG_FILE}
-    - (${BENCHMARK_BINARY} imatmul || true) |& tee -a ${BENCHMARK_LOG_FILE}
-  artifacts:
-    when: always
-    expire_in: 1 day
-    paths:
-      - "benchmark_dry_run_${BUILD_JOB_PROVIDER}.log"
-
 # Purpose: Specialization of test-linux-aarch64 to run only SVE 256-bit VL unit test subset
 test-linux-aarch64-sve256:
   extends:
@@ -417,7 +447,7 @@ test-linux-aarch64-sve256:
     KUBERNETES_NODE_SELECTOR_TYPE: "karpenter.sh/capacity-type=on-demand"
     # Disable SVE/SVE2, but keep SME/SME2
     FVP_MODEL_EXTRA: "-C cluster0.sve.has_sve2=0 -C cluster0.sve.sme_only=1"
-    FVP_TEST_EXECUTABLE: "./build-${BUILD_JOB_PROVIDER}/kleidiai_test --gtest_output=xml:kleidiai_test_results-${BUILD_JOB_PROVIDER}.xml"
+    FVP_TEST_EXECUTABLE: "./build-${BUILD_JOB_PROVIDER}/kleidiai_test --gtest_output=xml:kleidiai_test_results-${BUILD_JOB_PROVIDER}.xml --gtest_random_seed=${GLOBAL_TEST_SEED:-42}"
   script:
     - ./tools/fvp.sh ${FVP_TEST_EXECUTABLE}
   artifacts:
@@ -467,7 +497,7 @@ test-linux-aarch64-v8only-fvp:
         echo -e "./'${EXAMPLE}' || true"                             >> run_tests.sh  # Allow failure (expected crash).
       done
       echo "echo Perform a positive test with CPU feature detection" >> run_tests.sh
-      echo "./build-clang/kleidiai_test --gtest_brief=1 || exit 1"   >> run_tests.sh  # Must succeed.
+      echo "./build-clang/kleidiai_test --gtest_brief=1 --gtest_random_seed=\${GLOBAL_TEST_SEED:-42} || exit 1"   >> run_tests.sh  # Must succeed.
     # Dump content for debugging purposes
     - |
       echo "Test script content:"
@@ -508,7 +538,7 @@ test-linux-aarch64-sme1only-fvp:
       echo "echo Perform a positive test with CPU feature detection"     >> run_tests.sh
       echo "export GTEST_OUTPUT=xml:kleidiai-${CI_JOB_NAME_SLUG}.xml"    >> run_tests.sh
       echo "export GTEST_BRIEF=1"                                        >> run_tests.sh
-      echo "./build-clang/kleidiai_test --gtest_filter=*sme_* || exit 1" >> run_tests.sh
+      echo "./build-clang/kleidiai_test --gtest_filter=*sme_* --gtest_random_seed=\${GLOBAL_TEST_SEED:-42} || exit 1" >> run_tests.sh
     # Dump content for debugging purposes
     - |
       echo "Test script content:"
@@ -556,6 +586,99 @@ test-examples-sme-fvp:
     paths:
       - example.log
 
+# Purpose: Resolve and lock gcovr version for consistent coverage reporting.
+resolve-gcovr:
+  extends: .standard-rules
+  stage: analyze
+  needs: []
+  variables:
+    PIP_CACHE_DIR: ".cache/pip3"
+  cache:
+    - key: "cache-pip3"
+      paths:
+        - $PIP_CACHE_DIR
+      policy: $CACHE_POLICY
+  script:
+    # Install latest gcovr once, then record the exact version
+    - python3 -m pip install --cache-dir=$PIP_CACHE_DIR --user -U --break-system-packages gcovr
+    - export PATH="$(python3 -m site --user-base)/bin:${PATH}"
+    - GCOVR_VERSION=$(gcovr --version | awk 'NR==1 {print $2; exit}')
+    - echo "GCOVR_VERSION=${GCOVR_VERSION}" | tee gcovr.env
+  artifacts:
+    paths:
+      - gcovr.env
+
+# Base template: .gcovr-install
+# Purpose: Install cached gcovr version from resolve-gcovr job.
+.gcovr-install:
+  variables:
+    PIP_CACHE_DIR: ".cache/pip3"
+  cache:
+    - key: "cache-pip3"
+      paths:
+        - $PIP_CACHE_DIR
+      policy: $CACHE_POLICY
+  before_script:
+    # Prefer Homebrew python3.13 -> 3.10 on macOS, otherwise keep python3 on PATH
+    - |
+      PYTHON_BIN="python3"
+      if [ "$(uname)" = "Darwin" ]; then
+        export PATH="/opt/homebrew/bin:/usr/local/bin:${PATH}"
+        for ver in 3.13 3.12 3.11 3.10; do
+          if [ -x "/opt/homebrew/bin/python${ver}" ]; then
+            PYTHON_BIN="/opt/homebrew/bin/python${ver}"
+            break
+          fi
+        done
+      fi
+      # Ensure the selected python is present on PATH.
+      if ! command -v "${PYTHON_BIN}" >/dev/null 2>&1; then
+        echo "Missing ${PYTHON_BIN} on PATH" >&2
+        exit 1
+      fi
+      # Enforce minimum python version required by gcovr tooling.
+      if ! "$PYTHON_BIN" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)'; then
+        echo "Python ${PYTHON_BIN} is too old; need >= 3.10" >&2
+        exit 1
+      fi
+      echo "Using python: ${PYTHON_BIN}"
+      "$PYTHON_BIN" -V
+
+    # Load the locked GCOVR_VERSION from resolve-gcovr
+    - |
+      if [ -f gcovr.env ]; then
+        set -a
+        . gcovr.env
+        set +a
+        echo "Using gcovr ${GCOVR_VERSION} from resolve-gcovr"
+      else
+        echo "gcovr.env not found; ensure resolve-gcovr is listed in needs." >&2
+        exit 1
+      fi
+
+    # Install pip + gcovr==$GCOVR_VERSION
+    - |
+      if "$PYTHON_BIN" -m pip help install 2>&1 | grep -q -- "--break-system-packages"; then
+        PIP_BREAK_SYSTEM_PACKAGES_FLAG="--break-system-packages"
+      else
+        PIP_BREAK_SYSTEM_PACKAGES_FLAG=""
+      fi
+      $PYTHON_BIN -m pip install --cache-dir=$PIP_CACHE_DIR --user -U ${PIP_BREAK_SYSTEM_PACKAGES_FLAG} pip
+      $PYTHON_BIN -m pip install --cache-dir=$PIP_CACHE_DIR --user ${PIP_BREAK_SYSTEM_PACKAGES_FLAG} "gcovr==${GCOVR_VERSION}"
+    - export PATH="$("$PYTHON_BIN" -m site --user-base)/bin:${PATH}"
+
+    # Sanity check the installed gcovr version
+    - |
+      (
+        set -euo pipefail
+        INSTALLED_GCOVR_VERSION=$(gcovr --version | awk 'NR==1 {print $2; exit}')
+        echo "gcovr ${INSTALLED_GCOVR_VERSION}"
+        if [ "${INSTALLED_GCOVR_VERSION}" != "${GCOVR_VERSION}" ]; then
+          echo "Expected gcovr ${GCOVR_VERSION} but found ${INSTALLED_GCOVR_VERSION}" >&2
+          exit 1
+        fi
+      )
+
 # Base template: .coverage-base
 # Purpose: Instrumented build & diversified benchmark/test execution producing per-job JSON coverage trace.
 .coverage-base:
@@ -573,7 +696,7 @@ test-examples-sme-fvp:
       -S . -B ${CI_JOB_NAME_SLUG}
     - cmake --build ${CI_JOB_NAME_SLUG} -j${PARALLEL_JOBS} --verbose
     # Run kleidiai_test to generate coverage report for unit tests
-    - ./${CI_JOB_NAME_SLUG}/kleidiai_test --gtest_brief=1
+    - ./${CI_JOB_NAME_SLUG}/kleidiai_test --gtest_brief=1 --gtest_random_seed=${GLOBAL_TEST_SEED:-42}
     # Run combined benchmark for all subcommands (backwards compatibility, matmul, imatmul, dwconv)
     - |
       declare -a BENCHMARKS=(
@@ -618,18 +741,12 @@ test-examples-sme-fvp:
 coverage-linux:
   extends:
     - .coverage-base
+    - .gcovr-install
   stage: analyze
+  needs:
+    - resolve-gcovr
   variables:
     GCOV_EXECUTABLE: "llvm-cov gcov"
-    PIP_CACHE_DIR: ".cache/pip3"
-  cache:
-    - key: cache-pip3
-      paths:
-        - $PIP_CACHE_DIR
-      policy: $CACHE_POLICY
-  before_script:
-    # Install latest gcovr to keep it in sync with other systems
-    - pip3 install --cache-dir=$PIP_CACHE_DIR -U --break-system-packages --user gcovr
 
 # Purpose: SVE256 coverage variant (focus on *_sve_* tests) to extend line/function coverage set.
 coverage-linux-sve256:
@@ -644,7 +761,10 @@ coverage-linux-sve256:
 coverage-clang:
   extends:
     - .coverage-base
+    - .gcovr-install
   stage: analyze
+  needs:
+    - resolve-gcovr
   tags:
     - apple_silicon
   variables:
@@ -655,23 +775,15 @@ coverage-clang:
 coverage:
   extends:
     - .standard-rules
+    - .gcovr-install
   stage: deploy
   needs:
+    - resolve-gcovr
     - coverage-linux
     - coverage-linux-sve256
     - coverage-clang
   tags:
     - apple_silicon
-  variables:
-    PIP_CACHE_DIR: ".cache/pip3"
-  cache:
-    - key: cache-pip3
-      paths:
-        - $PIP_CACHE_DIR
-      policy: $CACHE_POLICY
-  before_script:
-    - python3 -m pip install --cache-dir=$PIP_CACHE_DIR --user -U gcovr --break-system-packages
-    - export PATH="$(python3 -m site --user-base)/bin:${PATH}"
   script:
     # Generage Cobertura and HTML reports merging coverage across variants,
     # where each variant artifact should be stored in JSON file at build/coverage/

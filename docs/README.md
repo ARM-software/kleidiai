@@ -1,5 +1,5 @@
 <!--
-    SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+    SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 
     SPDX-License-Identifier: Apache-2.0
 -->
@@ -36,6 +36,7 @@ The `examples` directory contains standalone C++ sample applications that demons
 
 ## Documentation and guides
 
+- [KleidiAI micro-kernel tables](microkernel_tables.md)
 - [How to run the int4 matmul micro-kernels](matmul_qsi4cx/README.md)
 - [How to run the indirect matmul micro-kernels](imatmul/README.md)
 - [Matmul micro-kernels overview](../kai/ukernels/matmul/README.md)

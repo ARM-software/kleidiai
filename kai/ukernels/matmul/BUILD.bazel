@@ -1,5 +1,5 @@
 #
-# SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -47,6 +47,7 @@ NEON_KERNELS = [
     "pack/kai_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0",
     "pack/kai_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon",
     "pack/kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon",
+    "pack/kai_rhs_pack_nxk_qsu2cxp4vlx4_qsu2cx_neon",
 ]
 
 # buildifier: keep sorted
@@ -60,6 +61,7 @@ NEON_KERNELS_ASM = [
 # buildifier: keep sorted
 FP16_KERNELS = [
     "matmul_clamp_f16_f16_f16p/kai_matmul_clamp_f16_f16_f16p16x1biasf16_6x16x8_neon_mla",
+    "pack/kai_lhs_pack_f16pmrx2_f32_neon",
     "pack/kai_lhs_quant_pack_qai8dxp_f16_neon",
     "pack/kai_lhs_quant_pack_qsi8d32pscalef32_f16_neon",
     "pack/kai_rhs_pack_kxn_f16p16x1biasf16_f16_f16_neon",
@@ -184,48 +186,31 @@ SVE_I8MM_KERNELS_ASM = [
 
 # buildifier: keep sorted
 SVE_KERNELS_ASM = [
+    "imatmul_clamp_f32_f32_f32p/kai_imatmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla",
     "matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla",
+    "pack/kai_rhs_imatmul_pack_kxn_x32p4vlx1b_x32_x32_sve",
     "pack/kai_rhs_pack_kxn_x32p4vlx1b_x32_x32_sve",
 ]
 
 # buildifier: keep sorted
 SME_KERNELS = [
-    "matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_qmx_mopa",
-    "matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_qmx_sdot",
-    "matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_qmx_mopa",
-    "matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_qmx_sdot",
     "pack/kai_lhs_pack_bf16p2vlx2_f32_sme",
     "pack/kai_rhs_pack_kxn_bf16p2vlx2b_f32_x32_sme",
 ]
 
 # buildifier: keep sorted
 SME_KERNELS_ASM = [
-    "imatmul_clamp_f16_f16p_f16p/kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_qmx_mopa",
-    "imatmul_clamp_f32_f32p_f32p/kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_qmx_mopa",
-    "imatmul_clamp_qai8_qai8p_qsi8cxp/kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_qmx_mopa",
-    "matmul_clamp_f16_f16_f16p/kai_matmul_clamp_f16_f16_f16p2vlx2b_1x16vl_qmx_dot",
-    "matmul_clamp_f16_f16p_f16p/kai_matmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_qmx_mopa",
-    "matmul_clamp_f16_qsi8d32p_qai4c32p/kai_matmul_clamp_f16_qsi8d32p1vlx4_qai4c32p4vlx4_1vlx4vl_qmx_mopa",
-    "matmul_clamp_f16_qsi8d32p_qai4c32p/kai_matmul_clamp_f16_qsi8d32p1x4_qai4c32p4vlx4_1x4vl_qmx_dot",
-    "matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p16vlx1b_1x16vl_qmx_mla",
-    "matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p2vlx1b_1x16vl_qmx_mla",
-    "matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_qmx_mopa",
-    "matmul_clamp_f32_qai8dxp_qsi4c32p/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi4c32p4vlx4_1vlx4vl_qmx_mopa",
-    "matmul_clamp_f32_qai8dxp_qsi4c32p/kai_matmul_clamp_f32_qai8dxp1x4_qsi4c32p4vlx4_1x4vl_qmx_dot",
-    "matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_qmx_mopa",
-    "matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_qmx_dot",
-    "matmul_clamp_f32_qsi8d32p_qai4c32p/kai_matmul_clamp_f32_qsi8d32p1vlx4_qai4c32p4vlx4_1vlx4vl_qmx_mopa",
-    "matmul_clamp_f32_qsi8d32p_qai4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qai4c32p4vlx4_1x4vl_qmx_dot",
-    "matmul_clamp_fp32_bf16p_bf16p/kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_qmx_mopa",
-    "matmul_clamp_qai8_qai8_qsi8cxp/kai_matmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_qmx_dot",
-    "matmul_clamp_qai8_qai8p_qsi8cxp/kai_matmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_qmx_mopa",
     "imatmul_clamp_f16_f16p_f16p/kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa",
     "imatmul_clamp_f32_f32p_f32p/kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa",
     "imatmul_clamp_qai8_qai8p_qsi8cxp/kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxp2vlx4sb_2vlx2vl_sme_mopa",
     "matmul_clamp_f16_f16_f16p/kai_matmul_clamp_f16_f16_f16p2vlx2b_1x8vl_sme_mla",
     "matmul_clamp_f16_f16p_f16p/kai_matmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa",
+    "matmul_clamp_f16_qai8dxp_qsi8cxp/kai_matmul_clamp_f16_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa",
+    "matmul_clamp_f16_qai8dxp_qsi8cxp/kai_matmul_clamp_f16_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot",
     "matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p2vlx1b_1x8vl_sme_mla",
     "matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa",
+    "matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa",
+    "matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme_dot",
     "matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa",
     "matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme_dot",
     "matmul_clamp_qai8_qai8p_qsi8cxp/kai_matmul_clamp_qai8_qai8p2vlx4_qsi8cxp2vlx4sb_2vlx2vl_sme_mopa",
@@ -247,11 +232,33 @@ SME_KERNELS_ASM = [
 ]
 
 # buildifier: keep sorted
+SME_KERNELS_ASM_NOHDR = [
+    "pack/kai_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme",
+    "pack/kai_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme",
+    "pack/kai_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme",
+]
+
+# buildifier: keep sorted
 SME2_KERNELS = [
     "matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa",
     "matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot",
     "matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa",
     "matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot",
+]
+
+# buildifier: keep sorted
+SME2_KERNELS_NOHDR = [
+    "matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8vs_sme2_mopa",
+]
+
+# buildifier: keep sorted
+SME2_KERNELS_ASM_ONLY = [
+    "matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_16vsx4vs_sme2_mopa",
+    "matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_4vsx16vs_sme2_mopa",
+    "matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_4vsx4vs_sme2_mopa",
+    "matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_4vsx8vs_sme2_mopa",
+    "matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx4vs_sme2_mopa",
+    "matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8vs_sme2_mopa",
 ]
 
 # buildifier: keep sorted
@@ -263,6 +270,7 @@ SME2_KERNELS_ASM = [
     "matmul_clamp_f16_f16p_f16p/kai_matmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa",
     "matmul_clamp_f16_qsi8d32p_qai4c32p/kai_matmul_clamp_f16_qsi8d32p1vlx4_qai4c32p4vlx4_1vlx4vl_sme2_mopa",
     "matmul_clamp_f16_qsi8d32p_qai4c32p/kai_matmul_clamp_f16_qsi8d32p1x4_qai4c32p4vlx4_1x4vl_sme2_dot",
+    "matmul_clamp_f32_f16p_qsi4c32p/kai_matmul_clamp_f32_f16p1vlx2_qsi4c32p4vlx2_1vlx4vl_sme2_mopa",
     "matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p16vlx1b_1x16vl_sme2_mla",
     "matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p2vlx1b_1x16vl_sme2_mla",
     "matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa",
@@ -270,6 +278,8 @@ SME2_KERNELS_ASM = [
     "matmul_clamp_f32_qai8dxp_qsi4c32p/kai_matmul_clamp_f32_qai8dxp1x4_qsi4c32p4vlx4_1x4vl_sme2_dot",
     "matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa",
     "matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot",
+    "matmul_clamp_f32_qai8dxp_qsu2cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsu2cxp4vlx4_1vlx4vl_sme2_mopa",
+    "matmul_clamp_f32_qai8dxp_qsu2cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsu2cxp4vlx4_1x4vl_sme2_dot",
     "matmul_clamp_f32_qsi8d32p_qai4c32p/kai_matmul_clamp_f32_qsi8d32p1vlx4_qai4c32p4vlx4_1vlx4vl_sme2_mopa",
     "matmul_clamp_f32_qsi8d32p_qai4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qai4c32p4vlx4_1x4vl_sme2_dot",
     "matmul_clamp_fp32_bf16p_bf16p/kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa",
@@ -277,9 +287,43 @@ SME2_KERNELS_ASM = [
     "matmul_clamp_qai8_qai8p_qsi8cxp/kai_matmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa",
 ]
 
+# buildifier: keep sorted
+QMX_KERNELS_ASM = [
+    "imatmul_clamp_f16_f16p_f16p/kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_qmx_mopa",
+    "imatmul_clamp_f32_f32p_f32p/kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_qmx_mopa",
+    "imatmul_clamp_qai8_qai8p_qsi8cxp/kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_qmx_mopa",
+    "matmul_clamp_f16_f16_f16p/kai_matmul_clamp_f16_f16_f16p2vlx2b_1x16vl_qmx_dot",
+    "matmul_clamp_f16_f16p_f16p/kai_matmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_qmx_mopa",
+    "matmul_clamp_f16_qsi8d32p_qai4c32p/kai_matmul_clamp_f16_qsi8d32p1vlx4_qai4c32p4vlx4_1vlx4vl_qmx_mopa",
+    "matmul_clamp_f16_qsi8d32p_qai4c32p/kai_matmul_clamp_f16_qsi8d32p1x4_qai4c32p4vlx4_1x4vl_qmx_dot",
+    "matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p16vlx1b_1x16vl_qmx_mla",
+    "matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p2vlx1b_1x16vl_qmx_mla",
+    "matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_qmx_mopa",
+    "matmul_clamp_f32_qai8dxp_qsi4c32p/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi4c32p4vlx4_1vlx4vl_qmx_mopa",
+    "matmul_clamp_f32_qai8dxp_qsi4c32p/kai_matmul_clamp_f32_qai8dxp1x4_qsi4c32p4vlx4_1x4vl_qmx_dot",
+    "matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_qmx_mopa",
+    "matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_qmx_sdot",
+    "matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_qmx_mopa",
+    "matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_qmx_dot",
+    "matmul_clamp_f32_qsi8d32p_qai4c32p/kai_matmul_clamp_f32_qsi8d32p1vlx4_qai4c32p4vlx4_1vlx4vl_qmx_mopa",
+    "matmul_clamp_f32_qsi8d32p_qai4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qai4c32p4vlx4_1x4vl_qmx_dot",
+    "matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_qmx_mopa",
+    "matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_qmx_sdot",
+    "matmul_clamp_fp32_bf16p_bf16p/kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_qmx_mopa",
+    "matmul_clamp_qai8_qai8_qsi8cxp/kai_matmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_qmx_dot",
+    "matmul_clamp_qai8_qai8p_qsi8cxp/kai_matmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_qmx_mopa",
+]
+
 kai_c_library(
     name = "interface",
-    textual_hdrs = glob(["**/*_interface.h"]),
+    textual_hdrs = glob(["**/*_interface.h"]) + [
+        "kai_matmul.h",
+        "kai_matmul_types.h",
+        "kai_matmul_pack_lhs.h",
+        "kai_matmul_pack_lhs_types.h",
+        "kai_matmul_pack_rhs.h",
+        "kai_matmul_pack_rhs_types.h",
+    ],
     visibility = ["//visibility:public"],
 )
 
@@ -400,18 +444,43 @@ kai_c_library(
     name = "sme_impl_asm",
     cpu_uarch = kai_cpu_sme(),
     kernels_asm = SME_KERNELS_ASM,
+    kernels_asm_nohdr = SME_KERNELS_ASM_NOHDR,
+    textual_hdrs = [
+        "kai_matmul.h",
+        "kai_matmul_types.h",
+        "kai_matmul_pack_lhs.h",
+        "kai_matmul_pack_lhs_types.h",
+        "kai_matmul_pack_rhs.h",
+        "kai_matmul_pack_rhs_types.h",
+    ],
 )
 
 kai_c_library(
     name = "sme2_impl",
     cpu_uarch = kai_cpu_sme2(),
     kernels = SME2_KERNELS,
+    kernels_nohdr = SME2_KERNELS_NOHDR,
+    textual_hdrs = [
+        "kai_matmul.h",
+        "kai_matmul_types.h",
+        "kai_matmul_pack_lhs.h",
+        "kai_matmul_pack_lhs_types.h",
+        "kai_matmul_pack_rhs.h",
+        "kai_matmul_pack_rhs_types.h",
+    ],
 )
 
 kai_c_library(
     name = "sme2_impl_asm",
     cpu_uarch = kai_cpu_sme2(),
     kernels_asm = SME2_KERNELS_ASM,
+    kernels_asm_only = SME2_KERNELS_ASM_ONLY,
+)
+
+kai_c_library(
+    name = "qmx_impl_asm",
+    cpu_uarch = kai_cpu_sme(),
+    kernels_asm = QMX_KERNELS_ASM,
 )
 
 kai_c_library(
@@ -433,6 +502,7 @@ kai_c_library(
         ":interface",
         ":neon_impl",
         ":neon_impl_asm",
+        ":qmx_impl_asm",
         ":scalar_impl",
         ":sme2_impl",
         ":sme2_impl_asm",

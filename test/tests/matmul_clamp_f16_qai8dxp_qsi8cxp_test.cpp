@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -14,6 +14,10 @@
 #include <string>
 #include <tuple>
 
+#include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi8cxp/kai_matmul_clamp_f16_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa.h"
+#include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi8cxp/kai_matmul_clamp_f16_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot.h"
+#include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi8cxp/kai_matmul_clamp_f16_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_qmx_mopa.h"
+#include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi8cxp/kai_matmul_clamp_f16_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_qmx_dot.h"
 #include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi8cxp/kai_matmul_clamp_f16_qai8dxp1x4_qsi8cxp4x4_1x4_neon_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi8cxp/kai_matmul_clamp_f16_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi8cxp/kai_matmul_clamp_f16_qai8dxp4x4_qsi8cxp4x4_16x4_neon_dotprod.h"
@@ -32,6 +36,7 @@
 #include "test/common/matrix_portion.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/round.hpp"
+#include "test/common/seed.hpp"
 #include "test/common/test_suite.hpp"
 #include "test/reference/cast.hpp"
 #include "test/reference/clamp.hpp"
@@ -69,12 +74,17 @@ F16Qai8Qsi8CacheData ReferenceGenerator<F16Qai8Qsi8CacheDataId, F16Qai8Qsi8Cache
     const size_t N = shape.n;
     const size_t K = shape.k;
 
-    static uint32_t seed = 1;
+    // Seed the random generator.
+    const auto key = std::string("F16Qai8Qsi8_cache:") + std::to_string(M) + "x" + std::to_string(N) + "x" +
+        std::to_string(K) + ":" + std::to_string(static_cast<uint32_t>(lhs_format.data_type())) + ":" +
+        std::to_string(static_cast<uint32_t>(rhs_format.data_type())) + ":" +
+        std::to_string(static_cast<uint32_t>(bias_format.data_type())) + ":" + std::to_string(clamp_keep_ratio);
+    auto& feed = seed_stream(key);
 
     bool has_bias = bias_format.data_type() != DataType::UNKNOWN;
-    Buffer lhs = fill_matrix_random(shape.m, shape.k, lhs_format, seed++);
-    Buffer rhs = fill_matrix_random(shape.n, shape.k, rhs_format, seed++);
-    Buffer bias = has_bias ? fill_matrix_random(1, shape.n, bias_format, seed++) : Buffer();
+    Buffer lhs = fill_matrix_random(shape.m, shape.k, lhs_format, feed());
+    Buffer rhs = fill_matrix_random(shape.n, shape.k, rhs_format, feed());
+    Buffer bias = has_bias ? fill_matrix_random(1, shape.n, bias_format, feed()) : Buffer();
 
     const auto ref_lhs = cast<float, Float16>(lhs.data(), lhs.size() * 8 / size_in_bits<Float16>);
 
@@ -112,17 +122,27 @@ F16Qai8Qsi8CacheData ReferenceGenerator<F16Qai8Qsi8CacheDataId, F16Qai8Qsi8Cache
     return out;
 }
 
-static const std::array<UkernelVariant<kai_matmul_clamp_f16_qai8dxp_qsi8cxp_ukernel>, 4>
-    variants_kai_matmul_clamp_f16_qai8dxp_qsi8cxp = {{
-        {UKERNEL_MATMUL_VARIANT(clamp_f16_qai8dxp1x4_qsi8cxp4x4_1x4_neon_dotprod),
-         "kai_matmul_clamp_f16_qai8dxp1x4_qsi8cxp4x4_1x4_neon_dotprod", cpu_has_dotprod_and_fp16},
-        {UKERNEL_MATMUL_VARIANT(clamp_f16_qai8dxp4x4_qsi8cxp4x4_16x4_neon_dotprod),
-         "kai_matmul_clamp_f16_qai8dxp4x4_qsi8cxp4x4_16x4_neon_dotprod", cpu_has_dotprod_and_fp16},
-        {UKERNEL_MATMUL_VARIANT(clamp_f16_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod),
-         "kai_matmul_clamp_f16_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod", cpu_has_dotprod_and_fp16},
-        {UKERNEL_MATMUL_VARIANT(clamp_f16_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm),
-         "kai_matmul_clamp_f16_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm", cpu_has_i8mm_and_fp16},
-    }};
+static const std::array<UkernelVariant<kai_matmul_clamp_f16_qai8dxp_qsi8cxp_ukernel>, 8>
+    variants_kai_matmul_clamp_f16_qai8dxp_qsi8cxp = {
+        {{UKERNEL_MATMUL_VARIANT(clamp_f16_qai8dxp1x4_qsi8cxp4x4_1x4_neon_dotprod),
+          "kai_matmul_clamp_f16_qai8dxp1x4_qsi8cxp4x4_1x4_neon_dotprod", cpu_has_dotprod_and_fp16},
+         {UKERNEL_MATMUL_VARIANT(clamp_f16_qai8dxp4x4_qsi8cxp4x4_16x4_neon_dotprod),
+          "kai_matmul_clamp_f16_qai8dxp4x4_qsi8cxp4x4_16x4_neon_dotprod", cpu_has_dotprod_and_fp16},
+         {UKERNEL_MATMUL_VARIANT(clamp_f16_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod),
+          "kai_matmul_clamp_f16_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod", cpu_has_dotprod_and_fp16},
+         {UKERNEL_MATMUL_VARIANT(clamp_f16_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm),
+          "kai_matmul_clamp_f16_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm", cpu_has_i8mm_and_fp16},
+         {UKERNEL_MATMUL_VARIANT(clamp_f16_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa),
+          "kai_matmul_clamp_f16_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa", cpu_has_sme2},
+         {UKERNEL_MATMUL_VARIANT(clamp_f16_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot),
+          "kai_matmul_clamp_f16_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot", cpu_has_sme2},
+         {UKERNEL_MATMUL_VARIANT(clamp_f16_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_qmx_mopa),
+          "kai_matmul_clamp_f16_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_qmx_mopa", cpu_has_sme},
+         {UKERNEL_MATMUL_VARIANT(clamp_f16_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_qmx_dot),
+          "kai_matmul_clamp_f16_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_qmx_dot", cpu_has_sme}          
+          
+          
+          }};
 
 class MatMulTest_f16_qai8dxp_qsi8cxp : public ::testing::TestWithParam<MatMulClampTestPortionedParamsWithBias> {};
 
@@ -225,7 +245,7 @@ TEST_P(MatMulTest_f16_qai8dxp_qsi8cxp, EndToEnd) {
     ASSERT_TRUE(success);
 }
 INSTANTIATE_TEST_SUITE_P(
-    MatMul, MatMulTest_f16_qai8dxp_qsi8cxp,
+    MatMul_z_, MatMulTest_f16_qai8dxp_qsi8cxp,
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f16_qai8dxp_qsi8cxp.size()),
         testing::Values(
@@ -236,7 +256,8 @@ INSTANTIATE_TEST_SUITE_P(
             MatMulShape{3, 3, 32},     //
             MatMulShape{4, 4, 32},     //
             MatMulShape{5, 5, 31},     //
-            MatMulShape{16, 32, 64},   //
+            MatMulShape{16, 64, 32},   //
+            MatMulShape{1, 64, 32},    //
             MatMulShape{16, 32, 36},   //
             MatMulShape{15, 35, 65},   //
             MatMulShape{8, 32, 64},    //

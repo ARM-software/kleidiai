@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -7,7 +7,6 @@
 // + Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 // + SPDX-License-Identifier: BSD-3-Clause-Clear
 //
-
 
 #pragma once
 
@@ -65,7 +64,7 @@ size_t kai_get_sr_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_qmx_mopa(
 ///
 /// @param[in] m_idx Row index in the LHS matrix (not packed). It must be a multiple of m_step.
 /// @param[in] k     Total number of columns in the LHS matrix (not packed).
-/// @param[in] bl    Block length. It must be 32.
+/// @param[in] bl    Block length. It must be a multiple of 32.
 ///
 /// @return the offset in bytes to the packed LHS matrix
 size_t kai_get_lhs_packed_offset_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_qmx_mopa(
@@ -78,7 +77,7 @@ size_t kai_get_lhs_packed_offset_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1v
 ///
 /// @param[in] n_idx Row index in the RHS matrix (not packed). It must be a multiple of n_step.
 /// @param[in] k     The common dimension between the LHS and RHS matrix (K).
-/// @param[in] bl    Block length. It must be 32.
+/// @param[in] bl    Block length. It must be a multiple of 32.
 ///
 /// @return the offset in bytes to the packed RHS matrix
 size_t kai_get_rhs_packed_offset_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_qmx_mopa(
@@ -114,12 +113,12 @@ size_t kai_get_dst_size_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_qmx
 /// RHS matrix: Quantized Symmetric Signed 4-bit with per-block (32) quantization (qsi4c32) and packed.
 /// Output tile: (rows x cols) = 1 VL  x 4 VL (Vector Length)
 ///
-/// Instruction used: SME2 (MOPA)
+/// Instruction used: qmx (MOPA)
 ///
 /// @param[in]  m              The number of output rows written.
 /// @param[in]  n              The number of output columns written.
 /// @param[in]  k              The number of channels. The common dimension between the LHS and RHS matrix.
-/// @param[in]  bl             Block length. Block length. It must be 32.
+/// @param[in]  bl             Block length. It must be a multiple of 32.
 /// @param[in]  lhs_packed     The LHS packed matrix. The micro-kernel dependencies list at the top of this file reports
 /// the available
 ///                            LHS packing functions for this micro-kernel.

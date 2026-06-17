@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -27,13 +27,13 @@ namespace kai::test {
 namespace {
 
 template <typename T>
-std::tuple<Buffer, Buffer> dynamic_clamp(float ratio, Span<const size_t> shape, Span<const std::byte> data) {
+std::tuple<Buffer, Buffer> dynamic_clamp(float ratio, Shape shape, Span<const std::byte> data) {
     KAI_TEST_ASSERT(ratio > 0.0F);
     KAI_TEST_ASSERT(ratio <= 1.0F);
 
     const size_t num_dims = shape.size();
     const size_t width = shape.at(num_dims - 1);
-    const size_t height = std::accumulate(shape.begin(), shape.end() - 1, 1, std::multiplies<>());
+    const size_t height = std::accumulate(shape.begin(), shape.end() - 1, size_t{1}, std::multiplies<>());
 
     // Finds the input range.
     T src_min = numeric_highest<T>;

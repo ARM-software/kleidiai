@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -63,6 +63,9 @@ size_t pack_block2d(
 
 PackBlock2dFn make_pack_block2d(DataType dtype) {
     switch (dtype) {
+        case DataType::FP32:
+            return pack_block2d<float>;
+
         case DataType::I8:
             return pack_block2d<int8_t>;
 

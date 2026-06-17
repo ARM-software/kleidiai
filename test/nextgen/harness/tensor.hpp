@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -16,9 +16,10 @@
 
 #include "test/common/assert.hpp"
 #include "test/common/buffer.hpp"
-#include "test/common/span.hpp"
 #include "test/nextgen/common/poly.hpp"
+#include "test/nextgen/common/shape.hpp"
 #include "test/nextgen/format/format.hpp"
+#include "test/nextgen/operators/matmul/matmul_slots.hpp"
 
 namespace kai::test {
 
@@ -26,7 +27,7 @@ namespace kai::test {
 class Tensor {
 public:
     /// Gets the size of the multidimensional array.
-    [[nodiscard]] Span<const size_t> shape() const {
+    [[nodiscard]] Shape shape() const {
         return m_shape;
     }
 
@@ -36,7 +37,7 @@ public:
     /// the new shape must be the same as the existing shape
     /// to make sure all components in the test environment have the same
     /// expectation for this slot.
-    Tensor& set_shape(Span<const size_t> shape) {
+    Tensor& set_shape(Shape shape) {
         if (m_shape.empty()) {
             KAI_TEST_ASSERT_MSG(m_data.size() == 0, "The slot must be empty when its shape is setup.");
             m_shape = std::vector(shape.begin(), shape.end());
@@ -160,6 +161,38 @@ private:
     std::vector<size_t> m_shape;
     std::optional<Poly<Format>> m_format;
     Buffer m_data;
+};
+
+/// Helper class for allowing MatMulSlot to be used as index.
+class TensorSet : public Span<Tensor> {
+public:
+    using Span<Tensor>::Span;
+    using Span<Tensor>::at;
+
+    /// Gets the tensor at the specified slot with bounds checking.
+    ///
+    /// @param[in] slot The tensor slot.
+    ///
+    /// @return The tensor at the requested slot.
+    [[nodiscard]] constexpr Tensor& at(MatMulSlot slot) const {
+        return Span<Tensor>::at(as_idx(slot));
+    }
+};
+
+/// Helper class for allowing MatMulSlot to be used as index.
+class ConstTensorSet : public Span<const Tensor> {
+public:
+    using Span<const Tensor>::Span;
+    using Span<const Tensor>::at;
+
+    /// Gets the tensor at the specified slot with bounds checking.
+    ///
+    /// @param[in] slot The tensor slot.
+    ///
+    /// @return The tensor at the requested slot.
+    [[nodiscard]] constexpr const Tensor& at(MatMulSlot slot) const {
+        return Span<const Tensor>::at(as_idx(slot));
+    }
 };
 
 }  // namespace kai::test

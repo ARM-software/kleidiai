@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -31,11 +31,13 @@
 #include "test/common/abi_checker.hpp"
 #include "test/common/buffer.hpp"
 #include "test/common/cache.hpp"
+#include "test/common/compare.hpp"
 #include "test/common/cpu_info.hpp"
 #include "test/common/matmul_test_common.hpp"
 #include "test/common/matrix_portion.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/printer.hpp"
+#include "test/common/seed.hpp"
 #include "test/common/test_suite.hpp"
 #include "test/reference/clamp.hpp"
 #include "test/reference/fill.hpp"
@@ -72,10 +74,16 @@ F32Qai8Qsi8CacheData ReferenceGenerator<F32Qai8Qsi8CacheDataId, F32Qai8Qsi8Cache
     const size_t N = shape.n;
     const size_t K = shape.k;
 
-    static size_t seed = 1;
-    Buffer lhs = fill_matrix_random(shape.m, shape.k, lhs_format, seed++);
-    Buffer rhs = fill_matrix_random(shape.k, shape.n, rhs_format, seed++);
-    Buffer bias = fill_matrix_random(1, shape.n, bias_format, seed++);
+    // Seed the random generator.
+    const auto key = std::string("F32Qai8Qsi8_cache:") + std::to_string(M) + "x" + std::to_string(N) + "x" +
+        std::to_string(K) + ":" + std::to_string(static_cast<uint32_t>(lhs_format.data_type())) + ":" +
+        std::to_string(static_cast<uint32_t>(rhs_format.data_type())) + ":" +
+        std::to_string(static_cast<uint32_t>(bias_format.data_type())) + ":" + std::to_string(clamp_keep_ratio);
+    auto& feed = seed_stream(key);
+
+    Buffer lhs = fill_matrix_random(shape.m, shape.k, lhs_format, feed());
+    Buffer rhs = fill_matrix_random(shape.k, shape.n, rhs_format, feed());
+    Buffer bias = fill_matrix_random(1, shape.n, bias_format, feed());
 
     QuantizationInfo lhs_qinfo{};
     lhs_qinfo.quant_width = K;
@@ -293,19 +301,10 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi8cxp, EndToEnd_RHS_nxk_qsi8cx) {
         testdata.clamp_range.min, testdata.clamp_range.max);
 
     // Compares the output of the micro-kernels against the output of the reference implementation.
-    for (size_t y = 0; y < rect.height(); ++y) {
-        for (size_t x = 0; x < rect.width(); ++x) {
-            const auto imp_value =
-                read_array<float>(imp_dst.data(), (rect.start_row() + y) * N + (x + rect.start_col()));
-            const auto ref_value =
-                read_array<float>(ref_dst.data(), (rect.start_row() + y) * N + (x + rect.start_col()));
-            const auto rel_error = ref_value != 0 ? std::abs((imp_value - ref_value) / ref_value) : std::abs(imp_value);
-
-            if (rel_error > 0.0001F) {
-                ASSERT_EQ(imp_value, ref_value);
-            }
-        }
-    }
+    DefaultMismatchHandler handler(0, 0.02, 0, 0.05);
+    DataFormat dst_format = DataFormat(DataType::FP32);
+    const auto success = compare(imp_dst.data(), ref_dst.data(), dst_format, M, N, rect, handler);
+    ASSERT_TRUE(success);
 }
 
 TEST_P(MatMulTest_f32_qai8dxp_qsi8cxp, EndToEnd_RHS_kxn_qsi8cx) {
@@ -398,23 +397,14 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi8cxp, EndToEnd_RHS_kxn_qsi8cx) {
         testdata.clamp_range.min, testdata.clamp_range.max);
 
     // Compares the output of the micro-kernels against the output of the reference implementation.
-    for (size_t y = 0; y < rect.height(); ++y) {
-        for (size_t x = 0; x < rect.width(); ++x) {
-            const auto imp_value =
-                read_array<float>(imp_dst.data(), (rect.start_row() + y) * N + (x + rect.start_col()));
-            const auto ref_value =
-                read_array<float>(ref_dst.data(), (rect.start_row() + y) * N + (x + rect.start_col()));
-            const auto rel_error = ref_value != 0 ? std::abs((imp_value - ref_value) / ref_value) : std::abs(imp_value);
-
-            if (rel_error > 0.0001F) {
-                ASSERT_EQ(imp_value, ref_value);
-            }
-        }
-    }
+    DefaultMismatchHandler handler(0, 0.02, 0, 0.05);
+    DataFormat dst_format = DataFormat(DataType::FP32);
+    const auto success = compare(imp_dst.data(), ref_dst.data(), dst_format, M, N, rect, handler);
+    ASSERT_TRUE(success);
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMul, MatMulTest_f32_qai8dxp_qsi8cxp,
+    MatMul_g, MatMulTest_f32_qai8dxp_qsi8cxp,
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_qai8dxp_qsi8cxp.size()),
         testing::Values(

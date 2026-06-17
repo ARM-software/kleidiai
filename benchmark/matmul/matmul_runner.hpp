@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -13,6 +13,7 @@
 #include <test/common/data_type.hpp>
 
 #include "kai/kai_common.h"
+#include "kai/ukernels/matmul/kai_matmul_types.h"
 #include "matmul_interface.hpp"
 
 namespace kai::benchmark {
@@ -171,6 +172,64 @@ inline void MatMulRunner<MatMulBlockwiseDynamicQuantInterface>::run(const void* 
         dst_stride_row_, dst_stride_col_,    //
         -FLT_MAX, FLT_MAX                    //
     );
+}
+
+/// Runs the matrix multiplication micro-kernel. Specialized on the dynamic blockwise quantization interface with look
+/// up table.
+///
+/// @param lhs Buffer containing LHS matrix data.
+/// @param rhs Buffer containing RHS matrix data.
+/// @param dst Destination buffer to write to.
+template <>
+inline void MatMulRunner<MatMulBlockwiseDynamicQuantLutInterface>::run(const void* lhs, const void* rhs, void* dst) {
+    matmul_interface_.run_matmul(
+        m_, n_, k_,                          //
+        lhs, rhs, static_cast<float*>(dst),  //
+        dst_stride_row_, dst_stride_col_,    //
+        -FLT_MAX, FLT_MAX,                   //
+        nullptr);
+}
+
+/// Runs the matrix multiplication micro-kernel. Specialized on the ukernel API interface.
+///
+/// @param lhs Buffer containing LHS matrix data.
+/// @param rhs Buffer containing RHS matrix data.
+/// @param dst Destination buffer to write to.
+template <>
+inline void MatMulRunner<MatMulUkernelApiInterface>::run(const void* lhs, const void* rhs, void* dst) {
+    struct ClampArgs {
+        float min;
+        float max;
+    };
+
+    const auto api = matmul_interface_.get_api();
+    const auto config = matmul_interface_.get_config();
+
+    const ClampArgs clamp_args{-FLT_MAX, FLT_MAX};
+
+    const kai_matmul_uker_lhs_dim_args lhs_shape = {m_, k_};
+    const kai_matmul_uker_rhs_dim_args rhs_shape = {n_, k_};
+
+    kai_matmul_uker_args args = {};
+    args.flags = KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP;
+
+    args.shape.m = m_;
+    args.shape.n = n_;
+    args.shape.k = k_;
+
+    args.operand.lhs.ptr = lhs;
+    args.operand.lhs.stride = api.get_lhs_stride(&config, &lhs_shape);
+
+    args.operand.rhs.ptr = rhs;
+    args.operand.rhs.stride = api.get_rhs_stride(&config, &rhs_shape);
+
+    args.operand.dst.ptr = dst;
+    args.operand.dst.stride.m = dst_stride_row_;
+
+    args.activation.clamp.min_ptr = &clamp_args.min;
+    args.activation.clamp.max_ptr = &clamp_args.max;
+
+    api.run(&config, &args);
 }
 
 }  // namespace kai::benchmark

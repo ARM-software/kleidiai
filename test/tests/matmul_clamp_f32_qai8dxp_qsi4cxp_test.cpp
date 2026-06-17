@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -17,10 +17,12 @@
 #include <string>
 #include <string_view>
 
+#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_qmx_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_qmx_sdot.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme_dot.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4x4_1x4_neon_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1x8_qsi4cxp4x8_1x4x32_neon_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1x8_qsi4cxp8x8_1x8x32_neon_dotprod.h"
@@ -87,7 +89,7 @@ struct UkernelVariantCustom : public UkernelVariant<T> {
     }
 };
 
-static const std::array<UkernelVariantCustom<kai_matmul_clamp_f32_qai8dxp_qsi4cxp_ukernel>, 22>
+static const std::array<UkernelVariantCustom<kai_matmul_clamp_f32_qai8dxp_qsi4cxp_ukernel>, 25>
     variants_kai_matmul_clamp_f32_qai8dxp_qsi4cxp = {
         {{UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa),
           "kai_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa__RHS_NxK__", cpu_has_sme2,
@@ -95,25 +97,46 @@ static const std::array<UkernelVariantCustom<kai_matmul_clamp_f32_qai8dxp_qsi4cx
           kai_get_rhs_packed_size_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon,
           kai_get_rhs_packed_offset_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon,
           kai_get_rhs_offset_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon, RhsPackType::NxK},
-         {UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_qmx_mopa),
+
+         {UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa),
+          "kai_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa__RHS_NxK__", cpu_has_sme,
+          kai_run_rhs_pack_nxk_qsi4cxp_qs4cxs1s0, kai_get_rhs_packed_size_rhs_pack_nxk_qsi4cxp_qs4cxs1s0,
+          kai_get_rhs_packed_offset_rhs_pack_nxk_qsi4cxp_qs4cxs1s0, kai_get_rhs_offset_rhs_pack_nxk_qsi4cxp_qs4cxs1s0,
+          RhsPackType::NxK},
+         {UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa),
+          "kai_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa__RHS_KxN__", cpu_has_sme,
+          kai_run_rhs_pack_kxn_qsi4cxp_qs4cxs1s0, kai_get_rhs_packed_size_rhs_pack_kxn_qsi4cxp_qs4cxs1s0,
+          kai_get_rhs_packed_offset_rhs_pack_kxn_qsi4cxp_qs4cxs1s0, kai_get_rhs_offset_rhs_pack_kxn_qsi4cxp_qs4cxs1s0,
+          RhsPackType::KxN},
+
+{UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_qmx_mopa),
           "kai_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_qmx_mopa__RHS_NxK__", cpu_has_sme,
           kai_run_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon,
           kai_get_rhs_packed_size_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon,
           kai_get_rhs_packed_offset_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon,
           kai_get_rhs_offset_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon, RhsPackType::NxK},
+
          {UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot),
           "kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot__RHS_NxK__", cpu_has_sme2,
           kai_run_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon,
           kai_get_rhs_packed_size_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon,
           kai_get_rhs_packed_offset_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon,
           kai_get_rhs_offset_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon, RhsPackType::NxK},
+
          {UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_qmx_sdot),
           "kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_qmx_sdot__RHS_NxK__", cpu_has_sme,
           kai_run_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon,
           kai_get_rhs_packed_size_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon,
           kai_get_rhs_packed_offset_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon,
           kai_get_rhs_offset_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon, RhsPackType::NxK},
-          {UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp1x4_qsi4cxp4x4_1x4_neon_dotprod),
+          
+         {UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme_dot),
+          "kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme_dot__RHS_NxK__", cpu_has_sme,
+          kai_run_rhs_pack_nxk_qsi4cxp_qs4cxs1s0, kai_get_rhs_packed_size_rhs_pack_nxk_qsi4cxp_qs4cxs1s0,
+          kai_get_rhs_packed_offset_rhs_pack_nxk_qsi4cxp_qs4cxs1s0, kai_get_rhs_offset_rhs_pack_nxk_qsi4cxp_qs4cxs1s0,
+          RhsPackType::NxK},
+
+         {UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp1x4_qsi4cxp4x4_1x4_neon_dotprod),
           "kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4x4_1x4_neon_dotprod__RHS_NxK__", cpu_has_dotprod,
           kai_run_rhs_pack_nxk_qsi4cxp_qs4cxs1s0, kai_get_rhs_packed_size_rhs_pack_nxk_qsi4cxp_qs4cxs1s0,
           kai_get_rhs_packed_offset_rhs_pack_nxk_qsi4cxp_qs4cxs1s0, kai_get_rhs_offset_rhs_pack_nxk_qsi4cxp_qs4cxs1s0,
@@ -212,8 +235,7 @@ static const std::array<UkernelVariantCustom<kai_matmul_clamp_f32_qai8dxp_qsi4cx
           "kai_matmul_clamp_f32_qai8dxp4x8_qsi4cxp8x8_8x8x32_neon_i8mm__RHS_KxN__", cpu_has_i8mm,
           kai_run_rhs_pack_kxn_qsi4cxp_qs4cxs1s0, kai_get_rhs_packed_size_rhs_pack_kxn_qsi4cxp_qs4cxs1s0,
           kai_get_rhs_packed_offset_rhs_pack_kxn_qsi4cxp_qs4cxs1s0, kai_get_rhs_offset_rhs_pack_kxn_qsi4cxp_qs4cxs1s0,
-          RhsPackType::KxN}
-          }
+          RhsPackType::KxN}}
 
 };
 
@@ -410,19 +432,10 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsi4cx) {
 
     // Compares the output of the micro-kernels against the output of the reference implementation for the portion
     // tested.
-    for (size_t y = 0; y < rect.height(); ++y) {
-        for (size_t x = 0; x < rect.width(); ++x) {
-            const auto imp_value =
-                read_array<float>(imp_dst.data(), (rect.start_row() + y) * N + (x + rect.start_col()));
-            const auto ref_value =
-                read_array<float>(ref_clamped.data(), (rect.start_row() + y) * N + (x + rect.start_col()));
-            const auto rel_error = ref_value != 0 ? std::abs((imp_value - ref_value) / ref_value) : imp_value;
-
-            if (rel_error > 0.0001F) {
-                ASSERT_EQ(imp_value, ref_value);
-            }
-        }
-    }
+    DefaultMismatchHandler handler(0, 0.02, 0, 0.05);
+    DataFormat dst_format = DataFormat(DataType::FP32);
+    const auto success = compare(imp_dst.data(), ref_clamped.data(), dst_format, M, N, rect, handler);
+    ASSERT_TRUE(success);
 }
 
 TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsu4cx) {
@@ -554,19 +567,10 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsu4cx) {
 
     // Compares the output of the micro-kernels against the output of the reference implementation for the portion
     // tested.
-    for (size_t y = 0; y < rect.height(); ++y) {
-        for (size_t x = 0; x < rect.width(); ++x) {
-            const auto imp_value =
-                read_array<float>(imp_dst.data(), (rect.start_row() + y) * N + (x + rect.start_col()));
-            const auto ref_value =
-                read_array<float>(ref_clamped.data(), (rect.start_row() + y) * N + (x + rect.start_col()));
-            const auto rel_error = ref_value != 0 ? std::abs((imp_value - ref_value) / ref_value) : imp_value;
-
-            if (rel_error > 0.0001F) {
-                ASSERT_EQ(imp_value, ref_value);
-            }
-        }
-    }
+    DefaultMismatchHandler handler(0, 0.02, 0, 0.05);
+    DataFormat dst_format = DataFormat(DataType::FP32);
+    const auto success = compare(imp_dst.data(), ref_clamped.data(), dst_format, M, N, rect, handler);
+    ASSERT_TRUE(success);
 }
 
 TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsi4cx) {
@@ -701,19 +705,10 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsi4cx) {
 
     // Compares the output of the micro-kernels against the output of the reference implementation for the portion
     // tested.
-    for (size_t y = 0; y < rect.height(); ++y) {
-        for (size_t x = 0; x < rect.width(); ++x) {
-            const auto imp_value =
-                read_array<float>(imp_dst.data(), (rect.start_row() + y) * N + (x + rect.start_col()));
-            const auto ref_value =
-                read_array<float>(ref_clamped.data(), (rect.start_row() + y) * N + (x + rect.start_col()));
-            const auto rel_error = ref_value != 0 ? std::abs((imp_value - ref_value) / ref_value) : imp_value;
-
-            if (rel_error > 0.0001F) {
-                ASSERT_EQ(imp_value, ref_value);
-            }
-        }
-    }
+    DefaultMismatchHandler handler(0, 0.02, 0, 0.05);
+    DataFormat dst_format = DataFormat(DataType::FP32);
+    const auto success = compare(imp_dst.data(), ref_clamped.data(), dst_format, M, N, rect, handler);
+    ASSERT_TRUE(success);
 }
 
 TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsu4cx) {
@@ -851,7 +846,7 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsu4cx) {
 
     // Compares the output of the micro-kernels against the output of the reference implementation for the portion
     // tested.
-    DefaultMismatchHandler handler(0, 0.1, 0, 0.05);
+    DefaultMismatchHandler handler(0, 0.02, 0, 0.05);
     DataFormat dst_format = DataFormat(DataType::FP32);
     const auto success = compare(imp_dst.data(), ref_clamped.data(), dst_format, M, N, rect, handler);
     ASSERT_TRUE(success);

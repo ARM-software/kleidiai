@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -18,6 +18,7 @@
 #include <utility>
 #include <vector>
 
+#include "benchmark/cycle_counter.hpp"
 #include "dwconv_interface.hpp"
 #include "dwconv_runner.hpp"
 #include "kai/kai_common.h"
@@ -172,10 +173,32 @@ inline void kai_benchmark_dwconv(
         runner->prepare(nullptr, rhs_weights.data(), rhs_bias.data(), nullptr);
     }
 
-    // This is the benchmarking loop
+    const bool cycle_counter_available = cycle_counter_init();
+    uint64_t total_cycles = 0;
+    uint64_t start_cycles = 0;
+    bool cycle_measurement_valid = false;
+    if (cycle_counter_available) {
+        cycle_counter_start();
+        cycle_measurement_valid = cycle_counter_read(start_cycles);
+    }
+
     for (auto _ : state) {
         runner->run(src.data(), dst.data());
     }
+
+    if (cycle_counter_available) {
+        uint64_t end_cycles = 0;
+        cycle_measurement_valid =
+            cycle_measurement_valid && cycle_counter_read(end_cycles) && end_cycles >= start_cycles;
+        cycle_counter_stop();
+        if (cycle_measurement_valid) {
+            total_cycles += (end_cycles - start_cycles);
+        }
+        cycle_counter_shutdown();
+    }
+
+    state.counters["cpu_cycles"] = ::benchmark::Counter(
+        static_cast<double>(total_cycles), ::benchmark::Counter::kAvgIterations, ::benchmark::Counter::OneK::kIs1000);
 
     const size_t num_ops = output_height * output_width * num_channels * filter_height * filter_width * 2;  // MACs
     const size_t rhs_bytes =

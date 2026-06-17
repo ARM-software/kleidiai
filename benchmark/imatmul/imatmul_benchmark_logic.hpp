@@ -1,17 +1,19 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
 
 #pragma once
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <test/common/cpu_info.hpp>
 #include <vector>
 
+#include "benchmark/cycle_counter.hpp"
 #include "imatmul_interface.hpp"
 #include "imatmul_runner.hpp"
 #include "kai/kai_common.h"
@@ -62,6 +64,10 @@ void kai_benchmark_imatmul(
         lhs_size *= kai_get_sme_vector_length_u32();
         rhs_size *= kai_get_sme_vector_length_u32();
         dst_size *= kai_get_sme_vector_length_u32();
+    } else if (test::cpu_has_sve()) {
+        lhs_size *= kai_get_sve_vector_length_u32();
+        rhs_size *= kai_get_sve_vector_length_u32();
+        dst_size *= kai_get_sve_vector_length_u32();
     }
 
     const Buffer lhs(lhs_size);
@@ -71,9 +77,47 @@ void kai_benchmark_imatmul(
     ImatmulRunner imatmul_runner(imatmul_interface, dst_type);
     imatmul_runner.set_mnk_chunked(m, n, k_chunk_count, k_chunk_length);
 
-    for (auto _ : state) {
-        imatmul_runner.run(lhs.data(), rhs.data(), dst.data());
+    // Some kernels accept an indirection buffer in place of LHS (when takes_indirection == true)
+    // -----------------------------------------------------------------------------
+    // Do the following :
+    // 1. Create a dummy float value for each pointer to point to.
+    // 2. Create a vector of sufficient size initialized with the default value of a pointer to the float.
+    // 3. If takes_indirection == false, indirection buffer is not used so size is irrelevant.
+    // 4. Pass to kernel runner in place of LHS.
+    std::vector<float> dummy_buffer(std::max<size_t>(k_chunk_count, 1), 1.0f);
+    const auto m_step = imatmul_interface.takes_indirection ? imatmul_interface.get_m_step() : 1;
+    std::vector<const float*> indirection_buffer(k_chunk_count * kai_roundup(m, m_step), dummy_buffer.data());
+
+    const bool cycle_counter_available = cycle_counter_init();
+    uint64_t total_cycles = 0;
+    uint64_t start_cycles = 0;
+    bool cycle_measurement_valid = false;
+    if (cycle_counter_available) {
+        cycle_counter_start();
+        cycle_measurement_valid = cycle_counter_read(start_cycles);
     }
+
+    for (auto _ : state) {
+        if (imatmul_interface.takes_indirection) {
+            imatmul_runner.run((const void*)indirection_buffer.data(), rhs.data(), dst.data());
+        } else {
+            imatmul_runner.run((const void*)lhs.data(), rhs.data(), dst.data());
+        }
+    }
+
+    if (cycle_counter_available) {
+        uint64_t end_cycles = 0;
+        cycle_measurement_valid =
+            cycle_measurement_valid && cycle_counter_read(end_cycles) && end_cycles >= start_cycles;
+        cycle_counter_stop();
+        if (cycle_measurement_valid) {
+            total_cycles += (end_cycles - start_cycles);
+        }
+        cycle_counter_shutdown();
+    }
+
+    state.counters["cpu_cycles"] = ::benchmark::Counter(
+        static_cast<double>(total_cycles), ::benchmark::Counter::kAvgIterations, ::benchmark::Counter::OneK::kIs1000);
 }
 
 }  // namespace kai::benchmark

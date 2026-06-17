@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -18,6 +18,8 @@ namespace internal {
 
 class PolyControl {
 public:
+    virtual ~PolyControl() = default;
+
     template <typename Derived>
     explicit PolyControl(std::in_place_type_t<Derived> type);
 
@@ -31,6 +33,8 @@ public:
 
 private:
     std::unique_ptr<PolyControl> (*m_clone_fn)(const PolyControl& inner);
+    const void* (*m_get_constant_fn)(const PolyControl& inner) = nullptr;
+    void* (*m_get_mutable_fn)(PolyControl& inner) = nullptr;
 };
 
 template <typename Derived>
@@ -44,18 +48,27 @@ struct PolyInner : public PolyControl {
 template <typename Derived>
 inline PolyControl::PolyControl([[maybe_unused]] std::in_place_type_t<Derived> type) :
     m_clone_fn([](const PolyControl& inner) -> std::unique_ptr<PolyControl> {
-        return std::make_unique<PolyInner<Derived>>(reinterpret_cast<const PolyInner<Derived>&>(inner).data);
+        auto& self = static_cast<const PolyInner<Derived>&>(inner);
+        return std::make_unique<PolyInner<Derived>>(self.data);
+    }),
+    m_get_constant_fn(+[](const PolyControl& inner) -> const void* {
+        auto& self = static_cast<const PolyInner<Derived>&>(inner);
+        return &self.data;
+    }),
+    m_get_mutable_fn(+[](PolyControl& inner) -> void* {
+        auto& self = static_cast<PolyInner<Derived>&>(inner);
+        return &self.data;
     }) {
 }
 
 template <typename Base>
 inline const Base& PolyControl::data() const {
-    return reinterpret_cast<Base&>(reinterpret_cast<const PolyInner<std::byte>*>(this)->data);
+    return *static_cast<const Base*>(m_get_constant_fn(*this));
 }
 
 template <typename Base>
 [[nodiscard]] inline Base& PolyControl::data() {
-    return reinterpret_cast<Base&>(reinterpret_cast<PolyInner<std::byte>*>(this)->data);
+    return *static_cast<Base*>(m_get_mutable_fn(*this));
 }
 
 [[nodiscard]] inline std::unique_ptr<PolyControl> PolyControl::clone() const {

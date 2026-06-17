@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -56,6 +56,8 @@ enum class DataType : uint16_t {
     QSU4 = 0b1'0'1'0'0000'00000100,  ///< 4-bit unsigned symmetric quantized.
     QSI4 = 0b1'1'1'0'0000'00000100,  ///< 4-bit signed symmetric quantized.
     QAI4 = 0b1'1'1'1'0000'00000100,  ///< 4-bit signed asymmetric quantized.
+
+    QSI2 = 0b1'1'1'0'0000'00000010,  ///< 2-bit signed symmetric quantized.
 };
 
 /// Gets the size in bits of the specified data type.

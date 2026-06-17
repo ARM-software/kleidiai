@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -197,7 +197,6 @@ void kai_run_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa(
         "   .inst 0xa041c564 //ld1w    { z4.s-z7.s }, pn9/z, [x11, #4, mul vl] \n"
         "   .inst 0xa042c568 //ld1w    { z8.s-z11.s }, pn9/z, [x11, #8, mul vl]\n"
         "   .inst 0x042b518b //addvl   x11, x11, #12               \n"
-        "   .inst 0xc132e000 //scvtf   { z0.s-z3.s }, { z0.s-z3.s }\n"
 
         // Store loop
         "   mov     x14, #0                \n"
@@ -208,13 +207,6 @@ void kai_run_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa(
         "   ld1rw   {z17.s}, p2/z, [x15]   \n"
         "   add     x10, x10, #4           \n"
         "   add     x15, x15, #4           \n"
-        "   scvtf   z16.s, p2/m, z16.s     \n"
-
-        // offset x Row-sum
-        "   fmul    z24.s, z16.s, z0.s     \n"
-        "   fmul    z25.s, z16.s, z1.s     \n"
-        "   fmul    z26.s, z16.s, z2.s     \n"
-        "   fmul    z27.s, z16.s, z3.s     \n"
 
         // Scaling factors
         "   fmul    z20.s, z17.s, z4.s    \n"
@@ -222,21 +214,22 @@ void kai_run_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa(
         "   fmul    z22.s, z17.s, z6.s    \n"
         "   fmul    z23.s, z17.s, z7.s    \n"
 
-        // Result = offset x Row-sum x SFs
-        "   fmul    z24.s, z24.s, z20.s   \n"
-        "   fmul    z25.s, z25.s, z21.s   \n"
-        "   fmul    z26.s, z26.s, z22.s   \n"
-        "   fmul    z27.s, z27.s, z23.s   \n"
-
         // Load inner accumulation & convert
         "   .inst 0xc006440c //mova    { z12.b-z15.b }, za0h.b[w14, 0:3]\n"
+
+        // Result += iacc + offset x Row-sum
+        "   mla    z12.s, p2/m, z16.s, z0.s  \n"
+        "   mla    z13.s, p2/m, z16.s, z1.s  \n"
+        "   mla    z14.s, p2/m, z16.s, z2.s  \n"
+        "   mla    z15.s, p2/m, z16.s, z3.s  \n"
+
         "   .inst 0xc132e18c //scvtf   { z12.s-z15.s }, { z12.s-z15.s } \n"
 
-        // Result += iacc x SF
-        "   fmla    z24.s, p2/m, z20.s, z12.s \n"
-        "   fmla    z25.s, p2/m, z21.s, z13.s \n"
-        "   fmla    z26.s, p2/m, z22.s, z14.s \n"
-        "   fmla    z27.s, p2/m, z23.s, z15.s \n"
+        // Result = (iacc + offset x Row-sum) x SFs
+        "   fmul    z24.s, z12.s, z20.s   \n"
+        "   fmul    z25.s, z13.s, z21.s   \n"
+        "   fmul    z26.s, z14.s, z22.s   \n"
+        "   fmul    z27.s, z15.s, z23.s   \n"
 
         // Add the bias
         "   fadd    z24.s, p2/m, z24.s, z8.s  \n"

@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -50,7 +50,7 @@ template std::tuple<Float16, Float16> find_clamp_range(const void* src, size_t l
 
 std::tuple<float, float> find_clamp_range(DataType type, const void* src, size_t len, float keep_ratio) {
     KAI_ASSUME_ALWAYS(keep_ratio > 0.0F);  // Avoid total clamping.
-    auto max = std::numeric_limits<float>::min();
+    auto max = std::numeric_limits<float>::lowest();
     auto min = std::numeric_limits<float>::max();
 
     for (size_t i = 0; i < len; i += 1) {

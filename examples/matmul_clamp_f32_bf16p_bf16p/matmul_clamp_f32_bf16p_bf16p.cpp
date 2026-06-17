@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024, 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -28,12 +28,12 @@
 
 // Include micro-kernel variants
 #include "kai/kai_common.h"
-#include "kai_lhs_quant_pack_bf16p1x4_f32_neon.h"
-#include "kai_lhs_quant_pack_bf16p8x4_f32_neon.h"
-#include "kai_matmul_clamp_f32_bf16p1x4_bf16p12x4b_1x36_neon_dot.h"
-#include "kai_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla.h"
-#include "kai_matmul_clamp_f32_bf16p_bf16p_interface.h"
-#include "kai_rhs_quant_pack_kxn_bf16p12x4biasf32_f32_neon.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_bf16p_bf16p/kai_matmul_clamp_f32_bf16p1x4_bf16p12x4b_1x36_neon_dot.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_bf16p_bf16p/kai_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_bf16p_bf16p/kai_matmul_clamp_f32_bf16p_bf16p_interface.h"
+#include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_bf16p1x4_f32_neon.h"
+#include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_bf16p8x4_f32_neon.h"
+#include "kai/ukernels/matmul/pack/kai_rhs_quant_pack_kxn_bf16p12x4biasf32_f32_neon.h"
 
 inline static float bf16_to_float(const uint16_t* v) {
     const uint16_t uint_rep = *v;

@@ -1,5 +1,5 @@
 <!--
-    SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+    SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 
     SPDX-License-Identifier: Apache-2.0
 -->
@@ -94,7 +94,7 @@ All functions defined in the **.h** header file of the micro-kernel variant has 
 
 ## Supported micro-kernels
 
-For a list of supported micro-kernels refer to the [source](/kai/ukernels/) directory. The micro-kernels are grouped in separate directories based on the performed operation.
+For a list of supported micro-kernels refer to the [KleidiAI micro-kernel tables](docs/microkernel_tables.md#kleidiai-micro-kernel-tables) and the [source](/kai/ukernels/) directory. The micro-kernels are grouped in separate directories based on the performed operation.
 For example, all the matrix-multiplication micro-kernels are held in the `matmul/` subdirectory. In there, the micro-kernels are grouped into directories whose name syntax describes the micro-kernel from a data type point of view of inputs and outputs.
 
 ## How to build
@@ -150,6 +150,8 @@ The release version conforms to Semantic Versioning.
 
 > ⚠️ Please note that API modifications, including function name changes, and feature enhancements may occur without advance notice.
 
+We recommend that you use release versions of KleidiAI. You can either use `git` to clone the repository or download a source archive. These are available from the [official source](https://gitlab.arm.com/kleidi/kleidiai) or the [GitHub mirror](https://github.com/ARM-software/kleidiai).
+
 ## Support
 
 Please raise a [GitLab Issue](https://gitlab.arm.com/kleidi/kleidiai/-/issues/new) for technical support.
@@ -163,6 +165,10 @@ No, KleidiAI is a library of micro-kernels optimized for the Arm® architecture.
 ### What ML operators are supported?
 
 KleidiAI does not provide traditional ML operators; it implements a set of optimized micro-kernels which can be used as building blocks to implement ML operators. Please refer to the sections [What is a micro-kernel](#what-is-a-micro-kernel), [Supported micro-kernels](#supported-micro-kernels) and the [docs](/docs/README.md) for more information.
+
+### How do I use the KleidiAI micro-kernels?
+
+Please refer to the [Examples](docs/README.md#examples) section of the documentation and the sample applications in the [examples](/examples) sub-directory. These examples are standalone C++ applications that demonstrate end-to-end use of a selection of the micro-kernels.
 
 ### What CPUs does KleidiAI support?
 
@@ -189,6 +195,10 @@ KleidiAI offers optimized micro-kernels such as matrix multiplication and depthw
 *The micro-kernel does not use any internal threading mechanism*. However, the micro-kernel's API is designed to allow the computation to be carried out only on specific areas of the output tensor. Therefore, this mechanism is sufficient to split the workload on parallel threads.
 
 Please refer to [examples/matmul_clamp_f32_qsi8d32p_qsi4c32p](/examples/matmul_clamp_f32_qsi8d32p_qsi4c32p) for an example on how to use micro-kernels in a multithreaded environment.
+
+### What are the recommended download sources for KleidiAI?
+
+Note that dynamically generated source archives can result in changed hash digests. If you want something unchanging, then use released source archives. These are listed under _Packages_ on the [official release page](https://gitlab.arm.com/kleidi/kleidiai/-/releases), or have a hash digest (e.g.,`SHA256`) on GitHub.
 
 ## License
 

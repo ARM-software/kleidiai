@@ -1,5 +1,5 @@
 <!--
-    SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+    SPDX-FileCopyrightText: Copyright 2024, 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 
     SPDX-License-Identifier: Apache-2.0
 -->
@@ -14,6 +14,14 @@ The agreement to DCO can be notified by the 'Signed-off-by' message in the commi
 An example is as below
 
 `Signed-off-by: Name <name@example.com>`
+
+# Copyright notice
+
+Contributors are responsible for ensuring their copyright notices are correct.
+Third party contributors should add their own copyright notice applicable to their own modifications in existing files.
+For new files, if they include any code copied from existing files, preserve the existing copyright as is (do not modify it in
+any way - for example changing the year) and amend as required with third party copyright notice.
+If the file is entirely new and does not contain Arm copyrightable content, there is typically no need to include Arm copyright.
 
 # Exempted from Contributions
 

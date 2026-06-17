@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -12,6 +12,7 @@
 #include <functional>
 #include <vector>
 
+#include "benchmark/cycle_counter.hpp"
 #include "kai/kai_common.h"
 #include "matmul_interface.hpp"
 #include "matmul_runner.hpp"
@@ -93,9 +94,32 @@ void kai_benchmark_matmul(
     matmul_runner.set_mnk(m, n, k);
     matmul_runner.set_bl(bl);
 
+    const bool cycle_counter_available = cycle_counter_init();
+    uint64_t total_cycles = 0;
+    uint64_t start_cycles = 0;
+    bool cycle_measurement_valid = false;
+    if (cycle_counter_available) {
+        cycle_counter_start();
+        cycle_measurement_valid = cycle_counter_read(start_cycles);
+    }
+
     for (auto _ : state) {
         matmul_runner.run(lhs.data(), rhs.data(), dst.data());
     }
+
+    if (cycle_counter_available) {
+        uint64_t end_cycles = 0;
+        cycle_measurement_valid =
+            cycle_measurement_valid && cycle_counter_read(end_cycles) && end_cycles >= start_cycles;
+        cycle_counter_stop();
+        if (cycle_measurement_valid) {
+            total_cycles += (end_cycles - start_cycles);
+        }
+        cycle_counter_shutdown();
+    }
+
+    state.counters["cpu_cycles"] = ::benchmark::Counter(
+        static_cast<double>(total_cycles), ::benchmark::Counter::kAvgIterations, ::benchmark::Counter::OneK::kIs1000);
 }
 }  // namespace kai::benchmark
 

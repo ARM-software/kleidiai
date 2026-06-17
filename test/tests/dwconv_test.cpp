@@ -24,6 +24,7 @@
 #include "test/common/cpu_info.hpp"
 #include "test/common/matmul_test_common.hpp"
 #include "test/common/matrix_portion.hpp"
+#include "test/common/seed.hpp"
 #include "test/reference/clamp.hpp"
 #include "test/reference/fill.hpp"
 
@@ -155,21 +156,20 @@ struct ReferenceGenerator {
     }
 
 private:
-    /// Return incremented seed value
-    static size_t get_seed() {
-        static size_t seed = 0;
-        return seed++;
-    }
-
     /// Generate reference data.
     // NOTE : This block is currently FP32 specific - it is not datatype generic
     static TestData generate_reference(const TestDataId& test_id, const MatMulShape& out_shape) {
         const auto& [in_shape, rhs_shape, pad, dt, acc_dt, clamp_keep_ratio] = test_id;
 
+        // Stable key derived from the cache identifier.
+        const auto key_hash = static_cast<std::uint32_t>(TestDataId::Hash{}(test_id));
+        const auto key = std::string("dwconv_cache:") + std::to_string(key_hash);
+        auto& feed = seed_stream(key);
+
         // Generate random input data
-        Buffer lhs = fill_matrix_random(in_shape.m, in_shape.n * in_shape.k, DataFormat(dt), get_seed());
-        Buffer rhs = fill_matrix_random(rhs_shape.m, rhs_shape.n * rhs_shape.k, DataFormat(dt), get_seed());
-        Buffer bias = fill_matrix_random(1, out_shape.k, DataFormat(dt), get_seed());
+        Buffer lhs = fill_matrix_random(in_shape.m, in_shape.n * in_shape.k, DataFormat(dt), feed());
+        Buffer rhs = fill_matrix_random(rhs_shape.m, rhs_shape.n * rhs_shape.k, DataFormat(dt), feed());
+        Buffer bias = fill_matrix_random(1, out_shape.k, DataFormat(dt), feed());
 
         // Call reference function
         Buffer out = depthwise_reference<float>(

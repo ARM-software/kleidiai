@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -12,12 +12,14 @@
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <type_traits>
 
 #include "kai/kai_common.h"
 #include "test/common/buffer.hpp"
 #include "test/common/data_format.hpp"
 #include "test/common/float16.hpp"
 #include "test/common/matrix_portion.hpp"
+#include "test/common/seed.hpp"
 
 namespace kai::test {
 /// Matrix multiplication shape.
@@ -51,8 +53,13 @@ struct Range {
     T min;
     T max;
 
-    [[nodiscard]] T range() const {
-        return max - min;
+    [[nodiscard]] std::size_t inclusive_count() const {
+        static_assert(std::is_integral_v<T>);
+        return max - min + 1;
+    }
+
+    [[nodiscard]] bool is_valid() const {
+        return min <= max;
     }
 };
 
@@ -78,25 +85,29 @@ struct MatMulMethod {
     ///
     /// @param[in] m Number of rows in the LHS matrix.
     /// @param[in] k Number of columns in the LHS matrix.
+    /// @param[in] seed_feed Seed feed for random number generation.
     ///
     /// @return LHS matrix data buffer.
-    std::function<Buffer(size_t, size_t)> fn_generate_lhs{nullptr};
+    std::function<Buffer(size_t, size_t, SeedFeed&)> fn_generate_lhs{nullptr};
 
     /// Generate RHS matrix.
     ///
     /// @param[in] k Number of rows in the RHS matrix.
     /// @param[in] n Number of columns in the RHS matrix.
+    /// @param[in] seed_feed Seed feed for random number generation.
     ///
     /// @return RHS matrix data buffer.
-    std::function<Buffer(size_t, size_t)> fn_generate_rhs{nullptr};
+    std::function<Buffer(size_t, size_t, SeedFeed&)> fn_generate_rhs{nullptr};
 
     /// Generate bias.
     ///
     /// @param[in] n Number of rows in the bias.
     /// @param[in] k Number of columns in the bias.
+    /// @param[in] seed_feed Seed feed for random number generation.
+    /// @param[in] null_bias_mode Whether to generate null bias (true) or real bias (false).
     ///
     /// @return Bias data buffer.
-    std::function<Buffer(size_t, size_t)> fn_generate_bias{nullptr};
+    std::function<Buffer(size_t, size_t, SeedFeed&, bool)> fn_generate_bias{nullptr};
 
     /// Check if CPU supports required features.
     ///

@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -65,4 +65,4 @@ KAI_ASM_FUNCTION_LABEL(kai_get_sme_vector_length_u8)
     ret
     KAI_ASM_FUNCTION_END(kai_get_sme_vector_length_u8)
 
-KAI_ASM_END
+    KAI_ASM_END

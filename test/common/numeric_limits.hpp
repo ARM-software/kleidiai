@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -11,6 +11,7 @@
 
 #include "test/common/bfloat16.hpp"
 #include "test/common/float16.hpp"
+#include "test/common/int2.hpp"
 #include "test/common/int4.hpp"
 
 namespace kai::test {
@@ -27,6 +28,14 @@ inline constexpr UInt4 numeric_highest<UInt4>{15};
 template <>
 inline constexpr Int4 numeric_highest<Int4>{7};
 
+/// Highest finite value of @ref UInt2.
+template <>
+inline constexpr UInt2 numeric_highest<UInt2>{3};
+
+/// Highest finite value of @ref Int2.
+template <>
+inline constexpr Int2 numeric_highest<Int2>{1};
+
 /// Highest finite value of @ref Float16.
 template <>
 inline constexpr Float16 numeric_highest<Float16> = Float16::from_binary(0x7bff);
@@ -38,6 +47,14 @@ inline constexpr BFloat16 numeric_highest<BFloat16<>> = BFloat16<>::from_binary(
 /// Lowest finite value of type `T`.
 template <typename T>
 inline constexpr std::enable_if_t<std::is_arithmetic_v<T>, T> numeric_lowest = std::numeric_limits<T>::lowest();
+
+/// Lowest finite value of @ref UInt2.
+template <>
+inline constexpr UInt2 numeric_lowest<UInt2>{0};
+
+/// Lowest finite value of @ref Int2.
+template <>
+inline constexpr Int2 numeric_lowest<Int2>{-2};
 
 /// Lowest finite value of @ref UInt4.
 template <>

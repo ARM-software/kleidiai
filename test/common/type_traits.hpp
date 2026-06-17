@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -10,6 +10,8 @@
 
 namespace kai::test {
 
+class UInt2;
+class Int2;
 class UInt4;
 class Int4;
 class Float16;
@@ -31,6 +33,14 @@ inline constexpr bool is_unsigned<Int4> = false;
 
 /// `true` if `T` is unsigned numeric type.
 template <>
+inline constexpr bool is_unsigned<UInt2> = true;
+
+/// `true` if `T` is unsigned numeric type.
+template <>
+inline constexpr bool is_unsigned<Int2> = false;
+
+/// `true` if `T` is unsigned numeric type.
+template <>
 inline constexpr bool is_unsigned<BFloat16<>> = false;
 
 /// `true` if `T` is signed numeric type.
@@ -47,6 +57,14 @@ inline constexpr bool is_signed<Int4> = true;
 
 /// `true` if `T` is signed numeric type.
 template <>
+inline constexpr bool is_signed<UInt2> = false;
+
+/// `true` if `T` is signed numeric type.
+template <>
+inline constexpr bool is_signed<Int2> = true;
+
+/// `true` if `T` is signed numeric type.
+template <>
 inline constexpr bool is_signed<BFloat16<>> = true;
 
 /// `true` if `T` is integral numeric type.
@@ -60,6 +78,14 @@ inline constexpr bool is_integral<UInt4> = true;
 /// `true` if `T` is integral numeric type.
 template <>
 inline constexpr bool is_integral<Int4> = true;
+
+/// `true` if `T` is integral numeric type.
+template <>
+inline constexpr bool is_integral<UInt2> = true;
+
+/// `true` if `T` is integral numeric type.
+template <>
+inline constexpr bool is_integral<Int2> = true;
 
 /// `true` if `T` is integral numeric type.
 template <>
@@ -97,6 +123,18 @@ struct make_signed<UInt4> {
 template <>
 struct make_signed<Int4> {
     using type = Int4;
+};
+
+/// Signed version of type `T`.
+template <>
+struct make_signed<UInt2> {
+    using type = Int2;
+};
+
+/// Signed version of type `T`.
+template <>
+struct make_signed<Int2> {
+    using type = Int2;
 };
 
 /// Signed version of type `T`.

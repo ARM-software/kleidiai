@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -14,6 +14,7 @@
 #include "test/common/assert.hpp"
 #include "test/common/bfloat16.hpp"
 #include "test/common/data_type.hpp"
+#include "test/common/int2.hpp"
 #include "test/common/int4.hpp"
 #include "test/common/round.hpp"
 #include "test/common/span.hpp"
@@ -32,6 +33,14 @@ inline constexpr size_t size_in_bits<UInt4> = 4;
 template <>
 inline constexpr size_t size_in_bits<Int4> = 4;
 
+/// The size in bits of type `T`.
+template <>
+inline constexpr size_t size_in_bits<UInt2> = 2;
+
+/// The size in bits of type `T`.
+template <>
+inline constexpr size_t size_in_bits<Int2> = 2;
+
 /// Reads the array at the specified index.
 ///
 /// @param[in] array Data buffer.
@@ -46,6 +55,26 @@ T read_array(const void* array, size_t index) {
     } else if constexpr (std::is_same_v<T, Int4>) {
         const auto [lo, hi] = Int4::unpack_u8(reinterpret_cast<const uint8_t*>(array)[index / 2]);
         return index % 2 == 0 ? lo : hi;
+    } else if constexpr (std::is_same_v<T, UInt2>) {
+        const auto [v1, v2, v3, v4] = UInt2::unpack_u8(reinterpret_cast<const uint8_t*>(array)[index / 4]);
+        if ((index % 4) == 0) {
+            return v1;
+        } else if ((index % 4) == 1) {
+            return v2;
+        } else if ((index % 4) == 2) {
+            return v3;
+        }
+        return v4;
+    } else if constexpr (std::is_same_v<T, Int2>) {
+        const auto [v1, v2, v3, v4] = Int2::unpack_u8(reinterpret_cast<const uint8_t*>(array)[index / 4]);
+        if ((index % 4) == 0) {
+            return v1;
+        } else if ((index % 4) == 1) {
+            return v2;
+        } else if ((index % 4) == 2) {
+            return v3;
+        }
+        return v4;
     } else if constexpr (std::is_same_v<T, BFloat16<false>>) {
         uint16_t raw_value = reinterpret_cast<const uint16_t*>(array)[index];
         return BFloat16<false>(kai_cast_f32_bf16(raw_value));
@@ -117,6 +146,32 @@ void write_array(void* array, size_t index, T value) {
             *arr_value = Int4::pack_u8(value, hi);
         } else {
             *arr_value = Int4::pack_u8(lo, value);
+        }
+    } else if constexpr (std::is_same_v<T, UInt2>) {
+        auto* arr_value = reinterpret_cast<uint8_t*>(array) + index / 4;
+        const auto [v1, v2, v3, v4] = UInt2::unpack_u8(*arr_value);
+
+        if ((index % 4) == 0) {
+            *arr_value = UInt2::pack_u8(value, v2, v3, v4);
+        } else if ((index % 4) == 1) {
+            *arr_value = UInt2::pack_u8(v1, value, v3, v4);
+        } else if ((index % 4) == 2) {
+            *arr_value = UInt2::pack_u8(v1, v2, value, v4);
+        } else {
+            *arr_value = UInt2::pack_u8(v1, v2, v3, value);
+        }
+    } else if constexpr (std::is_same_v<T, Int2>) {
+        auto* arr_value = reinterpret_cast<uint8_t*>(array) + index / 4;
+        const auto [v1, v2, v3, v4] = Int2::unpack_u8(*arr_value);
+
+        if ((index % 4) == 0) {
+            *arr_value = Int2::pack_u8(value, v2, v3, v4);
+        } else if ((index % 4) == 1) {
+            *arr_value = Int2::pack_u8(v1, value, v3, v4);
+        } else if ((index % 4) == 2) {
+            *arr_value = Int2::pack_u8(v1, v2, value, v4);
+        } else {
+            *arr_value = Int2::pack_u8(v1, v2, v3, value);
         }
     } else {
         reinterpret_cast<T*>(array)[index] = value;

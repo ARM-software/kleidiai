@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -43,9 +43,9 @@ std::tuple<float, float> calculate_error(T imp, T ref) {
 
 template <typename T>
 size_t compare_plain_2d(
-    Span<const size_t> shape, Span<const size_t> tile_coords, Span<const size_t> tile_shape,
-    Span<const std::byte> imp_buffer, Span<const std::byte> ref_buffer,
-    const std::function<void(std::ostream& os, Span<const size_t> coords)>& report_fn, MismatchHandler& handler) {
+    Shape shape, Span<const size_t> tile_coords, Shape tile_shape, Span<const std::byte> imp_buffer,
+    Span<const std::byte> ref_buffer, const std::function<void(std::ostream& os, Span<const size_t> coords)>& report_fn,
+    MismatchHandler& handler) {
     const size_t height = shape.at(0);
     const size_t width = shape.at(1);
 

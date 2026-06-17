@@ -1,52 +1,69 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
 
 #pragma once
 
+#include <cstdint>
+
+#include "test/common/enum_utils.hpp"
+
 namespace kai::test {
 
-enum {
-    MATMUL_SLOT_CONFIG,       ///< Matrix multiplication operator configuration.
-    MATMUL_SLOT_PACK_ARGS,    ///< Packing arguments.
-    MATMUL_SLOT_MATMUL_ARGS,  ///< Matrix multiplication micro-kernel parameters.
+/// Matrix multiplication tensor slots.
+enum class MatMulSlot : size_t {
+    CONFIG,       ///< Matrix multiplication operator configuration.
+    PACK_ARGS,    ///< Packing arguments.
+    MATMUL_ARGS,  ///< Matrix multiplication micro-kernel parameters.
 
-    MATMUL_SLOT_LHS_RAW,         ///< LHS data in F32.
-    MATMUL_SLOT_LHS_DATA,        ///< LHS data after conversion.
-    MATMUL_SLOT_LHS_QDATA,       ///< LHS data after quantization.
-    MATMUL_SLOT_LHS_QSCALE,      ///< LHS quantization scale.
-    MATMUL_SLOT_LHS_QZP,         ///< LHS quantization zero-point.
-    MATMUL_SLOT_LHS_QZP_NEG,     ///< Negative LHS quantization zero-point.
-    MATMUL_SLOT_REF_LHS_PACKED,  ///< Reference packed LHS.
-    MATMUL_SLOT_IMP_LHS_PACKED,  ///< Packed LHS from micro-kernel.
+    // If the input is floating-point:
+    //   * DATA contains the input data.
+    //   * CVT_DATA contains the converted input data if the operator computes
+    //     in different data type (lower precision for better performance).
+    //   * QDATA, QSCALE, QZP are unused.
+    //
+    // If the input is quantized:
+    //   * DATA contains the source floating-point data in F32 which later
+    //     will be used to determine the quantization parameters and then quantized.
+    //   * CVT_DATA is unused.
+    //   * QDATA, QSCALE, QZP contain the quantized data and quantization parameters
+    //     calculated from the source floating-point data.
 
-    MATMUL_SLOT_RHS_RAW,               ///< RHS data in F32.
-    MATMUL_SLOT_RHS_T_RAW,             ///< Transposed RHS data in F32.
-    MATMUL_SLOT_RHS_T_DATA,            ///< Transposed RHS data after conversion.
-    MATMUL_SLOT_RHS_T_QDATA,           ///< Transposed RHS data after quantization.
-    MATMUL_SLOT_RHS_T_QDATA_SIGN,      ///< Transposed RHS data after quantization with opposite signedness.
-    MATMUL_SLOT_RHS_T_QDATA_SIGN_SUM,  ///< Row sum of transposed RHS after quantization with opposite signedness.
-    MATMUL_SLOT_RHS_T_QSCALE,          ///< Transposed RHS quantization scale.
-    MATMUL_SLOT_RHS_T_QZP,             ///< Transposed RHS quantization zero-point.
-    MATMUL_SLOT_REF_RHS_PACKED,        ///< Reference packed RHS.
-    MATMUL_SLOT_IMP_RHS_PACKED,        ///< Packed RHS from micro-kernel.
+    LHS_DATA,        ///< LHS data.
+    LHS_CVT_DATA,    ///< LHS data after conversion.
+    LHS_QDATA,       ///< LHS data after quantization.
+    LHS_QSCALE,      ///< LHS quantization scale.
+    LHS_QZP,         ///< LHS quantization zero-point.
+    LHS_QZP_NEG,     ///< Negative LHS quantization zero-point.
+    LHS_PACKED,      ///< Packed LHS.
+    LHS_PACKED_IMP,  ///< Packed LHS from micro-kernel.
 
-    MATMUL_SLOT_BIAS_RAW,
-    MATMUL_SLOT_BIAS_DATA,
-    MATMUL_SLOT_BIAS_SCALE,
-    MATMUL_SLOT_BIAS_ZP,
-    MATMUL_SLOT_BIAS_PACKED,
+    RHS_DATA,              ///< RHS data.
+    RHS_CVT_DATA,          ///< RHS data after conversion.
+    RHS_T_DATA,            ///< Transposed RHS data.
+    RHS_T_CVT_DATA,        ///< Transposed RHS data after conversion.
+    RHS_T_QDATA,           ///< Transposed RHS data after quantization.
+    RHS_T_QDATA_SIGN,      ///< Transposed RHS data after quantization with opposite signedness.
+    RHS_T_QDATA_SIGN_SUM,  ///< Row sum of transposed RHS after quantization with opposite signedness.
+    RHS_T_QSCALE,          ///< Transposed RHS quantization scale.
+    RHS_T_QZP,             ///< Transposed RHS quantization zero-point.
+    RHS_PACKED,            ///< Packed RHS.
+    RHS_PACKED_IMP,        ///< Packed RHS from micro-kernel.
 
-    MATMUL_SLOT_DST_RAW,
-    MATMUL_SLOT_REF_DST_DATA,
-    MATMUL_SLOT_DST_SCALE,
-    MATMUL_SLOT_DST_ZP,
+    BIAS_DATA,      ///< Bias data.
+    BIAS_CVT_DATA,  ///< Bias data after conversion.
+    BIAS_SCALE,     ///< Bias quantization scale.
+    BIAS_ZP,        ///< Bias quantization zero-point.
+    BIAS_PACKED,    ///< Packed bias.
 
-    MATMUL_SLOT_IMP_DST_DATA,
+    DST_DATA,      ///< Output data (can be floating-point or quantized).
+    DST_QSCALE,    ///< Output quantization scale.
+    DST_QZP,       ///< Output quantization zero-point.
+    DST_DATA_IMP,  ///< Output data from micro-kernel.
 
-    NUM_MATMUL_SLOTS,
+    LAST,  ///< Sentinel value equal to the number of slots.
 };
 
 }  // namespace kai::test

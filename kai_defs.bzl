@@ -1,5 +1,5 @@
 #
-# SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -11,6 +11,7 @@ load(
     "update_attrs",
     "workspace_and_buildfile",
 )
+load("@rules_cc//cc:defs.bzl", "cc_library")
 
 # Extra warnings for GCC/CLANG C/C++
 def kai_gcc_warn_copts():
@@ -148,6 +149,7 @@ def _kai_c_cxx_common(name, copts_def_func, **kwargs):
         cpu_uarch.extend(kai_cpu_sve2())
 
         extra_copts.append("-fno-tree-vectorize")
+        extra_copts.append("-fno-tree-slp-vectorize")
 
     kwargs["copts"] = kwargs.get("copts", []) + copts_def_func(cpu_uarch) + extra_copts
     kwargs["deps"] = ["//:common"] + kwargs.get("deps", [])
@@ -169,7 +171,35 @@ def _kai_c_cxx_common(name, copts_def_func, **kwargs):
         kwargs["textual_hdrs"] = kwargs.get("textual_hdrs", []) + [ukernel + ".h" for ukernel in kwargs["kernels_asm"]]
         kwargs.pop("kernels_asm")
 
-    native.cc_library(
+    # Add kernels source files without per-kernel headers
+    if "kernels_nohdr" in kwargs:
+        kernels_nohdr = kwargs["kernels_nohdr"]
+        kwargs["srcs"] = (
+            kwargs.get("srcs", []) +
+            [ukernel + ".c" for ukernel in kernels_nohdr]
+        )
+        kwargs.pop("kernels_nohdr")
+
+    # Add assembly kernels source files without per-kernel headers
+    if "kernels_asm_nohdr" in kwargs:
+        kernels_asm_nohdr = kwargs["kernels_asm_nohdr"]
+        kwargs["srcs"] = (
+            kwargs.get("srcs", []) +
+            [ukernel + "_asm.S" for ukernel in kernels_asm_nohdr] +
+            [ukernel + ".c" for ukernel in kernels_asm_nohdr]
+        )
+        kwargs.pop("kernels_asm_nohdr")
+
+    # Add assembly-only kernels source files
+    if "kernels_asm_only" in kwargs:
+        kernels_asm_only = kwargs["kernels_asm_only"]
+        kwargs["srcs"] = (
+            kwargs.get("srcs", []) +
+            [ukernel + "_asm.S" for ukernel in kernels_asm_only]
+        )
+        kwargs.pop("kernels_asm_only")
+
+    cc_library(
         name = name,
         **kwargs
     )

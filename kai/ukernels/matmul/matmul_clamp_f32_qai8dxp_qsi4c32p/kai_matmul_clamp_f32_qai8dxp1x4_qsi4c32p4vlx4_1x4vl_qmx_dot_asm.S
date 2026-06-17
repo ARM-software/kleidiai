@@ -154,101 +154,101 @@ KAI_ASM_LABEL(k_loop)
 KAI_ASM_LABEL(k_block_loop)
     ld1rqb  { z0.b }, p1/z , [x21, x23]
     add     x23, x23, #16
-    KAI_ASM_INST(0x25391704)             // whilelt p4.b, x24, x25                          
-    KAI_ASM_INST(0x0430e3f8)             // incb  x24                                       
-    KAI_ASM_INST(0x25391705)             // whilelt p5.b, x24, x25                          
-    KAI_ASM_INST(0x0430e3f8)             // incb  x24                                       
-    KAI_ASM_INST(0x25391706)             // whilelt p6.b, x24, x25                          
-    KAI_ASM_INST(0x0430e3f8)             // incb  x24                                       
-    KAI_ASM_INST(0x25391707)             // whilelt p7.b, x24, x25                          
-    KAI_ASM_INST(0x0430e7f8)             // decb  x24                                       	
-    KAI_ASM_INST(0x0430e7f8)             // decb  x24                                       	
-    KAI_ASM_INST(0x0430e7f8)             // decb  x24                                       
-    KAI_ASM_INST(0xa400b310)             // ld1b z16.b, p4/Z, [x24]
-    KAI_ASM_INST(0xa401b711)             // ld1b z17.b, p5/Z, [x24, #1, MUL VL]
-    KAI_ASM_INST(0xa402bb12)             // ld1b z18.b, p6/Z, [x24, #2, MUL VL]
-    KAI_ASM_INST(0xa403bf13)             // ld1b z19.b, p7/Z, [x24, #3, MUL VL]
-    KAI_ASM_INST(0x25391784)             // whilelt p4.b, x28, x25                          
-    KAI_ASM_INST(0x0430e3fc)             // incb  x28                                       
-    KAI_ASM_INST(0x25391785)             // whilelt p5.b, x28, x25                          
-    KAI_ASM_INST(0x0430e3fc)             // incb  x28                                       
-    KAI_ASM_INST(0x25391786)             // whilelt p6.b, x28, x25                          
-    KAI_ASM_INST(0x0430e3fc)             // incb  x28                                       
-    KAI_ASM_INST(0x25391787)             // whilelt p7.b, x28, x25                          
-    KAI_ASM_INST(0x0430e7fc)             // decb  x28                                       	
-    KAI_ASM_INST(0x0430e7fc)             // decb  x28                                       	
-    KAI_ASM_INST(0x0430e7fc)             // decb  x28                                       
-    KAI_ASM_INST(0x04385098)             // addvl x24, x24, #4 
-    KAI_ASM_INST(0xa400b314)             // ld1b z20.b, p4/Z, [x24]
-    KAI_ASM_INST(0xa401b715)             // ld1b z21.b, p5/Z, [x24, #1, MUL VL]
-    KAI_ASM_INST(0xa402bb16)             // ld1b z22.b, p6/Z, [x24, #2, MUL VL]
-    KAI_ASM_INST(0xa403bf17)             // ld1b z23.b, p7/Z, [x24, #3, MUL VL]
-    KAI_ASM_INST(0x0521c201)             // mov z1.b, p0/m, z16.b
-    KAI_ASM_INST(0x042c9021)             // asr z1.b, z1.b, #4
-    KAI_ASM_INST(0x042c9e10)             // lsl z16.b, z16.b, #4
-    KAI_ASM_INST(0x042c9210)             // asr z16.b, z16.b, #4
-    KAI_ASM_INST(0x05216218)             // zip1 z24.b, z16.b, z1.b
-    KAI_ASM_INST(0x05216619)             // zip2 z25.b, z16.b, z1.b
-    KAI_ASM_INST(0x0521c221)             // mov z1.b, p0/m, z17.b
-    KAI_ASM_INST(0x042c9021)             // asr z1.b, z1.b, #4
-    KAI_ASM_INST(0x042c9e31)             // lsl z17.b, z17.b, #4
-    KAI_ASM_INST(0x042c9231)             // asr z17.b, z17.b, #4
-    KAI_ASM_INST(0x0521623a)             // zip1 z26.b, z17.b, z1.b
-    KAI_ASM_INST(0x0521663b)             // zip2 z27.b, z17.b, z1.b
-    KAI_ASM_INST(0x44a00304)             // sdot z4.s,  z24.b,  z0.b[0]
-    KAI_ASM_INST(0x44a00325)             // sdot z5.s,  z25.b,  z0.b[0]
-    KAI_ASM_INST(0x44a00346)             // sdot z6.s,  z26.b,  z0.b[0]
-    KAI_ASM_INST(0x44a00367)             // sdot z7.s,  z27.b,  z0.b[0]
-    KAI_ASM_INST(0x0521c241)             // mov z1.b, p0/m, z18.b
-    KAI_ASM_INST(0x042c9021)             // asr z1.b, z1.b, #4
-    KAI_ASM_INST(0x042c9e52)             // lsl z18.b, z18.b, #4
-    KAI_ASM_INST(0x042c9252)             // asr z18.b, z18.b, #4
-    KAI_ASM_INST(0x0521624c)             // zip1 z12.b, z18.b, z1.b
-    KAI_ASM_INST(0x0521664d)             // zip2 z13.b, z18.b, z1.b
-    KAI_ASM_INST(0x0521c261)             // mov z1.b, p0/m, z19.b
-    KAI_ASM_INST(0x042c9021)             // asr z1.b, z1.b, #4
-    KAI_ASM_INST(0x042c9e73)             // lsl z19.b, z19.b, #4
-    KAI_ASM_INST(0x042c9273)             // asr z19.b, z19.b, #4
-    KAI_ASM_INST(0x0521626e)             // zip1 z14.b, z19.b, z1.b
-    KAI_ASM_INST(0x0521666f)             // zip2 z15.b, z19.b, z1.b
-    KAI_ASM_INST(0x44a80184)             // sdot z4.s,  z12.b,  z0.b[1]
-    KAI_ASM_INST(0x44a801a5)             // sdot z5.s,  z13.b,  z0.b[1]
-    KAI_ASM_INST(0x44a801c6)             // sdot z6.s,  z14.b,  z0.b[1]
-    KAI_ASM_INST(0x44a801e7)             // sdot z7.s,  z15.b,  z0.b[1]
-    KAI_ASM_INST(0x0521c281)             // mov z1.b, p0/m, z20.b
-    KAI_ASM_INST(0x042c9021)             // asr z1.b, z1.b, #4
-    KAI_ASM_INST(0x042c9e94)             // lsl z20.b, z20.b, #4
-    KAI_ASM_INST(0x042c9294)             // asr z20.b, z20.b, #4
-    KAI_ASM_INST(0x05216288)             // zip1 z8.b, z20.b, z1.b
-    KAI_ASM_INST(0x05216689)             // zip2 z9.b, z20.b, z1.b
-    KAI_ASM_INST(0x0521c2a1)             // mov z1.b, p0/m, z21.b
-    KAI_ASM_INST(0x042c9021)             // asr z1.b, z1.b, #4
-    KAI_ASM_INST(0x042c9eb5)             // lsl z21.b, z21.b, #4
-    KAI_ASM_INST(0x042c92b5)             // asr z21.b, z21.b, #4
-    KAI_ASM_INST(0x052162aa)             // zip1 z10.b, z21.b, z1.b
-    KAI_ASM_INST(0x052166ab)             // zip2 z11.b, z21.b, z1.b
-    KAI_ASM_INST(0x44b00104)             // sdot z4.s,  z8.b,  z0.b[2]
-    KAI_ASM_INST(0x44b00125)             // sdot z5.s,  z9.b,  z0.b[2]
-    KAI_ASM_INST(0x44b00146)             // sdot z6.s,  z10.b,  z0.b[2]
-    KAI_ASM_INST(0x44b00167)             // sdot z7.s,  z11.b,  z0.b[2]
-    KAI_ASM_INST(0x0521c2c1)             // mov z1.b, p0/m, z22.b
-    KAI_ASM_INST(0x042c9021)             // asr z1.b, z1.b, #4
-    KAI_ASM_INST(0x042c9ed6)             // lsl z22.b, z22.b, #4
-    KAI_ASM_INST(0x042c92d6)             // asr z22.b, z22.b, #4
-    KAI_ASM_INST(0x052162cc)             // zip1 z12.b, z22.b, z1.b
-    KAI_ASM_INST(0x052166cd)             // zip2 z13.b, z22.b, z1.b
-    KAI_ASM_INST(0x0521c2e1)             // mov z1.b, p0/m, z23.b
-    KAI_ASM_INST(0x042c9021)             // asr z1.b, z1.b, #4
-    KAI_ASM_INST(0x042c9ef7)             // lsl z23.b, z23.b, #4
-    KAI_ASM_INST(0x042c92f7)             // asr z23.b, z23.b, #4
-    KAI_ASM_INST(0x052162ee)             // zip1 z14.b, z23.b, z1.b
-    KAI_ASM_INST(0x052166ef)             // zip2 z15.b, z23.b, z1.b
-    KAI_ASM_INST(0x44b80184)             // sdot z4.s,  z12.b,  z0.b[3]
-    KAI_ASM_INST(0x44b801a5)             // sdot z5.s,  z13.b,  z0.b[3]
-    KAI_ASM_INST(0x44b801c6)             // sdot z6.s,  z14.b,  z0.b[3]
-    KAI_ASM_INST(0x44b801e7)             // sdot z7.s,  z15.b,  z0.b[3]
-    KAI_ASM_INST(0x04385098)             // addvl   x24, x24, #4
-    KAI_ASM_INST(0x0438509c)             // addvl   x28, x24, #4
+    KAI_ASM_INST(0x25391704)             //    whilelt p4.b, x24, x25                          
+    KAI_ASM_INST(0x0430e3f8)             //    incb  x24                                       
+    KAI_ASM_INST(0x25391705)             //    whilelt p5.b, x24, x25                          
+    KAI_ASM_INST(0x0430e3f8)             //    incb  x24                                       
+    KAI_ASM_INST(0x25391706)             //    whilelt p6.b, x24, x25                          
+    KAI_ASM_INST(0x0430e3f8)             //    incb  x24                                       
+    KAI_ASM_INST(0x25391707)             //    whilelt p7.b, x24, x25                          
+    KAI_ASM_INST(0x0430e7f8)             //    decb  x24                                       	
+    KAI_ASM_INST(0x0430e7f8)             //    decb  x24                                       	
+    KAI_ASM_INST(0x0430e7f8)             //    decb  x24                                       
+    KAI_ASM_INST(0xa400b310)             //    ld1b z16.b, p4/Z, [x24]
+    KAI_ASM_INST(0xa401b711)             //    ld1b z17.b, p5/Z, [x24, #1, MUL VL]
+    KAI_ASM_INST(0xa402bb12)             //    ld1b z18.b, p6/Z, [x24, #2, MUL VL]
+    KAI_ASM_INST(0xa403bf13)             //    ld1b z19.b, p7/Z, [x24, #3, MUL VL]
+    KAI_ASM_INST(0x25391784)             //    whilelt p4.b, x28, x25                          
+    KAI_ASM_INST(0x0430e3fc)             //    incb  x28                                       
+    KAI_ASM_INST(0x25391785)             //    whilelt p5.b, x28, x25                          
+    KAI_ASM_INST(0x0430e3fc)             //    incb  x28                                       
+    KAI_ASM_INST(0x25391786)             //    whilelt p6.b, x28, x25                          
+    KAI_ASM_INST(0x0430e3fc)             //    incb  x28                                       
+    KAI_ASM_INST(0x25391787)             //    whilelt p7.b, x28, x25                          
+    KAI_ASM_INST(0x0430e7fc)             //    decb  x28                                       	
+    KAI_ASM_INST(0x0430e7fc)             //    decb  x28                                       	
+    KAI_ASM_INST(0x0430e7fc)             //    decb  x28                                       
+    KAI_ASM_INST(0x04385098)             //    addvl x24, x24, #4 
+    KAI_ASM_INST(0xa400b314)             //    ld1b z20.b, p4/Z, [x24]
+    KAI_ASM_INST(0xa401b715)             //    ld1b z21.b, p5/Z, [x24, #1, MUL VL]
+    KAI_ASM_INST(0xa402bb16)             //    ld1b z22.b, p6/Z, [x24, #2, MUL VL]
+    KAI_ASM_INST(0xa403bf17)             //    ld1b z23.b, p7/Z, [x24, #3, MUL VL]
+    KAI_ASM_INST(0x0523c203)             //    mov z3.b, p0/m, z16.b
+    KAI_ASM_INST(0x042c9063)             //    asr z3.b, z3.b, #4
+    KAI_ASM_INST(0x042c9e10)             //    lsl z16.b, z16.b, #4
+    KAI_ASM_INST(0x042c9210)             //    asr z16.b, z16.b, #4
+    KAI_ASM_INST(0x05236218)             //    zip1 z24.b, z16.b, z3.b
+    KAI_ASM_INST(0x05236619)             //    zip2 z25.b, z16.b, z3.b
+    KAI_ASM_INST(0x0523c223)             //    mov z3.b, p0/m, z17.b
+    KAI_ASM_INST(0x042c9063)             //    asr z3.b, z3.b, #4
+    KAI_ASM_INST(0x042c9e31)             //    lsl z17.b, z17.b, #4
+    KAI_ASM_INST(0x042c9231)             //    asr z17.b, z17.b, #4
+    KAI_ASM_INST(0x0523623a)             //    zip1 z26.b, z17.b, z3.b
+    KAI_ASM_INST(0x0523663b)             //    zip2 z27.b, z17.b, z3.b
+    KAI_ASM_INST(0x44a00304)             //    sdot z4.s,  z24.b,  z0.b[0]
+    KAI_ASM_INST(0x44a00325)             //    sdot z5.s,  z25.b,  z0.b[0]
+    KAI_ASM_INST(0x44a00346)             //    sdot z6.s,  z26.b,  z0.b[0]
+    KAI_ASM_INST(0x44a00367)             //    sdot z7.s,  z27.b,  z0.b[0]
+    KAI_ASM_INST(0x0523c243)             //    mov z3.b, p0/m, z18.b
+    KAI_ASM_INST(0x042c9063)             //    asr z3.b, z3.b, #4
+    KAI_ASM_INST(0x042c9e52)             //    lsl z18.b, z18.b, #4
+    KAI_ASM_INST(0x042c9252)             //    asr z18.b, z18.b, #4
+    KAI_ASM_INST(0x0523624c)             //    zip1 z12.b, z18.b, z3.b
+    KAI_ASM_INST(0x0523664d)             //    zip2 z13.b, z18.b, z3.b
+    KAI_ASM_INST(0x0523c263)             //    mov z3.b, p0/m, z19.b
+    KAI_ASM_INST(0x042c9063)             //    asr z3.b, z3.b, #4
+    KAI_ASM_INST(0x042c9e73)             //    lsl z19.b, z19.b, #4
+    KAI_ASM_INST(0x042c9273)             //    asr z19.b, z19.b, #4
+    KAI_ASM_INST(0x0523626e)             //    zip1 z14.b, z19.b, z3.b
+    KAI_ASM_INST(0x0523666f)             //    zip2 z15.b, z19.b, z3.b
+    KAI_ASM_INST(0x44a80184)             //    sdot z4.s,  z12.b,  z0.b[1]
+    KAI_ASM_INST(0x44a801a5)             //    sdot z5.s,  z13.b,  z0.b[1]
+    KAI_ASM_INST(0x44a801c6)             //    sdot z6.s,  z14.b,  z0.b[1]
+    KAI_ASM_INST(0x44a801e7)             //    sdot z7.s,  z15.b,  z0.b[1]
+    KAI_ASM_INST(0x0523c283)             //    mov z3.b, p0/m, z20.b
+    KAI_ASM_INST(0x042c9063)             //    asr z3.b, z3.b, #4
+    KAI_ASM_INST(0x042c9e94)             //    lsl z20.b, z20.b, #4
+    KAI_ASM_INST(0x042c9294)             //    asr z20.b, z20.b, #4
+    KAI_ASM_INST(0x05236288)             //    zip1 z8.b, z20.b, z3.b
+    KAI_ASM_INST(0x05236689)             //    zip2 z9.b, z20.b, z3.b
+    KAI_ASM_INST(0x0523c2a3)             //    mov z3.b, p0/m, z21.b
+    KAI_ASM_INST(0x042c9063)             //    asr z3.b, z3.b, #4
+    KAI_ASM_INST(0x042c9eb5)             //    lsl z21.b, z21.b, #4
+    KAI_ASM_INST(0x042c92b5)             //    asr z21.b, z21.b, #4
+    KAI_ASM_INST(0x052362aa)             //    zip1 z10.b, z21.b, z3.b
+    KAI_ASM_INST(0x052366ab)             //    zip2 z11.b, z21.b, z3.b
+    KAI_ASM_INST(0x44b00104)             //    sdot z4.s,  z8.b,  z0.b[2]
+    KAI_ASM_INST(0x44b00125)             //    sdot z5.s,  z9.b,  z0.b[2]
+    KAI_ASM_INST(0x44b00146)             //    sdot z6.s,  z10.b,  z0.b[2]
+    KAI_ASM_INST(0x44b00167)             //    sdot z7.s,  z11.b,  z0.b[2]
+    KAI_ASM_INST(0x0523c2c3)             //    mov z3.b, p0/m, z22.b
+    KAI_ASM_INST(0x042c9063)             //    asr z3.b, z3.b, #4
+    KAI_ASM_INST(0x042c9ed6)             //    lsl z22.b, z22.b, #4
+    KAI_ASM_INST(0x042c92d6)             //    asr z22.b, z22.b, #4
+    KAI_ASM_INST(0x052362cc)             //    zip1 z12.b, z22.b, z3.b
+    KAI_ASM_INST(0x052366cd)             //    zip2 z13.b, z22.b, z3.b
+    KAI_ASM_INST(0x0523c2e3)             //    mov z3.b, p0/m, z23.b
+    KAI_ASM_INST(0x042c9063)             //    asr z3.b, z3.b, #4
+    KAI_ASM_INST(0x042c9ef7)             //    lsl z23.b, z23.b, #4
+    KAI_ASM_INST(0x042c92f7)             //    asr z23.b, z23.b, #4
+    KAI_ASM_INST(0x052362ee)             //    zip1 z14.b, z23.b, z3.b
+    KAI_ASM_INST(0x052366ef)             //    zip2 z15.b, z23.b, z3.b
+    KAI_ASM_INST(0x44b80184)             //    sdot z4.s,  z12.b,  z0.b[3]
+    KAI_ASM_INST(0x44b801a5)             //    sdot z5.s,  z13.b,  z0.b[3]
+    KAI_ASM_INST(0x44b801c6)             //    sdot z6.s,  z14.b,  z0.b[3]
+    KAI_ASM_INST(0x44b801e7)             //    sdot z7.s,  z15.b,  z0.b[3]
+    KAI_ASM_INST(0x04385098)             //    addvl   x24, x24, #4
+    KAI_ASM_INST(0x0438509c)             //    addvl   x28, x24, #4
     subs x13, x13, #16
     b.gt k_block_loop                     // To block loop start
     // Load RHS scales (s16), shift left to Q15 in s32 lanes

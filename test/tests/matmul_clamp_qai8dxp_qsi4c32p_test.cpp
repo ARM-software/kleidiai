@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -55,6 +55,7 @@
 #include "test/common/matrix_portion.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/round.hpp"
+#include "test/common/seed.hpp"
 #include "test/common/test_suite.hpp"
 #include "test/reference/cast.hpp"
 #include "test/reference/clamp.hpp"
@@ -100,6 +101,7 @@ const auto& get_f32_gemm_variants() noexcept {
     using Variant = UkernelMatmulPackVariant<
         kai_matmul_clamp_f32_qai8dxp_qsi4c32p_ukernel, kai_qai8dxp_pack_functions, kai_qsi4c32p_pack_functions>;
 
+
     static const std::array<Variant, 13> variants = {{
         UKERNEL_MATMUL_PACK_VARIANT(
             clamp_f32_qai8dxp1x4_qsi4c32p4x4_1x4_neon_dotprod, cpu_has_dotprod, lhs_quant_pack_qai8dxp_f32,
@@ -141,7 +143,7 @@ const auto& get_f32_gemm_variants() noexcept {
             rhs_pack_nxk_qsi4c32ps1s0nrx4_qsu4c32s1s0_neon, false),
         UKERNEL_MATMUL_PACK_VARIANT(
             clamp_f32_qai8dxp1vlx4_qsi4c32p4vlx4_1vlx4vl_qmx_mopa, cpu_has_sme, lhs_quant_pack_qai8dxp_f32,
-            rhs_pack_nxk_qsi4c32ps1s0nrx4_qsu4c32s1s0_neon, false),
+            rhs_pack_nxk_qsi4c32ps1s0nrx4_qsu4c32s1s0_neon, false)
     }};
 
     return variants;
@@ -158,10 +160,12 @@ const auto& get_f32_gemv_variants() noexcept {
             rhs_pack_nxk_qsi4c32ps1s0nrx4_qsu4c32s1s0_neon, false),
         UKERNEL_MATMUL_PACK_VARIANT(
             clamp_f32_qai8dxp1x4_qsi4c32p4vlx4_1x4vl_qmx_dot, cpu_has_sme, lhs_quant_pack_qai8dxp_f32,
-            rhs_pack_nxk_qsi4c32ps1s0nrx4_qsu4c32s1s0_neon, false),    }};
+            rhs_pack_nxk_qsi4c32ps1s0nrx4_qsu4c32s1s0_neon, false)
+            }};
 
     return variants;
 }
+
 
 const auto& get_bf16_gemm_variants() noexcept {
     using Variant = UkernelVariant<kai_matmul_clamp_bf16_qai8dxp_qsi4c32p_ukernel>;
@@ -176,7 +180,7 @@ const auto& get_bf16_gemm_variants() noexcept {
     return variants;
 }
 
-// NEON/i8mm only (exclude SME2)
+// Advanced SIMD / i8mm only (exclude SME2)
 const auto& get_f32_neon_gemm_variants_only() {
     static std::vector<UkernelMatmulPackVariant<
         kai_matmul_clamp_f32_qai8dxp_qsi4c32p_ukernel, kai_qai8dxp_pack_functions, kai_qsi4c32p_pack_functions>>
@@ -479,8 +483,6 @@ std::string test_description(
     return sstream.str();
 }
 
-constexpr uint32_t seed = 0;  ///< Random seed used for tests
-
 struct TestData {
     size_t M{}, N{}, K{}, bl{};
 
@@ -685,9 +687,15 @@ TestData ReferenceGenerator<F32QMatMulRefKey, TestData>::generate_reference(cons
     ref.bl = bl;
     ref.rect = rect;
 
-    ref.lhs = fill_random<float>(ref.M * ref.K, seed + 0);
-    ref.rhs = fill_random<float>(ref.N * ref.K, seed + 1);
-    ref.bias = fill_random<float>(ref.N, seed + 2);
+    // Creates a unique seed for the test data.
+    const auto key = std::string("F32QMatMulRefKey:") + std::to_string(ref.M) + "x" + std::to_string(ref.N) + "x" +
+        std::to_string(ref.K) + "_" + std::to_string(bl) + "_" + ((rhs_pack_type == RhsPackType::NxK) ? "NxK" : "KxN") +
+        "_" + std::to_string(clamp_keep_ratio);
+    auto& feed = seed_stream(key);
+
+    ref.lhs = fill_random<float>(ref.M * ref.K, feed());
+    ref.rhs = fill_random<float>(ref.N * ref.K, feed());
+    ref.bias = fill_random<float>(ref.N, feed());
 
     // Dynamic LHS quantization (reference only).
     QuantizationInfo lhs_qinfo{};
@@ -841,10 +849,16 @@ BF16TestData ReferenceGenerator<BF16QMatMulRefKey, BF16TestData>::generate_refer
     ref.bl = bl;
     ref.rect = Rect(rect_start_row, rect_start_col, rect_height, rect_width);
 
+    // Creates a unique seed for the test data.
+    const auto key = std::string("BF16QMatMulRefKey:") + std::to_string(ref.M) + "x" + std::to_string(ref.N) + "x" +
+        std::to_string(ref.K) + "_" + std::to_string(bl) + "_" + ((rhs_pack_type == RhsPackType::NxK) ? "NxK" : "KxN") +
+        "_" + std::to_string(clamp_keep_ratio);
+    auto& feed = seed_stream(key);
+
     // Inputs
-    ref.lhs_bf16 = fill_random<BFloat16<false>>(ref.M * ref.K, seed + 0);
-    Buffer const ref_rhs = fill_random<float>(ref.N * ref.K, seed + 1);
-    ref.bias = fill_random<float>(ref.N, seed + 2);
+    ref.lhs_bf16 = fill_random<BFloat16<false>>(ref.M * ref.K, feed());
+    Buffer const ref_rhs = fill_random<float>(ref.N * ref.K, feed());
+    ref.bias = fill_random<float>(ref.N, feed());
 
     // Cast BF16 LHS to FP32 for reference quantization
     const Buffer ref_lhs =
@@ -1097,7 +1111,7 @@ TEST_P(QMatMulClampF32Test, LhsPackBufferMatchesReference) {
     constexpr size_t rect_start_row = 0;
     constexpr size_t rect_height = 1;
 
-    const auto ref_lhs = fill_random<float>(M * K, seed);
+    const auto ref_lhs = fill_random<float>(M * K, seed_stream(current_test_key())());
 
     const size_t lhs_stride = K * sizeof(float);
     std::tuple<Buffer, size_t> pack_pair = pack_lhs_qai8dxp(
@@ -1501,7 +1515,7 @@ static constexpr std::array<float, 3> clamp_keep_ratios_sweep{
 };
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMulGemm_SmallOdd, QMatMulClampF32Test,
+    MatMul_j_Gemm_SmallOdd, QMatMulClampF32Test,
     testing::Combine(
         testing::Range<size_t>(0, get_f32_gemm_variants().size()),
         testing::Values(true),
@@ -1513,7 +1527,7 @@ INSTANTIATE_TEST_SUITE_P(
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMulGemm_Aligned, QMatMulClampF32Test,
+    MatMul_j_Gemm_Aligned, QMatMulClampF32Test,
     testing::Combine(
         testing::Range<size_t>(0, get_f32_gemm_variants().size()),
         testing::Values(true),
@@ -1525,7 +1539,7 @@ INSTANTIATE_TEST_SUITE_P(
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMulGemm_Rect, QMatMulClampF32Test,
+    MatMul_j_Gemm_Rect, QMatMulClampF32Test,
     testing::Combine(
         testing::Range<size_t>(0, get_f32_gemm_variants().size()),
         testing::Values(true),
@@ -1537,7 +1551,7 @@ INSTANTIATE_TEST_SUITE_P(
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMulGemm_Large, QMatMulClampF32Test,
+    MatMul_j_Gemm_Large, QMatMulClampF32Test,
     testing::Combine(
         testing::Range<size_t>(0, get_f32_gemm_variants().size()),
         testing::Values(true),
@@ -1549,7 +1563,7 @@ INSTANTIATE_TEST_SUITE_P(
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMulGemv_Small, QMatMulClampF32Test,
+    MatMul_j_Gemv_Small, QMatMulClampF32Test,
     testing::Combine(
         testing::Range<size_t>(0, get_f32_gemv_variants().size()),
         testing::Values(false),
@@ -1561,7 +1575,7 @@ INSTANTIATE_TEST_SUITE_P(
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMulGemv_Large, QMatMulClampF32Test,
+    MatMul_j_Gemv_Large, QMatMulClampF32Test,
     testing::Combine(
         testing::Range<size_t>(0, get_f32_gemv_variants().size()),
         testing::Values(false),
@@ -1573,7 +1587,7 @@ INSTANTIATE_TEST_SUITE_P(
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMulNeonRhsPackGemm_SmallOdd, NeonRhsPackF32Test,
+    MatMul_j_NeonRhsPackGemm_SmallOdd, NeonRhsPackF32Test,
     testing::Combine(
         testing::Range<size_t>(0, get_f32_neon_gemm_variants_only().size()),
         testing::Values(true),
@@ -1585,7 +1599,7 @@ INSTANTIATE_TEST_SUITE_P(
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMulNeonRhsPackGemm_Aligned, NeonRhsPackF32Test,
+    MatMul_j_NeonRhsPackGemm_Aligned, NeonRhsPackF32Test,
     testing::Combine(
         testing::Range<size_t>(0, get_f32_neon_gemm_variants_only().size()),
         testing::Values(true),
@@ -1602,7 +1616,7 @@ static constexpr std::array clamp_sweep_shapes{
 };
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMulGemm_ClampSweep, QMatMulClampF32Test,
+    MatMul_j_Gemm_ClampSweep, QMatMulClampF32Test,
     testing::Combine(
         testing::Range<size_t>(0, get_f32_gemm_variants().size()),
         testing::Values(true),
@@ -1614,7 +1628,7 @@ INSTANTIATE_TEST_SUITE_P(
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMulBF16_SingleSet, QMatMulClampBF16Test,
+    MatMul_j_BF16_SingleSet, QMatMulClampBF16Test,
     testing::Combine(
         testing::Range<size_t>(0, get_bf16_gemm_variants().size()),
         testing::ValuesIn(bf16_shapes),

@@ -227,7 +227,7 @@ void kai_run_rhs_pack_kxn_qsi4c32ps1s0nrx4_qsu4c32s1s0_neon(
                     const float32x4_t vd_2 = vcvt_f32_bf16(vd_bf16.val[2]);
                     const float32x4_t vd_3 = vcvt_f32_bf16(vd_bf16.val[3]);
 #else
-                    // Portable BF16 -> F32 conversion using integer NEON: (u16 << 16) reinterpret as f32
+                    // Portable BF16 -> F32 conversion using integer (Advanced SIMD): (u16 << 16) reinterpret as f32
                     const uint16_t* bf16_ptr = ((const uint16_t*)rhs_packed_scale) + nr_idx;
                     const uint16x4_t vbf0 = vld1_u16(bf16_ptr + 0);
                     const uint16x4_t vbf1 = vld1_u16(bf16_ptr + 4);

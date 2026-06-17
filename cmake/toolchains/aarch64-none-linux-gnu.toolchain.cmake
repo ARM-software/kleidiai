@@ -11,8 +11,8 @@ set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_PROCESSOR arm)
 
 set(triple aarch64-linux-gnu)
-set(TOOLS_PATH ${CMAKE_CURRENT_LIST_DIR}/../../tools)
-set(CROSS_COMPILE_LLVM_PATH ${TOOLS_PATH}/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04)
+set(TOOLS_PATH /prj/qct/chips/swarch/tools)
+set(CROSS_COMPILE_LLVM_PATH ${TOOLS_PATH}/clang-16.0.0)
 
 set(CMAKE_C_COMPILER "${CROSS_COMPILE_LLVM_PATH}/bin/clang")
 set(CMAKE_C_COMPILER_TARGET ${triple})

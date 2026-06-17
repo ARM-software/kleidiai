@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -23,9 +23,12 @@
 #include "test/common/cpu_info.hpp"
 #include "test/common/data_format.hpp"
 #include "test/common/data_type.hpp"
+#include "test/common/matmul_shape_generator.hpp"
 #include "test/common/matmul_test_common.hpp"
 #include "test/common/matrix_portion.hpp"
 #include "test/common/printer.hpp"
+#include "test/common/seed.hpp"
+#include "test/nextgen/common/test_registry.hpp"
 #include "test/reference/clamp.hpp"
 #include "test/reference/fill.hpp"
 #include "test/reference/matmul.hpp"
@@ -35,6 +38,7 @@
 #include "kai/ukernels/matmul/matmul_clamp_f16_bf16p_bf16p/kai_matmul_clamp_f16_bf16p8x4_bf16p12x4b_8x12_neon_mmla.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_pack_bf16p8x4_f16_neon.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_bf16p12x4biasf16_f16_neon.h"
+
 namespace kai::test {
 
 /// List of supported matrix multiplication methods.
@@ -116,11 +120,15 @@ static const std::array<MatMulMethod, 2>& get_matmul_methods() {
     return matmul_methods;
 }
 
-}  // namespace
-
 /// Matrix multiplication test fixture.
-class MatMulTestBf16OutFp16 : public testing::TestWithParam<MatMulClampTestParams> {
+class MatMulTestBf16OutFp16 : public testing::Test {
+public:
+    explicit MatMulTestBf16OutFp16(const MatMulClampTestParams& params) : m_params{params} {
+    }
+    void TestBody() override;
+
 private:
+    MatMulClampTestParams m_params;
     /// Unique ID: m, n, k
     using TestDataId = std::tuple<size_t, size_t, size_t, float, std::string_view>;
 
@@ -138,8 +146,8 @@ protected:
     };
 
     /// Gets the test data for the current test case.
-    static const TestData& test_data() {
-        const auto& [method, info, portion, bias_mode, clamp_keep_ratio] = GetParam();
+    static const TestData& test_data(const MatMulClampTestParams& params) {
+        const auto& [method, info, portion, bias_mode, clamp_keep_ratio] = params;
         const TestDataId data_id{info.m, info.n, info.k, clamp_keep_ratio, method.name};
 
         // If the test data is already available, returns it.
@@ -154,9 +162,15 @@ protected:
         const auto has_rhs_pack = method.packed_rhs_format.data_type() != DataType::UNKNOWN;
         const auto has_bias = method.bias_format.data_type() != DataType::UNKNOWN;
 
+        // Seed the random generator.
+        const auto key = std::string(method.name) + "_" + std::to_string(info.m) + "x" + std::to_string(info.n) + "x" +
+            std::to_string(info.k) + "_" + (bias_mode == BiasMode::INTERNAL ? "internal" : "provided") + ":" +
+            std::to_string(clamp_keep_ratio);
+        auto& feed = seed_stream(key);
+
         const auto lhs_h = info.m;
         const auto lhs_w = info.k;
-        auto lhs = fill_matrix_random(lhs_h, lhs_w, method.lhs_format, 0);
+        auto lhs = fill_matrix_random(lhs_h, lhs_w, method.lhs_format, feed());
         Buffer ref_packed_lhs;
 
         if (has_lhs_pack) {
@@ -166,12 +180,12 @@ protected:
 
         const auto rhs_h = info.k;
         const auto rhs_w = info.n;
-        auto rhs = fill_matrix_random(rhs_h, rhs_w, method.rhs_format, 1);
+        auto rhs = fill_matrix_random(rhs_h, rhs_w, method.rhs_format, feed());
 
         Buffer rhs_scales;
         if (data_type_is_quantized(method.rhs_format.data_type()) &&
             method.rhs_format.pack_format() == DataFormat::PackFormat::NONE) {
-            rhs_scales = fill_matrix_random(rhs_h, 1, DataFormat(DataType::FP32), 2);
+            rhs_scales = fill_matrix_random(rhs_h, 1, DataFormat(DataType::FP32), feed());
         }
 
         const auto bias_h = 1;
@@ -179,7 +193,7 @@ protected:
         Buffer bias;
 
         if (has_bias) {
-            bias = fill_matrix_random(bias_h, bias_w, method.bias_format, 3);
+            bias = fill_matrix_random(bias_h, bias_w, method.bias_format, feed());
         }
 
         Buffer packed_rhs(method.fn_get_packed_rhs_size(rhs_w, rhs_h));
@@ -231,8 +245,8 @@ std::map<MatMulTestBf16OutFp16::TestDataId, MatMulTestBf16OutFp16::TestData> Mat
 // NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
 /// Tests the output.
-TEST_P(MatMulTestBf16OutFp16, Output) {
-    const auto& [method, info, portion, bias_mode, clamp_keep_ratio] = GetParam();
+void MatMulTestBf16OutFp16::TestBody() {
+    const auto& [method, info, portion, bias_mode, clamp_keep_ratio] = m_params;
 
     if (method.fn_is_supported && !method.fn_is_supported()) {
         GTEST_SKIP() << "Unsupported CPU feature";
@@ -242,7 +256,7 @@ TEST_P(MatMulTestBf16OutFp16, Output) {
         GTEST_SKIP() << "No main kernel available";
     }
 
-    const auto& data = test_data();
+    const auto& data = test_data(m_params);
 
     const auto m_step = method.fn_get_main_m_step();
     ASSERT_EQ(m_step, method.m0);
@@ -325,30 +339,30 @@ TEST_P(MatMulTestBf16OutFp16, Output) {
     ASSERT_TRUE(success);
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    MatMul, MatMulTestBf16OutFp16,
-    testing::Combine(
-        testing::ValuesIn(get_matmul_methods()),
-        testing::Values(
-            MatMulShape{3, 7, 3},     // Smaller than block size
-            MatMulShape{12, 8, 4},    // Same block size
-            MatMulShape{1, 1, 73},    // Long K
-            MatMulShape{73, 1, 5},    // Long M
-            MatMulShape{2, 73, 6},    // Long N
-            MatMulShape{13, 33, 23},  //
-            MatMulShape{73, 57, 69},  //
-            MatMulShape{70, 70, 70},  // Square
-            MatMulShape{59, 67, 73}   // Prime numbers
-            ),
-        testing::Values(
-            MatrixPortion(0, 0, 1, 1),         // Full matrix.
-            MatrixPortion(0, 0, 0.25, 0.25),   // Top-left corner.
-            MatrixPortion(0.75, 0.75, 1, 1),   // Bottom-right corner.
-            MatrixPortion(0.75, 0, 1, 1),      // Partial rows
-            MatrixPortion(0.4, 0.5, 0.6, 0.8)  // Somewhere Middle
-            ),
-        testing::Values(BiasMode::PROVIDED),                               //
-        testing::ValuesIn(std::initializer_list<float>{1.0f, 0.9f, 0.5f})  // Clamping
-        ),
-    testing::PrintToStringParamName());
+const auto matmul_tests_setup = kai::test::TestRegistry::register_setup([]() {
+    auto& feed = seed_stream("MatMulTestBf16OutFp16::shapes");
+    MatMulShapeGenerator gen({1, 256}, {1, 256}, {1, 256}, feed);
+    const auto shapes = gen.generate(256);
+    const std::array portions = {
+        MatrixPortion(0, 0, 1, 1),          // Full matrix.
+        MatrixPortion(0, 0, 0.25, 0.25),    // Top-left corner.
+        MatrixPortion(0.75, 0.75, 1, 1),    // Bottom-right corner.
+        MatrixPortion(0.75, 0, 1, 1),       // Bottom-left corner.
+        MatrixPortion(0.4, 0.5, 0.6, 0.8),  // Middle portion.
+    };
+    const std::array clamp = {1.0f, 0.9f, 0.5f};
+    for (const auto& method : get_matmul_methods()) {
+        for (const auto& shape : shapes) {
+            for (const auto& portion : portions) {
+                for (float clamp_ratio : clamp) {
+                    MatMulClampTestParams params{method, shape, portion, BiasMode::PROVIDED, clamp_ratio};
+                    const std::string name = test_description(method.name, shape, portion, true, clamp_ratio);
+                    KAI_REGISTER_TEST(MatMulTestBf16OutFp16, MatMulTestBf16OutFp16, "MatMul", name.c_str(), params);
+                }
+            }
+        }
+    }
+});
+}  // namespace
+
 }  // namespace kai::test

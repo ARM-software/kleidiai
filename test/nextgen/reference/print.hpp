@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -10,7 +10,7 @@
 #include <ostream>
 
 #include "test/common/data_type.hpp"
-#include "test/common/span.hpp"
+#include "test/nextgen/common/shape.hpp"
 
 namespace kai::test {
 
@@ -20,7 +20,7 @@ namespace kai::test {
 /// @param[in] shape The size of multidimensional array.
 /// @param[in] data The data buffer.
 /// @param[in] level The number of indentation levels.
-using PrintFn = void (*)(std::ostream& os, Span<const size_t> shape, Span<const std::byte> data, size_t level);
+using PrintFn = void (*)(std::ostream& os, Shape shape, Span<const std::byte> data, size_t level);
 
 /// Gets the pointer to the print function for the specified data type.
 ///

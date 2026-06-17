@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -30,102 +30,128 @@
 
 // imatmul_clamp_f16_f16p_f16p
 #include "kai/ukernels/matmul/imatmul_clamp_f16_f16p_f16p/kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa.h"
-#include "kai/ukernels/matmul/imatmul_clamp_f16_f16p_f16p/kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_qmx_mopa.h"
 #include "kai/ukernels/matmul/imatmul_clamp_f16_f16p_f16p/kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa.h"
 
 // imatmul_clamp_f32_f32p_f32p
 #include "kai/ukernels/matmul/imatmul_clamp_f32_f32p_f32p/kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme2_mopa.h"
-#include "kai/ukernels/matmul/imatmul_clamp_f32_f32p_f32p/kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_qmx_mopa.h"
 #include "kai/ukernels/matmul/imatmul_clamp_f32_f32p_f32p/kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa.h"
+
+// imatmul_clamp_f32_f32_f32p
+#include "kai/ukernels/matmul/imatmul_clamp_f32_f32_f32p/kai_imatmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla.h"
 
 // imatmul_clamp_qai8_qai8p_qsi8cxp
 #include "kai/ukernels/matmul/imatmul_clamp_qai8_qai8p_qsi8cxp/kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxp2vlx4sb_2vlx2vl_sme_mopa.h"
 #include "kai/ukernels/matmul/imatmul_clamp_qai8_qai8p_qsi8cxp/kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa.h"
-#include "kai/ukernels/matmul/imatmul_clamp_qai8_qai8p_qsi8cxp/kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_qmx_mopa.h"
 
+// imatmul QMX kernels
+#include "kai/ukernels/matmul/imatmul_clamp_f16_f16p_f16p/kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_qmx_mopa.h"
+#include "kai/ukernels/matmul/imatmul_clamp_f32_f32p_f32p/kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_qmx_mopa.h"
+#include "kai/ukernels/matmul/imatmul_clamp_qai8_qai8p_qsi8cxp/kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_qmx_mopa.h"
 
 namespace kai::benchmark {
 using DataType = test::DataType;
 
 // imatmul_clamp_f16_f16p_f16p
 inline constexpr ImatmulBaseInterface kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa_interface{
+    .get_m_step = kai_get_m_step_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa,
     .run_imatmul = kai_run_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa,
-};
-inline constexpr ImatmulBaseInterface kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_qmx_mopa_interface{
-    .run_imatmul = kai_run_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_qmx_mopa,
 };
 
 inline constexpr ImatmulBaseInterface kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa_interface{
+    .get_m_step = kai_get_m_step_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa,
     .run_imatmul = kai_run_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa,
 };
 
-// imatmul_clamp_f16_f16_f16p
+// imatmul_clamp_f32_f32p_f32p
 inline constexpr ImatmulBaseInterface kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme2_mopa_interface{
+    .get_m_step = kai_get_m_step_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme2_mopa,
     .run_imatmul = kai_run_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme2_mopa,
-};
-inline constexpr ImatmulBaseInterface kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_qmx_mopa_interface{
-    .run_imatmul = kai_run_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_qmx_mopa,
 };
 
 inline constexpr ImatmulBaseInterface kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa_interface{
+    .get_m_step = kai_get_m_step_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa,
     .run_imatmul = kai_run_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa,
 };
 
 // imatmul_clamp_qai8_qai8p_qsi8cxp
+inline constexpr ImatmulStaticQuantInterface
+    kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxp2vlx4sb_2vlx2vl_sme_mopa_interface{
+        .get_m_step = kai_get_m_step_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxp2vlx4sb_2vlx2vl_sme_mopa,
+        .run_imatmul = kai_run_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxp2vlx4sb_2vlx2vl_sme_mopa,
+    };
 
 inline constexpr ImatmulStaticQuantInterface
     kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa_interface{
+        .get_m_step = kai_get_m_step_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
         .run_imatmul = kai_run_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa,
     };
+
+// imatmul QMX kernel interfaces
+inline constexpr ImatmulBaseInterface kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_qmx_mopa_interface{
+    .get_m_step = kai_get_m_step_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_qmx_mopa,
+    .run_imatmul = kai_run_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_qmx_mopa,
+};
+inline constexpr ImatmulBaseInterface kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_qmx_mopa_interface{
+    .get_m_step = kai_get_m_step_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_qmx_mopa,
+    .run_imatmul = kai_run_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_qmx_mopa,
+};
 inline constexpr ImatmulStaticQuantInterface
     kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_qmx_mopa_interface{
+        .get_m_step = kai_get_m_step_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_qmx_mopa,
         .run_imatmul = kai_run_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_qmx_mopa,
     };
-inline constexpr ImatmulStaticQuantInterface
-    kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxp2vlx4sb_2vlx2vl_sme_mopa_interface{
-        .run_imatmul = kai_run_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxp2vlx4sb_2vlx2vl_sme_mopa,
-    };
-    
+
+// imatmul_clamp_f32_f32_f32p (takes indirection buffer)
+inline constexpr ImatmulNoLHSPackBaseInterface kai_imatmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla_interface{
+    .get_m_step = kai_get_m_step_imatmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla,
+    .run_imatmul = kai_run_imatmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla,
+};
+
 inline const std::array imatmul_benchmarks{
     // imatmul_clamp_f16_f16p_f16p
     RegisterBenchmark(
         "kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa", kai_benchmark_imatmul<ImatmulBaseInterface>,
         kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa_interface, DataType::FP16, test::cpu_has_sme2),
     RegisterBenchmark(
-        "kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_qmx_mopa", kai_benchmark_imatmul<ImatmulBaseInterface>,
-        kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_qmx_mopa_interface, DataType::FP16, test::cpu_has_sme),
-    RegisterBenchmark(
         "kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa", kai_benchmark_imatmul<ImatmulBaseInterface>,
         kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa_interface, DataType::FP16, test::cpu_has_sme),
 
-    // imatmul_clamp_f16_f16_f16p
+    // imatmul_clamp_f32_f32p_f16p
     RegisterBenchmark(
         "kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme2_mopa", kai_benchmark_imatmul<ImatmulBaseInterface>,
         kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme2_mopa_interface, DataType::FP32, test::cpu_has_sme2),
-    RegisterBenchmark(
-        "kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_qmx_mopa", kai_benchmark_imatmul<ImatmulBaseInterface>,
-        kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_qmx_mopa_interface, DataType::FP32, test::cpu_has_sme),
     RegisterBenchmark(
         "kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa", kai_benchmark_imatmul<ImatmulBaseInterface>,
         kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa_interface, DataType::FP32, test::cpu_has_sme),
 
     // imatmul_clamp_qai8_qai8p_qsi8cxp
     RegisterBenchmark(
+        "kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxp2vlx4sb_2vlx2vl_sme_mopa",
+        kai_benchmark_imatmul<ImatmulStaticQuantInterface>,
+        kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxp2vlx4sb_2vlx2vl_sme_mopa_interface, DataType::QAI8, test::cpu_has_sme),
+    RegisterBenchmark(
         "kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa",
         kai_benchmark_imatmul<ImatmulStaticQuantInterface>,
         kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa_interface, DataType::QAI8,
         test::cpu_has_sme2),
+
+    // imatmul_clamp_f32_f32_f32p - takes indirection buffer.
+    RegisterBenchmark(
+        "kai_imatmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla", kai_benchmark_imatmul<ImatmulNoLHSPackBaseInterface>,
+        kai_imatmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla_interface, DataType::FP32, test::cpu_has_sve),
+
+    // imatmul QMX kernels
+    RegisterBenchmark(
+        "kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_qmx_mopa", kai_benchmark_imatmul<ImatmulBaseInterface>,
+        kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_qmx_mopa_interface, DataType::FP16, test::cpu_has_sme),
+    RegisterBenchmark(
+        "kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_qmx_mopa", kai_benchmark_imatmul<ImatmulBaseInterface>,
+        kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_qmx_mopa_interface, DataType::FP32, test::cpu_has_sme),
     RegisterBenchmark(
         "kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_qmx_mopa",
         kai_benchmark_imatmul<ImatmulStaticQuantInterface>,
         kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_qmx_mopa_interface, DataType::QAI8,
         test::cpu_has_sme),
-    RegisterBenchmark(
-        "kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxp2vlx4sb_2vlx2vl_sme_mopa",
-        kai_benchmark_imatmul<ImatmulStaticQuantInterface>,
-        kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxp2vlx4sb_2vlx2vl_sme_mopa_interface, DataType::QAI8, test::cpu_has_sme),
-
-
 };
 
 void RegisteriMatMulBenchmarks(size_t m, size_t n, size_t k_chunk_count, size_t k_chunk_length) {

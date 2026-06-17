@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -16,6 +16,7 @@
 #include "test/common/data_format.hpp"
 #include "test/common/data_type.hpp"
 #include "test/common/float16.hpp"
+#include "test/common/int2.hpp"
 #include "test/common/int4.hpp"
 
 namespace kai::test {
@@ -32,6 +33,12 @@ inline void print_data(std::ostream& os, const uint8_t* data, size_t len, DataTy
         for (size_t i = 0; i < len / 2; ++i) {
             const auto [low, high] = Int4::unpack_u8(data[i]);
             os << static_cast<int32_t>(low) << ", " << static_cast<int32_t>(high) << ", ";
+        }
+    } else if (data_type == DataType::QSI2) {
+        for (size_t i = 0; i < len / 4; ++i) {
+            const auto [v1, v2, v3, v4] = Int2::unpack_u8(data[i]);
+            os << static_cast<int32_t>(v1) << ", " << static_cast<int32_t>(v2) << ", " << static_cast<int32_t>(v3)
+               << ", " << static_cast<int32_t>(v4) << ", ";
         }
     } else {
         for (size_t i = 0; i < len; ++i) {

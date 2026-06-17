@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -70,8 +70,11 @@ Buffer cast(const void* src, kai::test::DataType src_dt, DataType dst_dt, size_t
         return cast<BFloat16<>, Float16>(src, length);
     } else if (src_dt == DataType::FP32 && dst_dt == DataType::BF16) {
         return cast<BFloat16<>, float>(src, length);
+    } else if (src_dt == DataType::FP32 && dst_dt == DataType::FP16) {
+        return cast<Float16, float>(src, length);
+    } else if (src_dt == DataType::FP16 && dst_dt == DataType::FP32) {
+        return cast<float, Float16>(src, length);
     }
-
     KAI_ERROR("Unsupported cast data type!");
 }
 
@@ -80,6 +83,16 @@ Buffer cast_qsu4_qsi4(const void* src, size_t length) {
 
     for (size_t i = 0; i < length; ++i) {
         write_array(dst.data(), i, static_cast<UInt4>(static_cast<int32_t>(read_array<Int4>(src, i)) + 8));
+    }
+
+    return dst;
+}
+
+Buffer cast_u2_i2(const void* src, size_t length) {
+    Buffer dst(round_up_division(length, 4));
+
+    for (size_t i = 0; i < length; ++i) {
+        write_array(dst.data(), i, static_cast<UInt2>(static_cast<int32_t>(read_array<Int2>(src, i)) + 2));
     }
 
     return dst;

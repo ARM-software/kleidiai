@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -24,8 +24,7 @@
 namespace kai::test {
 
 void AsymmLinearQuantizer::dynamic_quantize(
-    DataType fp_dtype, Span<const size_t> shape, Span<const std::byte> fp_data, Tensor& qdata, Tensor& qscale,
-    Tensor& qzp) const {
+    DataType fp_dtype, Shape shape, Span<const std::byte> fp_data, Tensor& qdata, Tensor& qscale, Tensor& qzp) const {
     KAI_TEST_ASSERT_MSG(shape.size() == 2, "Only 2D quantization is supported.");
 
     const size_t height = shape.at(0);
@@ -48,7 +47,7 @@ void AsymmLinearQuantizer::dynamic_quantize(
 }
 
 Buffer AsymmLinearQuantizer::dequantize(
-    DataType fp_dtype, Span<const size_t> shape, Span<const std::byte> qdata, Span<const std::byte> qscale,
+    DataType fp_dtype, Shape shape, Span<const std::byte> qdata, Span<const std::byte> qscale,
     Span<const std::byte> qzp) const {
     KAI_TEST_ASSERT_MSG(shape.size() == 2, "Only 2D quantization is supported.");
 
