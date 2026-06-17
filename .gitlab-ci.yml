@@ -338,6 +338,17 @@ test-verify-microkernel-tables:
   script:
     - python3 tools/check_microkernel_tables.py
 
+# Purpose: Verify that all micro-kernel headers contain include directives for used symbols.
+test-verify-microkernel-header-includes:
+  extends:
+    - .standard-rules
+  stage: test
+  needs: []
+  rules:
+    - !reference [.main-branch-verification-rules, rules]
+  script:
+    - python3 tools/check_microkernel_header_includes.py
+
 # Purpose: Build current sources against tests/benchmarks from latest semver tag to detect API breakage.
 test-api-compat:
   extends:
