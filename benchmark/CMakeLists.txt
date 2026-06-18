@@ -16,17 +16,20 @@ set(BENCHMARK_ENABLE_GTEST_TESTS "OFF")
 
 include(FetchGBench)
 
-# Single benchmark binary combining matmul, imatmul and dwconv
+# Single benchmark binary combining matmul, pack_matmul, imatmul and dwconv
 add_executable(kleidiai_benchmark
     benchmark/main.cpp
     benchmark/dwconv/dwconv_registry.cpp
     benchmark/matmul/matmul_registry.cpp
+    benchmark/pack_matmul/pack_matmul_registry.cpp
     benchmark/imatmul/imatmul_registry.cpp
     test/common/cpu_info.cpp
     test/common/data_type.cpp
 )
 
 set_source_files_properties(benchmark/matmul/matmul_registry.cpp
+    PROPERTIES COMPILE_OPTIONS "-fno-tree-vectorize;-fno-tree-slp-vectorize;-march=armv8-a+sve+sve2${KLEIDIAI_INTERNAL_EXTRA_ARCH}")
+set_source_files_properties(benchmark/pack_matmul/pack_matmul_registry.cpp
     PROPERTIES COMPILE_OPTIONS "-fno-tree-vectorize;-fno-tree-slp-vectorize;-march=armv8-a+sve+sve2${KLEIDIAI_INTERNAL_EXTRA_ARCH}")
 set_source_files_properties(benchmark/imatmul/imatmul_registry.cpp
     PROPERTIES COMPILE_OPTIONS "-fno-tree-vectorize;-fno-tree-slp-vectorize;-march=armv8-a+sve+sve2${KLEIDIAI_INTERNAL_EXTRA_ARCH}")

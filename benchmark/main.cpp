@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -21,6 +21,7 @@
 #include "benchmark/dwconv/dwconv_registry.hpp"
 #include "benchmark/imatmul/imatmul_registry.hpp"
 #include "benchmark/matmul/matmul_registry.hpp"
+#include "benchmark/pack_matmul/pack_matmul_registry.hpp"
 #include "kai/kai_common.h"
 
 #ifdef __GNUC__
@@ -47,6 +48,16 @@ void print_matmul_usage(std::string_view name, bool defaulted = false) {
     }
     oss << "Matmul usage:" << '\n';
     oss << '\t' << name << " matmul -m <M> -n <N> -k <K> [-b <block_size>]" << '\n';
+    oss << "Options:" << '\n';
+    oss << "\t-m,-n,-k\tMatrix dimensions (LHS MxK, RHS KxN)" << '\n';
+    oss << "\t-b\t\t(Optional) Block size for blockwise quantization" << '\n';
+    std::cerr << oss.str() << '\n';
+}
+
+void print_pack_matmul_usage(std::string_view name) {
+    std::ostringstream oss;
+    oss << "PackMatmul usage:" << '\n';
+    oss << '\t' << name << " pack_matmul -m <M> -n <N> -k <K> [-b <block_size>]" << '\n';
     oss << "Options:" << '\n';
     oss << "\t-m,-n,-k\tMatrix dimensions (LHS MxK, RHS KxN)" << '\n';
     oss << "\t-b\t\t(Optional) Block size for blockwise quantization" << '\n';
@@ -89,13 +100,14 @@ void print_dwconv_usage(std::string_view name) {
 void print_global_usage(std::string_view name) {
     std::ostringstream oss;
     oss << "Usage:" << '\n';
-    oss << '\t' << name << " <matmul|imatmul|dwconv> [<options>]" << '\n';
+    oss << '\t' << name << " <matmul|pack_matmul|imatmul|dwconv> [<options>]" << '\n';
     oss << "\nIf no operation is provided, defaults to: " << name << " matmul [options]" << '\n';
     oss << "\nBenchmark Framework options:" << '\n';
     oss << '\t' << name << " --help" << '\n';
     std::cerr << oss.str() << '\n';
 
     print_matmul_usage(name);
+    print_pack_matmul_usage(name);
     print_imatmul_usage(name);
     print_dwconv_usage(name);
 }
@@ -334,9 +346,53 @@ static int run_matmul(
     }
 
     kai::benchmark::RegisterMatMulBenchmarks({m, n, k}, bl);
+    const std::string spec = user_filter_opt.has_value() ? *user_filter_opt : std::string("^kai_matmul");
 
-    // Default filter if user didn’t supply one
-    std::string spec = user_filter_opt.has_value() ? *user_filter_opt : std::string("^kai_matmul");
+    ::benchmark::RunSpecifiedBenchmarks(nullptr, nullptr, spec);
+    ::benchmark::Shutdown();
+    return 0;
+}
+
+static int run_pack_matmul(int argc, char** argv, const std::optional<std::string>& user_filter_opt) {
+    bool mflag = false, nflag = false, kflag = false, bflag = false;
+    size_t m = 1, n = 1, k = 1, bl = 32;
+
+    optind = 1;
+    int opt;
+    while ((opt = getopt(argc, argv, "m:n:k:b:")) != -1) {
+        switch (opt) {
+            case 'm':
+                m = std::atoi(optarg);
+                mflag = true;
+                break;
+            case 'n':
+                n = std::atoi(optarg);
+                nflag = true;
+                break;
+            case 'k':
+                k = std::atoi(optarg);
+                kflag = true;
+                break;
+            case 'b':
+                bl = std::atoi(optarg);
+                bflag = true;
+                break;
+            default:
+                print_pack_matmul_usage(argv[0]);
+                return EXIT_FAILURE;
+        }
+    }
+
+    if (!mflag || !nflag || !kflag) {
+        print_pack_matmul_usage(argv[0]);
+        return EXIT_FAILURE;
+    }
+    if (!bflag) {
+        std::cerr << "Optional argument -b not specified. Defaulting to block size " << bl << "\n";
+    }
+
+    kai::benchmark::RegisterPackMatMulBenchmarks({m, n, k}, bl);
+    const std::string spec = user_filter_opt.has_value() ? *user_filter_opt : std::string("kai_pack_matmul");
 
     ::benchmark::RunSpecifiedBenchmarks(nullptr, nullptr, spec);
     ::benchmark::Shutdown();
@@ -463,10 +519,11 @@ int main(int argc, char** argv) {
 
     std::cerr << "KleidiAI version: v" << kai_get_version() << "\n";
 
-    // Determine subcommand (mode): matmul or imatmul.
-    enum class Mode : uint8_t { COMPAT, MATMUL, IMATMUL, DWCONV } mode = Mode::COMPAT;
+    // Determine subcommand (mode): matmul, pack_matmul, imatmul or dwconv.
+    enum class Mode : uint8_t { COMPAT, MATMUL, PACK_MATMUL, IMATMUL, DWCONV } mode = Mode::COMPAT;
 
     static constexpr std::string_view MATMUL = "matmul";
+    static constexpr std::string_view PACK_MATMUL = "pack_matmul";
     static constexpr std::string_view IMATMUL = "imatmul";
     static constexpr std::string_view DWCONV = "dwconv";
 
@@ -479,6 +536,10 @@ int main(int argc, char** argv) {
 
     if (argc >= 2 && args[1] == MATMUL) {
         mode = Mode::MATMUL;
+        argv += 1;
+        argc -= 1;
+    } else if (argc >= 2 && args[1] == PACK_MATMUL) {
+        mode = Mode::PACK_MATMUL;
         argv += 1;
         argc -= 1;
     } else if (argc >= 2 && args[1] == IMATMUL) {
@@ -495,12 +556,16 @@ int main(int argc, char** argv) {
         std::string spec;
         if (mode == Mode::COMPAT) {
             kai::benchmark::RegisterMatMulBenchmarks({1, 1, 1}, 32);
+            kai::benchmark::RegisterPackMatMulBenchmarks({1, 1, 1}, 32);
             kai::benchmark::RegisteriMatMulBenchmarks(1, 1, 1, 1);
             kai::benchmark::RegisterDwConvBenchmarks({3, 3, 1});
             spec = user_filter_opt.value_or("");
         } else if (mode == Mode::MATMUL) {
             kai::benchmark::RegisterMatMulBenchmarks({1, 1, 1}, 32);
             spec = user_filter_opt.has_value() ? *user_filter_opt : std::string("^kai_matmul");
+        } else if (mode == Mode::PACK_MATMUL) {
+            kai::benchmark::RegisterPackMatMulBenchmarks({1, 1, 1}, 32);
+            spec = user_filter_opt.has_value() ? *user_filter_opt : std::string("kai_pack_matmul");
         } else if (mode == Mode::IMATMUL) {
             kai::benchmark::RegisteriMatMulBenchmarks(1, 1, 1, 1);
             spec = user_filter_opt.has_value() ? *user_filter_opt : std::string("^kai_imatmul");
@@ -508,6 +573,7 @@ int main(int argc, char** argv) {
             kai::benchmark::RegisterDwConvBenchmarks({3, 3, 1});
             spec = user_filter_opt.has_value() ? *user_filter_opt : std::string("^kai_dwconv");
         }
+        ::benchmark::SetBenchmarkFilter(spec);
         ::benchmark::RunSpecifiedBenchmarks(nullptr, nullptr, spec);
         ::benchmark::Shutdown();
         return 0;
@@ -518,6 +584,8 @@ int main(int argc, char** argv) {
             return run_matmul(argc, argv, true, user_filter_opt);
         case Mode::MATMUL:
             return run_matmul(argc, argv, false, user_filter_opt);
+        case Mode::PACK_MATMUL:
+            return run_pack_matmul(argc, argv, user_filter_opt);
         case Mode::IMATMUL:
             return run_imatmul(argc, argv, user_filter_opt);
         case Mode::DWCONV:

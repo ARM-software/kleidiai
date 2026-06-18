@@ -969,6 +969,7 @@ resolve-gcovr:
       declare -a BENCHMARKS=(
         ""        "--benchmark_dry_run=true -m 1 -n 30 -k 64"
         "matmul"  "--benchmark_dry_run=true -m 1 -n 30 -k 64"
+        "pack_matmul" "--benchmark_dry_run=true -m 1 -n 30 -k 64"
         "imatmul" "--benchmark_dry_run=true -m 1 -n 30 -c 4 -l 15"
         "dwconv"  "--benchmark_dry_run=true --input_height 32 --input_width 32 --channels 64 --padding 1,1,1,1"
       )

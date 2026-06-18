@@ -1,5 +1,5 @@
 <!--
-    SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+    SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 
     SPDX-License-Identifier: Apache-2.0
 -->
@@ -9,6 +9,7 @@
 KleidiAI provides a single benchmarking binary that runs multiple variants via subcommands:
 
 - `kleidiai_benchmark matmul` for standard matrix multiplication (matmul)
+- `kleidiai_benchmark pack_matmul` for LHS packing followed by matrix multiplication
 - `kleidiai_benchmark imatmul` for indirect matrix multiplication (imatmul, chunked K)
 - `kleidiai_benchmark dwconv` for depthwise convolution (dwconv)
 
@@ -45,10 +46,11 @@ $ cmake -DCMAKE_TOOLCHAIN_FILE=/path/to/android-ndk/build/cmake/android.toolchai
 
 ### Quick Examples
 
-Run both matmul, imatmul and dwconv with example dimensions:
+Run matmul, pack_matmul, imatmul and dwconv with example dimensions:
 
 ```sh
 ./kleidiai_benchmark matmul  -m 32 -n 32 -k 32
+./kleidiai_benchmark pack_matmul -m 32 -n 32 -k 32
 ./kleidiai_benchmark imatmul -m 32 -n 32 -c 4 -l 8
 ./kleidiai_benchmark dwconv  --input_height 32 --input_width 32 --channels 64 --padding 1,1,1,1
 ```
@@ -60,7 +62,24 @@ The shape of the LHS-matrix is MxK, and the shape of the RHS-matrix is KxN.
 Run the matmul benchmark with matrix dimensions:
 
 ```
-./kleidiai_benchmark matmul -m <M> -n <N> -k <K>
+./kleidiai_benchmark matmul -m <M> -n <N> -k <K> [-b <BLOCK_SIZE>]
+```
+
+Use `--benchmark_filter` to run an individual matrix multiplication micro-kernel:
+
+```
+./kleidiai_benchmark matmul -m <M> -n <N> -k <K> --benchmark_filter=^<name>
+```
+
+`-b` sets the block size for blockwise quantization and defaults to `32` if omitted.
+
+### PackMatmul Benchmark
+
+Some matrix multiplication micro-kernels have benchmark metadata for LHS preparation. Use `pack_matmul` to run
+registered LHS packing and matrix multiplication micro-kernel pairs:
+
+```
+./kleidiai_benchmark pack_matmul -m <M> -n <N> -k <K> [-b <BLOCK_SIZE>]
 ```
 
 Example:
@@ -145,11 +164,12 @@ kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla                123 ns   
 
 ### Filtering
 
-Benchmarks can be filtered using the --benchmark_filter option, which accepts a regex. For example, to only run the sme2 microkernels:
+Benchmarks can be filtered using the --benchmark_filter option, which accepts a regex. For example, to only run the sme2 micro-kernels:
 (Note: The measurement results are placeholders)
 
 ```
 ./kleidiai_benchmark matmul  --benchmark_filter=sme2 -m 13 -n 17 -k 18
+./kleidiai_benchmark pack_matmul --benchmark_filter=sme2 -m 13 -n 17 -k 18
 ./kleidiai_benchmark imatmul --benchmark_filter=sme2 -m 13 -n 17 -c 1 -l 18
 ./kleidiai_benchmark dwconv  --benchmark_filter=sme2 --input_height 32 --input_width 32 --channels 64 --padding 1,1,1,1
 Run on (8 X 1800 MHz CPU s)
@@ -175,6 +195,7 @@ Specify the micro-kernel operator to list all the benchmarks of a certain type.
 
 ```
 ./kleidiai_benchmark matmul  --benchmark_list_tests
+./kleidiai_benchmark pack_matmul --benchmark_list_tests
 ./kleidiai_benchmark imatmul --benchmark_list_tests
 ./kleidiai_benchmark dwconv  --benchmark_list_tests
 ```
