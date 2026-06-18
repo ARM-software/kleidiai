@@ -17,6 +17,7 @@
 #include "kai/kai_common.h"
 #include "test/common/buffer.hpp"
 #include "test/common/data_format.hpp"
+#include "test/common/data_type.hpp"
 #include "test/common/float16.hpp"
 #include "test/common/matrix_portion.hpp"
 #include "test/common/range.hpp"
@@ -58,13 +59,14 @@ struct MatMulMethod {
     size_t n0{0};  ///< Block size in N dimension.
     size_t k0{0};  ///< Block size in K dimension.
 
-    DataFormat dst_format{};         ///< Data format of the destination matrix.
-    DataFormat lhs_format{};         ///< Data format of the LHS matrix.
-    DataFormat packed_lhs_format{};  ///< Data format of the packed LHS matrix.
-    DataFormat rhs_format{};         ///< Data format of the RHS matrix.
-    DataFormat packed_rhs_format{};  ///< Data format of the packed RHS matrix.
-    DataFormat bias_format{};        ///< Data format of the bias vector.
-    bool nb_support{};               ///< Does the kernel support null_bias.
+    DataFormat dst_format{};             ///< Data format of the destination matrix.
+    DataFormat lhs_format{};             ///< Data format of the LHS matrix.
+    DataFormat packed_lhs_format{};      ///< Data format of the packed LHS matrix.
+    DataFormat rhs_format{};             ///< Data format of the RHS matrix.
+    DataFormat packed_rhs_format{};      ///< Data format of the packed RHS matrix.
+    DataFormat bias_format{};            ///< Data format of the bias vector.
+    DataType acc_dt{DataType::UNKNOWN};  ///< Reference accumulator data type, if specified.
+    bool nb_support{};                   ///< Does the kernel support null_bias.
 
     /// Generate LHS matrix.
     ///

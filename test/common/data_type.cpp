@@ -39,6 +39,45 @@ size_t bits(DataType dt) {
 
 }  // namespace
 
+const char* to_cstring(DataType dt) {
+    switch (dt) {
+        case DataType::UNKNOWN:
+            return "UNKNOWN";
+        case DataType::FP32:
+            return "FP32";
+        case DataType::FP16:
+            return "FP16";
+        case DataType::BF16:
+            return "BF16";
+        case DataType::I32:
+            return "I32";
+        case DataType::I8:
+            return "I8";
+        case DataType::I4:
+            return "I4";
+        case DataType::U32:
+            return "U32";
+        case DataType::U8:
+            return "U8";
+        case DataType::U4:
+            return "U4";
+        case DataType::QAI8:
+            return "QAI8";
+        case DataType::QSI8:
+            return "QSI8";
+        case DataType::QSU4:
+            return "QSU4";
+        case DataType::QSI4:
+            return "QSI4";
+        case DataType::QAI4:
+            return "QAI4";
+        case DataType::QSI2:
+            return "QSI2";
+        default:
+            KAI_ERROR("Unknown data type!");
+    }
+}
+
 size_t data_type_size_in_bits(DataType dt) {
     return bits(dt);
 }

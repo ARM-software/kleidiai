@@ -12,7 +12,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <limits>
 #include <map>
+#include <string>
 #include <string_view>
 #include <tuple>
 #include <utility>
@@ -134,6 +136,7 @@ static const auto& get_matmul_methods() {
         DataType::UNKNOWN,                       // Scaling type
         2 * get_sme_vector_length<float>(), 2);  // Sub-block
     matmul_methods[1].bias_format = DataFormat(DataType::FP16);
+    matmul_methods[1].acc_dt = DataType::FP32;
     matmul_methods[1].fn_generate_lhs = [](size_t rows, size_t cols, SeedFeed& feed) {
         return UniformRandomGenerator<Float16>(-1.0, 1.0, feed())(rows, cols);
     };
@@ -338,6 +341,7 @@ static const auto& get_matmul_methods() {
         DataType::UNKNOWN,                       // Scaling type
         2 * get_sme_vector_length<float>(), 2);  // Sub-block
     matmul_methods[5].bias_format = DataFormat(DataType::FP16);
+    matmul_methods[5].acc_dt = DataType::FP32;
     matmul_methods[5].fn_generate_lhs = [](size_t rows, size_t cols, SeedFeed& feed) {
         return UniformRandomGenerator<Float16>(-1.0, 1.0, feed())(rows, cols);
     };
@@ -441,6 +445,7 @@ static const auto& get_vecmul_methods() {
         DataType::UNKNOWN,                       // Scaling type
         2 * get_sme_vector_length<float>(), 2);  // Sub-block
     vecmul_methods[0].bias_format = DataFormat(DataType::FP16);
+    vecmul_methods[0].acc_dt = DataType::FP32;
     vecmul_methods[0].fn_generate_lhs = [](size_t rows, size_t cols, SeedFeed& feed) {
         return UniformRandomGenerator<Float16>(-1.0, 1.0, feed())(rows, cols);
     };
@@ -485,6 +490,7 @@ static const auto& get_vecmul_methods() {
         DataType::UNKNOWN,                       // Scaling type
         2 * get_sme_vector_length<float>(), 2);  // Sub-block
     vecmul_methods[1].bias_format = DataFormat(DataType::FP16);
+    vecmul_methods[1].acc_dt = DataType::FP32;
     vecmul_methods[1].fn_generate_lhs = [](size_t rows, size_t cols, SeedFeed& feed) {
         return UniformRandomGenerator<Float16>(-1.0, 1.0, feed())(rows, cols);
     };
@@ -887,7 +893,7 @@ using MatMulClampTestParams = std::tuple<MatMulMethod, MatMulShape, MatrixPortio
 class MatMulTest : public testing::TestWithParam<MatMulClampTestParams> {
 private:
     /// Unique ID: m, n, k, method_id.
-    using TestDataId = std::tuple<size_t, size_t, size_t, std::string_view, BiasMode, std::optional<float>>;
+    using TestDataId = std::tuple<size_t, size_t, size_t, std::string_view, BiasMode, std::optional<float>, DataType>;
 
 protected:
     /// Cached test data that is shared between multiple test case.
@@ -907,12 +913,13 @@ protected:
     /// Gets the test data for the current test case.
     static const TestData& test_data() {
         const auto& [method, info, portion, bias_mode, clamp_keep_ratio] = GetParam();
-        const TestDataId data_id{info.m, info.n, info.k, method.name, bias_mode, clamp_keep_ratio};
+        const TestDataId data_id{info.m, info.n, info.k, method.name, bias_mode, clamp_keep_ratio, method.acc_dt};
 
         // Creates a unique seed for the test data.
         const auto key = std::string(method.name) + "_" + std::to_string(info.m) + "x" + std::to_string(info.n) + "x" +
             std::to_string(info.k) + "_" + (bias_mode == BiasMode::INTERNAL ? "internal" : "provided") + "_" +
-            (clamp_keep_ratio.has_value() ? std::to_string(clamp_keep_ratio.value()) : "noclamp");
+            (clamp_keep_ratio.has_value() ? std::to_string(clamp_keep_ratio.value()) : "noclamp") + "_" +
+            to_cstring(method.acc_dt);
         auto& feed = seed_stream(key);
 
         // If the test data is already available, returns it.
@@ -974,7 +981,7 @@ protected:
             rhs.data(), rhs_scales.data(), nullptr, method.rhs_format.data_type(),  //
             bias.data(), nullptr, nullptr, method.bias_format.data_type(),          //
             method.dst_format.data_type(),                                          //
-            info.m, info.n, info.k, false, false);
+            info.m, info.n, info.k, false, false, method.acc_dt);
 
         const auto [clamp_min, clamp_max] =
             find_clamp_range(method.dst_format.data_type(), ref_dst.data(), info.m * info.n, clamp_keep_ratio);

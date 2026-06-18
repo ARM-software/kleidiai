@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -55,6 +55,7 @@ Buffer matmul_pack_rhs(
 /// @param[in] k Non-transposed LHS width and non-transposed RHS height.
 /// @param[in] lhs_transposed `true` if LHS operand is transposed.
 /// @param[in] rhs_transposed `true` if RHS operand is transposed.
+/// @param[in] accumulator_dt Optional accumulator data type. UNKNOWN uses the default reference arithmetic.
 ///
 /// @return The result data buffer.
 Buffer matmul(
@@ -63,7 +64,7 @@ Buffer matmul(
     const void* bias, const void* bias_scales, const void* bias_zero_points, DataType bias_dt,  //
     DataType dst_dt,                                                                            //
     size_t m, size_t n, size_t k,                                                               //
-    bool lhs_transposed, bool rhs_transposed);
+    bool lhs_transposed, bool rhs_transposed, DataType accumulator_dt = DataType::UNKNOWN);
 
 /// Indirect matrix multiplication.
 ///

@@ -60,6 +60,23 @@ enum class DataType : uint16_t {
     QSI2 = 0b1'1'1'0'0000'00000010,  ///< 2-bit signed symmetric quantized.
 };
 
+/// Gets the data type, or the default data type if unknown.
+///
+/// @param[in] dt The data type.
+/// @param[in] default_dt The default data type.
+///
+/// @return The data type if known, otherwise the default data type.
+[[nodiscard]] constexpr DataType data_type_default(DataType dt, DataType default_dt) {
+    return dt != DataType::UNKNOWN ? dt : default_dt;
+}
+
+/// Gets the name of the specified data type.
+///
+/// @param[in] dt The data type.
+///
+/// @return The data type name.
+[[nodiscard]] const char* to_cstring(DataType dt);
+
 /// Gets the size in bits of the specified data type.
 ///
 /// @param[in] dt The data type.

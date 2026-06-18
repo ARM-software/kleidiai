@@ -7,6 +7,7 @@
 #include "test/reference/matmul.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <type_traits>
@@ -21,7 +22,6 @@
 #include "test/common/memory.hpp"
 #include "test/common/round.hpp"
 #include "test/reference/binary_elementwise.hpp"
-#include "test/reference/cast.hpp"
 #include "test/reference/pack.hpp"
 #include "test/reference/reduce.hpp"
 #include "test/reference/transpose.hpp"
@@ -30,48 +30,87 @@ namespace kai::test {
 
 namespace {
 
+struct Stride {
+    size_t row_stride;
+    size_t col_stride;
+
+    [[nodiscard]] size_t operator()(size_t row, size_t col) const {
+        return row * row_stride + col * col_stride;
+    }
+};
+
 /// Matrix multiplication.
 ///
-/// @tparam T Data type.
+/// @tparam In LHS and RHS data type.
+/// @tparam Acc Accumulator data type.
+/// @tparam Out Output data type.
+/// @tparam Bias Bias data type.
 ///
 /// @param[in] lhs LHS operand data buffer.
 /// @param[in] rhs RHS operand data buffer.
+/// @param[in] bias Bias data buffer.
 /// @param[in] m Output height.
 /// @param[in] n Output width.
 /// @param[in] k Non-transposed LHS width and non-transposed RHS height.
-/// @param[in] lhs_transposed `true` if LHS operand is transposed.
-/// @param[in] rhs_transposed `true` if RHS operand is transposed.
+/// @param[in] lhs_stride Stride for accessing the LHS matrix.
+/// @param[in] rhs_stride Stride for accessing the RHS matrix.
 ///
 /// @return The result data buffer.
-template <typename In, typename Acc>
+template <typename In, typename Acc = In, typename Out = In, typename Bias = Acc>
 Buffer matmul_any_type(
-    const void* lhs, const void* rhs,  //
-    size_t m, size_t n, size_t k,      //
-    bool lhs_transposed, bool rhs_transposed) {
-    const auto lhs_m_stride = lhs_transposed ? 1 : k;
-    const auto lhs_k_stride = lhs_transposed ? m : 1;
-
-    const auto rhs_n_stride = rhs_transposed ? k : 1;
-    const auto rhs_k_stride = rhs_transposed ? 1 : n;
-
-    Buffer dst(m * n * size_in_bits<In> / 8);
-    KAI_ASSUME_ALWAYS(n * size_in_bits<In> % 8 == 0);
+    const void* lhs, const void* rhs, const void* bias,  // Input buffers
+    size_t m, size_t n, size_t k,                        // Problem shape
+    const Stride& lhs_stride, const Stride& rhs_stride   // Input buffer traversal
+) {
+    Buffer dst(m * n * size_in_bits<Out> / 8);
+    KAI_ASSUME_ALWAYS(n * size_in_bits<Out> % 8 == 0);
 
     for (size_t im = 0; im < m; ++im) {
         for (size_t in = 0; in < n; ++in) {
-            Acc acc = Acc(0);
+            Acc acc = bias != nullptr ? static_cast<Acc>(read_array<Bias>(bias, in)) : Acc(0);
 
             for (size_t ik = 0; ik < k; ++ik) {
-                const auto lhs_value = read_array<In>(lhs, im * lhs_m_stride + ik * lhs_k_stride);
-                const auto rhs_value = read_array<In>(rhs, in * rhs_n_stride + ik * rhs_k_stride);
+                const auto lhs_value = read_array<In>(lhs, lhs_stride(im, ik));
+                const auto rhs_value = read_array<In>(rhs, rhs_stride(in, ik));
                 acc += static_cast<Acc>(lhs_value) * static_cast<Acc>(rhs_value);
             }
 
-            write_array<In>(dst.data(), im * n + in, static_cast<In>(acc));
+            write_array<Out>(dst.data(), im * n + in, static_cast<Out>(acc));
         }
     }
 
     return dst;
+}
+
+/// Function declaration helper. Template arguments does not affect type signature
+using MatMulAnyFn = decltype(&matmul_any_type<float>);
+
+/// Mapping object that maps `DataType` to template instantiation
+struct MatMulEntry {
+    DataType lhs_dt;
+    DataType rhs_dt;
+    DataType bias_dt;
+    DataType acc_dt;
+    DataType dst_dt;
+    MatMulAnyFn fn;
+};
+
+template <DataType DType, typename Type>
+struct TypedData {
+    static constexpr DataType dtype = DType;
+    using type = Type;
+};
+
+using FP32 = TypedData<DataType::FP32, float>;
+using FP16 = TypedData<DataType::FP16, Float16>;
+
+template <typename Lhs, typename Rhs, typename Bias, typename Acc, typename Dst>
+constexpr MatMulEntry make_matmul_entry() {
+    return {
+        Lhs::dtype,  Rhs::dtype,
+        Bias::dtype, Acc::dtype,
+        Dst::dtype,  &matmul_any_type<typename Lhs::type, typename Acc::type, typename Dst::type, typename Bias::type>,
+    };
 }
 
 }  // namespace
@@ -134,61 +173,36 @@ Buffer matmul(
     const void* bias, const void* bias_scales, const void* bias_zero_points, DataType bias_dt,  //
     DataType dst_dt,                                                                            //
     size_t m, size_t n, size_t k,                                                               //
-    bool lhs_transposed, bool rhs_transposed) {
-    const auto lhs_h = lhs_transposed ? k : m;
-    const auto lhs_w = lhs_transposed ? m : k;
+    bool lhs_transposed, bool rhs_transposed, DataType accumulator_dt) {
+    KAI_ASSUME_ALWAYS(lhs_scales == nullptr);
+    KAI_ASSUME_ALWAYS(lhs_zero_points == nullptr);
+    KAI_ASSUME_ALWAYS(rhs_scales == nullptr);
+    KAI_ASSUME_ALWAYS(rhs_zero_points == nullptr);
+    KAI_ASSUME_ALWAYS(bias_scales == nullptr);
+    KAI_ASSUME_ALWAYS(bias_zero_points == nullptr);
+    KAI_ASSUME_ALWAYS(bias_dt == DataType::UNKNOWN || !data_type_is_quantized(bias_dt));
 
-    const auto rhs_h = rhs_transposed ? n : k;
-    const auto rhs_w = rhs_transposed ? k : n;
+    const auto matmul_acc_dt = data_type_default(accumulator_dt, DataType::FP32);
+    const auto matmul_bias_dt = data_type_default(bias_dt, dst_dt);
 
-    Buffer tmp_lhs;
-    Buffer tmp_rhs;
-    Buffer tmp_dst;
-    Buffer tmp_bias;
+    const Stride lhs_stride{lhs_transposed ? 1 : k, lhs_transposed ? m : 1};
+    const Stride rhs_stride{rhs_transposed ? k : 1, rhs_transposed ? 1 : n};
 
-    if (lhs_dt != dst_dt) {
-        tmp_lhs = cast(lhs, lhs_dt, dst_dt, lhs_h, lhs_w);
-        lhs = tmp_lhs.data();
-    }
+    static constexpr std::array matmul_entries = {
+        make_matmul_entry<FP32, FP32, FP32, FP32, FP32>(),
+        make_matmul_entry<FP16, FP16, FP16, FP32, FP16>(),
+        make_matmul_entry<FP16, FP16, FP32, FP32, FP16>(),
+    };
 
-    if (rhs_dt != dst_dt) {
-        tmp_rhs = cast(rhs, rhs_dt, dst_dt, rhs_h, rhs_w);
-        rhs = tmp_rhs.data();
-    }
-
-    switch (dst_dt) {
-        case DataType::FP32:
-            tmp_dst = matmul_any_type<float, float>(lhs, rhs, m, n, k, lhs_transposed, rhs_transposed);
-            break;
-
-        case DataType::FP16:
-            tmp_dst = matmul_any_type<Float16, float>(lhs, rhs, m, n, k, lhs_transposed, rhs_transposed);
-            break;
-
-        default:
-            KAI_ERROR("Unknown data type!");
-    }
-
-    if (bias != nullptr) {
-        KAI_ASSUME_ALWAYS(!data_type_is_quantized(bias_dt));
-        KAI_ASSUME_ALWAYS(bias_scales == nullptr);
-        KAI_ASSUME_ALWAYS(bias_zero_points == nullptr);
-
-        // Add bias in f32 to reduce precision loss.
-        if (dst_dt != DataType::FP32) {
-            tmp_dst = cast(tmp_dst.data(), dst_dt, DataType::FP32, m, n);
-        }
-        if (bias_dt != DataType::FP32) {
-            tmp_bias = cast(bias, bias_dt, DataType::FP32, 1, n);
-            bias = tmp_bias.data();
-        }
-        tmp_dst = add(tmp_dst.data(), DataType::FP32, m, n, bias, DataType::FP32, 1, n);
-        if (dst_dt != DataType::FP32) {
-            tmp_dst = cast(tmp_dst.data(), DataType::FP32, dst_dt, m, n);
+    for (const auto& [entry_lhs_dt, entry_rhs_dt, entry_bias_dt, entry_acc_dt, entry_dst_dt, matmul_fn] :
+         matmul_entries) {
+        if (lhs_dt == entry_lhs_dt && rhs_dt == entry_rhs_dt && matmul_bias_dt == entry_bias_dt &&
+            matmul_acc_dt == entry_acc_dt && dst_dt == entry_dst_dt) {
+            return matmul_fn(lhs, rhs, bias, m, n, k, lhs_stride, rhs_stride);
         }
     }
 
-    return tmp_dst;
+    KAI_ERROR("Matmul data type combination is not implemented!");
 }
 
 Buffer indirect_matmul(
@@ -213,9 +227,8 @@ Buffer indirect_matmul(
         if (src_pointer != lhs_padding_ptr_uint) {
             src_pointer += lhs_offset;
         }
-        memcpy(
-            lhs.data() + i * chunk_bytes, reinterpret_cast<const void*>(src_pointer),
-            chunk_bytes);  // NOLINT(performance-no-int-to-ptr)
+        // NOLINTNEXTLINE(performance-no-int-to-ptr)
+        memcpy(lhs.data() + i * chunk_bytes, reinterpret_cast<const void*>(src_pointer), chunk_bytes);
     }
 
     return matmul(
