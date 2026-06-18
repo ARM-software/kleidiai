@@ -7,6 +7,7 @@
 load(
     "//:kai_defs.bzl",
     "kai_c_library",
+    "kai_cpu_sme",
     "kai_cpu_sme2",
 )
 
@@ -19,10 +20,21 @@ SME2_KERNELS = [
 ]
 
 # buildifier: keep sorted
+QMX_KERNELS_ASM = [
+    "dwconv_f16_f16_f16p/kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_qmx_mla",
+]
+
+# buildifier: keep sorted
 SME2_KERNELS_ASM = [
     "dwconv_f16_f16_f16p/kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla",
     "dwconv_f32_f32_f32p/kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla",
 ]
+
+kai_c_library(
+    name = "qmx_impl_asm",
+    cpu_uarch = kai_cpu_sme(),
+    kernels_asm = QMX_KERNELS_ASM,
+)
 
 kai_c_library(
     name = "sme2_impl",
@@ -51,6 +63,7 @@ kai_c_library(
     visibility = ["//visibility:public"],
     deps = [
         ":interface",
+        ":qmx_impl_asm",
         ":sme2_impl",
         ":sme2_impl_asm",
     ],

@@ -18,6 +18,7 @@
 #include <unordered_map>
 #include <variant>
 
+#include "kai/ukernels/dwconv/dwconv_f16_f16_f16p/kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_qmx_mla.h"
 #include "kai/ukernels/dwconv/dwconv_f16_f16_f16p/kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla.h"
 #include "kai/ukernels/dwconv/dwconv_f16_f16_f16p/kai_dwconv_clamp_f16_f16_f16p_interface.h"
 #include "kai/ukernels/dwconv/dwconv_f32_f32_f32p/kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla.h"
@@ -113,6 +114,15 @@ const kai_dwconv_clamp_f32_f32_f32p_planar_ukernel& get_dwconv_clamp_f32_f32_f32
     return ukernel;
 }
 
+const kai_dwconv_clamp_f16_f16_f16p_depthfirst_ukernel& get_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_qmx_mla() {
+    static kai_dwconv_clamp_f16_f16_f16p_depthfirst_ukernel ukernel;
+    ukernel.get_filter_height = kai_get_filter_height_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_qmx_mla;
+    ukernel.get_filter_width = kai_get_filter_width_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_qmx_mla;
+    ukernel.get_dst_size = kai_get_dst_size_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_qmx_mla;
+    ukernel.run_dwconv = kai_run_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_qmx_mla;
+    return ukernel;
+}
+
 const kai_dwconv_clamp_f16_f16_f16p_depthfirst_ukernel& get_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla() {
     static kai_dwconv_clamp_f16_f16_f16p_depthfirst_ukernel ukernel;
     ukernel.get_filter_height = kai_get_filter_height_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla;
@@ -156,6 +166,30 @@ const DepthwiseArray& get_depthwise_f16_depthfirst_methods() {
 
     const kai_dwconv_clamp_f16_f16_f16p_depthfirst_ukernel& ukernel_f16 =
         get_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla();
+    method.filter = {ukernel_f16.get_filter_height(), ukernel_f16.get_filter_width()};
+    method.data_type = DataType::FP16;
+    method.acc_type = DataType::FP16;
+    method.depthwise = DepthwiseDepthfirstKernel{
+        .get_dst_size = ukernel_f16.get_dst_size,
+        .get_filter_height = ukernel_f16.get_filter_height,
+        .get_filter_width = ukernel_f16.get_filter_width,
+        .conv = ukernel_f16.run_dwconv};
+
+    return depthwise_methods;
+}
+
+/// Returns the QMX-optimized FP16 depthfirst depthwise kernel (SME port).
+const DepthwiseArray& get_depthwise_f16_depthfirst_qmx_methods() {
+    static DepthwiseArray depthwise_methods{};
+    Depthwise& method = depthwise_methods[0];
+
+    method.name = "dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_qmx_mla";
+    method.rhs.get_rhs_packed_size = kai_rhs_get_dst_size_dwconv_pack_x16p1vlx1b_x16_x16_sme;
+    method.rhs.pack = kai_run_rhs_dwconv_pack_x16p1vlx1b_x16_x16_sme;
+    method.is_supported = cpu_has_sme;
+
+    const kai_dwconv_clamp_f16_f16_f16p_depthfirst_ukernel& ukernel_f16 =
+        get_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_qmx_mla();
     method.filter = {ukernel_f16.get_filter_height(), ukernel_f16.get_filter_width()};
     method.data_type = DataType::FP16;
     method.acc_type = DataType::FP16;
@@ -602,6 +636,15 @@ INSTANTIATE_TEST_SUITE_P(
     Fp16DepthwiseDepthfirst, DepthwiseF16DepthfirstKernelTest,
     testing::Combine(
         testing::ValuesIn(get_depthwise_f16_depthfirst_methods()),  //
+        testing::ValuesIn(get_depthwise_shapes()), testing::ValuesIn(get_depthwise_paddings()),
+        testing::ValuesIn(get_depthwise_clamp_keep_ratios())),
+    testing::PrintToStringParamName());
+
+// QMX-optimized FP16 depthfirst depthwise kernel test suite
+INSTANTIATE_TEST_SUITE_P(
+    Fp16DepthwiseDepthfirstQmx, DepthwiseF16DepthfirstKernelTest,
+    testing::Combine(
+        testing::ValuesIn(get_depthwise_f16_depthfirst_qmx_methods()),  //
         testing::ValuesIn(get_depthwise_shapes()), testing::ValuesIn(get_depthwise_paddings()),
         testing::ValuesIn(get_depthwise_clamp_keep_ratios())),
     testing::PrintToStringParamName());
