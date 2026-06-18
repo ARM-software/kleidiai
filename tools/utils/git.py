@@ -90,7 +90,6 @@ def latest_tag_matching(pattern: str, *, root_dir: Path | None = None) -> str | 
 
 def git_run(args: list[str], *, cwd: Path | None = None) -> tuple[int, str]:
     cmd = ["git", *args]
-    print(f"Running command: {shlex.join(cmd)}")
     result = subprocess.run(
         cmd,
         cwd=cwd,

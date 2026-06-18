@@ -338,10 +338,21 @@ test-verify-microkernel-tables:
   script:
     - python3 tools/check_microkernel_tables.py
 
+# Purpose: Verify that all micro-kernels have correct names.
+test-verify-microkernel-names:
+  extends:
+    - .stable-rules
+  stage: test
+  needs: []
+  rules:
+    - !reference [.main-branch-verification-rules, rules]
+  script:
+    - python3 tools/check_microkernel_names.py
+
 # Purpose: Verify that all micro-kernel headers contain include directives for used symbols.
 test-verify-microkernel-header-includes:
   extends:
-    - .standard-rules
+    - .stable-rules
   stage: test
   needs: []
   rules:
