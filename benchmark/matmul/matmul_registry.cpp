@@ -554,6 +554,7 @@ inline constexpr MatMulBlockwiseDynamicQuantInterface
         .run_matmul = kai_run_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_qmx_mopa,
     };
 
+inline constexpr MatMulBlockwiseDynamicQuantInterface
     kai_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme_mopa_interface{
         .run_matmul = kai_run_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme_mopa,
     };
