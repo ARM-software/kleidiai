@@ -240,4 +240,17 @@ std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f32_f32_f32p4vsx
         MatMulUkerApiBiasDeliveryStage::PACK_RHS);
 }
 
+std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f32_f32p4vsx1_f32p4vsx1b_8vsx8vs_elastic_qmx_mopa() {
+    return std::make_unique<MatMulUkerApiWrapper>(
+        "matmul_clamp_f32_f32p4vsx1_f32p4vsx1b_8vsx8vs_elastic_qmx_mopa",
+        make_poly<Block2dRowFormat>(
+            1 * get_sme_vector_length<float>(), 1, 1, false, DataType::FP32, std::array<DataType, 0>{},
+            std::array<DataType, 0>{}),
+        make_poly<Block2dRowFormat>(
+            1 * get_sme_vector_length<float>(), 1, 1, false, DataType::FP32, std::array{DataType::FP32},
+            std::array<DataType, 0>{}),
+        make_poly<PlainFormat>(DataType::FP32));
+}
+
+
 }  // namespace kai::test
