@@ -93,7 +93,7 @@ KAI_ASM_FUNCTION_LABEL(kai_kernel_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_q
     stp d10, d11, [sp, 88]
     stp d12, d13, [sp, 104]
     stp d14, d15, [sp, 120]
-    SMSTART
+    KAI_ASM_INST(0xd503477f)  // SMSTART ZA
     ldr x5, [x0, #0x18]
     ptrue p0.b
     ldr x6, [x0, #0x0]
@@ -415,7 +415,7 @@ KAI_ASM_LABEL(label_13)             // m_loop: n_loop: post_process_done
     cmp x28, x8
     add x16, x16, x15
     blt label_2
-    SMSTOP
+    KAI_ASM_INST(0xd503467f)  // SMSTOP ZA
     ldp x22, x23, [sp, 16]
     ldp x24, x25, [sp, 32]
     ldp x26, x27, [sp, 48]

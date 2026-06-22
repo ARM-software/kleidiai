@@ -16,6 +16,7 @@
 #include "kai/kai_common.h"
 #include "kai/ukernels/matmul/kai_matmul_types.h"
 #include "matmul_interface.hpp"
+#include "test/common/cpu_info.hpp"
 
 namespace kai::benchmark {
 
@@ -283,13 +284,15 @@ inline void MatMulRunner<MatMulUkernelApiInterface>::prepare() {
     // Allocate row bias for accumulation stage
     if ((matmul_interface_.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_ACC_BIAS_M) != 0) {
         KAI_ASSUME(matmul_interface_.acc_bias_elem_size != 0);
-        acc_bias_m_.resize(m_ * matmul_interface_.acc_bias_elem_size);
+        const size_t m_scale = (test::cpu_has_sme() || test::cpu_has_sme2()) ? kai_get_sme_vscale() : 1;
+        acc_bias_m_.resize(m_ * m_scale * matmul_interface_.acc_bias_elem_size);
     }
 
     // Allocate column bias for accumulation stage
     if ((matmul_interface_.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_ACC_BIAS_N) != 0) {
         KAI_ASSUME(matmul_interface_.acc_bias_elem_size != 0);
-        acc_bias_n_.resize(n_ * matmul_interface_.acc_bias_elem_size);
+        const size_t n_scale = (test::cpu_has_sme() || test::cpu_has_sme2()) ? kai_get_sme_vscale() : 1;
+        acc_bias_n_.resize(n_ * n_scale * matmul_interface_.acc_bias_elem_size);
     }
 
     // Allocate global scale for the accumulation stage
