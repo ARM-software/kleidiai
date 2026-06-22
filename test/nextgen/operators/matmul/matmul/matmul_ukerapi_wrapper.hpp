@@ -12,6 +12,7 @@
 #include <string_view>
 #include <vector>
 
+#include "kai/ukernels/matmul/kai_matmul.h"
 #include "kai/ukernels/matmul/kai_matmul_types.h"
 #include "test/common/data_type.hpp"
 #include "test/common/enum_utils.hpp"
@@ -104,6 +105,16 @@ public:
         m_clamp_config(clamp_config),
         m_bias_delivery_stage(bias_delivery_stage),
         m_output_stage_config(output_stage_config) {
+    }
+
+    /// Creates a new wrapper using the default QMX elastic MOPA kernel (4-arg convenience constructor).
+    MatMulUkerApiWrapper(
+        std::string_view name, const Poly<Format>& lhs_format, const Poly<Format>& rhs_format,
+        const Poly<Format>& dst_format) :
+        MatMulUkerApiWrapper(
+            name, kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8vs_qmx_mopa(), MatMulSlot::LHS_PACKED,
+            lhs_format, rhs_format, dst_format, DataType::FP32,
+            MatMulUkerClampConfig::optional(DataType::FP32), MatMulUkerApiBiasDeliveryStage::PACK_RHS) {
     }
 
     [[nodiscard]] std::string_view name() const override;
