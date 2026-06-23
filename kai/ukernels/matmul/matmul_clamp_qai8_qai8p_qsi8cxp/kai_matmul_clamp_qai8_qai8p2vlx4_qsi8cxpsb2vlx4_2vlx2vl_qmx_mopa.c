@@ -119,6 +119,7 @@ void kai_run_matmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_qmx_mopa(
     args.accumulator_buffer = NULL;
     args.flags = 0;
 
+    kai_commit_za();
     kai_kernel_matmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_qmx_mopa(&args);
 }
 
