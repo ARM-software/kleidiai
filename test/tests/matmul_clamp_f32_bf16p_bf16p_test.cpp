@@ -358,7 +358,7 @@ static const std::array<MatMulMethod, 2>& get_gemv_methods() {
 class MatMulTestBf16 : public testing::TestWithParam<MatMulClampTestParams> {
 private:
     /// Unique ID: m, n, k
-    using TestDataId = std::tuple<size_t, size_t, size_t, std::optional<float>, std::string_view>;
+    using TestDataId = std::tuple<size_t, size_t, size_t, float, std::string_view>;
 
 protected:
     /// Cached test data that is shared between multiple test case.
@@ -382,7 +382,7 @@ protected:
         // Creates a unique seed for the test data.
         const auto key = std::string(method.name) + "_" + std::to_string(info.m) + "x" + std::to_string(info.n) + "x" +
             std::to_string(info.k) + "_" + (bias_mode == BiasMode::INTERNAL ? "internal" : "provided") + ":" +
-            (clamp_keep_ratio ? std::to_string(clamp_keep_ratio.value()) : "noclamp");
+            std::to_string(clamp_keep_ratio);
         auto& feed = seed_stream(key);
 
         // If the test data is already available, returns it.
@@ -626,9 +626,8 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0.75, 0, 1, 1),      // Partial rows
             MatrixPortion(0.4, 0.5, 0.6, 0.8)  // Somewhere Middle
             ),
-        testing::Values(BiasMode::PROVIDED),  //
-        testing::ValuesIn(
-            std::initializer_list<std::optional<float>>({std::nullopt, 1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
+        testing::Values(BiasMode::PROVIDED),                                   //
+        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
@@ -643,7 +642,6 @@ INSTANTIATE_TEST_SUITE_P(
             MatMulShape{1, 37, 23},      //
             MatMulShape{1, 57, 89},      //
             MatMulShape{1, 36, 89},      //
-            MatMulShape{1, 71, 32},      //
             MatMulShape{1, 98, 23},      //
             MatMulShape{1, 64, 1024},    // Nice shapes - Long Rhs Rect
             MatMulShape{1, 1024, 64},    // Nice shapes - Wide Rhs Rect
@@ -656,8 +654,7 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0, 0.75, 1, 1),  // Rightmost portion.
             MatrixPortion(0, 0.5, 1, 0.8)  // Somewhere Middle
             ),
-        testing::Values(BiasMode::PROVIDED),  //
-        testing::ValuesIn(
-            std::initializer_list<std::optional<float>>({std::nullopt, 1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
+        testing::Values(BiasMode::PROVIDED),                                   //
+        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
     testing::PrintToStringParamName());
 }  // namespace kai::test

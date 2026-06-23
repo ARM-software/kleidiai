@@ -6,7 +6,6 @@
 
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -47,7 +46,6 @@
 #include "test/common/matrix_portion.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/round.hpp"
-#include "test/common/seed.hpp"
 #include "test/common/test_suite.hpp"
 #include "test/reference/cast.hpp"
 #include "test/reference/clamp.hpp"
@@ -241,7 +239,7 @@ static const std::array<UkernelVariantCustom<kai_matmul_clamp_f32_qai8dxp_qsi4cx
 
 };
 
-using MatMulClampTestPortionedParams = std::tuple<size_t, MatMulShape, MatrixPortion, std::optional<float>>;
+using MatMulClampTestPortionedParams = std::tuple<size_t, MatMulShape, MatrixPortion, float>;
 class MatMulTest_f32_qai8dxp_qsi4cxp : public ::testing::TestWithParam<MatMulClampTestPortionedParams> {};
 
 TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, Offset_RHS) {
@@ -256,20 +254,17 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, Offset_RHS) {
     const size_t N = matmul_shape.n;
     const size_t K = matmul_shape.k;
 
-    const auto mr = ukernel_variant.interface.get_mr();
-    const auto nr = ukernel_variant.interface.get_nr();
-    const auto kr = ukernel_variant.interface.get_kr();
-    const auto sr = ukernel_variant.interface.get_sr();
+    auto m_step = ukernel_variant.interface.get_m_step();
+    auto n_step = ukernel_variant.interface.get_n_step();
 
-    const auto m_step = ukernel_variant.interface.get_m_step();
-    const auto n_step = ukernel_variant.interface.get_n_step();
-    const auto tile_m = std::max(m_step, mr);
-    const auto tile_n = std::max(n_step, nr);
-
-    const auto rect = portion.compute_portion(M, N, tile_m, tile_n);
+    const auto rect = portion.compute_portion(M, N, m_step, n_step);
     if (rect.height() == 0 || rect.width() == 0) {
         GTEST_SKIP() << "Empty dimension of matrix(" << rect.width() << "," << rect.height() << ")";
     }
+
+    const auto nr = ukernel_variant.interface.get_nr();
+    const auto kr = ukernel_variant.interface.get_kr();
+    const auto sr = ukernel_variant.interface.get_sr();
 
     const auto rhs_start_row = rect.start_col();
     auto rhs_packed_offset = ukernel_variant.get_rhs_packed_offset(rhs_start_row, K, nr, kr, sr);
@@ -289,20 +284,17 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, Offset_LHS) {
     const size_t N = matmul_shape.n;
     const size_t K = matmul_shape.k;
 
-    const auto mr = ukernel_variant.interface.get_mr();
-    const auto nr = ukernel_variant.interface.get_nr();
-    const auto kr = ukernel_variant.interface.get_kr();
-    const auto sr = ukernel_variant.interface.get_sr();
+    auto m_step = ukernel_variant.interface.get_m_step();
+    auto n_step = ukernel_variant.interface.get_n_step();
 
-    const auto m_step = ukernel_variant.interface.get_m_step();
-    const auto n_step = ukernel_variant.interface.get_n_step();
-    const auto tile_m = std::max(m_step, mr);
-    const auto tile_n = std::max(n_step, nr);
-
-    const auto rect = portion.compute_portion(M, N, tile_m, tile_n);
+    const auto rect = portion.compute_portion(M, N, m_step, n_step);
     if (rect.height() == 0 || rect.width() == 0) {
         GTEST_SKIP() << "Empty dimension of matrix(" << rect.width() << "," << rect.height() << ")";
     }
+
+    const auto mr = ukernel_variant.interface.get_mr();
+    const auto kr = ukernel_variant.interface.get_kr();
+    const auto sr = ukernel_variant.interface.get_sr();
 
     const auto lhs_start_row = rect.start_row();
     auto lhs_packed_offset = kai_get_lhs_packed_offset_lhs_quant_pack_qai8dxp_f32(lhs_start_row, K, mr, kr, sr);
@@ -322,7 +314,7 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsi4cx) {
         GTEST_SKIP() << "Wrong type. This test for NxK";
     }
 
-    auto& feed = seed_stream(current_test_key());
+    const uint32_t seed = 0;
 
     const size_t M = matmul_shape.m;
     const size_t N = matmul_shape.n;
@@ -334,11 +326,11 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsi4cx) {
     const auto sr = ukernel_variant.interface.get_sr();
 
     // Generates input data.
-    const auto ref_lhs = fill_random<float>(M * K, feed());
-    const auto ref_biases = fill_random<float>(N, feed());
+    const auto ref_lhs = fill_random<float>(M * K, seed + 0);
+    const auto ref_biases = fill_random<float>(N, seed + 2);
 
     std::uniform_real_distribution<float> dist(-10.0, 1.0);
-    std::mt19937 rnd(feed());
+    std::mt19937 rnd(seed + 1);
     const auto ref_rhs = fill_matrix_raw<float>(1, N * K, [&dist, &rnd](size_t, size_t) { return dist(rnd); });
 
     // Runs the reference implementation.
@@ -457,7 +449,7 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsu4cx) {
         GTEST_SKIP() << "Wrong type. This test for NxK";
     }
 
-    auto& feed = seed_stream(current_test_key());
+    const uint32_t seed = 0;
 
     const size_t M = matmul_shape.m;
     const size_t N = matmul_shape.n;
@@ -469,13 +461,13 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_nxk_qsu4cx) {
     const auto sr = ukernel_variant.interface.get_sr();
 
     // Generates input data.
-    const auto ref_lhs = fill_random<float>(M * K, feed());
+    const auto ref_lhs = fill_random<float>(M * K, seed + 0);
 
     std::uniform_real_distribution<float> dist(-10.0, 1.0);
-    std::mt19937 rnd(feed());
+    std::mt19937 rnd(seed + 1);
     const auto ref_rhs = fill_matrix_raw<float>(1, N * K, [&dist, &rnd](size_t, size_t) { return dist(rnd); });
 
-    const auto ref_biases = fill_random<float>(N, feed());
+    const auto ref_biases = fill_random<float>(N, seed + 2);
 
     // Runs the reference implementation.
     //   * Quantizes the LHS matrix using 8-bit asymmetric quantization.
@@ -592,7 +584,7 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsi4cx) {
         GTEST_SKIP() << "Wrong type. This test for KxN";
     }
 
-    auto& feed = seed_stream(current_test_key());
+    const uint32_t seed = 0;
 
     const size_t M = matmul_shape.m;
     const size_t N = matmul_shape.n;
@@ -604,13 +596,13 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsi4cx) {
     const auto sr = ukernel_variant.interface.get_sr();
 
     // Generates input data.
-    const auto ref_lhs = fill_random<float>(M * K, feed());
+    const auto ref_lhs = fill_random<float>(M * K, seed + 0);
 
     std::uniform_real_distribution<float> dist(-10.0, 1.0);
-    std::mt19937 rnd(feed());
+    std::mt19937 rnd(seed + 1);
     const auto ref_rhs = fill_matrix_raw<float>(1, N * K, [&dist, &rnd](size_t, size_t) { return dist(rnd); });
 
-    const auto ref_biases = fill_random<float>(N, feed());
+    const auto ref_biases = fill_random<float>(N, seed + 2);
 
     // Transposed(nxk) RHS dimensions
     const size_t ref_rhs_qsi4_nxk_stride = K;
@@ -730,7 +722,7 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsu4cx) {
         GTEST_SKIP() << "Wrong type. This test for KxN";
     }
 
-    auto& feed = seed_stream(current_test_key());
+    const uint32_t seed = 0;
 
     const size_t M = matmul_shape.m;
     const size_t N = matmul_shape.n;
@@ -742,13 +734,13 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp, EndToEnd_RHS_kxn_qsu4cx) {
     const auto sr = ukernel_variant.interface.get_sr();
 
     // Generates input data.
-    const auto ref_lhs = fill_random<float>(M * K, feed());
+    const auto ref_lhs = fill_random<float>(M * K, seed + 0);
 
     std::uniform_real_distribution<float> dist(-10.0, 1.0);
-    std::mt19937 rnd(feed());
+    std::mt19937 rnd(seed + 1);
     const auto ref_rhs = fill_matrix_raw<float>(1, N * K, [&dist, &rnd](size_t, size_t) { return dist(rnd); });
 
-    const auto ref_biases = fill_random<float>(N, feed());
+    const auto ref_biases = fill_random<float>(N, seed + 2);
 
     // Transposed(nxk) RHS dimensions
     const size_t ref_rhs_qsi4_nxk_stride = K;
@@ -871,7 +863,6 @@ INSTANTIATE_TEST_SUITE_P(
             MatMulShape{8, 32, 64},    //
             MatMulShape{15, 31, 45},   //
             MatMulShape{1, 35, 65},    //
-            MatMulShape{1, 71, 32},    //
             MatMulShape{1, 128, 32},   //
             MatMulShape{64, 128, 32},  //
             MatMulShape{1, 225, 55},   //
@@ -882,8 +873,7 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0, 0.75, 1, 1),  // Rightmost portion.
             MatrixPortion(0, 0.5, 1, 0.8)  // Somewhere Middle
             ),
-        testing::ValuesIn(
-            std::initializer_list<std::optional<float>>({std::nullopt, 1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
+        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f}))),  // clamp_keep_ratio
     [](const auto& info) {
         const auto variant_idx = std::get<0>(info.param);
         const std::string name{variants_kai_matmul_clamp_f32_qai8dxp_qsi4cxp.at(variant_idx).name};

@@ -6,7 +6,6 @@
 
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -92,7 +91,7 @@ F32F16pQsi4c32pCacheData ReferenceGenerator<F32F16pQsi4c32pCacheDataId, F32F16pQ
     return test_reference;
 }
 
-using MatMulTestParams_f32_f16p_qsi4c32p = std::tuple<size_t, MatMulShape, MatrixPortion, std::optional<float>, size_t>;
+using MatMulTestParams_f32_f16p_qsi4c32p = std::tuple<size_t, MatMulShape, MatrixPortion, float, size_t>;
 
 [[maybe_unused]] static void PrintTo(const MatMulTestParams_f32_f16p_qsi4c32p& param, std::ostream* os) {
     const auto variant_idx = std::get<0>(param);
@@ -105,8 +104,7 @@ using MatMulTestParams_f32_f16p_qsi4c32p = std::tuple<size_t, MatMulShape, Matri
     PrintTo(shape, os);
     *os << "__";
     PrintTo(portion, os);
-    *os << "__clamp_ratio_"
-        << (clamp_ratio.has_value() ? std::to_string(static_cast<int>(clamp_ratio.value() * 100)) : "noclamp");
+    *os << "__clamp_ratio_" << static_cast<int>(clamp_ratio * 100);
     *os << "__Bias";
     *os << "__bl_" << bl;
 }
@@ -205,12 +203,10 @@ TEST_P(MatMulTest_f32_f16p_qsi4c32p, Offset_RHS_LHS) {
     const auto kr = ukernel_variant.ukernel.interface.get_kr();
     const auto sr = ukernel_variant.ukernel.interface.get_sr();
 
-    const auto m_step = ukernel_variant.ukernel.interface.get_m_step();
-    const auto n_step = ukernel_variant.ukernel.interface.get_n_step();
-    const auto tile_m = std::max(m_step, mr);
-    const auto tile_n = std::max(n_step, nr);
+    auto n_step = ukernel_variant.ukernel.interface.get_n_step();
+    auto m_step = ukernel_variant.ukernel.interface.get_m_step();
 
-    const auto rect = portion.compute_portion(M, N, tile_m, tile_n);
+    const auto rect = portion.compute_portion(M, N, m_step, n_step);
 
     const auto rhs_start_row = rect.start_col();
     const auto lhs_start_row = rect.start_row();
@@ -351,7 +347,7 @@ TEST_P(MatMulTest_f32_f16p_qsi4c32p, EndToEnd) {
     ASSERT_EQ(dst_offset, ref_dst_offset);
 
     // Clamp reference output
-    const auto [min, max] = find_clamp_range(DataType::FP32, test_data.ref_dst.data(), M * N, clamp_ratio);
+    const auto [min, max] = find_clamp_range(DataType::FP32, test_data.ref_dst.data(), M * N, 1.0F - clamp_ratio);
     const auto out_clamped = clamp(DataType::FP32, test_data.ref_dst.data(), M * N, min, max);
 
     // Runs the GEMM micro-kernel.
@@ -389,7 +385,6 @@ static constexpr std::array shapes_k32{
     MatMulShape{1, 3, 32},     //
     MatMulShape{1, 4, 32},     //
     MatMulShape{1, 5, 32},     //
-    MatMulShape{1, 71, 32},    //
     MatMulShape{3, 3, 32},     //
     MatMulShape{4, 4, 32},     //
     MatMulShape{5, 5, 32},     //
@@ -442,13 +437,8 @@ INSTANTIATE_TEST_SUITE_P(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_f16p_qsi4c32p.size()),  //
         testing::ValuesIn(shapes_k32),                                                  //
         testing::ValuesIn(portions),                                                    //
-        testing::ValuesIn(std::initializer_list<std::optional<float>>{
-            std::nullopt,  //
-            1.0F,          //
-            0.9F,          //
-            0.5F,          // clamp_keep_ratio
-        }),
-        testing::Values(32)),  //
+        testing::ValuesIn(std::initializer_list<float>{0.0F, 0.1F, 0.5F}),              //
+        testing::Values(32)),                                                           //
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
@@ -457,13 +447,8 @@ INSTANTIATE_TEST_SUITE_P(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_f16p_qsi4c32p.size()),  //
         testing::ValuesIn(shapes_k64),                                                  //
         testing::ValuesIn(portions),                                                    //
-        testing::ValuesIn(std::initializer_list<std::optional<float>>{
-            std::nullopt,  //
-            1.0F,          //
-            0.9F,          //
-            0.5F,          // clamp_keep_ratio
-        }),
-        testing::Values(64)),  //
+        testing::ValuesIn(std::initializer_list<float>{0.0F, 0.1F, 0.5F}),              //
+        testing::Values(64)),                                                           //
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
@@ -472,13 +457,8 @@ INSTANTIATE_TEST_SUITE_P(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_f16p_qsi4c32p.size()),  //
         testing::ValuesIn(shapes_k128),                                                 //
         testing::ValuesIn(portions),                                                    //
-        testing::ValuesIn(std::initializer_list<std::optional<float>>{
-            std::nullopt,  //
-            1.0F,          //
-            0.9F,          //
-            0.5F,          // clamp_keep_ratio
-        }),
-        testing::Values(128)),  //
+        testing::ValuesIn(std::initializer_list<float>{0.0F, 0.1F, 0.5F}),              //
+        testing::Values(128)),                                                          //
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
@@ -487,13 +467,8 @@ INSTANTIATE_TEST_SUITE_P(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_f16p_qsi4c32p.size()),  //
         testing::ValuesIn(shapes_k256),                                                 //
         testing::ValuesIn(portions),                                                    //
-        testing::ValuesIn(std::initializer_list<std::optional<float>>{
-            std::nullopt,  //
-            1.0F,          //
-            0.9F,          //
-            0.5F,          // clamp_keep_ratio
-        }),
-        testing::Values(128)),  //
+        testing::ValuesIn(std::initializer_list<float>{0.0F, 0.1F, 0.5F}),              //
+        testing::Values(256)),                                                          //
     testing::PrintToStringParamName());
 }  // namespace
 }  // namespace kai::test

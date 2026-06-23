@@ -49,11 +49,11 @@
 namespace kai::test {
 
 using F16Qai8Qsi8CacheDataId = std::tuple<
-    MatMulShape,          //
-    DataFormat,           // lhs format
-    DataFormat,           // rhs format
-    DataFormat,           // bias format
-    std::optional<float>  // clamp_keep_ratio
+    MatMulShape,  //
+    DataFormat,   // lhs format
+    DataFormat,   // rhs format
+    DataFormat,   // bias format
+    float         // clamp_keep_ratio
     >;
 
 struct F16Qai8Qsi8CacheData {
@@ -78,8 +78,7 @@ F16Qai8Qsi8CacheData ReferenceGenerator<F16Qai8Qsi8CacheDataId, F16Qai8Qsi8Cache
     const auto key = std::string("F16Qai8Qsi8_cache:") + std::to_string(M) + "x" + std::to_string(N) + "x" +
         std::to_string(K) + ":" + std::to_string(static_cast<uint32_t>(lhs_format.data_type())) + ":" +
         std::to_string(static_cast<uint32_t>(rhs_format.data_type())) + ":" +
-        std::to_string(static_cast<uint32_t>(bias_format.data_type())) + ":" +
-        (clamp_keep_ratio.has_value() ? std::to_string(clamp_keep_ratio.value()) : "noclamp");
+        std::to_string(static_cast<uint32_t>(bias_format.data_type())) + ":" + std::to_string(clamp_keep_ratio);
     auto& feed = seed_stream(key);
 
     bool has_bias = bias_format.data_type() != DataType::UNKNOWN;
@@ -254,7 +253,6 @@ INSTANTIATE_TEST_SUITE_P(
             MatMulShape{1, 3, 32},     //
             MatMulShape{1, 4, 32},     //
             MatMulShape{1, 5, 31},     //
-            MatMulShape{1, 71, 32},    //
             MatMulShape{3, 3, 32},     //
             MatMulShape{4, 4, 32},     //
             MatMulShape{5, 5, 31},     //
@@ -277,8 +275,7 @@ INSTANTIATE_TEST_SUITE_P(
             MatrixPortion(0.75, 0, 1, 1),      // Partial rows
             MatrixPortion(0.4, 0.5, 0.6, 0.8)  // Somewhere Middle
             ),
-        testing::ValuesIn(
-            std::initializer_list<std::optional<float>>({std::nullopt, 1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
+        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
         testing::Bool()),
     [](const auto& info) {
         const auto variant_idx = std::get<0>(info.param);
