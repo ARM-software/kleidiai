@@ -70,15 +70,15 @@ KAI_ASM_LABEL(N_Loop)                           // N Loop
     mov     x10, x20
     mov     x11, x8
     mov     x22, x9
-    mov x16, #0
-    whilelt	p4.s, x16, x13
-    incw	x16
-    whilelt	p5.s, x16, x13
-    incw	x16
-    whilelt	p6.s, x16, x13
-    incw	x16
-    whilelt	p7.s, x16, x13
-    decw x16 , ALL, MUL #3
+    KAI_ASM_INST(0xd2800010)        // mov x16, #0
+    KAI_ASM_INST(0x25ad1604)        // whilelt	p4.s, x16, x13
+    KAI_ASM_INST(0x04b0e3f0)        // incw	x16
+    KAI_ASM_INST(0x25ad1605)        // whilelt	p5.s, x16, x13
+    KAI_ASM_INST(0x04b0e3f0)        // incw	x16
+    KAI_ASM_INST(0x25ad1606)        // whilelt	p6.s, x16, x13
+    KAI_ASM_INST(0x04b0e3f0)        // incw	x16
+    KAI_ASM_INST(0x25ad1607)        // whilelt	p7.s, x16, x13
+    KAI_ASM_INST(0x04b2e7f0)        // decw x16 , ALL, MUL #3
     KAI_ASM_INST(0xc00800ff)                    // zero    {za}
     add     x14, x10,x5
 KAI_ASM_LABEL(K_Loop)                           // K Loop
@@ -115,20 +115,20 @@ KAI_ASM_LABEL(K_Loop)                           // K Loop
     cmp     x10, x14
     b.lt    K_Loop
     // Load RHS row sum, scale factors & bias
-    ld1w    { z0.s }, p4/z, [x11, #0, mul vl]
-    ld1w    { z1.s }, p5/z, [x11, #1, mul vl]
-    ld1w    { z2.s }, p6/z, [x11, #2, mul vl]
-    ld1w    { z3.s }, p7/z, [x11, #3, mul vl]
-    ld1w	{z4.s }, p4/z, [x11, #4, mul vl]
-    ld1w	{z5.s }, p5/z, [x11, #5, mul vl]
-    ld1w	{z6.s }, p6/z, [x11, #6, mul vl]
-    ld1w	{z7.s }, p7/z, [x11, #7, mul vl]
-    addvl   x11, x11, #8
-    ld1w	{z8.s }, p4/z, [x11, #0, mul vl]
-    ld1w	{z9.s }, p5/z, [x11, #1, mul vl]
-    ld1w	{z10.s}, p6/z, [x11, #2, mul vl]
-    ld1w	{z11.s}, p7/z, [x11, #3, mul vl]
-    addvl   x11, x11, #4
+    KAI_ASM_INST(0xa540b160)        // ld1w    { z0.s }, p4/z, [x11, #0, mul vl]
+    KAI_ASM_INST(0xa541b561)        // ld1w    { z1.s }, p5/z, [x11, #1, mul vl]
+    KAI_ASM_INST(0xa542b962)        // ld1w    { z2.s }, p6/z, [x11, #2, mul vl]
+    KAI_ASM_INST(0xa543bd63)        // ld1w    { z3.s }, p7/z, [x11, #3, mul vl]
+    KAI_ASM_INST(0xa544b164)        // ld1w	{z4.s }, p4/z, [x11, #4, mul vl]
+    KAI_ASM_INST(0xa545b565)        // ld1w	{z5.s }, p5/z, [x11, #5, mul vl]
+    KAI_ASM_INST(0xa546b966)        // ld1w	{z6.s }, p6/z, [x11, #6, mul vl]
+    KAI_ASM_INST(0xa547bd67)        // ld1w	{z7.s }, p7/z, [x11, #7, mul vl]
+    KAI_ASM_INST(0x042b510b)        // addvl   x11, x11, #8
+    KAI_ASM_INST(0xa540b168)        // ld1w	{z8.s }, p4/z, [x11, #0, mul vl]
+    KAI_ASM_INST(0xa541b569)        // ld1w	{z9.s }, p5/z, [x11, #1, mul vl]
+    KAI_ASM_INST(0xa542b96a)        // ld1w	{z10.s}, p6/z, [x11, #2, mul vl]
+    KAI_ASM_INST(0xa543bd6b)        // ld1w	{z11.s}, p7/z, [x11, #3, mul vl]
+    KAI_ASM_INST(0x042b508b)        // addvl   x11, x11, #4
     mov     x14, #0
     addvl   x15, x10, #1
 KAI_ASM_LABEL(ZA_Loop)                          // Store Loop
@@ -136,10 +136,10 @@ KAI_ASM_LABEL(ZA_Loop)                          // Store Loop
     KAI_ASM_INST(0x8540c950)                    // ld1rw   { z16.s }, p2/z, [x10]
     KAI_ASM_INST(0x8540c9f1)                    // ld1rw   { z17.s }, p2/z, [x15]
     // Load inner accumulated value
-    mov	z12.b, p2/m, za0h.b[w14, 0]
-    mov	z13.b, p2/m, za0h.b[w14, 1]
-    mov	z14.b, p2/m, za0h.b[w14, 2]
-    mov	z15.b, p2/m, za0h.b[w14, 3]
+    KAI_ASM_INST(0xc002480c)        // mov	z12.b, p2/m, za0h.b[w14, 0]
+    KAI_ASM_INST(0xc002482d)        // mov	z13.b, p2/m, za0h.b[w14, 1]
+    KAI_ASM_INST(0xc002484e)        // mov	z14.b, p2/m, za0h.b[w14, 2]
+    KAI_ASM_INST(0xc002486f)        // mov	z15.b, p2/m, za0h.b[w14, 3]
     add     x10, x10, #4
     add     x15, x15, #4
     // LHS scaling factor * RHS scaling factor
@@ -152,10 +152,10 @@ KAI_ASM_LABEL(ZA_Loop)                          // Store Loop
     mla	    z13.s, p2/m, z16.s, z1.s
     mla	    z14.s, p2/m, z16.s, z2.s
     mla	    z15.s, p2/m, z16.s, z3.s
-    scvtf	z12.s, p2/m, z12.s
-    scvtf	z13.s, p2/m, z13.s
-    scvtf	z14.s, p2/m, z14.s
-    scvtf	z15.s, p2/m, z15.s
+    KAI_ASM_INST(0x6594a98c)        // scvtf	z12.s, p2/m, z12.s
+    KAI_ASM_INST(0x6594a9ad)        // scvtf	z13.s, p2/m, z13.s
+    KAI_ASM_INST(0x6594a9ce)        // scvtf	z14.s, p2/m, z14.s
+    KAI_ASM_INST(0x6594a9ef)        // scvtf	z15.s, p2/m, z15.s
     // Apply combined scale factors
     fmul    z24.s, z12.s, z20.s
     fmul    z25.s, z13.s, z21.s
@@ -167,18 +167,18 @@ KAI_ASM_LABEL(ZA_Loop)                          // Store Loop
     fadd    z26.s, p2/m, z26.s, z10.s
     fadd    z27.s, p2/m, z27.s, z11.s
     // Clamp and store
-    fmin	z24.s, p2/m, z24.s, z31.s
-    fmin	z25.s, p2/m, z25.s, z31.s
-    fmin	z26.s, p2/m, z26.s, z31.s
-    fmin	z27.s, p2/m, z27.s, z31.s
-    fmax	z24.s, p2/m, z24.s, z30.s
-    fmax	z25.s, p2/m, z25.s, z30.s
-    fmax	z26.s, p2/m, z26.s, z30.s
-    fmax	z27.s, p2/m, z27.s, z30.s
-    st1w	{z24.s}, p4, [x22]
-    st1w	{z25.s}, p5, [x22, #1, mul vl]
-    st1w	{z26.s}, p6, [x22, #2, mul vl]
-    st1w	{z27.s}, p7, [x22, #3, mul vl]
+    KAI_ASM_INST(0x65878bf8)        // fmin	z24.s, p2/m, z24.s, z31.s
+    KAI_ASM_INST(0x65878bf9)        // fmin	z25.s, p2/m, z25.s, z31.s
+    KAI_ASM_INST(0x65878bfa)        // fmin	z26.s, p2/m, z26.s, z31.s
+    KAI_ASM_INST(0x65878bfb)        // fmin	z27.s, p2/m, z27.s, z31.s
+    KAI_ASM_INST(0x65868bd8)        // fmax	z24.s, p2/m, z24.s, z30.s
+    KAI_ASM_INST(0x65868bd9)        // fmax	z25.s, p2/m, z25.s, z30.s
+    KAI_ASM_INST(0x65868bda)        // fmax	z26.s, p2/m, z26.s, z30.s
+    KAI_ASM_INST(0x65868bdb)        // fmax	z27.s, p2/m, z27.s, z30.s
+    KAI_ASM_INST(0xe540f2d8)        // st1w	{z24.s}, p4, [x22]
+    KAI_ASM_INST(0xe541f6d9)        // st1w	{z25.s}, p5, [x22, #1, mul vl]
+    KAI_ASM_INST(0xe542fada)        // st1w	{z26.s}, p6, [x22, #2, mul vl]
+    KAI_ASM_INST(0xe543fedb)        // st1w	{z27.s}, p7, [x22, #3, mul vl]
     add     x22, x22, x23
     add     x14, x14, #4
     cmp     x14, x21

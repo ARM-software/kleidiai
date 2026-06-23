@@ -171,12 +171,12 @@ KAI_ASM_LABEL(label_8)
     lsl x15, x15, #2
     mov w12, #0
 KAI_ASM_LABEL(label_5) // store tiles
-    //KAI_ASM_INST(0xc0060400) // mova {z0.b - z3.b}, za0h.b[w12, 0:3]
-    mova z0.b, p2/m, za0h.b[w12, 0]
-    mova z1.b, p2/m, za0h.b[w12, 1]
-    mova z2.b, p2/m, za0h.b[w12, 2]
-    mova z3.b, p2/m, za0h.b[w12, 3]
-    //KAI_ASM_INST(0xc1bdcb80) // fclamp  { z0.s - z3.s}, z28.s, z29.s
+    //KAI_ASM_INST(0xc0060400)   // mova {z0.b - z3.b}, za0h.b[w12, 0:3]
+    KAI_ASM_INST(0xc0020800)     // mova z0.b, p2/m, za0h.b[w12, 0]
+    KAI_ASM_INST(0xc0020821)     // mova z1.b, p2/m, za0h.b[w12, 1]
+    KAI_ASM_INST(0xc0020842)     // mova z2.b, p2/m, za0h.b[w12, 2]
+    KAI_ASM_INST(0xc0020863)     // mova z3.b, p2/m, za0h.b[w12, 3]
+    //KAI_ASM_INST(0xc1bdcb80)   // fclamp  { z0.s - z3.s}, z28.s, z29.s
     fmin z0.s, p2/m, z0.s, z29.s
     fmax z0.s, p2/m, z0.s, z28.s
     fmin z1.s, p2/m, z1.s, z29.s
