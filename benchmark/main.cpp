@@ -335,8 +335,14 @@ static int run_matmul(
 
     kai::benchmark::RegisterMatMulBenchmarks({m, n, k}, bl);
 
-    // Default filter if user didn’t supply one
-    std::string spec = user_filter_opt.has_value() ? *user_filter_opt : std::string("^kai_matmul");
+    // Scope filter to matmul benchmarks only to avoid running uninitialized dwconv benchmarks.
+    // If user supplied a filter, combine it with the matmul prefix.
+    std::string spec;
+    if (user_filter_opt.has_value()) {
+        spec = "^kai_matmul.*" + *user_filter_opt;
+    } else {
+        spec = "^kai_matmul";
+    }
 
     ::benchmark::RunSpecifiedBenchmarks(nullptr, nullptr, spec);
     ::benchmark::Shutdown();
@@ -383,8 +389,13 @@ static int run_imatmul(int argc, char** argv, const std::optional<std::string>& 
 
     kai::benchmark::RegisteriMatMulBenchmarks(m, n, k_chunk_count, k_chunk_length);
 
-    // Default filter if user didn’t supply one
-    std::string spec = user_filter_opt.has_value() ? *user_filter_opt : std::string("^kai_imatmul");
+    // Scope filter to imatmul benchmarks only.
+    std::string spec;
+    if (user_filter_opt.has_value()) {
+        spec = "^kai_imatmul.*" + *user_filter_opt;
+    } else {
+        spec = "^kai_imatmul";
+    }
 
     ::benchmark::RunSpecifiedBenchmarks(nullptr, nullptr, spec);
     ::benchmark::Shutdown();
@@ -440,7 +451,12 @@ static int run_dwconv(int argc, char** argv, const std::optional<std::string>& u
 
     kai::benchmark::RegisterDwConvBenchmarks(shape);
 
-    std::string spec = user_filter_opt.has_value() ? *user_filter_opt : std::string("^kai_dwconv");
+    std::string spec;
+    if (user_filter_opt.has_value()) {
+        spec = "^kai_dwconv.*" + *user_filter_opt;
+    } else {
+        spec = "^kai_dwconv";
+    }
     ::benchmark::RunSpecifiedBenchmarks(nullptr, nullptr, spec);
     ::benchmark::Shutdown();
     return 0;
