@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024, 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -20,8 +20,5 @@ template <typename T>
 uint64_t get_sme_vector_length() {
     return get_sme_vector_length<sizeof(T)>();
 }
-
-/// Gets the SME vector scale
-uint64_t get_sme_vector_scale();
 
 }  // namespace kai::test

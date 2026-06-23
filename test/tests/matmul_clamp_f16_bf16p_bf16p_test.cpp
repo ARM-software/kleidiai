@@ -165,7 +165,7 @@ protected:
         // Seed the random generator.
         const auto key = std::string(method.name) + "_" + std::to_string(info.m) + "x" + std::to_string(info.n) + "x" +
             std::to_string(info.k) + "_" + (bias_mode == BiasMode::INTERNAL ? "internal" : "provided") + ":" +
-            (clamp_keep_ratio.has_value() ? std::to_string(clamp_keep_ratio.value()) : "noclamp");
+            (clamp_keep_ratio.has_value() ? std::to_string(clamp_keep_ratio.value()) : std::string("noclamp"));
         auto& feed = seed_stream(key);
 
         const auto lhs_h = info.m;
@@ -350,11 +350,11 @@ const auto matmul_tests_setup = kai::test::TestRegistry::register_setup([]() {
         MatrixPortion(0.75, 0, 1, 1),       // Bottom-left corner.
         MatrixPortion(0.4, 0.5, 0.6, 0.8),  // Middle portion.
     };
-    const std::array<std::optional<float>, 4> clamp = {std::nullopt, 1.0f, 0.9f, 0.5f};
+    const std::array clamp = {1.0f, 0.9f, 0.5f};
     for (const auto& method : get_matmul_methods()) {
         for (const auto& shape : shapes) {
             for (const auto& portion : portions) {
-                for (const auto& clamp_ratio : clamp) {
+                for (float clamp_ratio : clamp) {
                     MatMulClampTestParams params{method, shape, portion, BiasMode::PROVIDED, clamp_ratio};
                     const std::string name = test_description(method.name, shape, portion, true, clamp_ratio);
                     KAI_REGISTER_TEST(MatMulTestBf16OutFp16, MatMulTestBf16OutFp16, "MatMul", name.c_str(), params);

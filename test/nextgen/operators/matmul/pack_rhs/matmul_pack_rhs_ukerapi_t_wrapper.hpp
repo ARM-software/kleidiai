@@ -8,6 +8,7 @@
 
 #include <string_view>
 
+#include "kai/ukernels/matmul/kai_matmul_pack_rhs.h"
 #include "kai/ukernels/matmul/kai_matmul_pack_rhs_types.h"
 #include "test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_ukerapi_common.hpp"
 
@@ -19,11 +20,9 @@ public:
     /// Creates a new wrapper.
     MatMulPackRhsUkerApiTWrapper(
         std::string_view name, kai_matmul_pack_rhs_uker_api api, const Poly<Format>& src_data_format,
-        const Poly<Format>& src_bias_format, const Poly<Format>& dst_format,
-        MatMulUkerApiBiasDeliveryStage bias_delivery_stage) :
+        const Poly<Format>& src_bias_format, const Poly<Format>& dst_format) :
         MatMulPackRhsUkerApiCommon(
-            name, MatMulSlot::RHS_T_DATA, RhsLayout::NxK, api, src_data_format, src_bias_format, dst_format,
-            bias_delivery_stage) {
+            name, MatMulSlot::RHS_T_DATA, RhsLayout::NxK, api, src_data_format, src_bias_format, dst_format) {
     }
 };
 

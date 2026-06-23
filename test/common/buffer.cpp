@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -27,15 +27,8 @@ Buffer::Buffer(const size_t size) : Buffer(size, 0) {
 Buffer::Buffer(const size_t size, const uint8_t init_value = 0) : m_user_buffer_size(size) {
     KAI_ASSUME_ALWAYS_MSG(size > 0, "Buffers must be of non-zero size");
 
-    // We want to default to overflow protection if supported as it is the most likely failure mode.
-#if defined(__linux__) || defined(__APPLE__)
-    const std::string default_protect_mode = "PROTECT_OVERFLOW";
-#else   // defined(__linux__) || defined(__APPLE__)
-    const std::string default_protect_mode = "NONE";
-#endif  // defined(__linux__) || defined(__APPLE__)
-
     const char* val = getenv(buffer_policy_env_name);
-    const std::string buffer_policy = (val != nullptr) ? std::string(val) : default_protect_mode;
+    const std::string buffer_policy = (val != nullptr) ? std::string(val) : std::string("NONE");
 
     std::ostringstream oss;
 

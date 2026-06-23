@@ -7,7 +7,6 @@
 #include "test/nextgen/reference/pack.hpp"
 
 #include <cstddef>
-#include <cstdint>
 
 #include "test/common/assert.hpp"
 #include "test/common/data_type.hpp"
@@ -69,9 +68,6 @@ PackBlock2dFn make_pack_block2d(DataType dtype) {
 
         case DataType::I8:
             return pack_block2d<int8_t>;
-
-        case DataType::U8:
-            return pack_block2d<uint8_t>;
 
         case DataType::I4:
             return pack_block2d<Int4>;

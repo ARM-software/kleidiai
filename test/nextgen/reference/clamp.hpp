@@ -7,7 +7,6 @@
 #pragma once
 
 #include <cstddef>
-#include <optional>
 #include <tuple>
 
 #include "test/common/buffer.hpp"

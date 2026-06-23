@@ -7,17 +7,14 @@
 #include "test/nextgen/operators/matmul/matmul/matmul_ukerapi_wrapper.hpp"
 
 #include <cstddef>
-#include <optional>
 #include <string_view>
 #include <vector>
 
 #include "kai/ukernels/matmul/kai_matmul_types.h"
 #include "test/common/abi_checker.hpp"
 #include "test/common/assert.hpp"
-#include "test/common/data_type.hpp"
 #include "test/common/span.hpp"
 #include "test/nextgen/harness/tensor.hpp"
-#include "test/nextgen/operators/matmul/matmul_config.hpp"
 #include "test/nextgen/operators/matmul/matmul_main_args.hpp"
 #include "test/nextgen/operators/matmul/matmul_slots.hpp"
 
@@ -27,66 +24,12 @@ std::string_view MatMulUkerApiWrapper::name() const {
     return m_name;
 }
 
-namespace {
-void add_output_stage_input_requirements(
-    const MatMulUkerOutputStageConfig& output_config, const MatMulConfig& config, std::vector<MatMulSlot>& inputs) {
-    if (output_config.acc_scale.has(MatMulUkerStageParameterLayout::GLOBAL)) {
-        inputs.emplace_back(MatMulSlot::ACC_SCALE_GLOBAL_DATA);
-    }
-
-    if (output_config.acc_scale.has(MatMulUkerStageParameterLayout::PER_M)) {
-        inputs.emplace_back(MatMulSlot::ACC_SCALE_M_DATA);
-    }
-
-    if (output_config.acc_scale.has(MatMulUkerStageParameterLayout::PER_N)) {
-        inputs.emplace_back(MatMulSlot::ACC_SCALE_N_DATA);
-    }
-
-    if (output_config.scale_bias.has(MatMulUkerStageParameterLayout::GLOBAL)) {
-        inputs.emplace_back(MatMulSlot::SCALE_BIAS_GLOBAL_DATA);
-    }
-
-    if (output_config.scale_bias.has(MatMulUkerStageParameterLayout::PER_M)) {
-        inputs.emplace_back(MatMulSlot::SCALE_BIAS_M_DATA);
-    }
-
-    if (output_config.scale_bias.has(MatMulUkerStageParameterLayout::PER_N) &&
-        config.bias_modes.has(MatMulBiasMode::SCALE_BIAS_PER_N)) {
-        inputs.emplace_back(MatMulSlot::SCALE_BIAS_N_DATA);
-    }
-}
-}  // namespace
-
-std::vector<MatMulSlot> MatMulUkerApiWrapper::run_inputs(ConstTensorSet tensors) const {
-    const MatMulConfig& config = tensors.at(MatMulSlot::CONFIG).value<MatMulConfig>();
-
-    std::vector<MatMulSlot> inputs = {MatMulSlot::CONFIG, m_lhs_input_slot, MatMulSlot::RHS_PACKED};
-
-    if (m_clamp_config.support() != MatMulUkerClampConfig::Support::UNSUPPORTED) {
-        inputs.emplace_back(MatMulSlot::MATMUL_ARGS);
-    }
-
-    if (m_bias_delivery_stage == MatMulUkerApiBiasDeliveryStage::MATMUL &&
-        config.bias_modes.has(MatMulBiasMode::ACCUMULATION_PER_M)) {
-        inputs.emplace_back(MatMulSlot::ACC_BIAS_M_DATA);
-    }
-
-    if (m_bias_delivery_stage == MatMulUkerApiBiasDeliveryStage::MATMUL &&
-        config.bias_modes.has(MatMulBiasMode::ACCUMULATION_PER_N)) {
-        inputs.emplace_back(MatMulSlot::ACC_BIAS_N_DATA);
-    }
-
-    add_output_stage_input_requirements(m_output_stage_config, config, inputs);
-
-    return inputs;
+std::vector<MatMulSlot> MatMulUkerApiWrapper::run_inputs([[maybe_unused]] ConstTensorSet tensors) const {
+    return {MatMulSlot::LHS_PACKED, MatMulSlot::RHS_PACKED, MatMulSlot::MATMUL_ARGS};
 }
 
-std::vector<MatMulSlot> MatMulUkerApiWrapper::ref_inputs(ConstTensorSet tensors) const {
-    const MatMulConfig& config = tensors.at(MatMulSlot::CONFIG).value<MatMulConfig>();
-
-    std::vector<MatMulSlot> inputs;
-    add_output_stage_input_requirements(m_output_stage_config, config, inputs);
-    return inputs;
+std::vector<MatMulSlot> MatMulUkerApiWrapper::ref_inputs([[maybe_unused]] ConstTensorSet tensors) const {
+    return {};
 }
 
 std::vector<size_t> MatMulUkerApiWrapper::steps(MatMulShape shape, [[maybe_unused]] ConstTensorSet tensors) const {
@@ -129,10 +72,12 @@ void MatMulUkerApiWrapper::run(
     KAI_TEST_ASSERT_MSG(start_k == 0, "Only full K is supported.");
     KAI_TEST_ASSERT_MSG(size_k == full_k, "Only full K is supported.");
 
-    const Tensor& ref_packed_lhs = tensors.at(m_lhs_input_slot);
+    const Tensor& ref_packed_lhs = tensors.at(MatMulSlot::LHS_PACKED);
     const Tensor& ref_packed_rhs = tensors.at(MatMulSlot::RHS_PACKED);
-    const MatMulConfig& config = tensors.at(MatMulSlot::CONFIG).value<MatMulConfig>();
+    const Tensor& kernel_args = tensors.at(MatMulSlot::MATMUL_ARGS);
     Tensor& imp_dst_data = tensors.at(MatMulSlot::DST_DATA_IMP);
+
+    const auto& clamp_args = kernel_args.value<MatMulClampArgsF32>();
 
     const size_t ref_packed_lhs_offset = m_lhs_format->compute_offset({full_m, full_k}, {start_m, start_k});
     const kai_matmul_uker_lhs_dim_args imp_lhs_shape = {full_m, full_k};
@@ -165,7 +110,7 @@ void MatMulUkerApiWrapper::run(
 
     kai_matmul_uker_args args = {};
 
-    args.flags = 0;
+    args.flags = KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP;
 
     args.shape.m = size_m;
     args.shape.n = size_n;
@@ -180,75 +125,8 @@ void MatMulUkerApiWrapper::run(
     args.operand.dst.ptr = dst_tile.data();
     args.operand.dst.stride = imp_dst_stride;
 
-    if (m_clamp_config.support() != MatMulUkerClampConfig::Support::UNSUPPORTED) {
-        const std::optional<DataType> clamp_data_type = m_clamp_config.data_type();
-        KAI_TEST_ASSERT_MSG(clamp_data_type.has_value(), "Clamping argument data type is required.");
-        KAI_TEST_ASSERT_MSG(clamp_data_type.value() == DataType::FP32, "Only FP32 clamping is supported.");
-
-        const Tensor& kernel_args = tensors.at(MatMulSlot::MATMUL_ARGS);
-        const auto& clamp_args = kernel_args.value<std::optional<MatMulClampArgsF32>>();
-
-        KAI_TEST_ASSERT_MSG(
-            m_clamp_config.support() != MatMulUkerClampConfig::Support::REQUIRED || clamp_args.has_value(),
-            "Clamping arguments are required.");
-
-        if (clamp_args.has_value()) {
-            args.flags |= KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP;
-            args.activation.clamp.min_ptr = &clamp_args.value().clamp_min;
-            args.activation.clamp.max_ptr = &clamp_args.value().clamp_max;
-        }
-    }
-
-    if (m_bias_delivery_stage == MatMulUkerApiBiasDeliveryStage::MATMUL &&
-        config.bias_modes.has(MatMulBiasMode::ACCUMULATION_PER_M)) {
-        const Tensor& acc_bias_m = tensors.at(MatMulSlot::ACC_BIAS_M_DATA);
-        const size_t start_m_size = data_type_array_size_in_bytes(m_acc_dtype, start_m);
-
-        args.operand.bias.acc_bias_m.ptr = acc_bias_m.data().subspan(start_m_size).data();
-    }
-
-    if (m_bias_delivery_stage == MatMulUkerApiBiasDeliveryStage::MATMUL &&
-        config.bias_modes.has(MatMulBiasMode::ACCUMULATION_PER_N)) {
-        const Tensor& acc_bias_n = tensors.at(MatMulSlot::ACC_BIAS_N_DATA);
-        const size_t start_n_size = data_type_array_size_in_bytes(m_acc_dtype, start_n);
-
-        args.operand.bias.acc_bias_n.ptr = acc_bias_n.data().subspan(start_n_size).data();
-    }
-
-    if (m_output_stage_config.acc_scale.has(MatMulUkerStageParameterLayout::GLOBAL)) {
-        const Tensor& acc_scale_global = tensors.at(MatMulSlot::ACC_SCALE_GLOBAL_DATA);
-        args.operand.scale.acc_scale_global.ptr = acc_scale_global.data().data();
-    }
-
-    if (m_output_stage_config.acc_scale.has(MatMulUkerStageParameterLayout::PER_M)) {
-        const Tensor& acc_scale_m = tensors.at(MatMulSlot::ACC_SCALE_M_DATA);
-        const size_t start_m_size = data_type_array_size_in_bytes(m_dst_format->dtype(), start_m);
-        args.operand.scale.acc_scale_m.ptr = acc_scale_m.data().subspan(start_m_size).data();
-    }
-
-    if (m_output_stage_config.acc_scale.has(MatMulUkerStageParameterLayout::PER_N)) {
-        const Tensor& acc_scale_n = tensors.at(MatMulSlot::ACC_SCALE_N_DATA);
-        const size_t start_n_size = data_type_array_size_in_bytes(m_dst_format->dtype(), start_n);
-        args.operand.scale.acc_scale_n.ptr = acc_scale_n.data().subspan(start_n_size).data();
-    }
-
-    if (m_output_stage_config.scale_bias.has(MatMulUkerStageParameterLayout::GLOBAL)) {
-        const Tensor& scale_bias_global = tensors.at(MatMulSlot::SCALE_BIAS_GLOBAL_DATA);
-        args.operand.bias.scale_bias_global.ptr = scale_bias_global.data().data();
-    }
-
-    if (m_output_stage_config.scale_bias.has(MatMulUkerStageParameterLayout::PER_M)) {
-        const Tensor& scale_bias_m = tensors.at(MatMulSlot::SCALE_BIAS_M_DATA);
-        const size_t start_m_size = data_type_array_size_in_bytes(m_dst_format->dtype(), start_m);
-        args.operand.bias.scale_bias_m.ptr = scale_bias_m.data().subspan(start_m_size).data();
-    }
-
-    if (m_output_stage_config.scale_bias.has(MatMulUkerStageParameterLayout::PER_N) &&
-        config.bias_modes.has(MatMulBiasMode::SCALE_BIAS_PER_N)) {
-        const Tensor& scale_bias_n = tensors.at(MatMulSlot::SCALE_BIAS_N_DATA);
-        const size_t start_n_size = data_type_array_size_in_bytes(m_dst_format->dtype(), start_n);
-        args.operand.bias.scale_bias_n.ptr = scale_bias_n.data().subspan(start_n_size).data();
-    }
+    args.activation.clamp.min_ptr = &clamp_args.clamp_min;
+    args.activation.clamp.max_ptr = &clamp_args.clamp_max;
 
     abi_check([&] { m_ukernel.run(&m_uker_config, &args); });
 }

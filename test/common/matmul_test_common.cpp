@@ -1,12 +1,14 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
 
 #include "matmul_test_common.hpp"
 
+#include <optional>
 #include <sstream>
+#include <string>
 
 namespace kai::test {
 
@@ -23,8 +25,7 @@ void PrintTo(const MatMulClampTestParams& param, std::ostream* os) {
     PrintTo(portion, os);
     PrintTo(bias_mode, os);
     *os << "__clamp_keep_ratio_"
-        << (clamp_keep_ratio.has_value() ? std::to_string(static_cast<int>(clamp_keep_ratio.value() * 100))
-                                         : "noclamp");
+        << (clamp_keep_ratio.has_value() ? std::to_string(static_cast<int>(clamp_keep_ratio.value() * 100)) : "noclamp");
 }
 
 void PrintTo(const MatMulShape& shape, std::ostream* os) {

@@ -51,6 +51,8 @@
 #include "test/reference/matmul.hpp"
 #include "test/reference/pack.hpp"
 #include "test/reference/quantize.hpp"
+#include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_qmx_mopa.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_qmx_sdot.h"
 
 namespace kai::test {
 
@@ -651,5 +653,7 @@ INSTANTIATE_TEST_SUITE_P(
             std::initializer_list<std::optional<float>>({std::nullopt, 1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
         testing::Values(256), testing::Values(true)),
     testing::PrintToStringParamName());
+
+
 
 }  // namespace kai::test

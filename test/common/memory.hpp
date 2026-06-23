@@ -122,21 +122,6 @@ T read_2d(Span<const std::byte> data, size_t width, size_t row, size_t col) {
 /// @return Value at specified index
 double read_array(DataType type, const void* array, size_t index);
 
-/// Reads the 2D array at the specified coordinates.
-///
-/// @param[in] type Array element data type.
-/// @param[in] data The data buffer.
-/// @param[in] width The array width.
-/// @param[in] row The row index.
-/// @param[in] col The column index.
-///
-/// @return The array value at the specified coordinates.
-inline double read_2d(DataType type, Span<const std::byte> data, size_t width, size_t row, size_t col) {
-    KAI_TEST_ASSERT_MSG(type != DataType::UNKNOWN, "Unknown data type for read_2d.");
-    const size_t stride = round_up_division(width * data_type_size_in_bits(type), 8);
-    return read_array(type, data.subspan(row * stride, stride).data(), col);
-}
-
 /// Writes the specified value to the array.
 ///
 /// @param[in] array Data buffer.

@@ -105,9 +105,6 @@ CompareFn make_compare_plain_2d(DataType dtype) {
         case DataType::I8:
             return compare_plain_2d<int8_t>;
 
-        case DataType::U8:
-            return compare_plain_2d<uint8_t>;
-
         case DataType::I4:
             return compare_plain_2d<Int4>;
 

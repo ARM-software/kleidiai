@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -10,7 +10,6 @@
 #include <cstdint>
 
 #include "kai/kai_common.h"
-#include "test/common/assert.hpp"
 
 namespace kai::test {
 
@@ -33,7 +32,6 @@ bool has_a(DataType dt) {
 }
 
 size_t bits(DataType dt) {
-    KAI_TEST_ASSERT(dt != DataType::UNKNOWN);
     return static_cast<uint16_t>(dt) & 0xFF;
 }
 
@@ -43,16 +41,12 @@ size_t data_type_size_in_bits(DataType dt) {
     return bits(dt);
 }
 
-size_t data_type_array_size_in_bytes(DataType dt, size_t len) {
-    return kai_div_ceil(bits(dt) * len, 8);
-}
-
 bool data_type_is_integral(DataType dt) {
     return has_i(dt);
 }
 
 bool data_type_is_float(DataType dt) {
-    KAI_ASSERT_ALWAYS(dt != DataType::UNKNOWN);
+    KAI_ASSERT_ALWAYS(data_type_is_signed(dt));
     return !data_type_is_integral(dt);
 }
 

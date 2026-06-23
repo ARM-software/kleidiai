@@ -22,16 +22,6 @@
 
 namespace kai::test {
 
-using MatMulKernelPtr = std::unique_ptr<KernelWrapper<MatMulShape>>;
-using MatPackKernelPtr = std::unique_ptr<KernelWrapper<MatShape>>;
-
-/// Matrix multiplication clamping support.
-enum class MatMulClampMode {
-    UNSUPPORTED,  ///< Clamping is not supported.
-    OPTIONAL,     ///< Clamping is supported, but require explicit activation to enable.
-    REQUIRED,     ///< Clamping parameters are required.
-};
-
 /// Matrix multiplication operator.
 struct MatMulOperator {
     std::string_view name;
@@ -39,8 +29,7 @@ struct MatMulOperator {
     bool (*is_cpu_supported)();
     bool (*is_shape_suitable)(size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
-    std::vector<MatMulBiasModeSet> supported_bias_mode_sets;
-    MatMulClampMode clamp_mode;
+    std::vector<MatMulBiasMode> supported_bias_modes;
 
     std::optional<std::unique_ptr<Quantizer>> lhs_quant;
     std::optional<std::unique_ptr<Quantizer>> rhs_quant;
@@ -52,9 +41,9 @@ struct MatMulOperator {
     DataType acc_dtype;
     DataType dst_dtype;
 
-    std::optional<MatPackKernelPtr> pack_lhs;
-    std::optional<MatPackKernelPtr> pack_rhs;
-    std::optional<MatMulKernelPtr> matmul;
+    std::optional<std::unique_ptr<KernelWrapper<MatShape>>> pack_lhs;
+    std::optional<std::unique_ptr<KernelWrapper<MatShape>>> pack_rhs;
+    std::unique_ptr<KernelWrapper<MatMulShape>> matmul;
 };
 
 [[nodiscard]] Span<const MatMulOperator> get_available_matmul_operators();

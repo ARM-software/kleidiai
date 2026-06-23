@@ -9,17 +9,16 @@
 #include <cstdint>
 #include <functional>
 #include <iosfwd>
-#include <optional>
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <type_traits>
 
 #include "kai/kai_common.h"
 #include "test/common/buffer.hpp"
 #include "test/common/data_format.hpp"
 #include "test/common/float16.hpp"
 #include "test/common/matrix_portion.hpp"
-#include "test/common/range.hpp"
 #include "test/common/seed.hpp"
 
 namespace kai::test {
@@ -46,6 +45,22 @@ private:
             lhs.k == rhs.k;
     }
     friend std::ostream& operator<<(std::ostream& os, const MatMulShape& shape);
+};
+
+/// Value range
+template <typename T>
+struct Range {
+    T min;
+    T max;
+
+    [[nodiscard]] std::size_t inclusive_count() const {
+        static_assert(std::is_integral_v<T>);
+        return max - min + 1;
+    }
+
+    [[nodiscard]] bool is_valid() const {
+        return min <= max;
+    }
 };
 
 // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
@@ -516,8 +531,7 @@ enum class BiasMode {
 /// Matrix multiplication test information.
 using MatMulClampTestParams = std::tuple<MatMulMethod, MatMulShape, MatrixPortion, BiasMode, std::optional<float>>;
 using MatMulClampTestPortionedParams = std::tuple<size_t, MatMulShape, MatrixPortion, std::optional<float>>;
-using MatMulClampTestPortionedParamsWithBias =
-    std::tuple<size_t, MatMulShape, MatrixPortion, std::optional<float>, bool>;
+using MatMulClampTestPortionedParamsWithBias = std::tuple<size_t, MatMulShape, MatrixPortion, std::optional<float>, bool>;
 using MatMulClampTestPortionedParamsWithBias_WithBL =
     std::tuple<size_t, MatMulShape, size_t, MatrixPortion, std::optional<float>, bool>;
 

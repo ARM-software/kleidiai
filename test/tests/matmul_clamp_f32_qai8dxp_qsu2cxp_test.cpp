@@ -43,6 +43,8 @@
 #include "test/reference/pad.hpp"
 #include "test/reference/quantize.hpp"
 #include "test/reference/transpose.hpp"
+#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsu2cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsu2cxp4vlx4_1vlx4vl_qmx_mopa.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsu2cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsu2cxp4vlx4_1x4vl_qmx_dot.h"
 
 namespace kai::test {
 /// Matrix multiplication test information.
@@ -453,4 +455,68 @@ INSTANTIATE_TEST_SUITE_P(
 
         return test_description(name, shape, portion, has_bias, clamp_keep_ratio, has_lut);
     });
+
+
+INSTANTIATE_TEST_SUITE_P(
+    MatMul_a_Gemm, MatMulTest_f32_qai8dxp_qsu2cxp,
+    testing::Combine(
+        testing::Range<size_t>(0, get_qsi2cx_gemm_variants().size()), testing::Values(true),
+        testing::Values(
+            MatMulShape{16, 32, 64},   //
+            MatMulShape{15, 63, 32},   //
+            MatMulShape{17, 65, 32},   //
+            MatMulShape{32, 128, 64},  //
+            MatMulShape{15, 31, 64},   //
+            MatMulShape{19, 129, 64},  //
+            MatMulShape{1, 128, 32}),
+        testing::Values(
+            MatrixPortion(0, 0, 1, 1),                                        // Full matrix.
+            MatrixPortion(0, 0, 1, 0.25),                                     // Leftmost portion.
+            MatrixPortion(0, 0.75, 1, 1),                                     // Rightmost portion.
+            MatrixPortion(0.4, 0.5, 0.6, 0.8)),                               // Somewhere Middle block
+        testing::ValuesIn(std::initializer_list<std::optional<float>>({1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
+        testing::Bool(),                                                      // Bias
+        testing::Bool()),                                                     // Look up table argument
+    [](const auto& info) {
+        const auto variant_idx = std::get<0>(info.param);
+        const std::string name{get_qsi2cx_gemm_variants().at(variant_idx).ukernel.name};
+        const auto shape = std::get<MatMulShape>(info.param);
+        const auto portion = std::get<3>(info.param);
+        const auto clamp_keep_ratio = std::get<4>(info.param);
+        const auto has_bias = std::get<5>(info.param);
+        const auto has_lut = std::get<6>(info.param);
+
+        return test_description(name, shape, portion, has_bias, clamp_keep_ratio, has_lut);
+    });
+
+INSTANTIATE_TEST_SUITE_P(
+    MatMul_a_Gemv, MatMulTest_f32_qai8dxp_qsu2cxp,
+    testing::Combine(
+        testing::Range<size_t>(0, get_qsi2cx_gemv_variants().size()), testing::Values(false),
+        testing::Values(
+            MatMulShape{1, 63, 32},   //
+            MatMulShape{1, 64, 32},   //
+            MatMulShape{1, 65, 32},   //
+            MatMulShape{1, 128, 64},  //
+            MatMulShape{1, 225, 64}),
+        testing::Values(
+            MatrixPortion(0, 0, 1, 1),                                        // Full matrix.
+            MatrixPortion(0, 0, 1, 0.25),                                     // Leftmost portion.
+            MatrixPortion(0, 0.75, 1, 1),                                     // Rightmost portion.
+            MatrixPortion(0.4, 0.5, 0.6, 0.8)),                               // Somewhere Middle block
+        testing::ValuesIn(std::initializer_list<std::optional<float>>({1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
+        testing::Bool(),                                                      // Bias
+        testing::Bool()),                                                     // Look up table argument
+    [](const auto& info) {
+        const auto variant_idx = std::get<0>(info.param);
+        const std::string name{get_qsi2cx_gemv_variants().at(variant_idx).ukernel.name};
+        const auto shape = std::get<MatMulShape>(info.param);
+        const auto portion = std::get<3>(info.param);
+        const auto clamp_keep_ratio = std::get<4>(info.param);
+        const auto has_bias = std::get<5>(info.param);
+        const auto has_lut = std::get<6>(info.param);
+
+        return test_description(name, shape, portion, has_bias, clamp_keep_ratio, has_lut);
+    });
+
 }  // namespace kai::test

@@ -29,15 +29,16 @@ namespace {
 std::optional<MatMulSlot> determine_bias_tensor_id(ConstTensorSet tensors) {
     const MatMulConfig& config = tensors.at(MatMulSlot::CONFIG).value<MatMulConfig>();
 
-    if (config.bias_modes.is_empty()) {
-        return std::nullopt;
+    switch (config.bias_mode) {
+        case MatMulBiasMode::NO_BIAS:
+            return std::nullopt;
+
+        case MatMulBiasMode::PER_N:
+            return MatMulSlot::BIAS_DATA;
+
+        default:
+            KAI_TEST_ERROR("Not supported.");
     }
-
-    KAI_TEST_ASSERT_MSG(
-        !config.bias_modes.has(MatMulBiasMode::ACCUMULATION_PER_M), "RHS packing only supports per-N bias.");
-    KAI_TEST_ASSERT_MSG(config.bias_modes.has(MatMulBiasMode::ACCUMULATION_PER_N), "RHS packing requires per-N bias.");
-
-    return MatMulSlot::ACC_BIAS_N_DATA;
 }
 
 }  // namespace
@@ -105,7 +106,7 @@ void MatMulPackRhsFpNtWrapper::run(
     const bool has_bias = bias_tensor_id.has_value();
 
     const Tensor& rhs_data = tensors.at(MatMulSlot::RHS_DATA);
-    const Tensor& bias_data = tensors.at(bias_tensor_id.value_or(MatMulSlot::ACC_BIAS_N_DATA));
+    const Tensor& bias_data = tensors.at(bias_tensor_id.value_or(MatMulSlot::BIAS_DATA));
     Tensor& packed_rhs = tensors.at(MatMulSlot::RHS_PACKED_IMP);
 
     const auto& pack_args = tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
@@ -148,7 +149,7 @@ void MatMulPackRhsFpNtWrapper::compute_reference(MatShape shape, TensorSet tenso
     const bool has_bias = bias_tensor_id.has_value();
 
     const Tensor& rhs_t_data = tensors.at(MatMulSlot::RHS_T_DATA);
-    const Tensor& bias_data = tensors.at(bias_tensor_id.value_or(MatMulSlot::ACC_BIAS_N_DATA));
+    const Tensor& bias_data = tensors.at(bias_tensor_id.value_or(MatMulSlot::BIAS_DATA));
     Tensor& ref_packed_rhs = tensors.at(MatMulSlot::RHS_PACKED);
 
     Buffer empty_bias;

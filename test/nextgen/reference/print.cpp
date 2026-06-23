@@ -72,9 +72,6 @@ PrintFn make_print_array(DataType dtype) {
         case DataType::I8:
             return print_array<int8_t>;
 
-        case DataType::U8:
-            return print_array<uint8_t>;
-
         case DataType::U4:
             return print_array<UInt4>;
 
