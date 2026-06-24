@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024,2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -60,7 +60,7 @@ size_t kai_get_sr_matmul_clamp_f32_qsi8d32p4x4_qsi4c32p4x4_16x4_neon_dotprod(voi
 ///
 /// @param[in] m_idx Row index in the LHS matrix (not packed). It must be a multiple of 16
 /// @param[in] k     Total number of columns in the LHS matrix (not packed).
-/// @param[in] bl    Block length. It must be 32.
+/// @param[in] bl    Block length. It must be a multiple of 32.
 ///
 /// @return the offset in bytes to the packed LHS matrix
 size_t kai_get_lhs_packed_offset_matmul_clamp_f32_qsi8d32p4x4_qsi4c32p4x4_16x4_neon_dotprod(
@@ -73,7 +73,7 @@ size_t kai_get_lhs_packed_offset_matmul_clamp_f32_qsi8d32p4x4_qsi4c32p4x4_16x4_n
 ///
 /// @param[in] n_idx Row index in the RHS matrix (not packed). It must be a multiple of 4.
 /// @param[in] k     The common dimension between the LHS and RHS matrix (K).
-/// @param[in] bl    Block length. It must be 32.
+/// @param[in] bl    Block length. It must be a multiple of 32.
 ///
 /// @return the offset in bytes to the packed RHS matrix
 size_t kai_get_rhs_packed_offset_matmul_clamp_f32_qsi8d32p4x4_qsi4c32p4x4_16x4_neon_dotprod(
@@ -114,7 +114,7 @@ size_t kai_get_dst_size_matmul_clamp_f32_qsi8d32p4x4_qsi4c32p4x4_16x4_neon_dotpr
 /// @param[in]  m              The number of output rows written.
 /// @param[in]  n              The number of output columns written.
 /// @param[in]  k              The number of channels. The common dimension between the LHS and RHS matrix.
-/// @param[in]  bl             Block length. Block length. It must be 32.
+/// @param[in]  bl             Block length. Block length. It must be a multiple of 32.
 /// @param[in]  lhs_packed     The LHS packed matrix. The micro-kernel dependencies list at the top of this file reports
 /// the available
 ///                            LHS packing functions for this micro-kernel.

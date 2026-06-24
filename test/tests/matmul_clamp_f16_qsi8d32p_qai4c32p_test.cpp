@@ -410,7 +410,7 @@ INSTANTIATE_TEST_SUITE_P(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f16_qsi8d32p_qai4c32p.size()), test_matmul_shapes,
         test_block_lengths,                                                   //
         test_portions,                                                        //
-        testing::ValuesIn(std::initializer_list<float>({1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
+        testing::ValuesIn(std::initializer_list<std::optional<float>>({1.0f, 0.9f, 0.5f})),  // clamp_keep_ratio
         testing::Bool()),                                                     //
     [](const auto& info) {
         const auto variant_idx = std::get<0>(info.param);
@@ -435,7 +435,7 @@ INSTANTIATE_TEST_SUITE_P(
         } else {
             sstream << "_RHS_s1s0__";
         }
-        sstream << "__clamp_keep_ratio_" << static_cast<int>(clamp_keep_ratio * 100);
+        sstream << "__clamp_keep_ratio_" << static_cast<int>(clamp_keep_ratio.value_or(1.0F) * 100);
         PrintTo(portion, &sstream);
 
         return sstream.str();

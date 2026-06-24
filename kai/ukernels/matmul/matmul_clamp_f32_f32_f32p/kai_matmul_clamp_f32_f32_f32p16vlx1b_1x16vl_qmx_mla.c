@@ -115,6 +115,7 @@ void kai_run_matmul_clamp_f32_f32_f32p16vlx1b_1x16vl_qmx_mla(
     args.output_ptr = dst;
     args.flags = flags;
 
+    kai_commit_za();
     kai_kernel_matmul_clamp_f32_f32_f32p16vlx1b_1x16vl_qmx_mla(&args);
 }
 

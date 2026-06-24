@@ -77,11 +77,34 @@ struct kai_matmul_pack_rhs_uker_bias_n_args {
     const void* ptr;  ///< Per-N bias buffer.
 };
 
+/// Per-matrix K sum scale buffer for matrix multiplication RHS packing micro-kernel.
+struct kai_matmul_pack_rhs_uker_k_sum_scale_global_args {
+    const void* ptr;  ///< Per-matrix K sum scale buffer.
+};
+
+/// Dimensions of the per-N scale buffer for matrix multiplication RHS packing micro-kernel.
+struct kai_matmul_pack_rhs_uker_scale_n_dim_args {
+    size_t n;  ///< Length or coordinate in N dimension.
+};
+
+/// Per-N scale buffer for matrix multiplication RHS packing micro-kernel.
+struct kai_matmul_pack_rhs_uker_scale_n_args {
+    const void* ptr;  ///< Per-N scale buffer.
+};
+
+/// Per-matrix scale buffer for matrix multiplication RHS packing micro-kernel.
+struct kai_matmul_pack_rhs_uker_scale_global_args {
+    const void* ptr;  ///< Per-matrix scale buffer.
+};
+
 /// Operands for matrix multiplication RHS packing micro-kernel.
 struct kai_matmul_pack_rhs_uker_operand_args {
-    struct kai_matmul_pack_rhs_uker_rhs_args rhs;                ///< RHS buffer.
-    struct kai_matmul_pack_rhs_uker_rhs_packed_args rhs_packed;  ///< Packed RHS buffer.
-    struct kai_matmul_pack_rhs_uker_bias_n_args bias_n;          ///< Per-N bias buffer.
+    struct kai_matmul_pack_rhs_uker_rhs_args rhs;                                ///< RHS buffer.
+    struct kai_matmul_pack_rhs_uker_rhs_packed_args rhs_packed;                  ///< Packed RHS buffer.
+    struct kai_matmul_pack_rhs_uker_bias_n_args bias_n;                          ///< Per-N bias buffer.
+    struct kai_matmul_pack_rhs_uker_k_sum_scale_global_args k_sum_scale_global;  ///< Per-matrix K sum scale buffer.
+    struct kai_matmul_pack_rhs_uker_scale_n_args scale_n;                        ///< Per-N scale buffer.
+    struct kai_matmul_pack_rhs_uker_scale_global_args scale_global;              ///< Per-matrix scale buffer.
 };
 
 /// Matrix multiplication RHS packing micro-kernel arguments.
@@ -172,10 +195,20 @@ struct kai_matmul_pack_rhs_uker_api {
     /// @param[in] config The micro-kernel configuration.
     /// @param[in] index The start coordinate in each dimension.
     ///
-    /// @return The offset in bytes.
+    /// @return The offset in bytes, or zero if `bias_n` is unused.
     size_t (*get_bias_n_offset)(
         const struct kai_matmul_pack_rhs_uker_config* config,
         const struct kai_matmul_pack_rhs_uker_bias_n_dim_args* index);
+
+    /// Gets the offset in bytes of the per-N scale data.
+    ///
+    /// @param[in] config The micro-kernel configuration.
+    /// @param[in] index The start coordinate in each dimension.
+    ///
+    /// @return The offset in bytes.
+    size_t (*get_scale_n_offset)(
+        const struct kai_matmul_pack_rhs_uker_config* config,
+        const struct kai_matmul_pack_rhs_uker_scale_n_dim_args* index);
 };
 
 #ifdef __cplusplus

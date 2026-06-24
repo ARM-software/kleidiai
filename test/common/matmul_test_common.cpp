@@ -6,7 +6,9 @@
 
 #include "matmul_test_common.hpp"
 
+#include <optional>
 #include <sstream>
+#include <string>
 
 namespace kai::test {
 
@@ -22,7 +24,8 @@ void PrintTo(const MatMulClampTestParams& param, std::ostream* os) {
     *os << "__";
     PrintTo(portion, os);
     PrintTo(bias_mode, os);
-    *os << "__clamp_keep_ratio_" << static_cast<int>(clamp_keep_ratio * 100);
+    *os << "__clamp_keep_ratio_"
+        << (clamp_keep_ratio.has_value() ? std::to_string(static_cast<int>(clamp_keep_ratio.value() * 100)) : "noclamp");
 }
 
 void PrintTo(const MatMulShape& shape, std::ostream* os) {
@@ -45,7 +48,7 @@ void PrintTo(const MatrixPortion& portion, std::ostream* os) {
 
 std::string test_description(
     const std::string_view& name, const MatMulShape& shape, const MatrixPortion& portion, bool bias,
-    float clamp_keep_ratio) {
+    std::optional<float> clamp_keep_ratio) {
     std::ostringstream os;
 
     os << name << "__";
@@ -55,7 +58,8 @@ std::string test_description(
     if (bias) {
         os << "__Bias";
     }
-    os << "__clamp_keep_ratio_" << static_cast<int>(clamp_keep_ratio * 100);
+    os << "__clamp_keep_ratio_"
+       << (clamp_keep_ratio.has_value() ? std::to_string(static_cast<int>(clamp_keep_ratio.value() * 100)) : "noclamp");
 
     return os.str();
 }

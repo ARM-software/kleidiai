@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -77,13 +77,13 @@ size_t kai_get_sr_matmul_clamp_f32_qai8dxp4x4_qsi4cxp8x4_8x8x32_neon_dotprod(voi
 }
 
 size_t kai_get_lhs_packed_offset_matmul_clamp_f32_qai8dxp4x4_qsi4cxp8x4_8x8x32_neon_dotprod(size_t m_idx, size_t k) {
-    KAI_ASSERT((m_idx % kai_m_step) == 0);
+    KAI_ASSERT((m_idx % kai_mr) == 0);
 
     return (m_idx / kai_mr) * kai_lhs_packed_stride(k);
 }
 
 size_t kai_get_rhs_packed_offset_matmul_clamp_f32_qai8dxp4x4_qsi4cxp8x4_8x8x32_neon_dotprod(size_t n_idx, size_t k) {
-    KAI_ASSERT((n_idx % kai_n_step) == 0);
+    KAI_ASSERT((n_idx % kai_nr) == 0);
 
     return (n_idx / kai_nr) * kai_rhs_packed_stride(k);
 }
