@@ -148,6 +148,7 @@ void kai_run_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_qmx_mopa(
         x19: Destination outer address (dst)
         x20: LHS base address (lhs)
     --------------------------------------------------- */
+    kai_commit_za();
     __asm__ volatile(
         "   .inst 0xd503477f //smstart                       \n"
         "   mov   x19, %[dst]                                \n"

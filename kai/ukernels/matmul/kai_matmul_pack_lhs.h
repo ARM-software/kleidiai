@@ -12,6 +12,24 @@
 extern "C" {
 #endif
 
+/// Non-transposed LHS packing micro-kernel for 8-bit data.
+///
+/// Required CPU features:
+///   * FEAT_SME
+///
+/// Configuration parameters: none.
+///
+/// Operands:
+///   * lhs_packed - The packed LHS matrix.
+///     * LHS matrix: 8-bit data in 4vsx4 blocked format.
+///   * lhs - The LHS matrix.
+///     * LHS matrix: 8-bit data in plain format.
+///
+/// Supported flags: none.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_pack_lhs_uker_api kai_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme(void);
+
 /// Non-transposed LHS packing micro-kernel for 32-bit data.
 ///
 /// Required CPU features:
@@ -21,9 +39,9 @@ extern "C" {
 ///
 /// Operands:
 ///   * lhs_packed - The packed LHS matrix.
-///     * LHS matrix: 32-bit data in 4vsx1 blocked format.
+///     * LHS matrix: 32-bit data in 4vsx1 blocked layout.
 ///   * lhs - The LHS matrix.
-///     * LHS matrix: 32-bit data in plain format.
+///     * LHS matrix: 32-bit data in MxK layout.
 ///
 /// Supported flags: none.
 ///

@@ -130,7 +130,7 @@ public:
 private:
     MatMulClampTestParams m_params;
     /// Unique ID: m, n, k
-    using TestDataId = std::tuple<size_t, size_t, size_t, float, std::string_view>;
+    using TestDataId = std::tuple<size_t, size_t, size_t, std::optional<float>, std::string_view>;
 
 protected:
     /// Cached test data that is shared between multiple test case.
@@ -165,7 +165,7 @@ protected:
         // Seed the random generator.
         const auto key = std::string(method.name) + "_" + std::to_string(info.m) + "x" + std::to_string(info.n) + "x" +
             std::to_string(info.k) + "_" + (bias_mode == BiasMode::INTERNAL ? "internal" : "provided") + ":" +
-            std::to_string(clamp_keep_ratio);
+            (clamp_keep_ratio.has_value() ? std::to_string(clamp_keep_ratio.value()) : std::string("noclamp"));
         auto& feed = seed_stream(key);
 
         const auto lhs_h = info.m;

@@ -114,6 +114,7 @@ void kai_run_matmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_qmx_dot(
     args.output_ptr = dst;
     args.flags = flags;
 
+    kai_commit_za();
     kai_kernel_matmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_qmx_dot(&args);
 }
 

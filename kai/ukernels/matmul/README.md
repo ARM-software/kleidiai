@@ -73,13 +73,16 @@ Input and output buffers can be described using the following form:
 | 8        | 8-bit quantized                                                                                   |
 | dx       | Per dimension quantized                                                                           |
 | cx       | Per channel quantized                                                                             |
+| d32      | Per-dimension block quantization, with block length multiple of 32                                |
 | c32      | Per block quantization, with block length multiple of 32                                          |
-| scalef16 | Scale factors stored as floating-point 16-bit                                                     |
+| scalef16 | **Deprecated** Scale factors stored as floating-point 16-bit                                      |
 | p        | Indicates data is packed                                                                          |
 | s16s0    | Packing order of data is interleaved                                                              |
+| s4s0     | Packing order of data is interleaved with nibble distance of 4                                    |
 | s1s0     | Packing order of data is sequential                                                               |
-| s        | Scale factors are packed into buffer                                                              |
-| b        | Bias values are packed into buffer                                                                |
+| s<type>  | Scale factors of type `<type>` are packed into buffer                                             |
+| b<type>  | Bias values of type `<type>` are packed into buffer                                               |
+| biasf32  | **Deprecated** Bias values are packed into buffer as `f32`                                        |
 
 Example: `qsi4cxp` which means quantized symmetric (`qs`) signed integer 4-bit
 data (`i4`) with per channel quantization (`cx`) that has been packed (`p`).

@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -61,14 +61,14 @@ size_t kai_get_lhs_offset_matmul_clamp_f32_f32_f32p2vlx1b_1x8vl_sme_mla(size_t m
 }
 
 static size_t kai_get_rhs_packed_stride_matmul_clamp_f32_f32_f32p2vlx1b_1x8vl_sme_mla(size_t k) {
-    return kai_get_n_step_matmul_clamp_f32_f32_f32p2vlx1b_1x8vl_sme_mla() *
+    return kai_get_nr_matmul_clamp_f32_f32_f32p2vlx1b_1x8vl_sme_mla() *
         (kai_roundup(k, kai_kr) * sizeof(float) + sizeof(float));
 }
 
 size_t kai_get_rhs_packed_offset_matmul_clamp_f32_f32_f32p2vlx1b_1x8vl_sme_mla(size_t n_idx, size_t k) {
-    KAI_ASSUME(n_idx % kai_get_n_step_matmul_clamp_f32_f32_f32p2vlx1b_1x8vl_sme_mla() == 0);
+    KAI_ASSUME(n_idx % kai_get_nr_matmul_clamp_f32_f32_f32p2vlx1b_1x8vl_sme_mla() == 0);
 
-    const size_t block_idx = n_idx / kai_get_n_step_matmul_clamp_f32_f32_f32p2vlx1b_1x8vl_sme_mla();
+    const size_t block_idx = n_idx / kai_get_nr_matmul_clamp_f32_f32_f32p2vlx1b_1x8vl_sme_mla();
     return block_idx * kai_get_rhs_packed_stride_matmul_clamp_f32_f32_f32p2vlx1b_1x8vl_sme_mla(k);
 }
 

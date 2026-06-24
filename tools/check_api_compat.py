@@ -76,16 +76,14 @@ def main() -> int:
         )
         return 0
 
-    if git_utils.has_local_changes(
-        ["CMakeLists.txt", "test", "benchmark"], root_dir=ROOT_DIR
-    ):
+    if git_utils.has_local_changes(["test", "benchmark"], root_dir=ROOT_DIR):
         print(
-            "Repository has local changes in CMakeLists.txt, test/, or benchmark/. "
+            "Repository has local changes in test/ or benchmark/. "
             "Refusing to overwrite local work."
         )
         return 1
 
-    print(f"Checking out CMakeLists.txt, test/, and benchmark/ from {latest_tag}.")
+    print(f"Checking out test/ and benchmark/ from {latest_tag}.")
     # CI job only: this intentionally mutates the workspace for the remainder of the script;
     # the job workspace is ephemeral and cleaned up by CI.
     for path in (ROOT_DIR / "test", ROOT_DIR / "benchmark"):
@@ -98,7 +96,6 @@ def main() -> int:
             "-q",
             latest_tag,
             "--",
-            "CMakeLists.txt",
             "test",
             "benchmark",
         ]
@@ -113,7 +110,10 @@ def main() -> int:
             "CMakePresets.json is required for the API compatibility check."
         )
 
+    # Configure the current library with released tests and benchmarks.
     run(["cmake", "--preset", "default-config", "-B", BUILD_DIR], check=True)
+
+    # Build the current library, released unit tests, and released benchmarks.
     run(
         [
             "cmake",
