@@ -48,16 +48,16 @@ inline static size_t kai_get_num_bytes_per_block_lhs(size_t bl) {
 }
 
 inline static size_t kai_get_num_bytes_per_block_rhs(size_t bl) {
-    KAI_ASSUME(bl == kai_bl);
+    KAI_ASSUME((bl % kai_bl) == 0);
     size_t num_bytes_per_block_rhs = (bl / kai_recip_num_bytes_qvalue_rhs) + kai_num_bytes_multiplier_rhs;
     return num_bytes_per_block_rhs;
 }
 
 inline static size_t kai_get_num_blocks_per_row(size_t k, size_t bl) {
-    KAI_ASSUME(bl == kai_bl);
-    KAI_ASSUME((k % kai_bl) == 0);
+    KAI_ASSUME((bl % kai_bl) == 0);
+    KAI_ASSUME((k % bl) == 0);
 
-    return kai_roundup(k, bl) / bl;
+    return k / bl;
 }
 
 inline static size_t kai_get_lhs_packed_stride(size_t k, size_t bl) {
@@ -66,8 +66,8 @@ inline static size_t kai_get_lhs_packed_stride(size_t k, size_t bl) {
 }
 
 inline static size_t kai_get_rhs_packed_stride(size_t k, size_t bl) {
-    KAI_ASSUME(bl == kai_bl);
-    KAI_ASSUME((k % kai_bl) == 0);
+    KAI_ASSUME((bl % kai_bl) == 0);
+    KAI_ASSUME((k % bl) == 0);
 
     const size_t num_blocks_per_row = kai_get_num_blocks_per_row(k, bl);
     const size_t num_bytes_per_block = kai_get_num_bytes_per_block_rhs(bl);
@@ -150,14 +150,22 @@ void kai_run_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_qmx_sdot(
     float scalar_max) {
     KAI_ASSUME(dst_stride_col == sizeof(float));
     KAI_ASSUME(m == 1);
+    KAI_ASSUME((bl % kai_bl) == 0);
 
     KAI_UNUSED(dst_stride_row);
-    KAI_UNUSED(scalar_min);
-    KAI_UNUSED(scalar_max);
 
     if (m == 0) {
         return;
     }
+
+    typedef struct {
+        float scalar_min;
+        float scalar_max;
+    } KernelArgs;
+
+    KernelArgs ka;
+    ka.scalar_min = scalar_min;
+    ka.scalar_max = scalar_max;
 
     const size_t lhs_packed_stride = kai_get_lhs_packed_stride(k, bl);
     const size_t rhs_packed_stride = kai_get_rhs_packed_stride(k, bl);
@@ -182,6 +190,11 @@ void kai_run_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_qmx_sdot(
         " mov x5, %[dst] \n"
         " mov x4, #0\n"
         " mov x17, %[n] \n"
+
+        // Load clamp min/max
+        " ld1rw z29.s, p2/z, [%x[args_ptr], %[min]] \n"
+        " ld1rw z30.s, p2/z, [%x[args_ptr], %[max]] \n"
+
         " .inst 0x25b11485 // whilelt p5.s, x4, x17\n"
         " b.none  5f // .LOOP_N_END%= \n"
         " 1: // .LOOP_N_START%=: \n"
@@ -313,6 +326,15 @@ void kai_run_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_qmx_sdot(
         " .inst 0x25b11486 // whilelt p6.s, x4, x17\n"
         " .inst 0x04b0e3e4 // incw  x4, all \n"
         " .inst 0x25b11487 // whilelt p7.s, x4, x17\n"
+        // Apply clamp: fmax(val, min) then fmin(val, max)
+        " fmax z24.s, p2/m, z24.s, z29.s \n"
+        " fmax z25.s, p2/m, z25.s, z29.s \n"
+        " fmax z26.s, p2/m, z26.s, z29.s \n"
+        " fmax z27.s, p2/m, z27.s, z29.s \n"
+        " fmin z24.s, p2/m, z24.s, z30.s \n"
+        " fmin z25.s, p2/m, z25.s, z30.s \n"
+        " fmin z26.s, p2/m, z26.s, z30.s \n"
+        " fmin z27.s, p2/m, z27.s, z30.s \n"
         " .inst 0xe540f4b8 // st1w z24.s, p5, [x5] \n"
         " .inst 0xe541f0b9 // st1w z25.s, p4, [x5, #1, MUL VL] \n"
         " .inst 0xe542f8ba // st1w z26.s, p6, [x5, #2, MUL VL] \n"
@@ -329,7 +351,8 @@ void kai_run_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_qmx_sdot(
         :
         : [lut] "r"(lut), [dst] "r"(dst), [rhs_packed] "r"(rhs_packed), [rhs_scales] "r"(rhs_scales),
           [lhs_packed] "r"(lhs_packed), [lhs_scales] "r"(lhs_scales), [rhs_packed_stride] "r"(rhs_packed_stride),
-          [n] "r"((int64_t)n), [k] "r"(k), [bl] "i"(kai_bl)
+          [n] "r"((int64_t)n), [k] "r"(k), [bl] "r"(bl), [args_ptr] "r"(&ka),
+          [min] "I"(offsetof(KernelArgs, scalar_min)), [max] "I"(offsetof(KernelArgs, scalar_max))
         : "p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9", "p10", "p11", "p12", "p13", "p14", "p15", "z0",
           "z1", "z2", "z3", "z4", "z5", "z6", "z7", "z8", "z9", "z10", "z11", "z12", "z13", "z14", "z15", "z16", "z17",
           "z18", "z19", "z20", "z21", "z22", "z23", "z24", "z25", "z26", "z27", "z28", "z29", "z30", "z31", "x0", "x1",

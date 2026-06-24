@@ -207,7 +207,9 @@ void kai_run_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_qmx_mopa(
         " mov x16, %[rhs_packed] \n"
         " mov x17, %[rhs_scales] \n"
 
-
+        // Load clamp min/max from KernelArgs
+        " ld1rw z15.s, p0/z, [%x[args_ptr], %[offset_min]] \n"
+        " ld1rw z17.s, p0/z, [%x[args_ptr], %[offset_max]] \n"
 
         // Iterate over n (x8)
         // e.g. for(n_idx = 0; n_idx < n; n_idx+=n_step)
@@ -396,6 +398,40 @@ void kai_run_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_qmx_mopa(
         " b.gt 3b // .LOOP_K_START%= \n"
 
         " 8: // .LOOP_K_END%=: \n"
+
+        // === Clamp loop ===
+        " ldr x5, [%x[args_ptr], %[is_clamp_valid]] \n"
+        " cbz x5, 11f // .LOOP_CLAMP_END%= \n"
+        " mov x5, x24 \n"  // save x24 (base of current M tile output)
+        " mov x12, 0 \n"
+
+        " 10: // .LOOP_CLAMP%=: \n"
+        // Load row of output (x24 walks forward each iteration)
+        " ld1w z24.s, p2/z, [x24] \n"
+        " ld1w z25.s, p5/z, [x24, #1, MUL VL] \n"
+        " ld1w z26.s, p6/z, [x24, #2, MUL VL] \n"
+        " ld1w z27.s, p7/z, [x24, #3, MUL VL] \n"
+        // Apply clamp: fmax(val, min) then fmin(val, max)
+        " fmax z24.s, p0/m, z24.s, z15.s \n"
+        " fmax z25.s, p0/m, z25.s, z15.s \n"
+        " fmax z26.s, p0/m, z26.s, z15.s \n"
+        " fmax z27.s, p0/m, z27.s, z15.s \n"
+        " fmin z24.s, p0/m, z24.s, z17.s \n"
+        " fmin z25.s, p0/m, z25.s, z17.s \n"
+        " fmin z26.s, p0/m, z26.s, z17.s \n"
+        " fmin z27.s, p0/m, z27.s, z17.s \n"
+        // Store clamped row
+        " st1w z24.s, p2, [x24] \n"
+        " st1w z25.s, p5, [x24, #1, MUL VL] \n"
+        " st1w z26.s, p6, [x24, #2, MUL VL] \n"
+        " st1w z27.s, p7, [x24, #3, MUL VL] \n"
+        " add x24, x24, %[stride] \n"
+        " add x12, x12, #4 \n"
+        " cmp x12, x15 \n"
+        " blt 10b // .LOOP_CLAMP%= \n"
+
+        " mov x24, x5 \n"  // restore x24 to M tile base
+        " 11: // .LOOP_CLAMP_END%=: \n"
 
         " ldr x5, [%x[args_ptr], %[offset_stride_l]] \n"
 
