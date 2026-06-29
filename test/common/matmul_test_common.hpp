@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <functional>
 #include <iosfwd>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <tuple>

@@ -101,14 +101,14 @@ static const std::array<UKernelVariants, 9>
              clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot, cpu_has_sme2, lhs_quant_pack_qsi8d32p_f32_neon,
              rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)},
          {UKERNEL_MATMUL_PACK_VARIANT(
+             clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme_dot, cpu_has_sme, lhs_quant_pack_qsi8d32p_f32_neon,
+             rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon, false)},
+         {UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_qmx_mopa, cpu_has_sme, lhs_quant_pack_qsi8d32p_f32_neon,
              rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)},
          {UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_qmx_sdot, cpu_has_sme, lhs_quant_pack_qsi8d32p_f32_neon,
              rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)},
-         {UKERNEL_MATMUL_PACK_VARIANT(
-             clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme_dot, cpu_has_sme, lhs_quant_pack_qsi8d32p_f32_neon,
-             rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon, false)},
          {UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p1x4_qsi4c32p8x4_1x8_sve_dotprod, (cpu_check<cpu_has_sve_vl256, cpu_has_dotprod>), lhs_quant_pack_qsi8d32p_f32,
              rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
@@ -151,7 +151,7 @@ static const std::array<UKernelVariants, 12>
              cpu_has_i8mm, lhs_quant_pack_qsi8d32p4x8sb_f32_neon, rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
          {UKERNEL_MATMUL_PACK_VARIANT(
             clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod, cpu_has_dotprod, lhs_quant_pack_qsi8d32p_f32,
-            rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)}
+            rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
         {UKERNEL_MATMUL_PACK_VARIANT(
             clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_qmx_mopa, cpu_has_sme, lhs_quant_pack_qsi8d32p_f32_neon,
             rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)},
@@ -162,29 +162,9 @@ static const std::array<UKernelVariants, 12>
             
             
             
-using MatMulTestParams_f32_qsi8d32p_qsi4c32p = std::tuple<size_t, MatMulShape, MatrixPortion, float, size_t, bool>;
-         {UKERNEL_MATMUL_PACK_VARIANT(
-            clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme_dot, cpu_has_sme, lhs_quant_pack_qsi8d32p_f32_neon,
-            rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon, false)},
-         {UKERNEL_MATMUL_PACK_VARIANT(
-             clamp_f32_qsi8d32p4x4_qsi4c32p4x4_16x4_neon_dotprod, cpu_has_dotprod, lhs_quant_pack_qsi8d32p_f32,
-             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
-         {UKERNEL_MATMUL_PACK_VARIANT(
-            clamp_f32_qsi8d32p4x8_qsi4c32p4x8_16x4_neon_i8mm, cpu_has_i8mm, lhs_quant_pack_qsi8d32p_f32,
-            rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
-         {UKERNEL_MATMUL_PACK_VARIANT(
-            clamp_f32_qsi8d32p4x8_qsi4c32p4x8_8x4x32_neon_i8mm, cpu_has_i8mm, lhs_quant_pack_qsi8d32p_f32,
-            rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
-         {UKERNEL_MATMUL_PACK_VARIANT(
-            clamp_f32_qsi8d32p1x8_qsi4c32p4x8_1x4x32_neon_dotprod, cpu_has_dotprod, lhs_quant_pack_qsi8d32p_f32,
-            rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
-         {UKERNEL_MATMUL_PACK_VARIANT(
-             4x8sb_clamp_f32_qsi8d32p4x8_qsi4c32p4x8_16x4_neon_i8mm, clamp_f32_qsi8d32p4x8_qsi4c32p4x8_16x4_neon_i8mm,
-             cpu_has_i8mm, lhs_quant_pack_qsi8d32p4x8sb_f32_neon, rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
-         {UKERNEL_MATMUL_PACK_VARIANT(
-            clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod, cpu_has_dotprod, lhs_quant_pack_qsi8d32p_f32,
-            rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)}}};
-// clang-format on
+using MatMulTestParams_f32_qsi8d32p_qsi4c32p =
+    std::tuple<size_t, MatMulShape, MatrixPortion, std::optional<float>, size_t, bool>;
+       
 
 using MatMulTestParams_f32_qsi8d32p_qsi4c32p =
     std::tuple<size_t, MatMulShape, MatrixPortion, std::optional<float>, size_t, bool>;
