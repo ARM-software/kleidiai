@@ -183,8 +183,7 @@ supported compilers.
 
 Follow the established naming, directory, CMake, and Bazel conventions used by
 the surrounding code. Micro-kernel naming is described in
-[kai/ukernels/matmul/README.md](../kai/ukernels/matmul/README.md) and
-[kai/ukernels/dwconv/README.md](../kai/ukernels/dwconv/README.md).
+[docs/microkernel_names.md](microkernel_names.md).
 
 ## Build scripts
 

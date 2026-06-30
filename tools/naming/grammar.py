@@ -9,29 +9,31 @@ This module provides a small expression system for writing grammar rules in a
 readable Python form. It is intended only for documentation generation and name
 validation. Rules are built from ``Expr`` objects:
 
-* ``Seq`` matches expressions in order.
-* ``OneOf`` matches one expression from a set of alternatives.
-* ``Optional`` matches an expression if it is present.
-* ``OneOrMore`` matches repeated expressions.
-* ``Literal`` matches a literal string.
-* ``NaturalInt`` matches a positive integer.
-* ``Pow2Int`` matches a natural integer that is a power of 2 (1, 2, 4, 8...)
-* ``OperandType`` matches a data type descriptor (f32, i8, bf16...)
+* ``Seq`` parses expressions in order.
+* ``OneOf`` parses one expression from a set of alternatives.
+* ``Optional`` parses an expression if it is present.
+* ``OneOrMore`` parses repeated expressions.
+* ``Literal`` parses a literal string.
+* ``Doc`` attaches documentation to an expression without changing it.
+* ``NaturalInt`` parses a positive integer.
+* ``Pow2Int`` parses a natural integer that is a power of 2 (1, 2, 4, 8...)
+* ``OperandType`` parses a data type descriptor (f32, i8, bf16...)
 
 ``Grammar`` is a local rule registry. Its ``rule`` decorator evaluates the
 decorated function once, wraps the returned expression in a named ``Rule``, and
-stores that rule for matching and documentation generation. Only rules with a
-description are included by ``render_markdown``.
+stores that rule for parsing and documentation generation. Only rules with a
+title are included by ``render_markdown``.
 
-Matching is position based. Every expression matches against an input string
-from a starting offset and returns either a ``MatchSuccess`` or ``MatchFailure``.
-``MatchSuccess.pos`` contains the end offset after a successful match.
-Alternatives use the longest successful match. Equal-length successful
+Parsing is position based. Every expression parses an input string
+from a starting offset and returns either a ``ParseSuccess`` or ``ParseFailure``.
+``ParseSuccess.pos`` contains the end offset after a successful parse.
+``ParseSuccess.descriptions`` contains descriptions from parsed ``Doc`` nodes.
+Alternatives use the longest successful parse. Equal-length successful
 alternatives are invalid grammar.
 
-* ``MatchFailure.failures`` contains ``MatchExpectation`` entries with the input
+* ``ParseFailure.failures`` contains ``ParseExpectation`` entries with the input
     offset and expected grammar fragment used for developer-facing diagnostics.
-* ``Expr.match_full`` converts partial matches into a failure that expects the
+* ``Expr.parse_full`` converts partial parses into a failure that expects the
     end of input.
 * ``furthest_failure`` selects the most advanced failure position and combines
     the expected fragments reported there.
@@ -42,11 +44,12 @@ from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Iterator
 from dataclasses import dataclass
+from dataclasses import field
 from typing import TypeAlias
 
 
 @dataclass(frozen=True)
-class MatchExpectation:
+class ParseExpectation:
     """An expected grammar fragment at a failed input position."""
 
     pos: int
@@ -54,11 +57,12 @@ class MatchExpectation:
 
 
 @dataclass(frozen=True)
-class MatchSuccess:
+class ParseSuccess:
     pos: int
+    descriptions: list[tuple[int, str]] = field(default_factory=list)
 
     @property
-    def matched(self) -> bool:
+    def parsed_ok(self) -> bool:
         return True
 
     def furthest_failure(self) -> None:
@@ -66,18 +70,18 @@ class MatchSuccess:
 
 
 @dataclass
-class MatchFailure:
-    failures: list[MatchExpectation]
+class ParseFailure:
+    failures: list[ParseExpectation]
 
     @classmethod
-    def expected(cls, pos: int, expected: str) -> "MatchFailure":
-        return cls([MatchExpectation(pos, expected)])
+    def expected(cls, pos: int, expected: str) -> "ParseFailure":
+        return cls([ParseExpectation(pos, expected)])
 
     @property
-    def matched(self) -> bool:
+    def parsed_ok(self) -> bool:
         return False
 
-    def furthest_failure(self) -> MatchExpectation | None:
+    def furthest_failure(self) -> ParseExpectation | None:
         if not self.failures:
             return None
 
@@ -87,10 +91,10 @@ class MatchFailure:
                 failure.expected for failure in self.failures if failure.pos == max_pos
             )
         )
-        return MatchExpectation(max_pos, expected)
+        return ParseExpectation(max_pos, expected)
 
 
-MatchResult: TypeAlias = MatchSuccess | MatchFailure
+ParseResult: TypeAlias = ParseSuccess | ParseFailure
 
 
 # -----------------------------------------------------------------------------
@@ -106,16 +110,16 @@ class Expr(ABC):
         """Whether this expression should be grouped when embedded."""
         return False
 
-    def match_full(self, text: str) -> MatchResult:
-        """Used for top level expressions to ensure that grammar fully matches a string"""
-        result = self.match(text)
-        if result.matched and result.pos != len(text):
-            return MatchFailure.expected(result.pos, "end of input")
+    def parse_full(self, text: str) -> ParseResult:
+        """Used for top level expressions to ensure that grammar fully parses a string"""
+        result = self.parse(text)
+        if result.parsed_ok and result.pos != len(text):
+            return ParseFailure.expected(result.pos, "end of input")
         return result
 
     @abstractmethod
-    def match(self, text: str, pos: int = 0) -> MatchResult:
-        """Match this expression against ``text`` starting at ``pos``."""
+    def parse(self, text: str, pos: int = 0) -> ParseResult:
+        """Parse this expression against ``text`` starting at ``pos``."""
         raise NotImplementedError
 
     @abstractmethod
@@ -142,15 +146,17 @@ class Seq(_CompoundExpr):
     def __init__(self, *items: Expr | str) -> None:
         self.items = tuple(_as_expr(item) for item in items)
 
-    def match(self, text: str, pos: int = 0) -> MatchResult:
+    def parse(self, text: str, pos: int = 0) -> ParseResult:
         position = pos
+        descriptions: list[tuple[int, str]] = []
         for item in self.items:
-            result = item.match(text, position)
-            if not result.matched:
+            result = item.parse(text, position)
+            if not result.parsed_ok:
                 return result
+            descriptions.extend(result.descriptions)
             position = result.pos
 
-        return MatchSuccess(position)
+        return ParseSuccess(position, descriptions)
 
     def to_grammar(self) -> str:
         return " ".join(
@@ -165,29 +171,29 @@ class OneOf(_CompoundExpr):
     def __init__(self, *options: Expr | str) -> None:
         self.options = tuple(_as_expr(option) for option in options)
 
-    def match(self, text: str, pos: int = 0) -> MatchResult:
-        matches = []
+    def parse(self, text: str, pos: int = 0) -> ParseResult:
+        parses: list[ParseSuccess] = []
         failures = []
         for option in self.options:
-            result = option.match(text, pos)
-            if result.matched:
-                matches.append(result)
+            result = option.parse(text, pos)
+            if result.parsed_ok:
+                parses.append(result)
             else:
                 failures.extend(result.failures)
 
-        if matches:
-            best_pos = max(result.pos for result in matches)
-            best_matches = [result for result in matches if result.pos == best_pos]
-            assert len(best_matches) == 1, (
+        if parses:
+            best_pos = max(result.pos for result in parses)
+            best_parses = [result for result in parses if result.pos == best_pos]
+            assert len(best_parses) == 1, (
                 "Ambiguous grammar alternatives consume the same input: "
                 f"{self.to_grammar()}"
             )
-            return MatchSuccess(best_pos)
+            return best_parses[0]
 
-        result = MatchFailure(failures)
+        result = ParseFailure(failures)
         failure = result.furthest_failure()
         assert failure is not None
-        return MatchFailure.expected(failure.pos, failure.expected)
+        return ParseFailure.expected(failure.pos, failure.expected)
 
     def to_grammar(self) -> str:
         return " | ".join(option.to_grammar() for option in self.options)
@@ -199,12 +205,12 @@ class Optional(Expr):
     def __init__(self, expr: Expr | str) -> None:
         self.expr = _as_expr(expr)
 
-    def match(self, text: str, pos: int = 0) -> MatchResult:
-        result = self.expr.match(text, pos)
-        if result.matched:
-            assert result.pos != pos, "Optional expression matched empty input"
-            return MatchSuccess(result.pos)
-        return MatchSuccess(pos)
+    def parse(self, text: str, pos: int = 0) -> ParseResult:
+        result = self.expr.parse(text, pos)
+        if result.parsed_ok:
+            assert result.pos != pos, "Optional expression parsed empty input"
+            return result
+        return ParseSuccess(pos)
 
     def to_grammar(self) -> str:
         return f"[{self.expr.to_grammar()}]"
@@ -216,18 +222,20 @@ class OneOrMore(Expr):
     def __init__(self, expr: Expr | str) -> None:
         self.expr = _as_expr(expr)
 
-    def match(self, text: str, pos: int = 0) -> MatchResult:
-        result = self.expr.match(text, pos)
-        if not result.matched:
+    def parse(self, text: str, pos: int = 0) -> ParseResult:
+        result = self.expr.parse(text, pos)
+        if not result.parsed_ok:
             return result
 
-        assert result.pos != pos, "Repeated expression matched empty input"
+        assert result.pos != pos, "Repeated expression parsed empty input"
         position = result.pos
+        descriptions = list(result.descriptions)
         while True:
-            result = self.expr.match(text, position)
-            if not result.matched:
-                return MatchSuccess(position)
-            assert result.pos != position, "Repeated expression matched empty input"
+            result = self.expr.parse(text, position)
+            if not result.parsed_ok:
+                return ParseSuccess(position, descriptions)
+            assert result.pos != position, "Repeated expression parsed empty input"
+            descriptions.extend(result.descriptions)
             position = result.pos
 
     def to_grammar(self) -> str:
@@ -242,20 +250,44 @@ class Literal(Expr):
     def __init__(self, value: str) -> None:
         self.value = value
 
-    def match(self, text: str, pos: int = 0) -> MatchResult:
+    def parse(self, text: str, pos: int = 0) -> ParseResult:
         if text.startswith(self.value, pos):
-            return MatchSuccess(pos + len(self.value))
-        return MatchFailure.expected(pos, self.to_grammar())
+            return ParseSuccess(pos + len(self.value))
+        return ParseFailure.expected(pos, self.to_grammar())
 
     def to_grammar(self) -> str:
         return f'"{self.value}"'
 
 
+class Doc(Expr):
+    """Documentation for a grammar expression."""
+
+    def __init__(self, expr: Expr | str, *, description: str) -> None:
+        self.expr = _as_expr(expr)
+        self.description = description
+
+    @property
+    def compound(self) -> bool:
+        return self.expr.compound
+
+    def parse(self, text: str, pos: int = 0) -> ParseResult:
+        result = self.expr.parse(text, pos)
+        if result.parsed_ok and result.pos != pos:
+            return ParseSuccess(
+                result.pos,
+                [(pos, self.description), *result.descriptions],
+            )
+        return result
+
+    def to_grammar(self) -> str:
+        return self.expr.to_grammar()
+
+
 class NaturalInt(Expr):
     """A positive integer literal."""
 
-    def match(self, text: str, pos: int = 0) -> MatchResult:
-        return _match_positive_integer(text, pos)
+    def parse(self, text: str, pos: int = 0) -> ParseResult:
+        return _parse_positive_integer(text, pos)
 
     def to_grammar(self) -> str:
         return "@natural_int"
@@ -264,8 +296,8 @@ class NaturalInt(Expr):
 class Pow2Int(Expr):
     """A power-of-two integer literal."""
 
-    def match(self, text: str, pos: int = 0) -> MatchResult:
-        return _match_positive_integer(
+    def parse(self, text: str, pos: int = 0) -> ParseResult:
+        return _parse_positive_integer(
             text, pos, lambda value: value > 0 and value & (value - 1) == 0
         )
 
@@ -276,19 +308,19 @@ class Pow2Int(Expr):
 class OperandType(Expr):
     """A data type descriptor."""
 
-    def match(self, text: str, pos: int = 0) -> MatchResult:
+    def parse(self, text: str, pos: int = 0) -> ParseResult:
         for base_type in ("bf", "f", "i", "u", "x"):
             if text.startswith(base_type, pos):
-                result = _match_positive_integer(
+                result = _parse_positive_integer(
                     text,
                     pos + len(base_type),
                     lambda value: value > 0 and value & (value - 1) == 0,
                 )
-                if result.matched:
+                if result.parsed_ok:
                     return result
-                return MatchFailure.expected(pos, self.to_grammar())
+                return ParseFailure.expected(pos, self.to_grammar())
 
-        return MatchFailure.expected(pos, self.to_grammar())
+        return ParseFailure.expected(pos, self.to_grammar())
 
     def to_grammar(self) -> str:
         return "@operand_type"
@@ -300,15 +332,22 @@ class OperandType(Expr):
 
 
 class Rule(Expr):
-    """A named grammar rule with a description."""
+    """A named grammar rule with documentation."""
 
-    def __init__(self, name: str, expr: Expr, description: str | None) -> None:
+    def __init__(
+        self,
+        name: str,
+        expr: Expr,
+        title: str | None,
+        description: str | None,
+    ) -> None:
         self.name = name
         self.expr = expr
+        self.title = title
         self.description = description
 
-    def match(self, text: str, pos: int = 0) -> MatchResult:
-        return self.expr.match(text, pos)
+    def parse(self, text: str, pos: int = 0) -> ParseResult:
+        return self.expr.parse(text, pos)
 
     def to_grammar(self) -> str:
         return self.name
@@ -324,6 +363,8 @@ class Rule(Expr):
             self.definition(),
             "```",
         ]
+        if self.title:
+            lines.extend(("", self.title))
         if self.description:
             lines.extend(("", self.description))
         return "\n".join(lines)
@@ -336,14 +377,18 @@ class Grammar:
         self._rules: dict[str, Rule] = {}
 
     def rule(
-        self, description: str | None = None, *, name: str | None = None
+        self,
+        *,
+        title: str | None = None,
+        description: str | None = None,
+        name: str | None = None,
     ) -> Callable[[Callable[[], Expr | str]], Rule]:
         def decorate(fn: Callable[[], Expr | str]) -> Rule:
             rule_name = name or fn.__name__
             if rule_name in self._rules:
                 raise ValueError(f"Grammar rule already registered: {rule_name}")
 
-            rule = Rule(rule_name, _as_expr(fn()), description)
+            rule = Rule(rule_name, _as_expr(fn()), title, description)
             self._rules[rule_name] = rule
             return rule
 
@@ -356,7 +401,7 @@ class Grammar:
         return self._rules.values()
 
     def iter_documented_rules(self) -> Iterable[Rule]:
-        return (rule for rule in self.iter_rules() if rule.description)
+        return (rule for rule in self.iter_rules() if rule.title)
 
     def to_grammar(self) -> str:
         return "\n".join(rule.definition() for rule in reversed(self._rules.values()))
@@ -373,12 +418,12 @@ def _as_expr(value: Expr | str) -> Expr:
     raise TypeError(f"Expected grammar expression or string literal, got {type(value)}")
 
 
-def _match_positive_integer(
+def _parse_positive_integer(
     text: str, pos: int, predicate: Callable[[int], bool] | None = None
-) -> MatchResult:
+) -> ParseResult:
     expected = "@natural_int" if predicate is None else "@pow2_int"
     if pos >= len(text) or not text[pos].isdigit() or text[pos] == "0":
-        return MatchFailure.expected(pos, expected)
+        return ParseFailure.expected(pos, expected)
 
     end = pos
     while end < len(text) and text[end].isdigit():
@@ -386,5 +431,5 @@ def _match_positive_integer(
 
     value = int(text[pos:end])
     if predicate is None or predicate(value):
-        return MatchSuccess(end)
-    return MatchFailure.expected(pos, expected)
+        return ParseSuccess(end)
+    return ParseFailure.expected(pos, expected)

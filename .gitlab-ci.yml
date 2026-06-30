@@ -348,6 +348,16 @@ test-verify-microkernel-names:
     - !reference [.main-branch-verification-rules, rules]
   script:
     - python3 tools/check_microkernel_names.py
+    - python3 tools/check_microkernel_names.py --generate-documentation docs/microkernel_names.md
+    - |
+      if [ -n "$(git status --porcelain -- docs/microkernel_names.md)" ]; then
+        echo "docs/microkernel_names.md is out of date."
+        echo "Run:"
+        echo "  python3 tools/check_microkernel_names.py --generate-documentation docs/microkernel_names.md"
+        echo "and commit the result whenever tools/naming/rules.py is updated."
+        git diff -- docs/microkernel_names.md
+        exit 1
+      fi
 
 # Purpose: Verify that all micro-kernel headers contain include directives for used symbols.
 test-verify-microkernel-header-includes:
