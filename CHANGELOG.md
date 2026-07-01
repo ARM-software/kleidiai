@@ -15,6 +15,7 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 - New SME micro-kernels:
   - Matrix multiplication (MxN) for BF16 inputs with F32 output.
 - New SME2 micro-kernels
+  - Matrix Multiplication (MxN) Micro-Kernel of QAI8DXP LHS and QSI4CXP RHS with F16 output.
   - Added `kai_lhs_pack_bf16p2vlx2_f32_sme2`, which is renaming of the `kai_lhs_pack_bf16p2vlx2_f32_sme` SME2 implementation.
 - Fixes
   - Updated `kai_lhs_pack_bf16p2vlx2_f32_sme` to avoid SME2-only instructions.

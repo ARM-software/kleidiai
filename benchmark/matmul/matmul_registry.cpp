@@ -136,6 +136,7 @@
 #include "kai/ukernels/matmul/matmul_clamp_qai8_qai8p_qsi8cxp/kai_matmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa.h"
 
 // matmul_clamp_f16_qai8dxp_qsi4cxp
+#include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi4cxp/kai_matmul_clamp_f16_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi4cxp/kai_matmul_clamp_f16_qai8dxp1x4_qsi4cxp4x4_1x4_neon_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi4cxp/kai_matmul_clamp_f16_qai8dxp1x8_qsi4cxp4x8_1x4_neon_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi4cxp/kai_matmul_clamp_f16_qai8dxp4x4_qsi4cxp4x4_16x4_neon_dotprod.h"
@@ -586,6 +587,10 @@ inline constexpr MatMulBaseInterface kai_matmul_clamp_bf16_qai8dxp4x8_qsi4cxp8x8
 };
 
 // matmul_clamp_f16_qai8dxp_qsi4cxp
+inline constexpr MatMulBaseInterface kai_matmul_clamp_f16_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa_interface{
+    .run_matmul = kai_run_matmul_clamp_f16_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa,
+};
+
 inline constexpr MatMulBaseInterface kai_matmul_clamp_f16_qai8dxp1x4_qsi4cxp4x4_1x4_neon_dotprod_interface{
     .run_matmul = kai_run_matmul_clamp_f16_qai8dxp1x4_qsi4cxp4x4_1x4_neon_dotprod,
 };
@@ -1107,6 +1112,10 @@ inline const std::array matmul_benchmarks{
         "kai_matmul_clamp_f16_qai8dxp1x8_qsi4cxp4x8_1x4_neon_dotprod", kai_benchmark_matmul<MatMulBaseInterface>,
         kai_matmul_clamp_f16_qai8dxp1x8_qsi4cxp4x8_1x4_neon_dotprod_interface, DataType::FP16, MatMulOp::GEMV,
         test::cpu_has_dotprod_and_fp16),
+    RegisterBenchmark(
+        "kai_matmul_clamp_f16_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa", kai_benchmark_matmul<MatMulBaseInterface>,
+        kai_matmul_clamp_f16_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa_interface, DataType::FP16, MatMulOp::GEMM,
+        test::cpu_has_sme2),
     RegisterBenchmark(
         "kai_matmul_clamp_f16_qai8dxp4x4_qsi4cxp4x4_16x4_neon_dotprod", kai_benchmark_matmul<MatMulBaseInterface>,
         kai_matmul_clamp_f16_qai8dxp4x4_qsi4cxp4x4_16x4_neon_dotprod_interface, DataType::FP16, MatMulOp::GEMM,
