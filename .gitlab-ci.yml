@@ -502,9 +502,9 @@ test-linux-aarch64-sve256:
     # Run only SVE unit tests
     GTEST_FILTER: "*_sve_*"
 
-# Purpose: FVP feature tests with disabled SVE/SVE2 but enabled SME/SME2
-# Disabled at the moment due to huge amount of SME/SME2 kernels
-.test-linux-aarch64-fvp-nosve:
+# Base template: .test-linux-aarch64-fvp
+# Purpose: Common FVP unit-test runner for feature-specific tests.
+.test-linux-aarch64-fvp:
   extends:
     - .stable-rules
   stage: test
@@ -519,9 +519,7 @@ test-linux-aarch64-sve256:
   variables:
     # Long test requires more stable node
     KUBERNETES_NODE_SELECTOR_TYPE: "karpenter.sh/capacity-type=on-demand"
-    # Disable SVE/SVE2, but keep SME/SME2
-    FVP_MODEL_EXTRA: "-C cluster0.sve.has_sve2=0 -C cluster0.sve.sme_only=1"
-    FVP_TEST_EXECUTABLE: "./build-${BUILD_JOB_PROVIDER}/kleidiai_test --gtest_output=xml:kleidiai_test_results-${BUILD_JOB_PROVIDER}.xml --gtest_random_seed=${GLOBAL_TEST_SEED:-42}"
+    FVP_TEST_EXECUTABLE: "./build-${BUILD_JOB_PROVIDER}/kleidiai_test --gtest_brief=1 --gtest_output=xml:kleidiai_test_results-${BUILD_JOB_PROVIDER}.xml --gtest_random_seed=${GLOBAL_TEST_SEED:-42}"
   script:
     - ./tools/fvp.sh ${FVP_TEST_EXECUTABLE}
   artifacts:
@@ -529,6 +527,38 @@ test-linux-aarch64-sve256:
     expire_in: 1 day
     paths:
       - kleidiai_test_results-${BUILD_JOB_PROVIDER}.xml
+    reports:
+      junit: kleidiai_test_results-${BUILD_JOB_PROVIDER}.xml
+
+# Purpose: FVP feature tests with disabled SVE/SVE2 but enabled SME/SME2
+# Disabled at the moment due to huge amount of SME/SME2 kernels
+.test-linux-aarch64-fvp-nosve:
+  extends:
+    - .test-linux-aarch64-fvp
+  variables:
+    # Disable SVE/SVE2, but keep SME/SME2
+    FVP_MODEL_EXTRA: "-C cluster0.sve.has_sve2=0 -C cluster0.sve.sme_only=1"
+
+# Purpose: FVP SVE2.1 unit tests.
+test-linux-aarch64-sve2p1-fvp:
+  extends:
+    - .test-linux-aarch64-fvp
+  timeout: 1h
+  variables:
+    # Enable SVE2.1 support explicitly for this feature-specific FVP run.
+    FVP_MODEL_EXTRA: "-C cluster0.sve.has_sve2=1 -C cluster0.sve.sve2_version=1"
+    # Run only SVE2.1 unit tests.
+    GTEST_FILTER: "*sve2p1*"
+    FVP_TEST_EXECUTABLE: "./build-${BUILD_JOB_PROVIDER}/kleidiai_test --gtest_brief=1 --test_size small --gtest_output=xml:kleidiai_test_results-${BUILD_JOB_PROVIDER}.xml --gtest_random_seed=${GLOBAL_TEST_SEED:-42}"
+  script:
+    - ./tools/fvp.sh -- "${FVP_TEST_EXECUTABLE}" | tee output.txt
+    - "grep -qE 'Features\\s+:.*sve2p1' output.txt"
+  artifacts:
+    when: always
+    expire_in: 1 day
+    paths:
+      - kleidiai_test_results-${BUILD_JOB_PROVIDER}.xml
+      - output.txt
     reports:
       junit: kleidiai_test_results-${BUILD_JOB_PROVIDER}.xml
 

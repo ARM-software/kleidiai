@@ -38,6 +38,9 @@ bool cpu_has_sve_vl256();
 /// Returns a value indicating whether the current CPU supports FEAT_SVE2.
 bool cpu_has_sve2();
 
+/// Returns a value indicating whether the current CPU supports FEAT_SVE2.1.
+bool cpu_has_sve2p1();
+
 /// Returns a value indicating whether the current CPU supports FEAT_SME.
 bool cpu_has_sme();
 

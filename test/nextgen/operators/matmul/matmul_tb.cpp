@@ -393,20 +393,24 @@ void MatMulTb::compute_ref_matmul() {
     const MatMulFn matmul_fn = make_matmul_nt_t(mm_lhs_dtype, mm_rhs_dtype, m_op->acc_dtype);
     Buffer ref_dst = matmul_fn(m_shape_m, m_shape_n, m_shape_k, mm_lhs_view, mm_rhs_t_view);
 
-    const bool has_acc_bias = config.bias_modes.has(MatMulBiasMode::ACCUMULATION_PER_M) ||
-        config.bias_modes.has(MatMulBiasMode::ACCUMULATION_PER_N);
-    if (has_acc_bias) {
-        KAI_TEST_ASSERT_MSG(
-            m_op->bias_dtype == m_op->acc_dtype, "Only support the accumulator and bias type being the same.");
-    }
-
     const BinaryElementwiseFn add_fn = make_add_2d(m_op->acc_dtype);
 
     if (config.bias_modes.has(MatMulBiasMode::ACCUMULATION_PER_M)) {
+        KAI_TEST_ASSERT_MSG(
+            m_op->bias_dtype == m_op->acc_dtype, "Only support the accumulator and per-M bias type being the same.");
+
         ref_dst = add_fn(m_shape_m, m_shape_n, ref_dst, m_shape_m, 1, acc_bias_m_data.data());
     }
     if (config.bias_modes.has(MatMulBiasMode::ACCUMULATION_PER_N)) {
-        ref_dst = add_fn(m_shape_m, m_shape_n, ref_dst, 1, m_shape_n, acc_bias_n_data.data());
+        Buffer tmp_bias;
+        Span<const std::byte> bias_view = acc_bias_n_data.data();
+
+        if (m_op->bias_dtype != m_op->acc_dtype) {
+            tmp_bias = cast(acc_bias_n_data.data_ptr(), m_op->bias_dtype, m_op->acc_dtype, 1, m_shape_n);
+            bias_view = tmp_bias.view();
+        }
+
+        ref_dst = add_fn(m_shape_m, m_shape_n, ref_dst, 1, m_shape_n, bias_view);
     }
 
     const bool has_acc_scaling_stage =                            //

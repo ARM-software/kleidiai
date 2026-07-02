@@ -16,6 +16,7 @@
 #include "test/common/assert.hpp"
 #include "test/common/buffer.hpp"
 #include "test/common/data_type.hpp"
+#include "test/common/float16.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/numeric_limits.hpp"
 #include "test/common/round.hpp"
@@ -81,6 +82,9 @@ DynamicClampFn make_dynamic_clamp(DataType dtype) {
     switch (dtype) {
         case DataType::FP32:
             return dynamic_clamp<float>;
+
+        case DataType::FP16:
+            return dynamic_clamp<Float16>;
 
         default:
             KAI_TEST_ERROR("Not implemented.");

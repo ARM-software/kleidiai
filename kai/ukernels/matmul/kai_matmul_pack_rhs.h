@@ -12,6 +12,27 @@
 extern "C" {
 #endif
 
+/// Non-transposed RHS packing micro-kernel for 16-bit data with per-N bias.
+///
+/// Required CPU features:
+///   * FEAT_SVE
+///
+/// Configuration parameters: none.
+///
+/// Operands:
+///   * rhs_packed - The packed RHS matrix.
+///     * RHS matrix: 16-bit data in 16vsx2 blocked layout.
+///     * Per-n bias vector: 16-bit data.
+///   * rhs - The RHS matrix.
+///     * RHS matrix: 16-bit data in KxN layout.
+///   * bias_n - The per-N bias vector.
+///     * Per-N bias vector: 16-bit data.
+///
+/// Supported flags: none.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_pack_rhs_uker_api kai_rhs_pack_kxn_x16p16vsx2bx16_x16_x16_sve(void);
+
 /// Non-transposed RHS packing micro-kernel for 32-bit data with per-N bias.
 ///
 /// Required CPU features:

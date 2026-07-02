@@ -258,6 +258,11 @@ inline static uint64_t kai_get_sve_vector_length_u32(void) {
     return kai_get_sve_vector_length_u8() / 4;
 }
 
+/// Gets the vscale scale factor for SVE
+inline static uint64_t kai_get_sve_vscale(void) {
+    return kai_get_sve_vector_length_u8() / KAI_VSCALE_UNIT_BYTES;
+}
+
 /// Extends the sign bit of int 4-bit value (stored in int8_t variable)
 /// @param[in] value The 4-bit int value
 ///

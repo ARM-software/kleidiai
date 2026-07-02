@@ -7,6 +7,7 @@
 #include "test/nextgen/operators/matmul/matmul/matmul_wrapper_registry.hpp"
 
 #include <array>
+#include <cstdint>
 #include <memory>
 
 #include "kai/ukernels/matmul/kai_matmul.h"
@@ -16,6 +17,7 @@
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot.h"
 #include "test/common/data_type.hpp"
 #include "test/common/sme.hpp"
+#include "test/common/sve.hpp"
 #include "test/nextgen/format/block2d_row_format.hpp"
 #include "test/nextgen/format/plain_format.hpp"
 #include "test/nextgen/functions/round.hpp"
@@ -136,6 +138,18 @@ std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f32_f32p2vlx1_f3
             1 * get_sme_vector_length<float>(), 1, 1, false, DataType::FP32, std::array{DataType::FP32},
             std::array<DataType, 0>{}),
         make_poly<PlainFormat>(DataType::FP32));
+}
+
+std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f16_f16_f16p16vsx2bf16_6x16vs_sve2p1_dot() {
+    return std::make_unique<MatMulUkerApiWrapper>(
+        "matmul_clamp_f16_f16_f16p16vsx2bf16_6x16vs_sve2p1_dot",
+        kai_matmul_clamp_f16_f16_f16p16vsx2bf16_6x16vs_sve2p1_dot(), MatMulSlot::LHS_DATA,
+        make_poly<PlainFormat>(DataType::FP16),
+        make_poly<Block2dRowFormat>(
+            4 * get_sve_vector_length<uint32_t>(), 2, 2, false, DataType::FP16, std::array{DataType::FP16},
+            std::array<DataType, 0>{}),
+        make_poly<PlainFormat>(DataType::FP16), DataType::FP32, MatMulUkerClampConfig::optional(DataType::FP32),
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS);
 }
 
 std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f32_f32p4vsx1_f32p4vsx1b_8vsx8vs_elastic_sme2_mopa() {

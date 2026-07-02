@@ -35,6 +35,11 @@ bool is_shape_suitable_lhs_vector(
     return shape_m == 1;
 }
 
+bool is_shape_suitable_lhs_direct(
+    size_t shape_m, [[maybe_unused]] size_t shape_n, size_t shape_k, [[maybe_unused]] const MatrixPortion& portion) {
+    return shape_m > 0 && shape_k > 0;
+}
+
 /// Common bias format sets.
 const MatMulBiasModeSet no_bias;
 const MatMulBiasModeSet acc_bias_per_n{MatMulBiasMode::ACCUMULATION_PER_N};
@@ -45,7 +50,7 @@ const MatMulBiasModeSet acc_bias_per_m_per_n_scale_bias_per_n{
 }  // namespace
 
 Span<const MatMulOperator> get_available_matmul_operators() {
-    static std::array<MatMulOperator, 11> operators;
+    static std::array<MatMulOperator, 12> operators;
 
     // matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa
     operators[0].name = "matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa";
@@ -303,6 +308,28 @@ Span<const MatMulOperator> get_available_matmul_operators() {
     operators[10].pack_lhs = std::nullopt;
     operators[10].pack_rhs = create_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme();
     operators[10].matmul = create_matmul_clamp_f32_f32_f32p4vsx1bf32_1x32vs_sme2_mla();
+
+    // kai_matmul_clamp_f16_f16_f16p16vsx2bf16_6x16vs_sve2p1_dot
+    operators[11].name = "matmul_clamp_f16_f16_f16p16vsx2bf16_6x16vs_sve2p1_dot";
+
+    operators[11].is_cpu_supported = cpu_check<cpu_has_sve2p1, cpu_has_fp16>;
+    operators[11].is_shape_suitable = all_true<  //
+        is_shape_suitable_lhs_direct,            //
+        is_shape_suitable_rhs_kxn_x16p16vsx2bx16_x16_x16_sve>;
+    operators[11].supported_bias_mode_sets = {no_bias, acc_bias_per_n};
+    operators[11].clamp_mode = MatMulClampMode::OPTIONAL;
+    operators[11].lhs_quant = std::nullopt;
+    operators[11].rhs_quant = std::nullopt;
+    operators[11].bias_quant = std::nullopt;
+    operators[11].lhs_dtype = DataType::FP16;
+    operators[11].rhs_dtype = DataType::FP16;
+    operators[11].bias_dtype = DataType::FP16;
+    operators[11].acc_dtype = DataType::FP32;
+    operators[11].dst_dtype = DataType::FP16;
+
+    operators[11].pack_lhs = std::nullopt;
+    operators[11].pack_rhs = create_matmul_rhs_pack_kxn_x16p16vsx2bx16_x16_x16_sve();
+    operators[11].matmul = create_matmul_clamp_f16_f16_f16p16vsx2bf16_6x16vs_sve2p1_dot();
 
     return operators;
 }

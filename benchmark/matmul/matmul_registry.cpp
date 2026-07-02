@@ -203,6 +203,11 @@ inline constexpr MatMulStridedLhsInterface kai_matmul_clamp_f16_f16_f16p32x1b_6x
     .run_matmul = kai_run_matmul_clamp_f16_f16_f16p32x1b_6x32_neon_mla_cortexa55,
 };
 
+inline constexpr MatMulUkernelApiInterface kai_matmul_clamp_f16_f16_f16p16vsx2bf16_6x16vs_sve2p1_dot_interface{
+    .get_config = [] { return kai_matmul_uker_config{}; },
+    .get_api = kai_matmul_clamp_f16_f16_f16p16vsx2bf16_6x16vs_sve2p1_dot,
+};
+
 // matmul_clamp_f16_f16p_f16p
 inline constexpr MatMulBaseInterface kai_matmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa_interface{
     .run_matmul = kai_run_matmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa,
@@ -718,6 +723,10 @@ inline const std::array matmul_benchmarks{
         "kai_matmul_clamp_f16_f16_f16p32x1b_6x32_neon_mla_cortexa55", kai_benchmark_matmul<MatMulStridedLhsInterface>,
         kai_matmul_clamp_f16_f16_f16p32x1b_6x32_neon_mla_cortexa55_interface, DataType::FP16, MatMulOp::GEMM,
         test::cpu_has_fp16),
+    RegisterBenchmark(
+        "kai_matmul_clamp_f16_f16_f16p16vsx2bf16_6x16vs_sve2p1_dot", kai_benchmark_matmul<MatMulUkernelApiInterface>,
+        kai_matmul_clamp_f16_f16_f16p16vsx2bf16_6x16vs_sve2p1_dot_interface, DataType::FP16, MatMulOp::GEMM,
+        test::cpu_check<test::cpu_has_sve2p1, test::cpu_has_fp16>),
 
     // matmul_clamp_f16_f16p_f16p
     RegisterBenchmark(

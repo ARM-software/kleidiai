@@ -15,6 +15,7 @@ load(
     "kai_cpu_sme",
     "kai_cpu_sme2",
     "kai_cpu_sve",
+    "kai_cpu_sve2",
 )
 
 package(default_visibility = ["//visibility:private"])
@@ -191,11 +192,21 @@ SVE_I8MM_KERNELS_ASM = [
 ]
 
 # buildifier: keep sorted
+SVE2P1_KERNELS_ASM_NOHDR = [
+    "matmul_clamp_f16_f16_f16p/kai_matmul_clamp_f16_f16_f16p16vsx2bf16_6x16vs_sve2p1_dot",
+]
+
+# buildifier: keep sorted
 SVE_KERNELS_ASM = [
     "imatmul_clamp_f32_f32_f32p/kai_imatmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla",
     "matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla",
     "pack/kai_rhs_imatmul_pack_kxn_x32p4vlx1b_x32_x32_sve",
     "pack/kai_rhs_pack_kxn_x32p4vlx1b_x32_x32_sve",
+]
+
+# buildifier: keep sorted
+SVE_KERNELS_ASM_NOHDR = [
+    "pack/kai_rhs_pack_kxn_x16p16vsx2bx16_x16_x16_sve",
 ]
 
 # buildifier: keep sorted
@@ -445,6 +456,25 @@ kai_c_library(
     name = "sve_impl_asm",
     cpu_uarch = kai_cpu_sve(),
     kernels_asm = SVE_KERNELS_ASM,
+    kernels_asm_nohdr = SVE_KERNELS_ASM_NOHDR,
+    textual_hdrs = [
+        "kai_matmul_pack_rhs.h",
+        "kai_matmul_pack_rhs_types.h",
+    ],
+)
+
+kai_c_library(
+    name = "sve2p1_impl_asm",
+    cpu_uarch = kai_cpu_sve() + kai_cpu_sve2(),
+    kernels_asm_nohdr = SVE2P1_KERNELS_ASM_NOHDR,
+    textual_hdrs = [
+        "kai_matmul.h",
+        "kai_matmul_types.h",
+        "kai_matmul_pack_lhs.h",
+        "kai_matmul_pack_lhs_types.h",
+        "kai_matmul_pack_rhs.h",
+        "kai_matmul_pack_rhs_types.h",
+    ],
 )
 
 kai_c_library(
@@ -516,6 +546,7 @@ kai_c_library(
         ":sme2_impl_asm",
         ":sme_impl",
         ":sme_impl_asm",
+        ":sve2p1_impl_asm",
         ":sve_impl_asm",
         ":sve_impl_dotprod_asm",
         ":sve_impl_i8mm_asm",

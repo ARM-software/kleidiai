@@ -47,6 +47,7 @@ enum class CpuFeature : size_t {
     BF16,         //
     SVE,          //
     SVE2,         //
+    SVE2P1,       //
     SME,          //
     SME2,         //
     LAST          // This should be last element, please add new CPU capabilities before it
@@ -60,6 +61,7 @@ constexpr std::array<std::tuple<CpuFeature, std::string_view>, n_elements<CpuFea
     {CpuFeature::BF16, "BF16"},        //
     {CpuFeature::SVE, "SVE"},          //
     {CpuFeature::SVE2, "SVE2"},        //
+    {CpuFeature::SVE2P1, "SVE2P1"},    //
     {CpuFeature::SME, "SME"},          //
     {CpuFeature::SME2, "SME2"},        //
 }};
@@ -167,6 +169,9 @@ constexpr uint64_t HWCAP_SVE = 1UL << 22;
 #ifndef HWCAP2_SVE2
 constexpr uint64_t HWCAP2_SVE2 = 1UL << 1;
 #endif
+#ifndef HWCAP2_SVE2P1
+constexpr uint64_t HWCAP2_SVE2P1 = 1UL << 36;
+#endif
 #ifndef HWCAP2_I8MM
 constexpr uint64_t HWCAP2_I8MM = 1UL << 13;
 #endif
@@ -188,6 +193,7 @@ const std::array<std::tuple<CpuFeature, uint64_t, uint64_t>, n_elements<CpuFeatu
     {CpuFeature::BF16, AT_HWCAP2, HWCAP2_BF16},                //
     {CpuFeature::SVE, AT_HWCAP, HWCAP_SVE},                    //
     {CpuFeature::SVE2, AT_HWCAP2, HWCAP2_SVE2},                //
+    {CpuFeature::SVE2P1, AT_HWCAP2, HWCAP2_SVE2P1},            //
     {CpuFeature::SME, AT_HWCAP2, HWCAP2_SME},                  //
     {CpuFeature::SME2, AT_HWCAP2, HWCAP2_SME2},                //
 }};
@@ -215,8 +221,9 @@ const std::array<std::tuple<CpuFeature, std::string_view>, n_elements<CpuFeature
     {CpuFeature::I8MM, "hw.optional.arm.FEAT_I8MM"},
     {CpuFeature::FP16, "hw.optional.arm.FEAT_FP16"},
     {CpuFeature::BF16, "hw.optional.arm.FEAT_BF16"},
-    {CpuFeature::SVE, ""},   // not supported
-    {CpuFeature::SVE2, ""},  // not supported
+    {CpuFeature::SVE, ""},     // not supported
+    {CpuFeature::SVE2, ""},    // not supported
+    {CpuFeature::SVE2P1, ""},  // not supported
     {CpuFeature::SME, "hw.optional.arm.FEAT_SME"},
     {CpuFeature::SME2, "hw.optional.arm.FEAT_SME2"},
 }};
@@ -266,6 +273,7 @@ const std::array<std::tuple<CpuFeature, DWORD, const char*, uint64_t>, n_element
     {CpuFeature::BF16, 0, ID_AA64ISAR1_EL1, 0x0000f00000000000ULL},
     {CpuFeature::SVE, 46, nullptr, 0},
     {CpuFeature::SVE2, 47, nullptr, 0},
+    {CpuFeature::SVE2P1, 0, nullptr, 0},
     {CpuFeature::SME, 0, nullptr, 0},
     {CpuFeature::SME2, 0, nullptr, 0},
 }};
@@ -331,6 +339,7 @@ struct CpuInfo {
         has_bf16(get_cap_support(CpuFeature::BF16)),
         has_sve(get_cap_support(CpuFeature::SVE)),
         has_sve2(get_cap_support(CpuFeature::SVE2)),
+        has_sve2p1(get_cap_support(CpuFeature::SVE2P1)),
         has_sme(get_cap_support(CpuFeature::SME)),
         has_sme2(get_cap_support(CpuFeature::SME2)) {
     }
@@ -348,6 +357,7 @@ struct CpuInfo {
     const bool has_bf16{};     ///< B16 is supported.
     const bool has_sve{};      ///< SVE is supported.
     const bool has_sve2{};     ///< SVE2 is supported.
+    const bool has_sve2p1{};   ///< SVE2.1 is supported.
     const bool has_sme{};      ///< SME is supported.
     const bool has_sme2{};     ///< SME2 is supported.
 };
@@ -396,6 +406,10 @@ bool cpu_has_sve_vl256() {
 
 bool cpu_has_sve2() {
     return CpuInfo::current().has_sve2;
+}
+
+bool cpu_has_sve2p1() {
+    return CpuInfo::current().has_sve2p1;
 }
 
 bool cpu_has_sme() {

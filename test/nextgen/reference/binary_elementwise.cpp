@@ -13,6 +13,7 @@
 #include "test/common/assert.hpp"
 #include "test/common/buffer.hpp"
 #include "test/common/data_type.hpp"
+#include "test/common/float16.hpp"
 #include "test/common/int4.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/round.hpp"
@@ -83,6 +84,9 @@ BinaryElementwiseFn make_add_2d(DataType dtype) {
         case DataType::FP32:
             return add<float>;
 
+        case DataType::FP16:
+            return add<Float16>;
+
         case DataType::I32:
             return add<int32_t>;
 
@@ -99,6 +103,9 @@ BinaryElementwiseFn make_multiply_2d(DataType dtype) {
     switch (dtype) {
         case DataType::FP32:
             return multiply<float>;
+
+        case DataType::FP16:
+            return multiply<Float16>;
 
         case DataType::I32:
             return multiply<int32_t>;

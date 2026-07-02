@@ -15,6 +15,7 @@
 
 #include "test/common/assert.hpp"
 #include "test/common/data_type.hpp"
+#include "test/common/float16.hpp"
 #include "test/common/int4.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/round.hpp"
@@ -65,6 +66,9 @@ PrintFn make_print_array(DataType dtype) {
     switch (dtype) {
         case DataType::FP32:
             return print_array<float>;
+
+        case DataType::FP16:
+            return print_array<Float16>;
 
         case DataType::I32:
             return print_array<int32_t>;

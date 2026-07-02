@@ -11,6 +11,7 @@
 
 #include "test/common/assert.hpp"
 #include "test/common/data_type.hpp"
+#include "test/common/float16.hpp"
 #include "test/common/int4.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/round.hpp"
@@ -66,6 +67,9 @@ PackBlock2dFn make_pack_block2d(DataType dtype) {
     switch (dtype) {
         case DataType::FP32:
             return pack_block2d<float>;
+
+        case DataType::FP16:
+            return pack_block2d<Float16>;
 
         case DataType::I8:
             return pack_block2d<int8_t>;
