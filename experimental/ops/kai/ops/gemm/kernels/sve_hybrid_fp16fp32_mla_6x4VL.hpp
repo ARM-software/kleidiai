@@ -13,7 +13,7 @@
     IndirectInputArg<__fp16>, \
     size_t, size_t, \
     const __fp16 *, \
-    IndirectOutputArg<float>, \
+    OutputArg<float>, \
     const float *, Activation, bool
 
 namespace kai {

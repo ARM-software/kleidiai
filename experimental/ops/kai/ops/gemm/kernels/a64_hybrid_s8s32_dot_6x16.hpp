@@ -14,7 +14,7 @@
     IndirectInputArg<int8_t>, \
     size_t, size_t, \
     const int8_t *, \
-    IndirectOutputArg<int32_t>, \
+    OutputArg<int32_t>, \
     const int32_t *, Activation, bool
 
 namespace kai {

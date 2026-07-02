@@ -14,7 +14,7 @@
     IndirectInputArg<int8_t>, \
     size_t, size_t, \
     const int8_t *, \
-    IndirectOutputArg<int8_t>, \
+    OutputArg<int8_t>, \
     const Requantize32 *, const int32_t *, unsigned int
 
 namespace kai {

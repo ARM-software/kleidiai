@@ -17,7 +17,7 @@ namespace ops {
 
 void a64_hybrid_u8s8s32_mmla_6x16 (
     unsigned int num_strings, const unsigned int *string_lengths, IndirectInputArg<uint8_t> A_arg,
-    size_t M, size_t N, const int8_t *B_ptr, IndirectOutputArg<int32_t> output_arg,
+    size_t M, size_t N, const int8_t *B_ptr, OutputArg<int32_t> output_arg,
     const int32_t *bias, Activation, bool accumulate
 )
 {
@@ -34,25 +34,19 @@ void a64_hybrid_u8s8s32_mmla_6x16 (
     } ka;
 
     unsigned long flags=0;
-    void *input_ptr;
+    const void *input_ptr;
 
-    if (output_arg.is_indirect) {
-        ka.output_ptr=(void *)(output_arg.indirect.ptr);
-        ka.output_offset=output_arg.indirect.offset;
-        flags |= 0x4;
-    } else {
-        ka.output_ptr=(void *)(output_arg.direct.base);
-        ka.output_offset=output_arg.direct.stride;
-    }
+    ka.output_ptr=output_arg.base;
+    ka.output_offset=output_arg.stride;
 
     if (A_arg.is_indirect) {
-        input_ptr=(void *)(A_arg.indirect.ptr);
+        input_ptr=A_arg.indirect.ptr;
         ka.input_offset=A_arg.indirect.start_row;
         ka.input_initial_col=A_arg.indirect.start_col;
         flags |= 0x8;
     } else {
         assert(num_strings==1);
-        input_ptr=(void *)(A_arg.direct.base);
+        input_ptr=A_arg.direct.base;
         ka.input_offset=A_arg.direct.stride;
     }
     if (accumulate) {

@@ -71,33 +71,13 @@ enum class VLType {
 };
 
 template<typename T>
-struct IndirectOutputArg {
-    struct {
-        T       *base;
-        size_t   stride;
-    } direct = {};
-    struct {
-        T * const *ptr;
-        size_t     offset;
-    } indirect = {};
-    bool is_indirect;
+struct OutputArg {
+    T *base = nullptr;
+    size_t stride = 0;
 
-    // Direct
-    IndirectOutputArg(T *base, size_t stride) : is_indirect(false) {
-        direct.base = base;
-        direct.stride = stride;
-    }
+    OutputArg(T *base, size_t stride) : base(base), stride(stride) {}
 
-    // Indirect
-    IndirectOutputArg(T * const * ptr, size_t offset) : is_indirect(true) {
-        indirect.ptr = ptr;
-        indirect.offset = offset;
-    }
-
-    IndirectOutputArg() : is_indirect(false) {
-        direct.base = nullptr;
-        direct.stride = 0;
-    }
+    OutputArg() = default;
 };
 
 // Check that the provided Requantize32 doesn't have a left shift.

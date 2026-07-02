@@ -45,7 +45,7 @@ public:
         profiler &prof,
 #endif
         const strategy &strat, unsigned int num_strings, const unsigned int *string_ptr, IndirectInputArg<Tlo> A_arg, unsigned int M, unsigned int N,
-        unsigned int kern_k, const Tro *b_ptr, size_t b_stride, IndirectOutputArg<Tr> output_arg, const Tr *bias_ptr, Activation act, bool accumulate,
+        unsigned int kern_k, const Tro *b_ptr, size_t b_stride, OutputArg<Tr> output_arg, const Tr *bias_ptr, Activation act, bool accumulate,
         const OutputStage &os, const int32_t *col_bias, unsigned int n_0 );
 };
 
@@ -56,7 +56,7 @@ inline void run_hybrid_kernel<Nothing, false, false>::run(
         profiler &prof,
 #endif
         const strategy &strat, unsigned int num_strings, const unsigned int *string_ptr, IndirectInputArg<Tlo> A_arg, unsigned int M, unsigned int N,
-        unsigned int kern_k, const Tro *b_ptr, size_t, IndirectOutputArg<Tr> output_arg, const Tr *bias_ptr, Activation act, bool accumulate,
+        unsigned int kern_k, const Tro *b_ptr, size_t, OutputArg<Tr> output_arg, const Tr *bias_ptr, Activation act, bool accumulate,
         const Nothing &, const int32_t *, unsigned int) {
 #ifdef CYCLE_PROFILING
     auto p = prof.ScopedProfiler(PROFILE_KERNEL, (unsigned long)M * kern_k * roundup(N, strategy::out_width()));
@@ -71,17 +71,13 @@ inline void run_hybrid_kernel<Nothing, false, false>::run(
         unsigned int N_bulk = N - N_remainder;
 
         /* Output argument to be used for the tail */
-        IndirectOutputArg<Tr> offset_output = output_arg;
+        OutputArg<Tr> offset_output = output_arg;
 
         /* If there is a "bulk" to be processed, handle that and update "offset_output" appropriately. */
         if (N_bulk > 0) {
             strat.kernel(num_strings, string_ptr, A_arg, M, N_bulk, b_ptr, output_arg, bias_ptr, act, accumulate);
 
-            if (output_arg.is_indirect) {
-                offset_output = IndirectOutputArg<Tr>(output_arg.indirect.ptr, output_arg.indirect.offset + N_bulk);
-            } else {
-                offset_output = IndirectOutputArg<Tr>(output_arg.direct.base + N_bulk, output_arg.direct.stride);
-            }
+            offset_output = OutputArg<Tr>(output_arg.base + N_bulk, output_arg.stride);
         }
 
         /* Pad the bias buffer for the remainder */
@@ -102,7 +98,7 @@ inline void run_hybrid_kernel<Nothing, false, true>::run(
         profiler &prof,
 #endif
         const strategy &strat, unsigned int num_strings, const unsigned int *string_ptr, IndirectInputArg<Tlo> A_arg, unsigned int M, unsigned int N,
-        unsigned int kern_k, const Tro *b_ptr, size_t b_stride, IndirectOutputArg<Tr> output_arg, const Tr *bias_ptr, Activation act, bool accumulate,
+        unsigned int kern_k, const Tro *b_ptr, size_t b_stride, OutputArg<Tr> output_arg, const Tr *bias_ptr, Activation act, bool accumulate,
         const Nothing &, const int32_t *, unsigned int) {
 #ifdef CYCLE_PROFILING
     auto p = prof.ScopedProfiler(PROFILE_KERNEL, (unsigned long)M * kern_k * roundup(N, strategy::out_width()));
@@ -117,17 +113,13 @@ inline void run_hybrid_kernel<Nothing, false, true>::run(
         unsigned int N_bulk = N - N_remainder;
 
         /* Output argument to be used for the tail */
-        IndirectOutputArg<Tr> offset_output = output_arg;
+        OutputArg<Tr> offset_output = output_arg;
 
         /* If there is a "bulk" to be processed, handle that and update "offset_output" appropriately. */
         if (N_bulk > 0) {
             strat.kernel(num_strings, string_ptr, A_arg, M, N_bulk, b_ptr, b_stride, output_arg, bias_ptr, act, accumulate);
 
-            if (output_arg.is_indirect) {
-                offset_output = IndirectOutputArg<Tr>(output_arg.indirect.ptr, output_arg.indirect.offset + N_bulk);
-            } else {
-                offset_output = IndirectOutputArg<Tr>(output_arg.direct.base + N_bulk, output_arg.direct.stride);
-            }
+            offset_output = OutputArg<Tr>(output_arg.base + N_bulk, output_arg.stride);
         }
 
         /* Pad the bias buffer for the remainder */
@@ -150,7 +142,7 @@ inline void run_hybrid_kernel<Requantize32, false, false>::run(
         profiler &prof,
 #endif
         const strategy &strat, unsigned int num_strings, const unsigned int *string_ptr, IndirectInputArg<Tlo> A_arg, unsigned int M, unsigned int N,
-        unsigned int kern_k, const Tro *b_ptr, size_t, IndirectOutputArg<Tr> output_arg, const Tr *, Activation, bool,
+        unsigned int kern_k, const Tro *b_ptr, size_t, OutputArg<Tr> output_arg, const Tr *, Activation, bool,
         const Requantize32 &os, const int32_t *col_bias, unsigned int n_0 ) {
 #ifdef CYCLE_PROFILING
     auto p = prof.ScopedProfiler(PROFILE_KERNEL, (unsigned long)M * kern_k * roundup(N, strategy::out_width()));
@@ -167,14 +159,11 @@ inline void run_hybrid_kernel<Requantize32, true, false>::run(
         profiler &prof,
 #endif
         const strategy &strat, unsigned int num_strings, const unsigned int *string_ptr, IndirectInputArg<Tlo> A_arg, unsigned int M, unsigned int N,
-        unsigned int kern_k, const Tro *b_ptr, size_t, IndirectOutputArg<Tr> output_arg, const Tr *, Activation, bool,
+        unsigned int kern_k, const Tro *b_ptr, size_t, OutputArg<Tr> output_arg, const Tr *, Activation, bool,
         const Requantize32 &os, const int32_t *col_bias, unsigned int n_0 ) {
     UNUSED(kern_k);
     // On this route we will only process one kernel height at a time and will make sure this happens in the driver loop.
     assert(M <= strategy::out_height());
-    // We don't yet support indirect output (as the quantizer can't do it).
-    assert(output_arg.is_indirect == false);
-
     // We need a row sum buffer and intermediate output buffer.
     // These go on the stack as they are not too large, using an automatic array and alloca() respectively.
     int32_t row_sums[strategy::out_height()];
@@ -189,7 +178,7 @@ inline void run_hybrid_kernel<Requantize32, true, false>::run(
         auto p = prof.ScopedProfiler(PROFILE_KERNEL, (unsigned long)M * kern_k * roundup(N, strategy::out_width()));
 #endif
         // Perform the GEMM, into the output buffer.
-        strat.kernel(num_strings, string_ptr, A_arg, M, N, b_ptr, IndirectOutputArg<typename strategy::result_type>(result_buffer, output_width), nullptr, Activation(), false);
+        strat.kernel(num_strings, string_ptr, A_arg, M, N, b_ptr, OutputArg<typename strategy::result_type>(result_buffer, output_width), nullptr, Activation(), false);
     }
 
     if (os.b_offset != 0) {
@@ -206,7 +195,7 @@ inline void run_hybrid_kernel<Requantize32, true, false>::run(
         auto p = prof.ScopedProfiler(PROFILE_QUANTIZE, (unsigned long)M * N);
 #endif
         // Quantize
-        requantize_block_32(os, N, M, result_buffer, output_width, output_arg.direct.base, output_arg.direct.stride, row_sums, col_bias + n_0, n_0);
+        requantize_block_32(os, N, M, result_buffer, output_width, output_arg.base, output_arg.stride, row_sums, col_bias + n_0, n_0);
     }
 }
 
@@ -508,7 +497,7 @@ public:
                                (n0 * kern_k);
                 }
 
-                IndirectOutputArg<Tr> out_arg(g_arrays._Cptr + (multi * g_arrays._C_multi_stride) + (batch * g_arrays._C_batch_stride) + (m_start * g_arrays._ldc) + n0, g_arrays._ldc);
+                OutputArg<Tr> out_arg(g_arrays._Cptr + (multi * g_arrays._C_multi_stride) + (batch * g_arrays._C_batch_stride) + (m_start * g_arrays._ldc) + n0, g_arrays._ldc);
 
 #ifdef CYCLE_PROFILING
                 auto p = prof.ScopedProfiler(PROFILE_KERNEL, (unsigned long)(m_end - m_start) * kern_k * roundup(nmax-n0, strategy::out_width()));
@@ -609,7 +598,7 @@ public:
         // Start with actual pretransposed buffer...
         size_t size = roundup(_args._Nsize, strategy::out_width()) * _Ktotal * _args._nmulti * sizeof(Troi);
 
-        // Space for result row pointers (not strictly needed any more but retained for indirect output testing)
+        // Space for result row pointers retained for existing buffer sizing.
         size += _args._Msize * _args._nbatches * _args._nmulti * sizeof(const Tr *);
 
         if (std::is_same<OutputStage, Requantize32>::value) {
