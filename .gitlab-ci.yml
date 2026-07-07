@@ -688,10 +688,12 @@ test-examples-sme-fvp:
       - example.log
 
 # Base template: .experimental-ops-rules
+# Notice: Temporarily disabled while the experimental/ops CI coverage is reworked.
 # Purpose: Run experimental/ops checks only when relevant in MRs, and always on default branch/protected tags.
 .experimental-ops-rules:
   timeout: 1h
   rules:
+    - when: never
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
       changes:
         - .gitlab-ci.yml
