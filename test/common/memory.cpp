@@ -23,6 +23,16 @@ double read_array(DataType type, const void* array, size_t index) {
             return static_cast<float>(read_array<BFloat16<>>(array, index));
         case DataType::I32:
             return read_array<int32_t>(array, index);
+        case DataType::I8:
+            return read_array<int8_t>(array, index);
+        case DataType::U32:
+            return read_array<uint32_t>(array, index);
+        case DataType::U8:
+            return read_array<uint8_t>(array, index);
+        case DataType::U4:
+            return read_array<UInt4>(array, index);
+        case DataType::I4:
+            return read_array<Int4>(array, index);
         case DataType::QAI8:
         case DataType::QSI8:
             return read_array<int8_t>(array, index);
@@ -56,6 +66,26 @@ void write_array(DataType type, void* array, size_t index, double value) {
         }
         case DataType::I32: {
             write_array<int32_t>(array, index, value);
+            return;
+        }
+        case DataType::I8: {
+            write_array<int8_t>(array, index, value);
+            return;
+        }
+        case DataType::U32: {
+            write_array<uint32_t>(array, index, value);
+            return;
+        }
+        case DataType::U8: {
+            write_array<uint8_t>(array, index, value);
+            return;
+        }
+        case DataType::U4: {
+            write_array<UInt4>(array, index, static_cast<UInt4>(value));
+            return;
+        }
+        case DataType::I4: {
+            write_array<Int4>(array, index, static_cast<Int4>(value));
             return;
         }
         case DataType::QAI8:

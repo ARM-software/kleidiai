@@ -88,6 +88,7 @@ KAI_ASM_FUNCTION_LABEL(kai_kernel_matmul_clamp_f32_u8p4vsx4_u8p4vsx4_i32_i32_f32
     stp x24, x25, [sp, 32]
     stp x26, x27, [sp, 48]
     str x28, [sp, 64]
+    str x19, [sp, 136]
     stp d8, d9, [sp, 72]
     stp d10, d11, [sp, 88]
     stp d12, d13, [sp, 104]
@@ -425,6 +426,7 @@ KAI_ASM_LABEL(label_13)             // m_loop: n_loop: post_process_done
     ldp d10, d11, [sp, 88]
     ldp d12, d13, [sp, 104]
     ldp d14, d15, [sp, 120]
+    ldr x19, [sp, 136]
     ldp x20, x21, [sp], 144
     ret
     KAI_ASM_FUNCTION_END(kai_kernel_matmul_clamp_f32_u8p4vsx4_u8p4vsx4_i32_i32_f32_f32_8vsx8vs_qmx_mopa)

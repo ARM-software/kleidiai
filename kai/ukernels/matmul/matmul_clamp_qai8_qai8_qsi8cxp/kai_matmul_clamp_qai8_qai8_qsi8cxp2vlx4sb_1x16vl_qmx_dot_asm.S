@@ -491,6 +491,7 @@ KAI_ASM_LABEL(label_16)  // Width 2: Multiply loop: unique 4: skip row sum
     KAI_ASM_INST(0xa541a9e9)  // ld1w z9.s, p2/Z, [x15, #1, MUL VL]
     KAI_ASM_INST(0xa540aafe)  // ld1w z30.s, p2/Z, [x23]
     KAI_ASM_INST(0xa541aaff)  // ld1w z31.s, p2/Z, [x23, #1, MUL VL]
+    mov x9, x22
     KAI_ASM_INST(0x91000016)  // add x22, x0, #0x0
     KAI_ASM_INST(0x91002015)  // add x21, x0, #0x8
     KAI_ASM_INST(0x91001014)  // add x20, x0, #0x4
@@ -533,8 +534,8 @@ KAI_ASM_LABEL(label_16)  // Width 2: Multiply loop: unique 4: skip row sum
     KAI_ASM_INST(0xe400e9a0)  // st1b { z0.b }, p2, [x13]
     KAI_ASM_INST(0xa540a9f7)  // ld1w z23.s, p2/Z, [x15]
     KAI_ASM_INST(0xa541a9ff)  // ld1w z31.s, p2/Z, [x15, #1, MUL VL]
-    KAI_ASM_INST(0xa540aaf6)  // ld1w z22.s, p2/Z, [x23]
-    KAI_ASM_INST(0xa541aafe)  // ld1w z30.s, p2/Z, [x23, #1, MUL VL]
+    KAI_ASM_INST(0xa540a936)  // ld1w z22.s, p2/Z, [x9]
+    KAI_ASM_INST(0xa541a93e)  // ld1w z30.s, p2/Z, [x9, #1, MUL VL]
     KAI_ASM_INST(0x65970884)  // fmul z4.s, z4.s, z23.s
     KAI_ASM_INST(0x659f08a5)  // fmul z5.s, z5.s, z31.s
     KAI_ASM_INST(0x659608c6)  // fmul z6.s, z6.s, z22.s
@@ -943,8 +944,8 @@ KAI_ASM_LABEL(label_23)  // Width 3: Multiply loop: unique 6: skip row sum
     KAI_ASM_INST(0xe401e9a8)  // st1b	{z8.b}, p2, [x13, #1, mul vl]
     KAI_ASM_INST(0xa540a9e7)  // ld1w	{z7.s}, p2/z, [x15]
     KAI_ASM_INST(0xa541a9ef)  // ld1w	{z15.s}, p2/z, [x15, #1, mul vl]
-    KAI_ASM_INST(0xa540aaf1)  // ld1w	{z17.s}, p2/z, [x23]
-    KAI_ASM_INST(0xa541aaf9)  // ld1w	{z25.s}, p2/z, [x23, #1, mul vl]
+    KAI_ASM_INST(0xa540ab11)  // ld1w	{z17.s}, p2/z, [x24]
+    KAI_ASM_INST(0xa541ab19)  // ld1w	{z25.s}, p2/z, [x24, #1, mul vl]
     KAI_ASM_INST(0x65870b9c)  // fmul	z28.s, z28.s, z7.s
     KAI_ASM_INST(0x658f0bbd)  // fmul	z29.s, z29.s, z15.s
     KAI_ASM_INST(0x65910bde)  // fmul	z30.s, z30.s, z17.s

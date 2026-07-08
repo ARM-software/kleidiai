@@ -14,8 +14,6 @@
 #include "test/common/assert.hpp"
 #include "test/common/span.hpp"
 #include "test/nextgen/harness/tensor.hpp"
-#include "test/nextgen/operators/matmul/matmul_bias_mode.hpp"
-#include "test/nextgen/operators/matmul/matmul_config.hpp"
 #include "test/nextgen/operators/matmul/matmul_dims.hpp"
 #include "test/nextgen/operators/matmul/matmul_main_args.hpp"
 #include "test/nextgen/operators/matmul/matmul_pack_args.hpp"
@@ -32,8 +30,9 @@ std::vector<MatMulSlot> MatMulDqWrapper::run_inputs([[maybe_unused]] ConstTensor
 }
 
 std::vector<MatMulSlot> MatMulDqWrapper::ref_inputs([[maybe_unused]] ConstTensorSet tensors) const {
-    return {MatMulSlot::LHS_QDATA,   MatMulSlot::LHS_QSCALE,   MatMulSlot::LHS_QZP,
-            MatMulSlot::RHS_T_QDATA, MatMulSlot::RHS_T_QSCALE, MatMulSlot::BIAS_DATA};
+    return {
+        MatMulSlot::LHS_QDATA, MatMulSlot::LHS_QSCALE, MatMulSlot::LHS_QZP, MatMulSlot::RHS_T_QDATA,
+        MatMulSlot::RHS_T_QSCALE};
 }
 
 std::vector<size_t> MatMulDqWrapper::steps(MatMulShape shape, [[maybe_unused]] ConstTensorSet tensorsf) const {
@@ -108,13 +107,15 @@ void MatMulDqWrapper::run(
     const Span<const std::byte> packed_rhs_tile = ref_packed_rhs.data().subspan(ref_packed_rhs_offset);
     const Span<std::byte> dst_tile = imp_dst_data.data().subspan(ref_dst_offset);
 
-    const auto& clamp_args = kernel_args.value<MatMulClampArgsF32>();
+    const auto& clamp_args = kernel_args.value<std::optional<MatMulClampArgsF32>>();
+    const float clamp_min =
+        clamp_args.has_value() ? clamp_args.value().clamp_min : std::numeric_limits<float>::lowest();
+    const float clamp_max = clamp_args.has_value() ? clamp_args.value().clamp_max : std::numeric_limits<float>::max();
 
     abi_check([&] {
         m_kernel.run(
             size_m, size_n, size_k, packed_lhs_tile.data(), packed_rhs_tile.data(),
-            reinterpret_cast<float*>(dst_tile.data()), ref_dst_stride_row, ref_dst_stride_col, clamp_args.clamp_min,
-            clamp_args.clamp_max);
+            reinterpret_cast<float*>(dst_tile.data()), ref_dst_stride_row, ref_dst_stride_col, clamp_min, clamp_max);
     });
 }
 

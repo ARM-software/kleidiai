@@ -1230,7 +1230,8 @@ KAI_ASM_LABEL(label_48)  // m_loop: n_loop: post_process_tile3: height_4: proces
 KAI_ASM_LABEL(label_49)  // m_loop: n_loop: post_process_tile3: height_4: done
     cmp x21, #0x2
     bcc label_52
-    KAI_ASM_INST(0xc08600d0)  // mova { z16.s-z17.s }, za3h.s[x12, 0:1]
+    KAI_ASM_INST(0xc0820590)  // mova z16.s, p1/M, za3h.s[x12, 0]
+    KAI_ASM_INST(0xc08205b1)  // mova z17.s, p1/M, za3h.s[x12, 1]
     add x12, x12, #0x2
     scvtf z14.s, p1/m, z16.s
     scvtf z15.s, p1/m, z17.s

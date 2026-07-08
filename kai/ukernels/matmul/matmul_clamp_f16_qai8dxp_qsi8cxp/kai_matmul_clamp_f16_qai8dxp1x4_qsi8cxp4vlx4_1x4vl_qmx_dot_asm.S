@@ -209,6 +209,7 @@ KAI_ASM_LABEL(label_2)          //      Column Loop
     add	x26, x26, x20
     incb  x22, all
     addvl	x27, x27, #0x2
+    cmp	x22, x15
     b.lt	label_2
     ldr	x20, [x0, #0x18]        //      dst_stride_row
     add	x16, x16, x20

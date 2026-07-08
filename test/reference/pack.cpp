@@ -255,6 +255,9 @@ Buffer pack_data_scales(const void* data, const void* scales, size_t height, siz
     return dst;
 }
 
+template Buffer pack_data_scales<UInt4, Float16>(
+    const void* data, const void* scales, size_t height, size_t width, size_t quant_width);
+
 template <typename ZeroPoint, typename Data, typename Scale>
 Buffer pack_zero_points_data_scales_per_block(
     const void* zero_points, const void* data, const void* scales, size_t num_blocks, size_t block_num_zero_points,

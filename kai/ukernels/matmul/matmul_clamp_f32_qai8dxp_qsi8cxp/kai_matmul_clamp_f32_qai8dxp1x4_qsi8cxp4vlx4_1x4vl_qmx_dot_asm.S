@@ -210,6 +210,7 @@ KAI_ASM_LABEL(label_3)          //      Block Loop
     ldr	x20, [x0, #0x48]        //      rhs_stride
     add	x26, x26, x20
     addvl	x22, x22, #0x1
+    cmp	x22, x15
     b.lt	label_2
     ldr	x20, [x0, #0x18]        //      dst_stride_row
     add	x16, x16, x20

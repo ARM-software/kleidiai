@@ -962,7 +962,11 @@ inline const std::array matmul_benchmarks{
         kai_benchmark_matmul<MatMulUkernelApiInterface>,
         kai_matmul_clamp_f32_u8p4vsx4_u8p4vsx4_i32_i32_f32_f32_8vsx8vs_sme2_mopa_interface, DataType::FP32,
         MatMulOp::GEMM, test::cpu_has_sme2),
-    // NOTE: qmx_mopa u8p kernel removed from benchmark - crashes on QMX hardware (psel/VLx2 issue)
+    RegisterBenchmark(
+        "kai_matmul_clamp_f32_u8p4vsx4_u8p4vsx4_i32_i32_f32_f32_8vsx8vs_qmx_mopa",
+        kai_benchmark_matmul<MatMulUkernelApiInterface>,
+        kai_matmul_clamp_f32_u8p4vsx4_u8p4vsx4_i32_i32_f32_f32_8vsx8vs_qmx_mopa_interface, DataType::FP32,
+        MatMulOp::GEMM, test::cpu_has_sme),
 
     // matmul_clamp_f32_qai8dxp_qsu2cxp
     RegisterBenchmark(
@@ -1305,7 +1309,10 @@ inline const std::array matmul_benchmarks{
         "kai_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa", kai_benchmark_matmul<MatMulUkernelApiInterface>,
         kai_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa_interface, DataType::I32, MatMulOp::GEMM,
         test::cpu_has_sme2),
-    // NOTE: qmx_mopa i32_u8p kernel removed from benchmark - crashes on QMX hardware (psel/VLx2 issue)
+    RegisterBenchmark(
+        "kai_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_qmx_mopa", kai_benchmark_matmul<MatMulUkernelApiInterface>,
+        kai_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_qmx_mopa_interface, DataType::I32, MatMulOp::GEMM,
+        test::cpu_has_sme),
 
     // matmul_clamp_bf16_qai8dxp_qsi4c32p
     RegisterBenchmark(
