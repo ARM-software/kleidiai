@@ -36,6 +36,7 @@
 #include "kai/ukernels/matmul/matmul_clamp_f16_f16p_f16p/kai_matmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f16_f16p_f16p/kai_matmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi4cxp/kai_matmul_clamp_f16_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa.h"
+#include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi4cxp/kai_matmul_clamp_f16_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot.h"
 #include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi4cxp/kai_matmul_clamp_f16_qai8dxp1x4_qsi4cxp4x4_1x4_neon_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi4cxp/kai_matmul_clamp_f16_qai8dxp1x8_qsi4cxp4x8_1x4_neon_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi4cxp/kai_matmul_clamp_f16_qai8dxp4x4_qsi4cxp4x4_16x4_neon_dotprod.h"
@@ -201,6 +202,27 @@ inline const PackMatMulEntry kai_matmul_clamp_f16_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx
         kai_get_lhs_packed_offset_matmul_clamp_f16_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa,
     .run_pack_matmul = run_pack_matmul_base<
         kai_run_lhs_quant_pack_qai8dxp_f16_neon, kai_run_matmul_clamp_f16_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa>,
+};
+
+inline const PackMatMulEntry kai_matmul_clamp_f16_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot_lhs_pack_entry{
+    .benchmark_name =
+        "kai_pack_matmul/kai_matmul_clamp_f16_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot/"
+        "kai_lhs_quant_pack_qai8dxp_f16_neon",
+    .matmul_name = "kai_matmul_clamp_f16_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot",
+    .lhs_type = DataType::FP16,
+    .dst_type = DataType::FP16,
+    .matmul_op = PackMatMulOp::GEMV,
+    .needs_block_size = false,
+    .is_cpu_supported = test::cpu_has_sme2,
+    .get_mr = kai_get_mr_matmul_clamp_f16_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot,
+    .get_kr = kai_get_kr_matmul_clamp_f16_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot,
+    .get_sr = kai_get_sr_matmul_clamp_f16_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot,
+    .get_lhs_offset = kai_get_lhs_offset_lhs_quant_pack_qai8dxp_f16_neon,
+    .get_lhs_packed_offset = kai_get_lhs_packed_offset_lhs_quant_pack_qai8dxp_f16_neon,
+    .get_lhs_packed_size = kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp_f16_neon,
+    .get_matmul_lhs_packed_offset = kai_get_lhs_packed_offset_matmul_clamp_f16_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot,
+    .run_pack_matmul = run_pack_matmul_base<
+        kai_run_lhs_quant_pack_qai8dxp_f16_neon, kai_run_matmul_clamp_f16_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot>,
 };
 
 inline const PackMatMulEntry kai_matmul_clamp_f16_qai8dxp1x4_qsi4cxp4x4_1x4_neon_dotprod_lhs_pack_entry{
@@ -700,7 +722,7 @@ PackMatMulRegistryEntry RegisterPackMatMulBenchmarkEntry(const PackMatMulEntry& 
     };
 }
 
-inline const std::array<PackMatMulRegistryEntry, 29> pack_matmul_entries{
+inline const std::array<PackMatMulRegistryEntry, 30> pack_matmul_entries{
     {
         RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f16_bf16p8x4_bf16p12x4b_8x12_neon_mmla_lhs_pack_entry),
         RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa_lhs_pack_entry),
@@ -725,6 +747,7 @@ inline const std::array<PackMatMulRegistryEntry, 29> pack_matmul_entries{
         RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_bf16_qai8dxp4x8_qsi4cxp8x8_8x8_neon_i8mm_lhs_pack_entry),
         RegisterPackMatMulBenchmarkEntry(
             kai_matmul_clamp_f16_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa_lhs_pack_entry),
+        RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f16_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot_lhs_pack_entry),
         RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f16_qai8dxp1x4_qsi4cxp4x4_1x4_neon_dotprod_lhs_pack_entry),
         RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f16_qai8dxp1x8_qsi4cxp4x8_1x4_neon_dotprod_lhs_pack_entry),
         RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f16_qai8dxp4x4_qsi4cxp4x4_16x4_neon_dotprod_lhs_pack_entry),
