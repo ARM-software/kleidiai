@@ -7,26 +7,6 @@
 // + SPDX-License-Identifier: BSD-3-Clause-Clear
 //
 
-// Load 4 consecutive half-word vectors from addr into reg1..reg4
-.macro ld1h_4, reg1, reg2, reg3, reg4, pred, addr
-ld1h \reg1, \pred/Z, [\addr]
-ld1h \reg2, \pred/Z, [\addr, #1, MUL VL]
-ld1h \reg3, \pred/Z, [\addr, #2, MUL VL]
-ld1h \reg4, \pred/Z, [\addr, #3, MUL VL]
-.endm
-
-// Clamp 4 FP16 SVE registers to [min_val, max_val]
-// min_val = z15.h (loaded from clamp_min), max_val = z13.h (loaded from clamp_max)
-.macro clamp_float_4_h reg1, reg2, reg3, reg4, min_val, max_val, pred
-FMIN \reg1, \pred/M, \reg1, \max_val
-FMIN \reg2, \pred/M, \reg2, \max_val
-FMIN \reg3, \pred/M, \reg3, \max_val
-FMIN \reg4, \pred/M, \reg4, \max_val
-FMAX \reg1, \pred/M, \reg1, \min_val
-FMAX \reg2, \pred/M, \reg2, \min_val
-FMAX \reg3, \pred/M, \reg3, \min_val
-FMAX \reg4, \pred/M, \reg4, \min_val
-.endm
 
 #if defined(_MSC_VER) && !defined(__clang__)
     #define KAI_ASM_GLOBAL(name) GLOBAL name
@@ -84,7 +64,7 @@ KAI_ASM_FUNCTION_LABEL(kai_kernel_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_qmx
     stp d12, d13, [sp, 104]
     stp d14, d15, [sp, 120]
     ldr x8, [x0, #0x130]
-    SMSTART                                          // QMX: full SME state (vs SMSTART ZA in SME2)
+    KAI_ASM_INST(0xd503477f)        // SMSTART                                          // QMX: full SME state (vs SMSTART ZA in SME2)
     add x17, x0, #0x8
     mov x16, #0
     ptrue p3.b
@@ -93,17 +73,23 @@ KAI_ASM_FUNCTION_LABEL(kai_kernel_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_qmx
     ldp x21, x20, [x17, #0x10]
     cnth x15
     whilelt p2.h, XZR, x1
-    ld1rh { z15.h }, p3/Z, [x0]                     // QMX: direct mnemonic (clamp_min broadcast)
+    KAI_ASM_INST(0x84c0ac0f)        // ld1rh { z15.h }, p3/Z, [x0]                     // QMX: direct mnemonic (clamp_min broadcast)
     ld1h { z14.h }, p3/Z, [x8]
     addvl x8, x8, #1
     cmp x15, x1
     ldr x14, [x0, #0x128]
-    ld1h_4 z0.h, z1.h, z2.h, z3.h, p3, x8          // QMX: individual loads (weights 0-3)
+    KAI_ASM_INST(0xa4a0ad00)        // ld1h z0.h, p3/Z, [x8]
+    KAI_ASM_INST(0xa4a1ad01)        // ld1h z1.h, p3/Z, [x8, #1, MUL VL]
+    KAI_ASM_INST(0xa4a2ad02)        // ld1h z2.h, p3/Z, [x8, #2, MUL VL]
+    KAI_ASM_INST(0xa4a3ad03)        // ld1h z3.h, p3/Z, [x8, #3, MUL VL]
     addvl x8, x8, #4
     sub x13, XZR, x15
-    ld1h_4 z4.h, z5.h, z6.h, z7.h, p3, x8          // QMX: individual loads (weights 4-7)
+    KAI_ASM_INST(0xa4a0ad04)        // ld1h z4.h, p3/Z, [x8]
+    KAI_ASM_INST(0xa4a1ad05)        // ld1h z5.h, p3/Z, [x8, #1, MUL VL]
+    KAI_ASM_INST(0xa4a2ad06)        // ld1h z6.h, p3/Z, [x8, #2, MUL VL]
+    KAI_ASM_INST(0xa4a3ad07)        // ld1h z7.h, p3/Z, [x8, #3, MUL VL]
     addvl x8, x8, #4
-    ld1rh { z13.h }, p3/Z, [x0, #2]                 // QMX: direct mnemonic (clamp_max broadcast)
+    KAI_ASM_INST(0x84c1ac0d)        // ld1rh { z13.h }, p3/Z, [x0, #2]                 // QMX: direct mnemonic (clamp_max broadcast)
     ld1h { z8.h }, p3/Z, [x8]
     addvl x8, x8, #1
     ld1h { z9.h }, p2/Z, [x23, x16, LSL #1]
@@ -342,7 +328,14 @@ KAI_ASM_LABEL(label_1)  // Channel loop
     fmla z23.h, p3/M, z1.h, z11.h
     fmla z26.h, p3/M, z8.h, z10.h
     inch x16
-    clamp_float_4_h z16.h, z17.h, z18.h, z19.h, z15.h, z13.h, p3  // QMX: FMIN/FMAX (vs fclamp)
+    KAI_ASM_INST(0x65478db0)        // FMIN z16.h, p3/M, z16.h, z13.h
+    KAI_ASM_INST(0x65478db1)        // FMIN z17.h, p3/M, z17.h, z13.h
+    KAI_ASM_INST(0x65478db2)        // FMIN z18.h, p3/M, z18.h, z13.h
+    KAI_ASM_INST(0x65478db3)        // FMIN z19.h, p3/M, z19.h, z13.h
+    KAI_ASM_INST(0x65468df0)        // FMAX z16.h, p3/M, z16.h, z15.h
+    KAI_ASM_INST(0x65468df1)        // FMAX z17.h, p3/M, z17.h, z15.h
+    KAI_ASM_INST(0x65468df2)        // FMAX z18.h, p3/M, z18.h, z15.h
+    KAI_ASM_INST(0x65468df3)        // FMAX z19.h, p3/M, z19.h, z15.h
     fmla z27.h, p3/M, z7.h, z10.h
     whilelt p2.h, x16, x1
     fmla z24.h, p3/M, z7.h, z12.h
@@ -351,9 +344,19 @@ KAI_ASM_LABEL(label_1)  // Channel loop
     fmla z28.h, p3/M, z4.h, z12.h
     fmla z29.h, p3/M, z3.h, z12.h
     ld1h { z12.h }, p0/Z, [x20, x15, LSL #1]
-    clamp_float_4_h z20.h, z21.h, z22.h, z23.h, z15.h, z13.h, p3  // QMX: FMIN/FMAX (vs fclamp)
+    KAI_ASM_INST(0x65478db4)        // FMIN z20.h, p3/M, z20.h, z13.h
+    KAI_ASM_INST(0x65478db5)        // FMIN z21.h, p3/M, z21.h, z13.h
+    KAI_ASM_INST(0x65478db6)        // FMIN z22.h, p3/M, z22.h, z13.h
+    KAI_ASM_INST(0x65478db7)        // FMIN z23.h, p3/M, z23.h, z13.h
+    KAI_ASM_INST(0x65468df4)        // FMAX z20.h, p3/M, z20.h, z15.h
+    KAI_ASM_INST(0x65468df5)        // FMAX z21.h, p3/M, z21.h, z15.h
+    KAI_ASM_INST(0x65468df6)        // FMAX z22.h, p3/M, z22.h, z15.h
+    KAI_ASM_INST(0x65468df7)        // FMAX z23.h, p3/M, z23.h, z15.h
     fmla z30.h, p3/M, z5.h, z10.h
-    ld1h_4 z0.h, z1.h, z2.h, z3.h, p3, x8                          // QMX: individual loads
+    KAI_ASM_INST(0xa4a0ad00)        // ld1h z0.h, p3/Z, [x8]
+    KAI_ASM_INST(0xa4a1ad01)        // ld1h z1.h, p3/Z, [x8, #1, MUL VL]
+    KAI_ASM_INST(0xa4a2ad02)        // ld1h z2.h, p3/Z, [x8, #2, MUL VL]
+    KAI_ASM_INST(0xa4a3ad03)        // ld1h z3.h, p3/Z, [x8, #3, MUL VL]
     addvl x8, x8, #4
     st1h { z16.h }, p1, [x12, x13, LSL #1]
     ldr x23, [x14, #0x20]
@@ -361,11 +364,21 @@ KAI_ASM_LABEL(label_1)  // Channel loop
     ld1h { z10.h }, p0/Z, [x22, x15, LSL #1]
     st1h { z17.h }, p1, [x11, x13, LSL #1]
     ldr x22, [x14, #0x28]
-    clamp_float_4_h z24.h, z25.h, z26.h, z27.h, z15.h, z13.h, p3  // QMX: FMIN/FMAX (vs fclamp)
+    KAI_ASM_INST(0x65478db8)        // FMIN z24.h, p3/M, z24.h, z13.h
+    KAI_ASM_INST(0x65478db9)        // FMIN z25.h, p3/M, z25.h, z13.h
+    KAI_ASM_INST(0x65478dba)        // FMIN z26.h, p3/M, z26.h, z13.h
+    KAI_ASM_INST(0x65478dbb)        // FMIN z27.h, p3/M, z27.h, z13.h
+    KAI_ASM_INST(0x65468df8)        // FMAX z24.h, p3/M, z24.h, z15.h
+    KAI_ASM_INST(0x65468df9)        // FMAX z25.h, p3/M, z25.h, z15.h
+    KAI_ASM_INST(0x65468dfa)        // FMAX z26.h, p3/M, z26.h, z15.h
+    KAI_ASM_INST(0x65468dfb)        // FMAX z27.h, p3/M, z27.h, z15.h
     inch x15
     st1h { z18.h }, p1, [x10, x13, LSL #1]
     ldr x21, [x14, #0x30]
-    ld1h_4 z4.h, z5.h, z6.h, z7.h, p3, x8                          // QMX: individual loads
+    KAI_ASM_INST(0xa4a0ad04)        // ld1h z4.h, p3/Z, [x8]
+    KAI_ASM_INST(0xa4a1ad05)        // ld1h z5.h, p3/Z, [x8, #1, MUL VL]
+    KAI_ASM_INST(0xa4a2ad06)        // ld1h z6.h, p3/Z, [x8, #2, MUL VL]
+    KAI_ASM_INST(0xa4a3ad07)        // ld1h z7.h, p3/Z, [x8, #3, MUL VL]
     addvl x8, x8, #4
     st1h { z19.h }, p1, [x9, x13, LSL #1]
     ldr x20, [x14, #0x38]
@@ -373,7 +386,14 @@ KAI_ASM_LABEL(label_1)  // Channel loop
     ld1h { z8.h }, p3/Z, [x8]
     st1h { z20.h }, p1, [x23, x13, LSL #1]
     ldr x23, [x14, #0x40]
-    clamp_float_4_h z28.h, z29.h, z30.h, z31.h, z15.h, z13.h, p3  // QMX: FMIN/FMAX (vs fclamp)
+    KAI_ASM_INST(0x65478dbc)        // FMIN z28.h, p3/M, z28.h, z13.h
+    KAI_ASM_INST(0x65478dbd)        // FMIN z29.h, p3/M, z29.h, z13.h
+    KAI_ASM_INST(0x65478dbe)        // FMIN z30.h, p3/M, z30.h, z13.h
+    KAI_ASM_INST(0x65478dbf)        // FMIN z31.h, p3/M, z31.h, z13.h
+    KAI_ASM_INST(0x65468dfc)        // FMAX z28.h, p3/M, z28.h, z15.h
+    KAI_ASM_INST(0x65468dfd)        // FMAX z29.h, p3/M, z29.h, z15.h
+    KAI_ASM_INST(0x65468dfe)        // FMAX z30.h, p3/M, z30.h, z15.h
+    KAI_ASM_INST(0x65468dff)        // FMAX z31.h, p3/M, z31.h, z15.h
     addvl x8, x8, #1
     st1h { z21.h }, p1, [x22, x13, LSL #1]
     ldr x22, [x14, #0x48]
@@ -618,27 +638,55 @@ KAI_ASM_LABEL(label_2)  // Channel tail
     ld1h { z12.h }, p2/Z, [x21, x16, LSL #1]
     fmla z23.h, p3/M, z1.h, z11.h
     fmla z26.h, p3/M, z8.h, z10.h
-    clamp_float_4_h z16.h, z17.h, z18.h, z19.h, z15.h, z13.h, p3  // QMX: FMIN/FMAX (vs fclamp)
+    KAI_ASM_INST(0x65478db0)        // FMIN z16.h, p3/M, z16.h, z13.h
+    KAI_ASM_INST(0x65478db1)        // FMIN z17.h, p3/M, z17.h, z13.h
+    KAI_ASM_INST(0x65478db2)        // FMIN z18.h, p3/M, z18.h, z13.h
+    KAI_ASM_INST(0x65478db3)        // FMIN z19.h, p3/M, z19.h, z13.h
+    KAI_ASM_INST(0x65468df0)        // FMAX z16.h, p3/M, z16.h, z15.h
+    KAI_ASM_INST(0x65468df1)        // FMAX z17.h, p3/M, z17.h, z15.h
+    KAI_ASM_INST(0x65468df2)        // FMAX z18.h, p3/M, z18.h, z15.h
+    KAI_ASM_INST(0x65468df3)        // FMAX z19.h, p3/M, z19.h, z15.h
     fmla z27.h, p3/M, z7.h, z10.h
     fmla z24.h, p3/M, z7.h, z12.h
     fmla z25.h, p3/M, z6.h, z12.h
     fmla z28.h, p3/M, z4.h, z12.h
     fmla z29.h, p3/M, z3.h, z12.h
-    clamp_float_4_h z20.h, z21.h, z22.h, z23.h, z15.h, z13.h, p3  // QMX: FMIN/FMAX (vs fclamp)
+    KAI_ASM_INST(0x65478db4)        // FMIN z20.h, p3/M, z20.h, z13.h
+    KAI_ASM_INST(0x65478db5)        // FMIN z21.h, p3/M, z21.h, z13.h
+    KAI_ASM_INST(0x65478db6)        // FMIN z22.h, p3/M, z22.h, z13.h
+    KAI_ASM_INST(0x65478db7)        // FMIN z23.h, p3/M, z23.h, z13.h
+    KAI_ASM_INST(0x65468df4)        // FMAX z20.h, p3/M, z20.h, z15.h
+    KAI_ASM_INST(0x65468df5)        // FMAX z21.h, p3/M, z21.h, z15.h
+    KAI_ASM_INST(0x65468df6)        // FMAX z22.h, p3/M, z22.h, z15.h
+    KAI_ASM_INST(0x65468df7)        // FMAX z23.h, p3/M, z23.h, z15.h
     fmla z30.h, p3/M, z5.h, z10.h
     st1h { z16.h }, p0, [x12, x13, LSL #1]
     ldr x23, [x14, #0x20]
     fmla z31.h, p3/M, z4.h, z10.h
     st1h { z17.h }, p0, [x11, x13, LSL #1]
     ldr x22, [x14, #0x28]
-    clamp_float_4_h z24.h, z25.h, z26.h, z27.h, z15.h, z13.h, p3  // QMX: FMIN/FMAX (vs fclamp)
+    KAI_ASM_INST(0x65478db8)        // FMIN z24.h, p3/M, z24.h, z13.h
+    KAI_ASM_INST(0x65478db9)        // FMIN z25.h, p3/M, z25.h, z13.h
+    KAI_ASM_INST(0x65478dba)        // FMIN z26.h, p3/M, z26.h, z13.h
+    KAI_ASM_INST(0x65478dbb)        // FMIN z27.h, p3/M, z27.h, z13.h
+    KAI_ASM_INST(0x65468df8)        // FMAX z24.h, p3/M, z24.h, z15.h
+    KAI_ASM_INST(0x65468df9)        // FMAX z25.h, p3/M, z25.h, z15.h
+    KAI_ASM_INST(0x65468dfa)        // FMAX z26.h, p3/M, z26.h, z15.h
+    KAI_ASM_INST(0x65468dfb)        // FMAX z27.h, p3/M, z27.h, z15.h
     st1h { z18.h }, p0, [x10, x13, LSL #1]
     ldr x21, [x14, #0x30]
     st1h { z19.h }, p0, [x9, x13, LSL #1]
     ldr x20, [x14, #0x38]
     st1h { z20.h }, p0, [x23, x13, LSL #1]
     ldr x23, [x14, #0x40]
-    clamp_float_4_h z28.h, z29.h, z30.h, z31.h, z15.h, z13.h, p3  // QMX: FMIN/FMAX (vs fclamp)
+    KAI_ASM_INST(0x65478dbc)        // FMIN z28.h, p3/M, z28.h, z13.h
+    KAI_ASM_INST(0x65478dbd)        // FMIN z29.h, p3/M, z29.h, z13.h
+    KAI_ASM_INST(0x65478dbe)        // FMIN z30.h, p3/M, z30.h, z13.h
+    KAI_ASM_INST(0x65478dbf)        // FMIN z31.h, p3/M, z31.h, z13.h
+    KAI_ASM_INST(0x65468dfc)        // FMAX z28.h, p3/M, z28.h, z15.h
+    KAI_ASM_INST(0x65468dfd)        // FMAX z29.h, p3/M, z29.h, z15.h
+    KAI_ASM_INST(0x65468dfe)        // FMAX z30.h, p3/M, z30.h, z15.h
+    KAI_ASM_INST(0x65468dff)        // FMAX z31.h, p3/M, z31.h, z15.h
     st1h { z21.h }, p0, [x22, x13, LSL #1]
     ldr x22, [x14, #0x48]
     st1h { z22.h }, p0, [x21, x13, LSL #1]
@@ -657,7 +705,7 @@ KAI_ASM_LABEL(label_2)  // Channel tail
     st1h { z29.h }, p0, [x22, x13, LSL #1]
     st1h { z30.h }, p0, [x21, x13, LSL #1]
     st1h { z31.h }, p0, [x20, x13, LSL #1]
-    SMSTOP                                           // QMX: direct mnemonic (vs hex encoding)
+    KAI_ASM_INST(0xd503467f)        // SMSTOP                                           // QMX: direct mnemonic (vs hex encoding)
     ldp x22, x23, [sp, 16]
     ldp x24, x25, [sp, 32]
     ldp x26, x27, [sp, 48]
