@@ -297,7 +297,7 @@ TEST_P(MatMulTest_f32_f16p_qsi4c32p, EndToEnd) {
     const F32F16pQsi4c32pCacheData& test_data = getV<F32F16pQsi4c32pCacheDataId, F32F16pQsi4c32pCacheData>(id);
 
     // This test should only test GEMM and not GEMV
-    KAI_ASSERT_ALWAYS(!(mr == 1 && M > 1));
+    ASSERT_TRUE(!(mr == 1 && M > 1));
 
     auto m_step = ukernel_variant.ukernel.interface.get_m_step();
     ASSERT_TRUE(m_step % mr == 0);
