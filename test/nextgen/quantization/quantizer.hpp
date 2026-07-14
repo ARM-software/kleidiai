@@ -7,6 +7,7 @@
 #pragma once
 
 #include <cstddef>
+#include <string>
 
 #include "test/common/buffer.hpp"
 #include "test/common/data_type.hpp"
@@ -25,6 +26,7 @@ public:
     Quantizer(Quantizer&&) = default;                 ///< Move constructor.
     Quantizer& operator=(Quantizer&&) = default;      ///< Move assignment.
 
+    [[nodiscard]] virtual std::string uid() const = 0;
     /// Dynamically quantizes the data.
     ///
     /// This method determines the quantization information automatically from the input data.

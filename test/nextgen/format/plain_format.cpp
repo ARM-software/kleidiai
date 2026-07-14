@@ -115,6 +115,10 @@ void PlainFormat::print(std::ostream& os, Shape shape, Span<const std::byte> dat
     }
 }
 
+std::string PlainFormat::uid() const {
+    return data_type_uid(m_dtype);
+}
+
 bool PlainFormat::operator==(const Format& other) const {
     const auto* rhs = dynamic_cast<const PlainFormat*>(&other);
     return rhs != nullptr && m_dtype == rhs->m_dtype;

@@ -9,6 +9,9 @@
 #include <algorithm>
 #include <cstddef>
 #include <optional>
+#include <ostream>
+#include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -92,6 +95,17 @@ public:
         return m_data.data();
     }
 
+    [[nodiscard]] std::string_view id() const {
+        KAI_TEST_ASSERT_MSG(!m_id.empty(), "Tensor ID must not be empty.");
+        return m_id;
+    }
+
+    void set_id(const std::string& id) {
+        KAI_TEST_ASSERT_MSG(!id.empty(), "Tensor ID must not be empty.");
+        KAI_TEST_ASSERT_MSG(m_id.empty() || m_id == id, "Tensor ID must not be changed.");
+        m_id = id;
+    }
+
     /// Gets the value in custom format.
     template <typename T>
     [[nodiscard]] const T& value() const {
@@ -137,9 +151,14 @@ public:
     /// Sets the data buffer.
     ///
     /// The new data buffer must have the right size.
-    void set_data(Buffer&& buffer) {
+    void set_data(Buffer&& buffer, std::string id = {}) {
         [[maybe_unused]] const size_t size = compute_size();
         KAI_TEST_ASSERT_MSG(buffer.size() == size, "New data buffer must have the right size.");
+
+        if (!id.empty()) {
+            set_id(id);
+        }
+
         m_data = std::move(buffer);
     }
 
@@ -160,6 +179,7 @@ private:
     std::vector<size_t> m_shape;
     std::optional<Poly<Format>> m_format;
     Buffer m_data;
+    std::string m_id;
 };
 
 /// Helper class for allowing MatMulSlot to be used as index.

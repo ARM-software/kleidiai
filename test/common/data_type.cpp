@@ -8,6 +8,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
 
 #include "kai/kai_common.h"
 #include "test/common/assert.hpp"
@@ -84,6 +85,44 @@ size_t data_type_size_in_bits(DataType dt) {
 
 size_t data_type_array_size_in_bytes(DataType dt, size_t len) {
     return kai_div_ceil(bits(dt) * len, 8);
+}
+
+std::string data_type_uid(DataType dt) {
+    switch (dt) {
+        case DataType::FP32:
+            return "f32";
+        case DataType::FP16:
+            return "f16";
+        case DataType::BF16:
+            return "bf16";
+        case DataType::I32:
+            return "i32";
+        case DataType::I8:
+            return "i8";
+        case DataType::I4:
+            return "i4";
+        case DataType::U32:
+            return "u32";
+        case DataType::U8:
+            return "u8";
+        case DataType::U4:
+            return "u4";
+        case DataType::QAI8:
+            return "qai8";
+        case DataType::QSI8:
+            return "qsi8";
+        case DataType::QSU4:
+            return "qsu4";
+        case DataType::QSI4:
+            return "qsi4";
+        case DataType::QAI4:
+            return "qai4";
+        case DataType::QSI2:
+            return "qsi2";
+        case DataType::UNKNOWN:
+        default:
+            KAI_TEST_ERROR("Unsupported data type.");
+    }
 }
 
 bool data_type_is_integral(DataType dt) {

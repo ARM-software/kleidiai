@@ -38,6 +38,7 @@ public:
         return m_dtype;
     }
 
+    [[nodiscard]] std::string uid() const override;
     [[nodiscard]] size_t compute_offset(Shape shape, Span<const size_t> indices) const override;
     [[nodiscard]] size_t compute_size(Shape shape) const override;
     [[nodiscard]] Buffer generate(Shape shape, const GeneratorFn& generator) const override;

@@ -10,6 +10,7 @@
 #include <array>
 #include <cstddef>
 #include <ostream>
+#include <string>
 #include <vector>
 
 #include "test/common/assert.hpp"
@@ -337,9 +338,42 @@ void Block2dRowFormat::print(std::ostream& os, Shape shape, Span<const std::byte
     }
 }
 
+std::string Block2dRowFormat::uid() const {
+    std::string uid = "block2d_row";
+    uid += "_" + std::to_string(m_block_height) + "x" + std::to_string(m_block_width);
+    uid += "_wa" + std::to_string(m_width_align);
+    uid += (m_pad_right_same ? "_same" : "_zero");
+
+    uid += "_" + data_type_uid(m_dtype);
+
+    if (!m_pre_dtypes.empty()) {
+        uid += "_pre";
+        for (DataType dt : m_pre_dtypes) {
+            uid += "_" + data_type_uid(dt);
+        }
+    }
+
+    if (!m_post_dtypes.empty()) {
+        uid += "_post";
+        for (DataType dt : m_post_dtypes) {
+            uid += "_" + data_type_uid(dt);
+        }
+    }
+
+    return uid;
+}
+
 bool Block2dRowFormat::operator==(const Format& other) const {
     const auto* rhs = dynamic_cast<const Block2dRowFormat*>(&other);
-    return rhs != nullptr && m_dtype == rhs->m_dtype;
+
+    return rhs != nullptr &&                          //
+        m_block_height == rhs->m_block_height &&      //
+        m_block_width == rhs->m_block_width &&        //
+        m_width_align == rhs->m_width_align &&        //
+        m_pad_right_same == rhs->m_pad_right_same &&  //
+        m_dtype == rhs->m_dtype &&                    //
+        m_pre_dtypes == rhs->m_pre_dtypes &&          //
+        m_post_dtypes == rhs->m_post_dtypes;
 }
 
 }  // namespace kai::test
