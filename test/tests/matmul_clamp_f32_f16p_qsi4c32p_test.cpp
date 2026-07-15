@@ -62,8 +62,8 @@ F32F16pQsi4c32pCacheData ReferenceGenerator<F32F16pQsi4c32pCacheDataId, F32F16pQ
 
     auto& feed = seed_stream(key);
 
-    Buffer lhs = fill_matrix_random(shape.m, shape.k, lhs_format, feed());
-    Buffer rhs = fill_matrix_random(shape.k, shape.n, rhs_format, feed());
+    Buffer lhs = fill_matrix_random(shape.m, shape.k, lhs_format, feed(), -3, 2);
+    Buffer rhs = fill_matrix_random(shape.k, shape.n, rhs_format, feed(), -3, 2);
 
     const auto ref_lhs_qvalues = cast<Float16, float>(lhs.data(), shape.m * shape.k);
     QuantizationInfo rhs_qinfo{};
