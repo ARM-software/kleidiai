@@ -58,7 +58,7 @@ set(GEMM_EXEC_INCLUDE_DIRS
 # The 'gemm' benchmarking executable
 add_executable(gemm ${GEMM_SOURCES})
 target_link_libraries(gemm PRIVATE kleidiai_ops)
-target_compile_options(gemm PRIVATE "${KLEIDIAI_OPS_ARCH};${KLEIDIAI_OPS_CCXX_FLAGS}")
+target_compile_options(gemm PRIVATE ${KLEIDIAI_OPS_ARCH} ${KLEIDIAI_OPS_CCXX_FLAGS})
 target_compile_definitions(gemm PRIVATE "${KLEIDIAI_OPS_COMPILE_DEFINES}")
 target_include_directories(gemm PRIVATE ${GEMM_EXEC_INCLUDE_DIRS})
 set_target_properties(
@@ -72,7 +72,6 @@ set_target_properties(
 
 # Suppress warnings
 include(CheckCXXCompilerFlag)
-check_cxx_compiler_flag(-Wno-format HAS_WNO_FORMAT)
 check_cxx_compiler_flag(-Wno-psabi HAS_WNO_PSABI)
 check_cxx_compiler_flag(-Wno-unused-result HAS_WNO_UNUSED_RESULT)
 target_compile_options(

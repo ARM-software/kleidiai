@@ -7,6 +7,7 @@
 #pragma once
 
 #include <cassert>
+#include <cinttypes>
 #include <cstring>
 
 #include "barrier.hpp"
@@ -123,7 +124,7 @@ public:
 
         if (!success)
         {
-          printf("Winograd: Unsupported kernel size: %ldx%ld.\n",p->kernel_height, p->kernel_width);
+          printf("Winograd: Unsupported kernel size: %" PRId64 "x%" PRId64 ".\n",p->kernel_height, p->kernel_width);
           exit(1);
         }
         else

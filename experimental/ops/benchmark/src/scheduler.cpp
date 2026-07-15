@@ -166,10 +166,9 @@ class taskmaster_scheduler::thread_queue {
 private:
     // Class to maintain a head/tail pointer that should occupy its own
     // cache line (assumes 64 byte cache lines)
-    class ht_ptr {
+    class alignas(64) ht_ptr {
     private:
         volatile uint64_t  m_value;
-        uint64_t           padding[7] = {};
 
     public:
         ht_ptr() : m_value(0) { }
@@ -182,6 +181,9 @@ private:
             return m_value++;
         }
     };
+
+    static_assert(alignof(ht_ptr) == 64, "ht_ptr must be cache-line aligned");
+    static_assert(sizeof(ht_ptr) == 64, "ht_ptr must occupy one cache line");
 
     ht_ptr        m_head;
     ht_ptr        m_tail;

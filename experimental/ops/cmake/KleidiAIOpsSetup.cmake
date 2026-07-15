@@ -72,10 +72,51 @@ endif()
 
 # -------------------------------------------------------------------------------------------------
 
+if(MSVC)
+    # We don't currently provide support for MSVC, but when we do, we likely want to use /Wall
+    set(KLEIDIAI_OPS_WARNING_FLAGS_BASE "/Wall")
+else()
+    set(KLEIDIAI_OPS_WARNING_FLAGS_BASE
+        "-Wall"
+        "-Wdisabled-optimization"
+        "-Wextra"
+        "-Wformat-security"
+        "-Wformat=2"
+        "-Winit-self"
+        "-Wstrict-overflow=2"
+        "-Wswitch-default"
+        "-Wcast-qual"
+    )
+
+    # C only flags not present in C++
+    set(KLEIDIAI_OPS_WARNING_FLAGS_C
+        "-Wmissing-prototypes"
+        "-Wstrict-prototypes"
+    )
+
+    set(KLEIDIAI_OPS_WARNING_FLAGS_CXX
+        "-Wctor-dtor-privacy"
+        "-Woverloaded-virtual"
+        "-Wsign-promo"
+        "-Wno-missing-declarations"
+        "-Wno-unused-parameter"
+    )
+
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        list(APPEND KLEIDIAI_OPS_WARNING_FLAGS_CXX "-Wno-unused-private-field")
+    endif()
+endif()
+
+# Warning flags
+set(KLEIDIAI_OPS_WARNING_FLAGS
+    ${KLEIDIAI_OPS_WARNING_FLAGS_BASE} $<$<COMPILE_LANGUAGE:C>:${KLEIDIAI_OPS_WARNING_FLAGS_C}>
+    $<$<COMPILE_LANGUAGE:CXX>:${KLEIDIAI_OPS_WARNING_FLAGS_CXX}>)
+
 # C/C++ flags
 set(KLEIDIAI_OPS_CCXX_FLAGS
     ${KLEIDIAI_OPS_CCXX_FLAGS_INIT}
     $<IF:$<CONFIG:Debug>,${KLEIDIAI_OPS_CCXX_FLAGS_DEBUG},${KLEIDIAI_OPS_CCXX_FLAGS_RELEASE}>
+    ${KLEIDIAI_OPS_WARNING_FLAGS}
     CACHE STRING "")
 
 # Linker flags

@@ -199,6 +199,9 @@ public:
                     p->kernel_height = 1;
                     p->kernel_width = 7;
                     break;
+                default:
+                    UNREACHABLE("Impossible");
+                    break;
             }
         }
 

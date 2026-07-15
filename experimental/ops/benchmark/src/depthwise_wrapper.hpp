@@ -7,6 +7,7 @@
 #pragma once
 
 #include <cassert>
+#include <cinttypes>
 #include <cstring>
 #include <type_traits>
 
@@ -70,7 +71,7 @@ class depthwise_wrapper {
     // Check for a valid problem
     if (p->input_channels != p->groups)
     {
-      printf("Depthwise: Input channels (%ld) != number of groups (%ld)\n", p->input_channels, p->groups);
+      printf("Depthwise: Input channels (%" PRId64 ") != number of groups (%" PRId64 ")\n", p->input_channels, p->groups);
       exit(1);
     }
 

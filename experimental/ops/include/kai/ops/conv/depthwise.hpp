@@ -130,7 +130,7 @@ struct Tile {
         }
 
         do_premultiply<TInput>(
-            (TInput *) input + std::max(input_i, 0)*ld_row + std::max(input_j, 0)*ld_col,
+            input + std::max(input_i, 0)*ld_row + std::max(input_j, 0)*ld_col,
             ld_row, ld_col,
             array + pad_top * tile_cols * tile_channels + pad_left * tile_channels,
             tile_cols * tile_channels, tile_channels,
