@@ -8,7 +8,7 @@
 #error This file must be compiled for AArch64, FEAT_SVE2.
 #else  // Architectural features check.
 
-#include "kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme1_mla.h"
+#include "kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -39,41 +39,41 @@ typedef struct {
     size_t n_channels;
 } KernelArgs;
 
-void kai_kernel_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme1_mla(
+void kai_kernel_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla(
     const KernelArgs* args, size_t input_row_stride_in_elements, size_t input_col_stride_in_elements);
 
-size_t kai_get_m_step_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme1_mla(void) {
+size_t kai_get_m_step_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla(void) {
     return kai_mr;
 }
 
-size_t kai_get_filter_height_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme1_mla(void) {
+size_t kai_get_filter_height_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla(void) {
     return kai_filter_height;
 }
 
-size_t kai_get_filter_width_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme1_mla(void) {
+size_t kai_get_filter_width_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla(void) {
     return kai_filter_width;
 }
 
-size_t kai_get_kr_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme1_mla(void) {
+size_t kai_get_kr_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla(void) {
     return kai_kr;
 }
 
-size_t kai_get_dst_size_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme1_mla(
+size_t kai_get_dst_size_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla(
     size_t dst_height, size_t dst_width, size_t num_channels) {
     return dst_height * dst_width * num_channels * sizeof(float);
 }
 
-size_t kai_get_dst_offset_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme1_mla(
+size_t kai_get_dst_offset_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla(
     size_t dst_row_idx, size_t dst_stride_row) {
     KAI_ASSUME(dst_row_idx % kai_mr == 0);
     return (dst_row_idx * dst_stride_row);
 }
 
-size_t kai_get_src_offset_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme1_mla(size_t in_row_idx, size_t in_stride_row) {
+size_t kai_get_src_offset_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla(size_t in_row_idx, size_t in_stride_row) {
     return (in_row_idx * in_stride_row);
 }
 
-void kai_run_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme1_mla(
+void kai_run_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla(
     const void* src, const void* rhs_packed, void* dst, size_t in_stride_row, size_t in_stride_col,
     size_t dst_stride_row, size_t dst_stride_col, size_t valid_input_rows, size_t valid_dst_rows, size_t pad_left,
     size_t pad_top, float pad_value, float clamp_min, float clamp_max) {
@@ -134,7 +134,7 @@ void kai_run_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme1_mla(
 
     kai_commit_za();
 
-    kai_kernel_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme1_mla(
+    kai_kernel_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla(
         &args, input_row_stride_in_elements, input_col_stride_in_elements);
 }
 #endif  // Architectural features check.

@@ -21,28 +21,28 @@ extern "C" {
 /// This is the maximum number of rows of output data produced by this kernel when called once.
 ///
 /// @return Maximum number of rows of output data produced by this kernel.
-size_t kai_get_m_step_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme1_mla(void);
+size_t kai_get_m_step_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla(void);
 
 /// Gets the height of the filter.
 ///
 /// This is the filter height of the convolution operation supported by this kernel.
 ///
 /// @return The filter height
-size_t kai_get_filter_height_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme1_mla(void);
+size_t kai_get_filter_height_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla(void);
 
 /// Gets the width of the filter.
 ///
 /// This is the filter width of the convolution operation supported by this kernel.
 ///
 /// @return The filter width
-size_t kai_get_filter_width_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme1_mla(void);
+size_t kai_get_filter_width_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla(void);
 
 /// Gets the kr value
 ///
 /// This is the packing parameter which must be used to pack the RHS tensor.
 ///
 /// @return The kr value
-size_t kai_get_kr_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme1_mla(void);
+size_t kai_get_kr_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla(void);
 
 /// Returns the size of the dst buffer in bytes
 ///
@@ -51,7 +51,7 @@ size_t kai_get_kr_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme1_mla(void);
 /// @param[in] num_channels Number of channels in output tensor
 ///
 /// @return output size in bytes.
-size_t kai_get_dst_size_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme1_mla(
+size_t kai_get_dst_size_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla(
     size_t dst_height, size_t dst_width, size_t num_channels);
 
 /// Returns an offset in bytes to the dst buffer for given row and stride.
@@ -60,7 +60,7 @@ size_t kai_get_dst_size_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme1_mla(
 /// @param[in] dst_stride_row Output row stride in bytes
 ///
 /// @return offset to element in output/destination tensor.
-size_t kai_get_dst_offset_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme1_mla(
+size_t kai_get_dst_offset_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla(
     size_t dst_row_idx, size_t dst_stride_row);
 
 /// Return an offset in bytes to the src buffer for a given row and stride
@@ -69,7 +69,7 @@ size_t kai_get_dst_offset_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme1_mla(
 /// @param[in] in_stride_row Input row stride in bytes
 ///
 /// @return offset to element in source/input tensor.
-size_t kai_get_src_offset_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme1_mla(size_t in_row_idx, size_t in_stride_row);
+size_t kai_get_src_offset_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla(size_t in_row_idx, size_t in_stride_row);
 
 /// Runs a depthwise convolution operation followed by a clamp operation
 ///
@@ -88,7 +88,7 @@ size_t kai_get_src_offset_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme1_mla(si
 /// @param[in]  pad_value Fill value for padding. This kernel only supports 0.
 /// @param[in]  clamp_min	Lower clamp bound applied to every output value.
 /// @param[in]  clamp_max	Upper clamp bound applied to every output value.
-void kai_run_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme1_mla(
+void kai_run_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla(
     const void* src, const void* rhs_packed, void* dst, size_t in_stride_row, size_t in_stride_col,
     size_t dst_stride_row, size_t dst_stride_col, size_t valid_input_rows, size_t valid_dst_rows, size_t pad_left,
     size_t pad_top, float pad_value, float clamp_min, float clamp_max);

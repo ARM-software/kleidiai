@@ -30,6 +30,7 @@
 // Micro-kernels to register for benchmarking
 #include "kai/ukernels/dwconv/dwconv_f16_f16_f16p/kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_qmx_mla.h"
 #include "kai/ukernels/dwconv/dwconv_f16_f16_f16p/kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla.h"
+#include "kai/ukernels/dwconv/dwconv_f32_f32_f32p/kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla.h"
 #include "kai/ukernels/dwconv/dwconv_f32_f32_f32p/kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla.h"
 #include "kai/ukernels/dwconv/pack/kai_rhs_dwconv_pack_x16p1vlx1b_x16_x16_sme.h"
 #include "kai/ukernels/dwconv/pack/kai_rhs_dwconv_pack_x32p1vlx1b_x32_x32_sme.h"
@@ -47,6 +48,10 @@ inline constexpr DwConvPackedDepthfirstFloatInterface kai_dwconv_clamp_f16_f16_f
 
 inline constexpr DwConvPackedFloatInterface kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla_iface{
     .run_dwconv = kai_run_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
+};
+
+inline constexpr DwConvPackedFloatInterface kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla_iface{
+    .run_dwconv = kai_run_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla,
 };
 
 struct DwConvBenchmarkCase {
@@ -115,7 +120,16 @@ inline constexpr DwConvTraits kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme
     kai_get_dst_offset_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
     kai_get_src_offset_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla);
 
-inline std::array<DwConvBenchmarkCase, 3> dwconv_benchmarks{{
+inline constexpr DwConvTraits kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla_traits = BundleTraits(
+    kai_get_m_step_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla,
+    kai_get_filter_height_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla,
+    kai_get_filter_width_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla,
+    kai_get_kr_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla,
+    kai_get_dst_size_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla,
+    kai_get_dst_offset_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla,
+    kai_get_src_offset_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla);
+
+inline std::array<DwConvBenchmarkCase, 4> dwconv_benchmarks{{
     {
         ::benchmark::RegisterBenchmark(
             "kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla", kai_benchmark_dwconv,
@@ -126,6 +140,18 @@ inline std::array<DwConvBenchmarkCase, 3> dwconv_benchmarks{{
             kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla_traits, DataType::FP32, DataType::FP32,
             kai_dwconv_packed_fp32_rhs_cfg, test::cpu_has_sme2),
         &kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla_traits,
+    },
+    {
+        // QMX-optimized FP32 depthwise convolution kernel (SME port of sme2_mla)
+        ::benchmark::RegisterBenchmark(
+            "kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla", kai_benchmark_dwconv,
+            RunnerFactory{[](const DwConvTraits& tr, DataType sdt, DataType ddt) {
+                return std::make_unique<DwConvPackedFloatRunner>(
+                    kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla_iface, tr, sdt, ddt);
+            }},
+            kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla_traits, DataType::FP32, DataType::FP32,
+            kai_dwconv_packed_fp32_rhs_cfg, test::cpu_has_sme),
+        &kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla_traits,
     },
     {
         ::benchmark::RegisterBenchmark(

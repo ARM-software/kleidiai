@@ -9,10 +9,6 @@
 //
 
 
-
-
-
-
 #if defined(_MSC_VER) && !defined(__clang__)
     #define KAI_ASM_GLOBAL(name) GLOBAL name
     #define KAI_ASM_FUNCTION_TYPE(name)
@@ -125,141 +121,141 @@ KAI_ASM_LABEL(label_4)  // Column loop
     whilelt p1.b, XZR, x21
     cmp x10, #0x10
     KAI_ASM_INST(0xf8b44938)        // rprfm pldkeep, x20, [x9]
-    KAI_ASM_INST(0x042d502d)        // addvl x13, x13, #1
-    KAI_ASM_INST(0x04385038)        // addvl x24, x24, #1
-    KAI_ASM_INST(0x04375037)        // addvl x23, x23, #1
+    addvl x13, x13, #1
+    addvl x24, x24, #1
+    addvl x23, x23, #1
 
     
-    KAI_ASM_INST(0x04365036)        // addvl x22, x22, #1
+    addvl x22, x22, #1
     ble label_6
 KAI_ASM_LABEL(label_5)  // Width 1: Multiply loop: Main loop head
     whilelt p0.b, XZR, x10
-    KAI_ASM_INST(0xa400e9b4)        // ldnt1b { z20.b }, p2/Z, [x13]
-    KAI_ASM_INST(0xa401e9bc)        // ldnt1b { z28.b }, p2/Z, [x13, #1, MUL VL]
+    ldnt1b { z20.b }, p2/Z, [x13]
+    ldnt1b { z28.b }, p2/Z, [x13, #1, MUL VL]
     sub x10, x10, #0x10
     ld1rqb { z1.b }, p0/Z, [x9]
     cmp x10, #0x10
     add x9, x9, #0x10
-    KAI_ASM_INST(0xa400eb15)        // ldnt1b { z21.b }, p2/Z, [x24]
-    KAI_ASM_INST(0xa401eb1d)        // ldnt1b { z29.b }, p2/Z, [x24, #1, MUL VL]
-    KAI_ASM_INST(0xa400eaf6)        // ldnt1b { z22.b }, p2/Z, [x23]
-    KAI_ASM_INST(0xa401eafe)        // ldnt1b { z30.b }, p2/Z, [x23, #1, MUL VL]
-    KAI_ASM_INST(0xa400ead7)        // ldnt1b { z23.b }, p2/Z, [x22]
-    KAI_ASM_INST(0xa401eadf)        // ldnt1b { z31.b }, p2/Z, [x22, #1, MUL VL]
-    KAI_ASM_INST(0xa402e9b0)        // ldnt1b { z16.b }, p2/Z, [x13, #2, MUL VL]
-    KAI_ASM_INST(0xa403e9b8)        // ldnt1b { z24.b }, p2/Z, [x13, #3, MUL VL]
+    ldnt1b { z21.b }, p2/Z, [x24]
+    ldnt1b { z29.b }, p2/Z, [x24, #1, MUL VL]
+    ldnt1b { z22.b }, p2/Z, [x23]
+    ldnt1b { z30.b }, p2/Z, [x23, #1, MUL VL]
+    ldnt1b { z23.b }, p2/Z, [x22]
+    ldnt1b { z31.b }, p2/Z, [x22, #1, MUL VL]
+    ldnt1b { z16.b }, p2/Z, [x13, #2, MUL VL]
+    ldnt1b { z24.b }, p2/Z, [x13, #3, MUL VL]
     addvl x13, x13, #4
-    KAI_ASM_INST(0xa402eb11)        // ldnt1b { z17.b }, p2/Z, [x24, #2, MUL VL]
-    KAI_ASM_INST(0xa403eb19)        // ldnt1b { z25.b }, p2/Z, [x24, #3, MUL VL]
+    ldnt1b { z17.b }, p2/Z, [x24, #2, MUL VL]
+    ldnt1b { z25.b }, p2/Z, [x24, #3, MUL VL]
     addvl x24, x24, #4
-    KAI_ASM_INST(0x44a1028c)        // sdot z12.s, z20.b, z1.b[0]
-    KAI_ASM_INST(0x44a102ad)        // sdot z13.s, z21.b, z1.b[0]
-    KAI_ASM_INST(0x44a102ce)        // sdot z14.s, z22.b, z1.b[0]
-    KAI_ASM_INST(0x44a102ef)        // sdot z15.s, z23.b, z1.b[0]
-    KAI_ASM_INST(0xa402eaf2)        // ldnt1b { z18.b }, p2/Z, [x23, #2, MUL VL]
-    KAI_ASM_INST(0xa403eafa)        // ldnt1b { z26.b }, p2/Z, [x23, #3, MUL VL]
+    sdot z12.s, z20.b, z1.b[0]
+    sdot z13.s, z21.b, z1.b[0]
+    sdot z14.s, z22.b, z1.b[0]
+    sdot z15.s, z23.b, z1.b[0]
+    ldnt1b { z18.b }, p2/Z, [x23, #2, MUL VL]
+    ldnt1b { z26.b }, p2/Z, [x23, #3, MUL VL]
     addvl x23, x23, #4
-    KAI_ASM_INST(0xa402ead3)        // ldnt1b { z19.b }, p2/Z, [x22, #2, MUL VL]
-    KAI_ASM_INST(0xa403eadb)        // ldnt1b { z27.b }, p2/Z, [x22, #3, MUL VL]
+    ldnt1b { z19.b }, p2/Z, [x22, #2, MUL VL]
+    ldnt1b { z27.b }, p2/Z, [x22, #3, MUL VL]
     addvl x22, x22, #4
-    KAI_ASM_INST(0x44a9038c)        // sdot z12.s, z28.b, z1.b[1]
-    KAI_ASM_INST(0x44a903ad)        // sdot z13.s, z29.b, z1.b[1]
-    KAI_ASM_INST(0x44a903ce)        // sdot z14.s, z30.b, z1.b[1]
-    KAI_ASM_INST(0x44a903ef)        // sdot z15.s, z31.b, z1.b[1]
-    KAI_ASM_INST(0x44b1020c)        // sdot z12.s, z16.b, z1.b[2]
-    KAI_ASM_INST(0x44b1022d)        // sdot z13.s, z17.b, z1.b[2]
-    KAI_ASM_INST(0x44b1024e)        // sdot z14.s, z18.b, z1.b[2]
-    KAI_ASM_INST(0x44b1026f)        // sdot z15.s, z19.b, z1.b[2]
-    KAI_ASM_INST(0x44b9030c)        // sdot z12.s, z24.b, z1.b[3]
-    KAI_ASM_INST(0x44b9032d)        // sdot z13.s, z25.b, z1.b[3]
-    KAI_ASM_INST(0x44b9034e)        // sdot z14.s, z26.b, z1.b[3]
-    KAI_ASM_INST(0x44b9036f)        // sdot z15.s, z27.b, z1.b[3]
+    sdot z12.s, z28.b, z1.b[1]
+    sdot z13.s, z29.b, z1.b[1]
+    sdot z14.s, z30.b, z1.b[1]
+    sdot z15.s, z31.b, z1.b[1]
+    sdot z12.s, z16.b, z1.b[2]
+    sdot z13.s, z17.b, z1.b[2]
+    sdot z14.s, z18.b, z1.b[2]
+    sdot z15.s, z19.b, z1.b[2]
+    sdot z12.s, z24.b, z1.b[3]
+    sdot z13.s, z25.b, z1.b[3]
+    sdot z14.s, z26.b, z1.b[3]
+    sdot z15.s, z27.b, z1.b[3]
     bgt label_5
 KAI_ASM_LABEL(label_6)  // Width 1: Multiply loop: Single iteration only
     whilelt p0.b, XZR, x10
     ldnt1b { z16.b }, p2/Z, [x13]
-    KAI_ASM_INST(0xf100114a)        // subs x10, x10, #0x4
+    subs x10, x10, #0x4
     ld1rqb { z1.b }, p0/Z, [x9]
-    KAI_ASM_INST(0x042d502d)        // addvl x13, x13, #1
+    addvl x13, x13, #1
     ldnt1b { z17.b }, p2/Z, [x24]
-    KAI_ASM_INST(0x04385038)        // addvl x24, x24, #1
+    addvl x24, x24, #1
     ldnt1b { z18.b }, p2/Z, [x23]
-    KAI_ASM_INST(0x04375037)        // addvl x23, x23, #1
+    addvl x23, x23, #1
     ldnt1b { z19.b }, p2/Z, [x22]
-    KAI_ASM_INST(0x04365036)        // addvl x22, x22, #1
-    KAI_ASM_INST(0x44a1020c)        // sdot z12.s, z16.b, z1.b[0]
-    KAI_ASM_INST(0x44a1022d)        // sdot z13.s, z17.b, z1.b[0]
-    KAI_ASM_INST(0x44a1024e)        // sdot z14.s, z18.b, z1.b[0]
-    KAI_ASM_INST(0x44a1026f)        // sdot z15.s, z19.b, z1.b[0]
+    addvl x22, x22, #1
+    sdot z12.s, z16.b, z1.b[0]
+    sdot z13.s, z17.b, z1.b[0]
+    sdot z14.s, z18.b, z1.b[0]
+    sdot z15.s, z19.b, z1.b[0]
     ble label_7
-    KAI_ASM_INST(0xa400e9b4)        // ldnt1b { z20.b }, p2/Z, [x13]
-    KAI_ASM_INST(0xf100114a)        // subs x10, x10, #0x4
-    KAI_ASM_INST(0x042d502d)        // addvl x13, x13, #1
-    KAI_ASM_INST(0xa400eb15)        // ldnt1b { z21.b }, p2/Z, [x24]
-    KAI_ASM_INST(0x04385038)        // addvl x24, x24, #1
-    KAI_ASM_INST(0xa400eaf6)        // ldnt1b { z22.b }, p2/Z, [x23]
-    KAI_ASM_INST(0x04375037)        // addvl x23, x23, #1
-    KAI_ASM_INST(0xa400ead7)        // ldnt1b { z23.b }, p2/Z, [x22]
-    KAI_ASM_INST(0x04365036)        // addvl x22, x22, #1
-    KAI_ASM_INST(0x44a9028c)        // sdot z12.s, z20.b, z1.b[1]
-    KAI_ASM_INST(0x44a902ad)        // sdot z13.s, z21.b, z1.b[1]
-    KAI_ASM_INST(0x44a902ce)        // sdot z14.s, z22.b, z1.b[1]
-    KAI_ASM_INST(0x44a902ef)        // sdot z15.s, z23.b, z1.b[1]
+    ldnt1b { z20.b }, p2/Z, [x13]
+    subs x10, x10, #0x4
+    addvl x13, x13, #1
+    ldnt1b { z21.b }, p2/Z, [x24]
+    addvl x24, x24, #1
+    ldnt1b { z22.b }, p2/Z, [x23]
+    addvl x23, x23, #1
+    ldnt1b { z23.b }, p2/Z, [x22]
+    addvl x22, x22, #1
+    sdot z12.s, z20.b, z1.b[1]
+    sdot z13.s, z21.b, z1.b[1]
+    sdot z14.s, z22.b, z1.b[1]
+    sdot z15.s, z23.b, z1.b[1]
     ble label_7
     ldnt1b { z24.b }, p2/Z, [x13]
-    KAI_ASM_INST(0xf100114a)        // subs x10, x10, #0x4
-    KAI_ASM_INST(0x042d502d)        // addvl x13, x13, #1
+    subs x10, x10, #0x4
+    addvl x13, x13, #1
     ldnt1b { z25.b }, p2/Z, [x24]
-    KAI_ASM_INST(0x04385038)        // addvl x24, x24, #1
+    addvl x24, x24, #1
     ldnt1b { z26.b }, p2/Z, [x23]
-    KAI_ASM_INST(0x04375037)        // addvl x23, x23, #1
+    addvl x23, x23, #1
     ldnt1b { z27.b }, p2/Z, [x22]
-    KAI_ASM_INST(0x04365036)        // addvl x22, x22, #1
-    KAI_ASM_INST(0x44b1030c)        // sdot z12.s, z24.b, z1.b[2]
-    KAI_ASM_INST(0x44b1032d)        // sdot z13.s, z25.b, z1.b[2]
-    KAI_ASM_INST(0x44b1034e)        // sdot z14.s, z26.b, z1.b[2]
-    KAI_ASM_INST(0x44b1036f)        // sdot z15.s, z27.b, z1.b[2]
+    addvl x22, x22, #1
+    sdot z12.s, z24.b, z1.b[2]
+    sdot z13.s, z25.b, z1.b[2]
+    sdot z14.s, z26.b, z1.b[2]
+    sdot z15.s, z27.b, z1.b[2]
     ble label_7
-    KAI_ASM_INST(0xa400e9b4)        // ldnt1b { z20.b }, p2/Z, [x13]
-    KAI_ASM_INST(0x042d502d)        // addvl x13, x13, #1
-    KAI_ASM_INST(0xa400eb15)        // ldnt1b { z21.b }, p2/Z, [x24]
-    KAI_ASM_INST(0x04385038)        // addvl x24, x24, #1
-    KAI_ASM_INST(0xa400eaf6)        // ldnt1b { z22.b }, p2/Z, [x23]
-    KAI_ASM_INST(0x04375037)        // addvl x23, x23, #1
-    KAI_ASM_INST(0xa400ead7)        // ldnt1b { z23.b }, p2/Z, [x22]
-    KAI_ASM_INST(0x04365036)        // addvl x22, x22, #1
-    KAI_ASM_INST(0x44b9028c)        // sdot z12.s, z20.b, z1.b[3]
-    KAI_ASM_INST(0x44b902ad)        // sdot z13.s, z21.b, z1.b[3]
-    KAI_ASM_INST(0x44b902ce)        // sdot z14.s, z22.b, z1.b[3]
-    KAI_ASM_INST(0x44b902ef)        // sdot z15.s, z23.b, z1.b[3]
+    ldnt1b { z20.b }, p2/Z, [x13]
+    addvl x13, x13, #1
+    ldnt1b { z21.b }, p2/Z, [x24]
+    addvl x24, x24, #1
+    ldnt1b { z22.b }, p2/Z, [x23]
+    addvl x23, x23, #1
+    ldnt1b { z23.b }, p2/Z, [x22]
+    addvl x22, x22, #1
+    sdot z12.s, z20.b, z1.b[3]
+    sdot z13.s, z21.b, z1.b[3]
+    sdot z14.s, z22.b, z1.b[3]
+    sdot z15.s, z23.b, z1.b[3]
 KAI_ASM_LABEL(label_7)  // Width 1: Multiply loop: multiply skip
     ld1w { z16.s }, p2/Z, [x13]
     ld1w { z7.s }, p2/Z, [x24]
     ld1w { z17.s }, p2/Z, [x23]
     ld1w { z26.s }, p2/Z, [x22]
-    KAI_ASM_INST(0x6594a98c)        // scvtf z12.s, p2/m, z12.s
-    KAI_ASM_INST(0x6594a9ad)        // scvtf z13.s, p2/m, z13.s
-    KAI_ASM_INST(0x6594a9ce)        // scvtf z14.s, p2/m, z14.s
-    KAI_ASM_INST(0x6594a9ef)        // scvtf z15.s, p2/m, z15.s
-    KAI_ASM_INST(0x8540c800)        // ld1rw { z0.s }, p2/Z, [x0]
+    scvtf z12.s, p2/m, z12.s
+    scvtf z13.s, p2/m, z13.s
+    scvtf z14.s, p2/m, z14.s
+    scvtf z15.s, p2/m, z15.s
+    ld1rw { z0.s }, p2/Z, [x0]
     fmul z12.s, z12.s, z16.s
     fmul z13.s, z13.s, z7.s
-    KAI_ASM_INST(0x8542c807)        // ld1rw { z7.s }, p2/Z, [x0, #8]
+    ld1rw { z7.s }, p2/Z, [x0, #8]
     fmul z14.s, z14.s, z17.s
     fmul z15.s, z15.s, z26.s
-    KAI_ASM_INST(0x8541c813)        // ld1rw { z19.s }, p2/Z, [x0, #4]
-    KAI_ASM_INST(0x6580a98c)        // frintn z12.s, p2/m, z12.s
-    KAI_ASM_INST(0x6580a9ad)        // frintn z13.s, p2/m, z13.s
-    KAI_ASM_INST(0x6580a9ce)        // frintn z14.s, p2/m, z14.s
-    KAI_ASM_INST(0x6580a9ef)        // frintn z15.s, p2/m, z15.s
-    KAI_ASM_INST(0x659ca98c)        // fcvtzs z12.s, p2/m, z12.s
-    KAI_ASM_INST(0x659ca9ad)        // fcvtzs z13.s, p2/m, z13.s
-    KAI_ASM_INST(0x659ca9ce)        // fcvtzs z14.s, p2/m, z14.s
-    KAI_ASM_INST(0x659ca9ef)        // fcvtzs z15.s, p2/m, z15.s
-    KAI_ASM_INST(0x04a0018c)        // add z12.s, z12.s, z0.s
-    KAI_ASM_INST(0x04a001ad)        // add z13.s, z13.s, z0.s
-    KAI_ASM_INST(0x04a001ce)        // add z14.s, z14.s, z0.s
-    KAI_ASM_INST(0x04a001ef)        // add z15.s, z15.s, z0.s
+    ld1rw { z19.s }, p2/Z, [x0, #4]
+    frintn z12.s, p2/m, z12.s
+    frintn z13.s, p2/m, z13.s
+    frintn z14.s, p2/m, z14.s
+    frintn z15.s, p2/m, z15.s
+    fcvtzs z12.s, p2/m, z12.s
+    fcvtzs z13.s, p2/m, z13.s
+    fcvtzs z14.s, p2/m, z14.s
+    fcvtzs z15.s, p2/m, z15.s
+    add z12.s, z12.s, z0.s
+    add z13.s, z13.s, z0.s
+    add z14.s, z14.s, z0.s
+    add z15.s, z15.s, z0.s
     KAI_ASM_INST(0x4493c0ec)        // SCLAMP z12.s, z7.s, z19.s
     KAI_ASM_INST(0x4493c0ed)        // SCLAMP z13.s, z7.s, z19.s
     KAI_ASM_INST(0x4493c0ee)        // SCLAMP z14.s, z7.s, z19.s
@@ -303,15 +299,15 @@ KAI_ASM_LABEL(label_9)  // Width 2
     KAI_ASM_INST(0xf8b44938)        // rprfm pldkeep, x20, [x9]
     add x20, x13, x11, LSL #3
 
-    KAI_ASM_INST(0x042d502d)        // addvl x13, x13, #1
-    KAI_ASM_INST(0x04375037)        // addvl x23, x23, #1
+    addvl x13, x13, #1
+    addvl x23, x23, #1
 
-    KAI_ASM_INST(0x04395039)        // addvl x25, x25, #1
-    KAI_ASM_INST(0x04365036)        // addvl x22, x22, #1
-    KAI_ASM_INST(0x043c503c)        // addvl x28, x28, #1
-    KAI_ASM_INST(0x043b503b)        // addvl x27, x27, #1
-    KAI_ASM_INST(0x043a503a)        // addvl x26, x26, #1
-    KAI_ASM_INST(0x04385038)        // addvl x24, x24, #1
+    addvl x25, x25, #1
+    addvl x22, x22, #1
+    addvl x28, x28, #1
+    addvl x27, x27, #1
+    addvl x26, x26, #1
+    addvl x24, x24, #1
     ble label_11
 KAI_ASM_LABEL(label_10)  // Width 2: Multiply loop: Main loop head
     whilelt p0.b, XZR, x10
@@ -320,193 +316,193 @@ KAI_ASM_LABEL(label_10)  // Width 2: Multiply loop: Main loop head
     ld1rqb { z1.b }, p0/Z, [x9]
     cmp x10, #0x10
     add x9, x9, #0x10
-    KAI_ASM_INST(0xa400e9a4)        // ldnt1b { z4.b }, p2/Z, [x13]
-    KAI_ASM_INST(0xa401e9b0)        // ldnt1b { z16.b }, p2/Z, [x13, #1, MUL VL]
-    KAI_ASM_INST(0xa400eae5)        // ldnt1b { z5.b }, p2/Z, [x23]
-    KAI_ASM_INST(0xa401eaf1)        // ldnt1b { z17.b }, p2/Z, [x23, #1, MUL VL]
-    KAI_ASM_INST(0xa400eb26)        // ldnt1b { z6.b }, p2/Z, [x25]
-    KAI_ASM_INST(0xa401eb32)        // ldnt1b { z18.b }, p2/Z, [x25, #1, MUL VL]
-    KAI_ASM_INST(0xa400eac7)        // ldnt1b { z7.b }, p2/Z, [x22]
-    KAI_ASM_INST(0xa401ead3)        // ldnt1b { z19.b }, p2/Z, [x22, #1, MUL VL]
-    KAI_ASM_INST(0x44a10088)        // sdot z8.s , z4.b,  z1.b[0]
-    KAI_ASM_INST(0x44a100a9)        // sdot z9.s , z5.b,  z1.b[0]
-    KAI_ASM_INST(0x44a100ca)        // sdot z10.s, z6.b,  z1.b[0]
-    KAI_ASM_INST(0x44a100eb)        // sdot z11.s, z7.b,  z1.b[0]
-    KAI_ASM_INST(0x44a9020c)        // sdot z12.s, z16.b, z1.b[1]
-    KAI_ASM_INST(0x44a9022d)        // sdot z13.s, z17.b, z1.b[1]
-    KAI_ASM_INST(0x44a9024e)        // sdot z14.s, z18.b, z1.b[1]
-    KAI_ASM_INST(0x44a9026f)        // sdot z15.s, z19.b, z1.b[1]
+    ldnt1b { z4.b }, p2/Z, [x13]
+    ldnt1b { z16.b }, p2/Z, [x13, #1, MUL VL]
+    ldnt1b { z5.b }, p2/Z, [x23]
+    ldnt1b { z17.b }, p2/Z, [x23, #1, MUL VL]
+    ldnt1b { z6.b }, p2/Z, [x25]
+    ldnt1b { z18.b }, p2/Z, [x25, #1, MUL VL]
+    ldnt1b { z7.b }, p2/Z, [x22]
+    ldnt1b { z19.b }, p2/Z, [x22, #1, MUL VL]
+    sdot z8.s , z4.b,  z1.b[0]
+    sdot z9.s , z5.b,  z1.b[0]
+    sdot z10.s, z6.b,  z1.b[0]
+    sdot z11.s, z7.b,  z1.b[0] 
+    sdot z12.s, z16.b, z1.b[1]
+    sdot z13.s, z17.b, z1.b[1]
+    sdot z14.s, z18.b, z1.b[1]
+    sdot z15.s, z19.b, z1.b[1]
     
 
-    KAI_ASM_INST(0xa400eb90)        // ldnt1b { z16.b }, p2/Z, [x28]
-    KAI_ASM_INST(0xa401eb98)        // ldnt1b { z24.b }, p2/Z, [x28, #1, MUL VL]
-    KAI_ASM_INST(0xa400eb71)        // ldnt1b { z17.b }, p2/Z, [x27]
-    KAI_ASM_INST(0xa401eb79)        // ldnt1b { z25.b }, p2/Z, [x27, #1, MUL VL]
-    KAI_ASM_INST(0xa400eb52)        // ldnt1b { z18.b }, p2/Z, [x26]
-    KAI_ASM_INST(0xa401eb5a)        // ldnt1b { z26.b }, p2/Z, [x26, #1, MUL VL]
-    KAI_ASM_INST(0xa400eb13)        // ldnt1b { z19.b }, p2/Z, [x24]
-    KAI_ASM_INST(0xa401eb1b)        // ldnt1b { z27.b }, p2/Z, [x24, #1, MUL VL]
-    KAI_ASM_INST(0x44a10208)        // sdot z8.s , z16.b, z1.b[0]
-    KAI_ASM_INST(0x44a10229)        // sdot z9.s , z17.b, z1.b[0]
-    KAI_ASM_INST(0x44a1024a)        // sdot z10.s, z18.b, z1.b[0]
-    KAI_ASM_INST(0x44a1026b)        // sdot z11.s, z19.b, z1.b[0]
-    KAI_ASM_INST(0x44a9030c)        // sdot z12.s, z24.b, z1.b[1]
-    KAI_ASM_INST(0x44a9032d)        // sdot z13.s, z25.b, z1.b[1]
-    KAI_ASM_INST(0x44a9034e)        // sdot z14.s, z26.b, z1.b[1]
-    KAI_ASM_INST(0x44a9036f)        // sdot z15.s, z27.b, z1.b[1]
+    ldnt1b { z16.b }, p2/Z, [x28]
+    ldnt1b { z24.b }, p2/Z, [x28, #1, MUL VL]
+    ldnt1b { z17.b }, p2/Z, [x27]
+    ldnt1b { z25.b }, p2/Z, [x27, #1, MUL VL]
+    ldnt1b { z18.b }, p2/Z, [x26]
+    ldnt1b { z26.b }, p2/Z, [x26, #1, MUL VL]
+    ldnt1b { z19.b }, p2/Z, [x24]
+    ldnt1b { z27.b }, p2/Z, [x24, #1, MUL VL]
+    sdot z8.s , z16.b, z1.b[0]
+    sdot z9.s , z17.b, z1.b[0]
+    sdot z10.s, z18.b, z1.b[0]
+    sdot z11.s, z19.b, z1.b[0]
+    sdot z12.s, z24.b, z1.b[1]
+    sdot z13.s, z25.b, z1.b[1]
+    sdot z14.s, z26.b, z1.b[1]
+    sdot z15.s, z27.b, z1.b[1]
     
-    KAI_ASM_INST(0xa402e9b4)        // ldnt1b { z20.b }, p2/Z, [x13, #2, MUL VL]
-    KAI_ASM_INST(0xa403e9bc)        // ldnt1b { z28.b }, p2/Z, [x13, #3, MUL VL]
+    ldnt1b { z20.b }, p2/Z, [x13, #2, MUL VL]
+    ldnt1b { z28.b }, p2/Z, [x13, #3, MUL VL]
     addvl x13, x13, #4
-    KAI_ASM_INST(0xa402eaf5)        // ldnt1b { z21.b }, p2/Z, [x23, #2, MUL VL]
-    KAI_ASM_INST(0xa403eafd)        // ldnt1b { z29.b }, p2/Z, [x23, #3, MUL VL]
+    ldnt1b { z21.b }, p2/Z, [x23, #2, MUL VL]
+    ldnt1b { z29.b }, p2/Z, [x23, #3, MUL VL]
     addvl x23, x23, #4
-    KAI_ASM_INST(0xa402eb36)        // ldnt1b { z22.b }, p2/Z, [x25, #2, MUL VL]
-    KAI_ASM_INST(0xa403eb3e)        // ldnt1b { z30.b }, p2/Z, [x25, #3, MUL VL]
+    ldnt1b { z22.b }, p2/Z, [x25, #2, MUL VL]
+    ldnt1b { z30.b }, p2/Z, [x25, #3, MUL VL]
     addvl x25, x25, #4
-    KAI_ASM_INST(0xa402ead7)        // ldnt1b { z23.b }, p2/Z, [x22, #2, MUL VL]
-    KAI_ASM_INST(0xa403eadf)        // ldnt1b { z31.b }, p2/Z, [x22, #3, MUL VL]
+    ldnt1b { z23.b }, p2/Z, [x22, #2, MUL VL]
+    ldnt1b { z31.b }, p2/Z, [x22, #3, MUL VL]
     addvl x22, x22, #4
     
-    KAI_ASM_INST(0x44b10288)        // sdot z8.s , z20.b, z1.b[2]
-    KAI_ASM_INST(0x44b102a9)        // sdot z9.s , z21.b, z1.b[2]
-    KAI_ASM_INST(0x44b102ca)        // sdot z10.s, z22.b, z1.b[2]
-    KAI_ASM_INST(0x44b102eb)        // sdot z11.s, z23.b, z1.b[2]
-    KAI_ASM_INST(0x44b9038c)        // sdot z12.s, z28.b, z1.b[3]
-    KAI_ASM_INST(0x44b903ad)        // sdot z13.s, z29.b, z1.b[3]
-    KAI_ASM_INST(0x44b903ce)        // sdot z14.s, z30.b, z1.b[3]
-    KAI_ASM_INST(0x44b903ef)        // sdot z15.s, z31.b, z1.b[3]
+    sdot z8.s , z20.b, z1.b[2]
+    sdot z9.s , z21.b, z1.b[2]
+    sdot z10.s, z22.b, z1.b[2]
+    sdot z11.s, z23.b, z1.b[2]    
+    sdot z12.s, z28.b, z1.b[3]
+    sdot z13.s, z29.b, z1.b[3]
+    sdot z14.s, z30.b, z1.b[3]
+    sdot z15.s, z31.b, z1.b[3]    
     
-    KAI_ASM_INST(0xa402eb84)        // ldnt1b { z4.b }, p2/Z, [x28, #2, MUL VL]
-    KAI_ASM_INST(0xa403eb9c)        // ldnt1b { z28.b }, p2/Z, [x28, #3, MUL VL]
+    ldnt1b { z4.b }, p2/Z, [x28, #2, MUL VL]
+    ldnt1b { z28.b }, p2/Z, [x28, #3, MUL VL]
     addvl x28, x28, #4
-    KAI_ASM_INST(0xa402eb65)        // ldnt1b { z5.b }, p2/Z, [x27, #2, MUL VL]
-    KAI_ASM_INST(0xa403eb7d)        // ldnt1b { z29.b }, p2/Z, [x27, #3, MUL VL]
+    ldnt1b { z5.b }, p2/Z, [x27, #2, MUL VL]
+    ldnt1b { z29.b }, p2/Z, [x27, #3, MUL VL]
     addvl x27, x27, #4
 
-    KAI_ASM_INST(0xa402eb46)        // ldnt1b { z6.b }, p2/Z, [x26, #2, MUL VL]
-    KAI_ASM_INST(0xa403eb5e)        // ldnt1b { z30.b }, p2/Z, [x26, #3, MUL VL]
+    ldnt1b { z6.b }, p2/Z, [x26, #2, MUL VL]
+    ldnt1b { z30.b }, p2/Z, [x26, #3, MUL VL]
     addvl x26, x26, #4
-    KAI_ASM_INST(0xa402eb07)        // ldnt1b { z7.b }, p2/Z, [x24, #2, MUL VL]
-    KAI_ASM_INST(0xa403eb1f)        // ldnt1b { z31.b }, p2/Z, [x24, #3, MUL VL]
+    ldnt1b { z7.b }, p2/Z, [x24, #2, MUL VL]
+    ldnt1b { z31.b }, p2/Z, [x24, #3, MUL VL]
     addvl x24, x24, #4
 
 
-    KAI_ASM_INST(0x44b10088)        // sdot z8.s , z4.b,  z1.b[2]
-    KAI_ASM_INST(0x44b100a9)        // sdot z9.s , z5.b,  z1.b[2]
-    KAI_ASM_INST(0x44b100ca)        // sdot z10.s, z6.b,  z1.b[2]
-    KAI_ASM_INST(0x44b100eb)        // sdot z11.s, z7.b,  z1.b[2]
-    KAI_ASM_INST(0x44b9038c)        // sdot z12.s, z28.b, z1.b[3]
-    KAI_ASM_INST(0x44b903ad)        // sdot z13.s, z29.b, z1.b[3]
-    KAI_ASM_INST(0x44b903ce)        // sdot z14.s, z30.b, z1.b[3]
-    KAI_ASM_INST(0x44b903ef)        // sdot z15.s, z31.b, z1.b[3]
+    sdot z8.s , z4.b,  z1.b[2]
+    sdot z9.s , z5.b,  z1.b[2]
+    sdot z10.s, z6.b,  z1.b[2]
+    sdot z11.s, z7.b,  z1.b[2]
+    sdot z12.s, z28.b, z1.b[3]
+    sdot z13.s, z29.b, z1.b[3]
+    sdot z14.s, z30.b, z1.b[3]
+    sdot z15.s, z31.b, z1.b[3]
     bgt label_10
 KAI_ASM_LABEL(label_11)  // Width 2: Multiply loop: Single iteration only
     whilelt p0.b, XZR, x10
 
-    KAI_ASM_INST(0xf100114a)        // subs x10, x10, #0x4
+    subs x10, x10, #0x4
     ld1rqb { z1.b }, p0/Z, [x9]
-    KAI_ASM_INST(0xa400e9b4)        // ldnt1b { z20.b }, p2/Z, [x13]
-    KAI_ASM_INST(0x042d502d)        // addvl x13, x13, #1
+    ldnt1b { z20.b }, p2/Z, [x13]
+    addvl x13, x13, #1
     ldnt1b { z21.b }, p2/Z, [x23]
-    KAI_ASM_INST(0x04375037)        // addvl x23, x23, #1
+    addvl x23, x23, #1
     ldnt1b { z22.b }, p2/Z, [x25]
-    KAI_ASM_INST(0x04395039)        // addvl x25, x25, #1
-    KAI_ASM_INST(0xa400ead7)        // ldnt1b { z23.b }, p2/Z, [x22]
-    KAI_ASM_INST(0x04365036)        // addvl x22, x22, #1
+    addvl x25, x25, #1
+    ldnt1b { z23.b }, p2/Z, [x22]
+    addvl x22, x22, #1
     ldnt1b { z28.b }, p2/Z, [x28]
-    KAI_ASM_INST(0x043c503c)        // addvl x28, x28, #1
+    addvl x28, x28, #1
     ldnt1b { z29.b }, p2/Z, [x27]
-    KAI_ASM_INST(0x043b503b)        // addvl x27, x27, #1
+    addvl x27, x27, #1
     ldnt1b { z30.b }, p2/Z, [x26]
-    KAI_ASM_INST(0x44a10288)        // sdot z8.s , z20.b, z1.b[0]
-    KAI_ASM_INST(0x44a102a9)        // sdot z9.s , z21.b, z1.b[0]
-    KAI_ASM_INST(0x44a102ca)        // sdot z10.s, z22.b, z1.b[0]
-    KAI_ASM_INST(0x44a102eb)        // sdot z11.s, z23.b, z1.b[0]
-    KAI_ASM_INST(0x043a503a)        // addvl x26, x26, #1
+    sdot z8.s , z20.b, z1.b[0]
+    sdot z9.s , z21.b, z1.b[0]
+    sdot z10.s, z22.b, z1.b[0]
+    sdot z11.s, z23.b, z1.b[0]
+    addvl x26, x26, #1
     ldnt1b { z31.b }, p2/Z, [x24]
-    KAI_ASM_INST(0x04385038)        // addvl x24, x24, #1
-    KAI_ASM_INST(0x44a1038c)        // sdot z12.s, z28.b, z1.b[0]
-    KAI_ASM_INST(0x44a103ad)        // sdot z13.s, z29.b, z1.b[0]
-    KAI_ASM_INST(0x44a103ce)        // sdot z14.s, z30.b, z1.b[0]
-    KAI_ASM_INST(0x44a103ef)        // sdot z15.s, z31.b, z1.b[0]
-    KAI_ASM_INST(0x5400000d)        // ble label_12
-    KAI_ASM_INST(0xa400e9bc)        // ldnt1b { z28.b }, p2/Z, [x13]
-    KAI_ASM_INST(0xf100114a)        // subs x10, x10, #0x4
-    KAI_ASM_INST(0x042d502d)        // addvl x13, x13, #1
-    KAI_ASM_INST(0xa400eafd)        // ldnt1b { z29.b }, p2/Z, [x23]
-    KAI_ASM_INST(0x04375037)        // addvl x23, x23, #1
-    KAI_ASM_INST(0xa400eb3e)        // ldnt1b { z30.b }, p2/Z, [x25]
-    KAI_ASM_INST(0x04395039)        // addvl x25, x25, #1
-    KAI_ASM_INST(0xa400eadf)        // ldnt1b { z31.b }, p2/Z, [x22]
-    KAI_ASM_INST(0x04365036)        // addvl x22, x22, #1
-    KAI_ASM_INST(0xa400eb94)        // ldnt1b { z20.b }, p2/Z, [x28]
-    KAI_ASM_INST(0x043c503c)        // addvl x28, x28, #1
-    KAI_ASM_INST(0xa400eb75)        // ldnt1b { z21.b }, p2/Z, [x27]
-    KAI_ASM_INST(0x043b503b)        // addvl x27, x27, #1
-    KAI_ASM_INST(0xa400eb56)        // ldnt1b { z22.b }, p2/Z, [x26]
-    KAI_ASM_INST(0x44a90388)        // sdot z8.s , z28.b, z1.b[1]
-    KAI_ASM_INST(0x44a903a9)        // sdot z9.s , z29.b, z1.b[1]
-    KAI_ASM_INST(0x44a903ca)        // sdot z10.s, z30.b, z1.b[1]
-    KAI_ASM_INST(0x44a903eb)        // sdot z11.s, z31.b, z1.b[1]
-    KAI_ASM_INST(0x043a503a)        // addvl x26, x26, #1
-    KAI_ASM_INST(0xa400eb17)        // ldnt1b { z23.b }, p2/Z, [x24]
-    KAI_ASM_INST(0x04385038)        // addvl x24, x24, #1
-    KAI_ASM_INST(0x44a9028c)        // sdot z12.s, z20.b, z1.b[1]
-    KAI_ASM_INST(0x44a902ad)        // sdot z13.s, z21.b, z1.b[1]
-    KAI_ASM_INST(0x44a902ce)        // sdot z14.s, z22.b, z1.b[1]
-    KAI_ASM_INST(0x44a902ef)        // sdot z15.s, z23.b, z1.b[1]
-    KAI_ASM_INST(0x5400000d)        // ble label_12
-    KAI_ASM_INST(0xa400e9bc)        // ldnt1b { z28.b }, p2/Z, [x13]
-    KAI_ASM_INST(0xf100114a)        // subs x10, x10, #0x4
-    KAI_ASM_INST(0x042d502d)        // addvl x13, x13, #1
-    KAI_ASM_INST(0xa400eafd)        // ldnt1b { z29.b }, p2/Z, [x23]
-    KAI_ASM_INST(0x04375037)        // addvl x23, x23, #1
-    KAI_ASM_INST(0xa400eb3e)        // ldnt1b { z30.b }, p2/Z, [x25]
-    KAI_ASM_INST(0x04395039)        // addvl x25, x25, #1
-    KAI_ASM_INST(0xa400eadf)        // ldnt1b { z31.b }, p2/Z, [x22]
-    KAI_ASM_INST(0x04365036)        // addvl x22, x22, #1
-    KAI_ASM_INST(0xa400eb94)        // ldnt1b { z20.b }, p2/Z, [x28]
-    KAI_ASM_INST(0x043c503c)        // addvl x28, x28, #1
-    KAI_ASM_INST(0xa400eb75)        // ldnt1b { z21.b }, p2/Z, [x27]
-    KAI_ASM_INST(0x043b503b)        // addvl x27, x27, #1
-    KAI_ASM_INST(0xa400eb56)        // ldnt1b { z22.b }, p2/Z, [x26]
-    KAI_ASM_INST(0x44b10388)        // sdot z8.s , z28.b, z1.b[2]
-    KAI_ASM_INST(0x44b103a9)        // sdot z9.s , z29.b, z1.b[2]
-    KAI_ASM_INST(0x44b103ca)        // sdot z10.s, z30.b, z1.b[2]
-    KAI_ASM_INST(0x44b103eb)        // sdot z11.s, z31.b, z1.b[2]
-    KAI_ASM_INST(0x043a503a)        // addvl x26, x26, #1
-    KAI_ASM_INST(0xa400eb17)        // ldnt1b { z23.b }, p2/Z, [x24]
-    KAI_ASM_INST(0x04385038)        // addvl x24, x24, #1
-    KAI_ASM_INST(0x44b1028c)        // sdot z12.s, z20.b, z1.b[2]
-    KAI_ASM_INST(0x44b102ad)        // sdot z13.s, z21.b, z1.b[2]
-    KAI_ASM_INST(0x44b102ce)        // sdot z14.s, z22.b, z1.b[2]
-    KAI_ASM_INST(0x44b102ef)        // sdot z15.s, z23.b, z1.b[2]
-    KAI_ASM_INST(0x5400000d)        // ble label_12
-    KAI_ASM_INST(0xa400e9bc)        // ldnt1b { z28.b }, p2/Z, [x13]
-    KAI_ASM_INST(0x042d502d)        // addvl x13, x13, #1
-    KAI_ASM_INST(0xa400eafd)        // ldnt1b { z29.b }, p2/Z, [x23]
-    KAI_ASM_INST(0x04375037)        // addvl x23, x23, #1
-    KAI_ASM_INST(0xa400eb3e)        // ldnt1b { z30.b }, p2/Z, [x25]
-    KAI_ASM_INST(0x04395039)        // addvl x25, x25, #1
-    KAI_ASM_INST(0xa400eadf)        // ldnt1b { z31.b }, p2/Z, [x22]
-    KAI_ASM_INST(0x04365036)        // addvl x22, x22, #1
-    KAI_ASM_INST(0xa400eb94)        // ldnt1b { z20.b }, p2/Z, [x28]
-    KAI_ASM_INST(0x043c503c)        // addvl x28, x28, #1
-    KAI_ASM_INST(0xa400eb75)        // ldnt1b { z21.b }, p2/Z, [x27]
-    KAI_ASM_INST(0x043b503b)        // addvl x27, x27, #1
-    KAI_ASM_INST(0xa400eb56)        // ldnt1b { z22.b }, p2/Z, [x26]
-    KAI_ASM_INST(0x44b90388)        // sdot z8.s , z28.b, z1.b[3]
-    KAI_ASM_INST(0x44b903a9)        // sdot z9.s , z29.b, z1.b[3]
-    KAI_ASM_INST(0x44b903ca)        // sdot z10.s, z30.b, z1.b[3]
-    KAI_ASM_INST(0x44b903eb)        // sdot z11.s, z31.b, z1.b[3]
-    KAI_ASM_INST(0x043a503a)        // addvl x26, x26, #1
-    KAI_ASM_INST(0xa400eb17)        // ldnt1b { z23.b }, p2/Z, [x24]
-    KAI_ASM_INST(0x04385038)        // addvl x24, x24, #1
-    KAI_ASM_INST(0x44b9028c)        // sdot z12.s, z20.b, z1.b[3]
-    KAI_ASM_INST(0x44b902ad)        // sdot z13.s, z21.b, z1.b[3]
-    KAI_ASM_INST(0x44b902ce)        // sdot z14.s, z22.b, z1.b[3]
-    KAI_ASM_INST(0x44b902ef)        // sdot z15.s, z23.b, z1.b[3]
+    addvl x24, x24, #1
+    sdot z12.s, z28.b, z1.b[0]
+    sdot z13.s, z29.b, z1.b[0]
+    sdot z14.s, z30.b, z1.b[0]
+    sdot z15.s, z31.b, z1.b[0]
+    ble label_12
+    ldnt1b { z28.b }, p2/Z, [x13]
+    subs x10, x10, #0x4
+    addvl x13, x13, #1
+    ldnt1b { z29.b }, p2/Z, [x23]
+    addvl x23, x23, #1
+    ldnt1b { z30.b }, p2/Z, [x25]
+    addvl x25, x25, #1
+    ldnt1b { z31.b }, p2/Z, [x22]
+    addvl x22, x22, #1
+    ldnt1b { z20.b }, p2/Z, [x28]
+    addvl x28, x28, #1
+    ldnt1b { z21.b }, p2/Z, [x27]
+    addvl x27, x27, #1
+    ldnt1b { z22.b }, p2/Z, [x26]
+    sdot z8.s , z28.b, z1.b[1]
+    sdot z9.s , z29.b, z1.b[1]
+    sdot z10.s, z30.b, z1.b[1]
+    sdot z11.s, z31.b, z1.b[1]
+    addvl x26, x26, #1
+    ldnt1b { z23.b }, p2/Z, [x24]
+    addvl x24, x24, #1
+    sdot z12.s, z20.b, z1.b[1]
+    sdot z13.s, z21.b, z1.b[1]
+    sdot z14.s, z22.b, z1.b[1]
+    sdot z15.s, z23.b, z1.b[1]
+    ble label_12
+    ldnt1b { z28.b }, p2/Z, [x13]
+    subs x10, x10, #0x4
+    addvl x13, x13, #1
+    ldnt1b { z29.b }, p2/Z, [x23]
+    addvl x23, x23, #1
+    ldnt1b { z30.b }, p2/Z, [x25]
+    addvl x25, x25, #1
+    ldnt1b { z31.b }, p2/Z, [x22]
+    addvl x22, x22, #1
+    ldnt1b { z20.b }, p2/Z, [x28]
+    addvl x28, x28, #1
+    ldnt1b { z21.b }, p2/Z, [x27]
+    addvl x27, x27, #1
+    ldnt1b { z22.b }, p2/Z, [x26]
+    sdot z8.s , z28.b, z1.b[2]
+    sdot z9.s , z29.b, z1.b[2]
+    sdot z10.s, z30.b, z1.b[2]
+    sdot z11.s, z31.b, z1.b[2]
+    addvl x26, x26, #1
+    ldnt1b { z23.b }, p2/Z, [x24]
+    addvl x24, x24, #1
+    sdot z12.s, z20.b, z1.b[2]
+    sdot z13.s, z21.b, z1.b[2]
+    sdot z14.s, z22.b, z1.b[2]
+    sdot z15.s, z23.b, z1.b[2]
+    ble label_12
+    ldnt1b { z28.b }, p2/Z, [x13]
+    addvl x13, x13, #1
+    ldnt1b { z29.b }, p2/Z, [x23]
+    addvl x23, x23, #1
+    ldnt1b { z30.b }, p2/Z, [x25]
+    addvl x25, x25, #1
+    ldnt1b { z31.b }, p2/Z, [x22]
+    addvl x22, x22, #1
+    ldnt1b { z20.b }, p2/Z, [x28]
+    addvl x28, x28, #1
+    ldnt1b { z21.b }, p2/Z, [x27]
+    addvl x27, x27, #1
+    ldnt1b { z22.b }, p2/Z, [x26]
+    sdot z8.s , z28.b, z1.b[3]
+    sdot z9.s , z29.b, z1.b[3]
+    sdot z10.s, z30.b, z1.b[3]
+    sdot z11.s, z31.b, z1.b[3]
+    addvl x26, x26, #1
+    ldnt1b { z23.b }, p2/Z, [x24]
+    addvl x24, x24, #1
+    sdot z12.s, z20.b, z1.b[3]
+    sdot z13.s, z21.b, z1.b[3]
+    sdot z14.s, z22.b, z1.b[3]
+    sdot z15.s, z23.b, z1.b[3]
 KAI_ASM_LABEL(label_12)  // Width 2: Multiply loop: multiply skip
 
     ld1w { z17.s }, p2/Z, [x13]
@@ -515,15 +511,15 @@ KAI_ASM_LABEL(label_12)  // Width 2: Multiply loop: multiply skip
     ld1w { z20.s }, p2/Z, [x25]
     ld1w { z16.s }, p2/Z, [x22]
     ld1w { z19.s }, p2/Z, [x28]
-    KAI_ASM_INST(0x6594a908)        // scvtf z8.s, p2/m, z8.s
-    KAI_ASM_INST(0x6594a929)        // scvtf z9.s, p2/m, z9.s
-    KAI_ASM_INST(0x6594a94a)        // scvtf z10.s, p2/m, z10.s
-    KAI_ASM_INST(0x6594a96b)        // scvtf z11.s, p2/m, z11.s
+    scvtf z8.s, p2/m, z8.s
+    scvtf z9.s, p2/m, z9.s
+    scvtf z10.s, p2/m, z10.s
+    scvtf z11.s, p2/m, z11.s
     ld1w { z18.s }, p2/Z, [x27]
-    KAI_ASM_INST(0x6594a98c)        // scvtf z12.s, p2/m, z12.s
-    KAI_ASM_INST(0x6594a9ad)        // scvtf z13.s, p2/m, z13.s
-    KAI_ASM_INST(0x6594a9ce)        // scvtf z14.s, p2/m, z14.s
-    KAI_ASM_INST(0x6594a9ef)        // scvtf z15.s, p2/m, z15.s
+    scvtf z12.s, p2/m, z12.s
+    scvtf z13.s, p2/m, z13.s
+    scvtf z14.s, p2/m, z14.s
+    scvtf z15.s, p2/m, z15.s
     fmul z8.s, z8.s, z17.s
     fmul z9.s, z9.s, z4.s
     ld1w { z17.s }, p2/Z, [x26]
@@ -532,35 +528,35 @@ KAI_ASM_LABEL(label_12)  // Width 2: Multiply loop: multiply skip
     ld1w { z16.s }, p2/Z, [x24]
     fmul z12.s, z12.s, z19.s
     fmul z13.s, z13.s, z18.s
-    KAI_ASM_INST(0x8540c800)        // ld1rw { z0.s }, p2/Z, [x0]
+    ld1rw { z0.s }, p2/Z, [x0]
     fmul z14.s, z14.s, z17.s
-    KAI_ASM_INST(0x8542c811)        // ld1rw { z17.s }, p2/Z, [x0, #8]
+    ld1rw { z17.s }, p2/Z, [x0, #8]
     fmul z15.s, z15.s, z16.s
-    KAI_ASM_INST(0x6580a908)        // frintn z8.s, p2/m, z8.s
-    KAI_ASM_INST(0x6580a929)        // frintn z9.s, p2/m, z9.s
-    KAI_ASM_INST(0x6580a94a)        // frintn z10.s, p2/m, z10.s
-    KAI_ASM_INST(0x6580a96b)        // frintn z11.s, p2/m, z11.s
-    KAI_ASM_INST(0x8541c810)        // ld1rw { z16.s }, p2/Z, [x0, #4]
-    KAI_ASM_INST(0x659ca908)        // fcvtzs z8.s, p2/m, z8.s
-    KAI_ASM_INST(0x659ca929)        // fcvtzs z9.s, p2/m, z9.s
-    KAI_ASM_INST(0x659ca94a)        // fcvtzs z10.s, p2/m, z10.s
-    KAI_ASM_INST(0x659ca96b)        // fcvtzs z11.s, p2/m, z11.s
-    KAI_ASM_INST(0x04a00108)        // add z8.s, z8.s, z0.s
-    KAI_ASM_INST(0x04a00129)        // add z9.s, z9.s, z0.s
-    KAI_ASM_INST(0x04a0014a)        // add z10.s, z10.s, z0.s
-    KAI_ASM_INST(0x04a0016b)        // add z11.s, z11.s, z0.s
-    KAI_ASM_INST(0x6580a98c)        // frintn z12.s, p2/m, z12.s
-    KAI_ASM_INST(0x6580a9ad)        // frintn z13.s, p2/m, z13.s
-    KAI_ASM_INST(0x6580a9ce)        // frintn z14.s, p2/m, z14.s
-    KAI_ASM_INST(0x6580a9ef)        // frintn z15.s, p2/m, z15.s
-    KAI_ASM_INST(0x659ca98c)        // fcvtzs z12.s, p2/m, z12.s
-    KAI_ASM_INST(0x659ca9ad)        // fcvtzs z13.s, p2/m, z13.s
-    KAI_ASM_INST(0x659ca9ce)        // fcvtzs z14.s, p2/m, z14.s
-    KAI_ASM_INST(0x659ca9ef)        // fcvtzs z15.s, p2/m, z15.s
-    KAI_ASM_INST(0x04a0018c)        // add z12.s, z12.s, z0.s
-    KAI_ASM_INST(0x04a001ad)        // add z13.s, z13.s, z0.s
-    KAI_ASM_INST(0x04a001ce)        // add z14.s, z14.s, z0.s
-    KAI_ASM_INST(0x04a001ef)        // add z15.s, z15.s, z0.s
+    frintn z8.s, p2/m, z8.s
+    frintn z9.s, p2/m, z9.s
+    frintn z10.s, p2/m, z10.s
+    frintn z11.s, p2/m, z11.s
+    ld1rw { z16.s }, p2/Z, [x0, #4]
+    fcvtzs z8.s, p2/m, z8.s
+    fcvtzs z9.s, p2/m, z9.s
+    fcvtzs z10.s, p2/m, z10.s
+    fcvtzs z11.s, p2/m, z11.s
+    add z8.s, z8.s, z0.s
+    add z9.s, z9.s, z0.s
+    add z10.s, z10.s, z0.s
+    add z11.s, z11.s, z0.s
+    frintn z12.s, p2/m, z12.s
+    frintn z13.s, p2/m, z13.s
+    frintn z14.s, p2/m, z14.s
+    frintn z15.s, p2/m, z15.s
+    fcvtzs z12.s, p2/m, z12.s
+    fcvtzs z13.s, p2/m, z13.s
+    fcvtzs z14.s, p2/m, z14.s
+    fcvtzs z15.s, p2/m, z15.s
+    add z12.s, z12.s, z0.s
+    add z13.s, z13.s, z0.s
+    add z14.s, z14.s, z0.s
+    add z15.s, z15.s, z0.s
     KAI_ASM_INST(0x4490c228)        // SCLAMP z8.s, z17.s, z16.s
     KAI_ASM_INST(0x4490c229)        // SCLAMP z9.s, z17.s, z16.s
     KAI_ASM_INST(0x4490c22a)        // SCLAMP z10.s, z17.s, z16.s

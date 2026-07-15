@@ -22,6 +22,7 @@ SME2_KERNELS = [
 # buildifier: keep sorted
 QMX_KERNELS_ASM = [
     "dwconv_f16_f16_f16p/kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_qmx_mla",
+    "dwconv_f32_f32_f32p/kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_qmx_mla",
 ]
 
 # buildifier: keep sorted
