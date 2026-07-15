@@ -1,0 +1,240 @@
+# SPDX-FileCopyrightText: Copyright 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+# Summary:
+#   Build and test experimental/ops across different targets.
+# Purpose and scope:
+#   - Validate experimental/ops native benchmark builds with Clang and GCC.
+#   - Run GEMM, convolution and depthwise soak test plans against native builds.
+#   - Cover ASan variants with reduced test limits for diagnostic coverage.
+#   - Keep experimental/ops checks change-gated in MRs while preserving default
+#     branch and protected tag coverage when re-enabled.
+# Main jobs (high-level):
+#   - build-experimental-ops-* : compile experimental/ops benchmark binaries.
+#   - test-experimental-ops-*  : execute experimental/ops soak test plans.
+# Usage notes:
+#   - Temporarily disabled while the experimental/ops CI coverage is reworked.
+#   - Changes to shared root CI config are listed because shared defaults, runner
+#     settings and variables can affect experimental/ops when re-enabled.
+#
+
+# Base template: .experimental-ops-rules
+# Notice: Temporarily disabled while the experimental/ops CI coverage is reworked.
+# Purpose: Run experimental/ops checks only when relevant in MRs, and always on default branch/protected tags.
+.experimental-ops-rules:
+  timeout: 1h
+  rules:
+    - when: never
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+      changes:
+        - .gitlab-ci.yml
+        - .gitlab/ci/experimental-ops.yml
+        - experimental/ops/**/*
+      exists:
+        - experimental/ops/CMakeLists.txt
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      exists:
+        - experimental/ops/CMakeLists.txt
+      variables:
+        CACHE_POLICY: pull-push
+    - if: $CI_COMMIT_TAG && $CI_COMMIT_REF_PROTECTED == "true"
+      exists:
+        - experimental/ops/CMakeLists.txt
+
+# Base template: .build-experimental-ops-native
+# Purpose: Build the experimental/ops benchmark executable for native test jobs.
+.build-experimental-ops-native:
+  extends:
+    - .experimental-ops-rules
+  stage: build
+  script:
+    - cmake -G Ninja
+      --toolchain ${CI_PROJECT_DIR}/${EXPERIMENTAL_OPS_TOOLCHAIN_FILE}
+      -DCMAKE_C_COMPILER=${EXPERIMENTAL_OPS_C_COMPILER}
+      -DCMAKE_CXX_COMPILER=${EXPERIMENTAL_OPS_CXX_COMPILER}
+      -DKLEIDIAI_OPS_ENABLE_BUILD_BENCHMARK=ON
+      ${EXPERIMENTAL_OPS_CMAKE_EXTRA:-}
+      -S experimental/ops
+      -B ${CI_JOB_NAME_SLUG}
+    - cmake --build ${CI_JOB_NAME_SLUG} -j${PARALLEL_JOBS} --verbose
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - ${CI_JOB_NAME_SLUG}/benchmark/gemm
+
+# Base template: .test-experimental-ops-native
+# Purpose: Run the native GEMM, convolution, and depthwise test plans.
+.test-experimental-ops-native:
+  extends:
+    - .experimental-ops-rules
+  stage: test
+  timeout: 2h
+  variables:
+    RUNNER_SCRIPT_TIMEOUT: 2h
+  script:
+    - |
+      if [ -n "${EXPERIMENTAL_OPS_ASAN_OPTIONS:-}" ]; then
+        export ASAN_OPTIONS="${EXPERIMENTAL_OPS_ASAN_OPTIONS}"
+      fi
+    - echo "Running soak tests with ${PARALLEL_JOBS} threads"
+    - |
+      set -o pipefail
+      python3 experimental/ops/scripts/soak-full.py \
+        --test_plan_file experimental/ops/tests/configs/conv_tests.cfg \
+        --run_test_plan \
+        --conv \
+        --threads ${PARALLEL_JOBS} \
+        ${EXPERIMENTAL_OPS_SOAK_EXTRA_ARGS:-} \
+        --binary ${EXPERIMENTAL_OPS_BUILD_DIR}/benchmark/gemm 2>&1 \
+        | tee conv_tests.log
+    - |
+      set -o pipefail
+      python3 experimental/ops/scripts/soak-full.py \
+        --test_plan_file experimental/ops/tests/configs/depthwise_tests.cfg \
+        --run_test_plan \
+        --conv \
+        --kernel_filter depthwise \
+        --threads ${PARALLEL_JOBS} \
+        ${EXPERIMENTAL_OPS_SOAK_EXTRA_ARGS:-} \
+        --binary ${EXPERIMENTAL_OPS_BUILD_DIR}/benchmark/gemm 2>&1 \
+        | tee depthwise_tests.log
+    - |
+      set -o pipefail
+      python3 experimental/ops/scripts/soak-full.py \
+        --test_plan_file experimental/ops/tests/configs/gemm_tests.cfg \
+        --run_test_plan \
+        --threads ${PARALLEL_JOBS} \
+        ${EXPERIMENTAL_OPS_SOAK_EXTRA_ARGS:-} \
+        --binary ${EXPERIMENTAL_OPS_BUILD_DIR}/benchmark/gemm 2>&1 \
+        | tee gemm_tests.log
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - conv_tests.log
+      - depthwise_tests.log
+      - gemm_tests.log
+      - soak-*/
+
+build-experimental-ops-clang-linux-aarch64:
+  extends:
+    - .build-experimental-ops-native
+  variables:
+    EXPERIMENTAL_OPS_C_COMPILER: clang
+    EXPERIMENTAL_OPS_CXX_COMPILER: clang++
+    EXPERIMENTAL_OPS_TOOLCHAIN_FILE: experimental/ops/toolchains/native/native-linux-aarch64-gnu.cmake
+
+build-experimental-ops-clang-asan-linux-aarch64:
+  extends:
+    - .build-experimental-ops-native
+  variables:
+    EXPERIMENTAL_OPS_C_COMPILER: clang
+    EXPERIMENTAL_OPS_CXX_COMPILER: clang++
+    EXPERIMENTAL_OPS_TOOLCHAIN_FILE: experimental/ops/toolchains/native/native-linux-aarch64-gnu.cmake
+    EXPERIMENTAL_OPS_CMAKE_EXTRA: >-
+      -DCMAKE_BUILD_TYPE=Debug
+      -DKLEIDIAI_OPS_CCXX_FLAGS_INIT:STRING=-g;-fsanitize=address;-fno-omit-frame-pointer;-fno-common
+      -DKLEIDIAI_OPS_LINKER_FLAGS_INIT:STRING=-fsanitize=address
+
+build-experimental-ops-gcc-linux-aarch64:
+  extends:
+    - .build-experimental-ops-native
+  variables:
+    EXPERIMENTAL_OPS_C_COMPILER: gcc
+    EXPERIMENTAL_OPS_CXX_COMPILER: g++
+    EXPERIMENTAL_OPS_TOOLCHAIN_FILE: experimental/ops/toolchains/native/native-linux-aarch64-gnu.cmake
+
+build-experimental-ops-clang-macos:
+  extends:
+    - .build-experimental-ops-native
+  tags:
+    - apple_silicon
+  variables:
+    EXPERIMENTAL_OPS_C_COMPILER: clang
+    EXPERIMENTAL_OPS_CXX_COMPILER: clang++
+    EXPERIMENTAL_OPS_TOOLCHAIN_FILE: experimental/ops/toolchains/native/native-macos-aarch64-clang.cmake
+
+build-experimental-ops-clang-asan-macos:
+  extends:
+    - .build-experimental-ops-native
+  tags:
+    - apple_silicon
+  variables:
+    EXPERIMENTAL_OPS_C_COMPILER: clang
+    EXPERIMENTAL_OPS_CXX_COMPILER: clang++
+    EXPERIMENTAL_OPS_TOOLCHAIN_FILE: experimental/ops/toolchains/native/native-macos-aarch64-clang.cmake
+    EXPERIMENTAL_OPS_CMAKE_EXTRA: >-
+      -DCMAKE_BUILD_TYPE=Debug
+      -DKLEIDIAI_OPS_CCXX_FLAGS_INIT:STRING=-g;-fsanitize=address;-fno-omit-frame-pointer;-fno-common
+      -DKLEIDIAI_OPS_LINKER_FLAGS_INIT:STRING=-fsanitize=address
+
+build-experimental-ops-android-arm64-v8a:
+  extends:
+    - .experimental-ops-rules
+  stage: build
+  needs: []
+  variables:
+    # Android NDK is installed only in the amd64 CI image.
+    KUBERNETES_NODE_SELECTOR_ARCH: "kubernetes.io/arch=amd64"
+  script:
+    - cmake -G Ninja
+      --toolchain ${CI_PROJECT_DIR}/experimental/ops/toolchains/cross/cross-android-arm64-v8a.cmake
+      -DKLEIDIAI_OPS_ENABLE_BUILD_BENCHMARK=ON
+      -S experimental/ops
+      -B ${CI_JOB_NAME_SLUG}
+    - cmake --build ${CI_JOB_NAME_SLUG} -j${PARALLEL_JOBS} --verbose
+
+test-experimental-ops-clang-linux-aarch64:
+  extends:
+    - .test-experimental-ops-native
+  needs:
+    - build-experimental-ops-clang-linux-aarch64
+  variables:
+    EXPERIMENTAL_OPS_BUILD_DIR: build-experimental-ops-clang-linux-aarch64
+
+test-experimental-ops-clang-asan-linux-aarch64:
+  extends:
+    - .test-experimental-ops-native
+  needs:
+    - build-experimental-ops-clang-asan-linux-aarch64
+  variables:
+    EXPERIMENTAL_OPS_BUILD_DIR: build-experimental-ops-clang-asan-linux-aarch64
+    EXPERIMENTAL_OPS_ASAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+    EXPERIMENTAL_OPS_SOAK_EXTRA_ARGS: --case_limit 20
+    KUBERNETES_CPU_REQUEST: 8
+    KUBERNETES_CPU_LIMIT: 12
+    PARALLEL_JOBS: 4
+
+test-experimental-ops-gcc-linux-aarch64:
+  extends:
+    - .test-experimental-ops-native
+  needs:
+    - build-experimental-ops-gcc-linux-aarch64
+  variables:
+    EXPERIMENTAL_OPS_BUILD_DIR: build-experimental-ops-gcc-linux-aarch64
+    KUBERNETES_CPU_REQUEST: 32
+    KUBERNETES_CPU_LIMIT: 48
+    PARALLEL_JOBS: 32
+
+test-experimental-ops-clang-macos:
+  extends:
+    - .test-experimental-ops-native
+  needs:
+    - build-experimental-ops-clang-macos
+  tags:
+    - apple_silicon
+  variables:
+    EXPERIMENTAL_OPS_BUILD_DIR: build-experimental-ops-clang-macos
+
+test-experimental-ops-clang-asan-macos:
+  extends:
+    - .test-experimental-ops-native
+  needs:
+    - build-experimental-ops-clang-asan-macos
+  tags:
+    - apple_silicon
+  variables:
+    EXPERIMENTAL_OPS_BUILD_DIR: build-experimental-ops-clang-asan-macos
+    EXPERIMENTAL_OPS_ASAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+    EXPERIMENTAL_OPS_SOAK_EXTRA_ARGS: --case_limit 20
