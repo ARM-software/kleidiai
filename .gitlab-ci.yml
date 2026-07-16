@@ -62,6 +62,9 @@ variables:
   # Parallel build/test level matching reserved CPUs (prevents OOM from over-sharding).
   PARALLEL_JOBS: ${KUBERNETES_CPU_REQUEST}
 
+  # Android NDK version.
+  MACOS_ANDROID_NDK_VERSION: "27.3.13750724"
+
   # Enable more verbose script section content printout
   FF_SCRIPT_SECTIONS: true
 

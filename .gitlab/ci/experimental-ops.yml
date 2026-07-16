@@ -42,6 +42,13 @@
       exists:
         - experimental/ops/CMakeLists.txt
 
+.macos-android-ndk-setup:
+  script:
+    - &macos_android_ndk_setup |
+      MACOS_ANDROID_SDK="${ANDROID_HOME:-${HOME}/Library/Android/sdk}"
+      MACOS_ANDROID_NDK="${ANDROID_NDK_HOME:-${MACOS_ANDROID_SDK}/ndk/${MACOS_ANDROID_NDK_VERSION}}"
+      test -f "${MACOS_ANDROID_NDK}/build/cmake/android.toolchain.cmake" || { echo "Android NDK toolchain file not found under ${MACOS_ANDROID_NDK}"; exit 1; }
+
 # Base template: .build-experimental-ops-native
 # Purpose: Build the experimental/ops benchmark executable for native test jobs.
 .build-experimental-ops-native:
@@ -174,12 +181,14 @@ build-experimental-ops-android-arm64-v8a:
     - .experimental-ops-rules
   stage: build
   needs: []
-  variables:
-    # Android NDK is installed only in the amd64 CI image.
-    KUBERNETES_NODE_SELECTOR_ARCH: "kubernetes.io/arch=amd64"
+  tags:
+    - apple_silicon
   script:
+    - *macos_android_ndk_setup
+    - export ANDROID_NDK_HOME="${MACOS_ANDROID_NDK}"
     - cmake -G Ninja
       --toolchain ${CI_PROJECT_DIR}/experimental/ops/toolchains/cross/cross-android-arm64-v8a.cmake
+      -DCMAKE_ANDROID_NDK=${MACOS_ANDROID_NDK}
       -DKLEIDIAI_OPS_ENABLE_BUILD_BENCHMARK=ON
       -S experimental/ops
       -B ${CI_JOB_NAME_SLUG}
