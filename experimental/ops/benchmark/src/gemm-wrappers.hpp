@@ -711,9 +711,9 @@ public:
         if (std::is_same<Tres, bfloat16>::value) {
             // BF16 result implies BF16 operands
             // Fast mode implies BF16 accumulation, otherwise it's FP32
-            res_mantissa_bits = 6;
+            res_mantissa_bits = 8;
             if (p->fast_mode) {
-                acc_mantissa_bits = 6;
+                acc_mantissa_bits = 8;
             } else {
                 acc_mantissa_bits = 24;
             }
@@ -766,6 +766,15 @@ public:
 
         lhs_res_bits = std::max(1, (res_operand_bits+1) / 2);
         rhs_res_bits = std::max(1, (res_operand_bits - lhs_res_bits));
+
+        // In FP32 fast mode, we might be constrained by what the input
+        // values can represent - clamp here if needed.
+        if (std::is_same<Tres, float>::value && p->fast_mode) {
+            lhs_acc_bits = std::min(lhs_acc_bits, 8);
+            lhs_res_bits = std::min(lhs_res_bits, 8);
+            rhs_acc_bits = std::min(rhs_acc_bits, 8);
+            rhs_res_bits = std::min(rhs_res_bits, 8);
+        }
 
 #ifndef SILENT
         printf("Generating test data: %d accumulator mantissa bits, %d result mantissa bits, %" PRId64 " total accumulations, %d accumulation bits\n", acc_mantissa_bits, res_mantissa_bits, acc_depth, accu_bits);
@@ -1301,13 +1310,6 @@ void test(GemmProblem *p, int iterations, int nthreads, const char *kernel_name,
                 test_data.populate_bias(C);
                 C1->Copy(C);
             }
-        }
-
-        // FP32 fast mode means the operands can be cast to BF16 - mask them
-        // off here so the reference will match.
-        if (std::is_same<typename T_ref::operand_type, float>::value && p->fast_mode) {
-            A->template Mask<uint32_t>(0xffff0000);
-            B->template Mask<uint32_t>(0xffff0000);
         }
 
         T_ref kern_ref(A, B, C1, bias, p, true);
