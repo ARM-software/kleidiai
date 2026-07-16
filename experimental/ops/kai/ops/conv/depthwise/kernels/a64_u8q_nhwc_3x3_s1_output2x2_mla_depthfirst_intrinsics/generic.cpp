@@ -169,10 +169,10 @@ void a64_u8qa_nhwc_3x3_s1_output2x2_mla_depthfirst_intrinsics_impl(
 #define RQ_MUL(CHANNELS) \
     const int32x4_t rq_mul_ ## CHANNELS = vld1q_s32(requant_muls); \
     requant_muls += 4; \
-    acc00_ ## CHANNELS = vqrdmulhq_s32(acc00_ ## CHANNELS, rq_mul_ ## CHANNELS); \
-    acc01_ ## CHANNELS = vqrdmulhq_s32(acc01_ ## CHANNELS, rq_mul_ ## CHANNELS); \
-    acc10_ ## CHANNELS = vqrdmulhq_s32(acc10_ ## CHANNELS, rq_mul_ ## CHANNELS); \
-    acc11_ ## CHANNELS = vqrdmulhq_s32(acc11_ ## CHANNELS, rq_mul_ ## CHANNELS);
+    acc00_ ## CHANNELS = vqdmulhq_s32(acc00_ ## CHANNELS, rq_mul_ ## CHANNELS); \
+    acc01_ ## CHANNELS = vqdmulhq_s32(acc01_ ## CHANNELS, rq_mul_ ## CHANNELS); \
+    acc10_ ## CHANNELS = vqdmulhq_s32(acc10_ ## CHANNELS, rq_mul_ ## CHANNELS); \
+    acc11_ ## CHANNELS = vqdmulhq_s32(acc11_ ## CHANNELS, rq_mul_ ## CHANNELS);
 
     RQ_MUL(0123);
     RQ_MUL(4567);
