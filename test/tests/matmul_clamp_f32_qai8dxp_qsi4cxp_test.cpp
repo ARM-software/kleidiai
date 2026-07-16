@@ -125,10 +125,9 @@ static const std::array<UkernelVariantCustom<kai_matmul_clamp_f32_qai8dxp_qsi4cx
 
          {UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_qmx_sdot),
           "kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_qmx_sdot__RHS_NxK__", cpu_has_sme,
-          kai_run_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon,
-          kai_get_rhs_packed_size_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon,
-          kai_get_rhs_packed_offset_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon,
-          kai_get_rhs_offset_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon, RhsPackType::NxK},
+          kai_run_rhs_pack_nxk_qsi4cxp_qs4cxs1s0, kai_get_rhs_packed_size_rhs_pack_nxk_qsi4cxp_qs4cxs1s0,
+          kai_get_rhs_packed_offset_rhs_pack_nxk_qsi4cxp_qs4cxs1s0, kai_get_rhs_offset_rhs_pack_nxk_qsi4cxp_qs4cxs1s0,
+          RhsPackType::NxK},
           
          {UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme_dot),
           "kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme_dot__RHS_NxK__", cpu_has_sme,

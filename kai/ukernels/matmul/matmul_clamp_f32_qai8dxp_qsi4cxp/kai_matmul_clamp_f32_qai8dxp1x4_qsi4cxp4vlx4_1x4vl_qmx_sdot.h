@@ -20,7 +20,7 @@ extern "C" {
 /// Micro-kernel dependencies
 ///
 /// -# kai_lhs_quant_pack_qai8dxp_f32 to dynamically quantize and pack the LHS matrix
-/// -# kai_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon to pack the RHS matrix
+/// -# kai_rhs_pack_nxk_qsi4cxp_qs4cxs1s0 to pack the RHS matrix
 
 /// --------------------------------------------------
 
@@ -45,19 +45,19 @@ size_t kai_get_n_step_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_qmx_sdot(vo
 size_t kai_get_mr_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_qmx_sdot(void);
 
 /// Gets the nr value, which must be used to pack the RHS matrix with
-/// the @ref kai_run_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon micro-kernel
+/// the @ref kai_run_rhs_pack_nxk_qsi4cxp_qs4cxs1s0 micro-kernel
 ///
 /// @return the nr value
 size_t kai_get_nr_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_qmx_sdot(void);
 
 /// Gets the kr value, which must be used to pack the RHS matrix with
-/// the @ref kai_run_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon micro-kernel
+/// the @ref kai_run_rhs_pack_nxk_qsi4cxp_qs4cxs1s0 micro-kernel
 ///
 /// @return the kr value
 size_t kai_get_kr_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_qmx_sdot(void);
 
 /// Gets the sr value, which must be used to pack the RHS matrix with
-/// the @ref kai_run_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon micro-kernel
+/// the @ref kai_run_rhs_pack_nxk_qsi4cxp_qs4cxs1s0 micro-kernel
 ///
 /// @return the sr value
 size_t kai_get_sr_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_qmx_sdot(void);
@@ -113,7 +113,7 @@ size_t kai_get_dst_size_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_qmx_sdot(
 ///                            by calling the @ref kai_lhs_quant_pack_qai8dxp_f32 micro-kernel which performs
 ///                            both the dynamic quantization to 8-bit and activation packing in a single step.
 /// @param[in]  rhs_packed     The RHS packed matrix, which is obtained by calling @ref
-/// kai_run_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon
+/// kai_run_rhs_pack_nxk_qsi4cxp_qs4cxs1s0
 /// @param[out] dst            The DST matrix.
 /// @param[in]  dst_stride_row Stride in bytes between two rows of the DST matrix.
 /// @param[in]  dst_stride_col Stride in bytes between two columns of the DST matrix. It must be sizeof(float).
