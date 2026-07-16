@@ -64,7 +64,6 @@ KAI_ASM_FUNCTION_LABEL(kai_kernel_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8
     lsr x8, x8, #0
     ldr x11, [x0, #0x38]
     ldr x10, [x0, #0x48]
-    tbz x17, #16, label_1
     ldr x20, [x0, #0x78]
     KAI_ASM_INST(0x8540c289)  // ld1rw { z9.s }, p0/Z, [x20]
     KAI_ASM_INST(0x8541c288)  // ld1rw { z8.s }, p0/Z, [x20, #4]
@@ -198,7 +197,6 @@ KAI_ASM_LABEL(label_12)  // m_loop: n_loop: post_process_tile01: unroll_x2: body
     KAI_ASM_INST(0xc0460400)  // mova { z0.h-z3.h }, za0h.h[x12, 0:3]
     KAI_ASM_INST(0xc0460430)  // mova { z16.h-z19.h }, za0h.h[x12, 4:7]
     add x12, x12, #0x8
-    tbz x17, #16, label_13
     KAI_ASM_INST(0xc1a8c92c)  // fclamp { z12.s-z15.s }, z9.s, z8.s
     KAI_ASM_INST(0xc1a8c93c)  // fclamp { z28.s-z31.s }, z9.s, z8.s
     KAI_ASM_INST(0xc1a8c920)  // fclamp { z0.s-z3.s }, z9.s, z8.s
@@ -229,7 +227,6 @@ KAI_ASM_LABEL(label_15)  // m_loop: n_loop: post_process_tile01: unroll_x1: body
     KAI_ASM_INST(0xc0460410)  // mova { z16.h-z19.h }, za0h.h[x12, 0:3]
     KAI_ASM_INST(0xc0460424)  // mova { z4.h-z7.h }, za0h.h[x12, 4:7]
     add x12, x12, #0x8
-    tbz x17, #16, label_16
     KAI_ASM_INST(0xc1a8c930)  // fclamp { z16.s-z19.s }, z9.s, z8.s
     KAI_ASM_INST(0xc1a8c924)  // fclamp { z4.s-z7.s }, z9.s, z8.s
 KAI_ASM_LABEL(label_16)  // m_loop: n_loop: post_process_tile01: unroll_x1: process_and_store_height_4: clamp_output: no_clamp
@@ -257,7 +254,6 @@ KAI_ASM_LABEL(label_18)  // m_loop: n_loop: post_process_tile23: height_8: body
     KAI_ASM_INST(0xc0460440)  // mova { z0.h-z3.h }, za1h.h[x12, 0:3]
     KAI_ASM_INST(0xc0460470)  // mova { z16.h-z19.h }, za1h.h[x12, 4:7]
     add x12, x12, #0x8
-    tbz x17, #16, label_19
     KAI_ASM_INST(0xc1a8c938)  // fclamp { z24.s-z27.s }, z9.s, z8.s
     KAI_ASM_INST(0xc1a8c93c)  // fclamp { z28.s-z31.s }, z9.s, z8.s
     KAI_ASM_INST(0xc1a8c920)  // fclamp { z0.s-z3.s }, z9.s, z8.s
@@ -288,7 +284,6 @@ KAI_ASM_LABEL(label_20)  // m_loop: n_loop: post_process_tile23: height_8: done
     KAI_ASM_INST(0xc0460440)  // mova { z0.h-z3.h }, za1h.h[x12, 0:3]
     KAI_ASM_INST(0xc046046c)  // mova { z12.h-z15.h }, za1h.h[x12, 4:7]
     add x12, x12, #0x8
-    tbz x17, #16, label_22
     KAI_ASM_INST(0xc1a8c920)  // fclamp { z0.s-z3.s }, z9.s, z8.s
     KAI_ASM_INST(0xc1a8c92c)  // fclamp { z12.s-z15.s }, z9.s, z8.s
 KAI_ASM_LABEL(label_22)  // m_loop: n_loop: post_process_tile23: height_4: process_and_store_height_4: clamp_output: no_clamp
@@ -306,7 +301,6 @@ KAI_ASM_LABEL(label_23)  // m_loop: n_loop: post_process_tile23: height_4: done
     bcc label_26
     KAI_ASM_INST(0xc046045c)  // mova { z28.h-z31.h }, za1h.h[x12, 0:3]
     add x12, x12, #0x4
-    tbz x17, #16, label_25
     KAI_ASM_INST(0xc1a8c93c)  // fclamp { z28.s-z31.s }, z9.s, z8.s
 KAI_ASM_LABEL(label_25)  // m_loop: n_loop: post_process_tile23: height_2: process_and_store_height_2: clamp_output: no_clamp
     KAI_ASM_INST(0xa06042bc)  // st1w { z28.s-z29.s }, p8, [x21]
@@ -318,7 +312,6 @@ KAI_ASM_LABEL(label_26)  // m_loop: n_loop: post_process_tile23: height_2: done
     cmp x20, #0x1
     bcc label_29
     KAI_ASM_INST(0xc0460096)  // mova { z22.h-z23.h }, za1h.h[x12, 0:1]
-    tbz x17, #16, label_28
     KAI_ASM_INST(0xc1a8c136)  // fclamp { z22.s-z23.s }, z9.s, z8.s
 KAI_ASM_LABEL(label_28)  // m_loop: n_loop: post_process_tile23: height_1: process_and_store_height_1: clamp_output: no_clamp
     KAI_ASM_INST(0xa06042b6)  // st1w { z22.s-z23.s }, p8, [x21]

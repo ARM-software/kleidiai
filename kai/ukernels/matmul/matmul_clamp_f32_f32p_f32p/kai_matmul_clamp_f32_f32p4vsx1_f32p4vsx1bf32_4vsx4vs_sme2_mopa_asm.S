@@ -64,7 +64,6 @@ KAI_ASM_FUNCTION_LABEL(kai_kernel_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_4vsx4
     lsr x16, x16, #0
     ldr x9, [x0, #0x38]
     ldr x28, [x0, #0x48]
-    tbz x15, #16, label_1
     ldr x20, [x0, #0x78]
     KAI_ASM_INST(0x8540c690)  // ld1rw { z16.s }, p1/Z, [x20]
     KAI_ASM_INST(0x8541c685)  // ld1rw { z5.s }, p1/Z, [x20, #4]
@@ -160,7 +159,6 @@ KAI_ASM_LABEL(label_11)  // m_loop: n_loop: post_process_tile0123: height_4: bod
     fadd z13.s, z17.s, z27.s
     fadd z14.s, z21.s, z3.s
     fadd z15.s, z20.s, z31.s
-    tbz x15, #16, label_12
     KAI_ASM_INST(0xc1a5ca0c)  // fclamp { z12.s-z15.s }, z16.s, z5.s
 KAI_ASM_LABEL(label_12)  // m_loop: n_loop: post_process_tile0123: height_4: process_and_store_height_4: clamp_output: no_clamp
     st1w { z12.s }, p0, [x21]
@@ -186,7 +184,6 @@ KAI_ASM_LABEL(label_13)  // m_loop: n_loop: post_process_tile0123: height_4: don
     fadd z17.s, z17.s, z10.s
     fadd z2.s, z14.s, z3.s
     fadd z3.s, z17.s, z11.s
-    tbz x15, #16, label_15
     KAI_ASM_INST(0xc1a5c202)  // fclamp { z2.s-z3.s }, z16.s, z5.s
 KAI_ASM_LABEL(label_15)  // m_loop: n_loop: post_process_tile0123: height_2: process_and_store_height_2: clamp_output: no_clamp
     st1w { z2.s }, p0, [x21]
@@ -201,7 +198,6 @@ KAI_ASM_LABEL(label_16)  // m_loop: n_loop: post_process_tile0123: height_2: don
     fadd z3.s, z28.s, z29.s
     fadd z9.s, z3.s, z30.s
     fadd z19.s, z9.s, z31.s
-    tbz x15, #16, label_18
     KAI_ASM_INST(0x64a52613)  // fclamp z19.s, z16.s, z5.s
 KAI_ASM_LABEL(label_18)  // m_loop: n_loop: post_process_tile0123: height_1: process_and_store_height_1: clamp_output: no_clamp
     st1w { z19.s }, p0, [x21]
