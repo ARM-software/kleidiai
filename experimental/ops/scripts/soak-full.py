@@ -249,7 +249,7 @@ def option_value(tokens, option, default=None):
 def dump_name_for_case(kernel, case_line, case_index):
     tokens = shlex.split(case_line)
     fast = "fast" if "-f" in tokens else "nonfast"
-    bias = "bias" if "-b" in tokens else "nobias"
+    bias = "accumulate" if "-A" in tokens else ("bias" if "-b" in tokens else "nobias")
     act = sanitize_filename_field(option_value(tokens, "-a", "noact"))
 
     m = option_value(tokens, "-M")

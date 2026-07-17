@@ -845,9 +845,11 @@ void test_dequantized(GemmProblem *p, int iterations, int nthreads, const char *
         A_q->read_dump(dump_in);
         B_q->read_dump(dump_in);
 
-        if(p->use_bias) {
+        if (p->use_bias) {
             bias_f = std::make_shared<Matrix <typename T_ref::result_type> >(1, p->output_channels, p->output_channels, 1, p->multis);
             bias_f->read_dump(dump_in);
+        } else if (p->accumulate) {
+            C_in->read_dump(dump_in);
         }
 
         C_fr->read_dump(dump_in);
@@ -972,8 +974,10 @@ void test_dequantized(GemmProblem *p, int iterations, int nthreads, const char *
 
         A_q->dump_out(fp);
         B_q->dump_out(fp);
-        if(p->use_bias) {
+        if (p->use_bias) {
             bias_f->dump_out(fp);
+        } else if (p->accumulate) {
+            C_in->dump_out(fp);
         }
         C_r->dump_out(fp);
 
@@ -1019,6 +1023,8 @@ void test_quantized(GemmProblem *p, int iterations, int nthreads, const char *ke
         if (p->use_bias) {
             bias_q = std::make_shared<Matrix <int32_t> >(1, p->output_channels, p->output_channels, 1, p->multis);
             bias_q->read_dump(dump_in);
+        } else if (p->accumulate) {
+            Cin_q->read_dump(dump_in);
         }
 
         C_qr->read_dump(dump_in);
@@ -1217,6 +1223,8 @@ void test_quantized(GemmProblem *p, int iterations, int nthreads, const char *ke
         B_q->dump_out(fp);
         if (p->use_bias) {
             bias_q->dump_out(fp);
+        } else if (p->accumulate) {
+            Cin_q->dump_out(fp);
         }
         C_q->dump_out(fp);
 
@@ -1282,6 +1290,8 @@ void test(GemmProblem *p, int iterations, int nthreads, const char *kernel_name,
         if (p->use_bias) {
             bias = std::make_shared<Matrix <typename T_test::result_type> >(1, p->output_channels, p->output_channels, 1, p->multis);
             bias->read_dump(dump_in);
+        } else if (p->accumulate) {
+            C->read_dump(dump_in);
         }
 
         C1->read_dump(dump_in);
@@ -1359,6 +1369,8 @@ void test(GemmProblem *p, int iterations, int nthreads, const char *kernel_name,
         B->dump_out(fp);
         if (p->use_bias) {
             bias->dump_out(fp);
+        } else if (p->accumulate) {
+            C->dump_out(fp);
         }
         C2->dump_out(fp);
 
