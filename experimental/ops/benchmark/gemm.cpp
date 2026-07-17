@@ -855,6 +855,7 @@ int main(int argc, char **argv) {
         read_dump_file = nullptr;
     }
 
+
     /* Override groups for manual depthwise problems. */
     if (mykern->flags & KERN_DEPTHWISE && manual_spec) {
         p.groups = p.input_channels;
@@ -898,11 +899,16 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (mykern->flags & (KERN_QUANTIZED | KERN_NOACC)) {
+    if (mykern->flags & (KERN_QUANTIZED | KERN_NOACC | KERN_LEGACY)) {
         if (!(mykern->flags & KERN_ADD) && p.accumulate) {
             printf("Warning: accumulate not supported by %s, ignoring -A.\n", mykern->name);
             p.accumulate=false;
         }
+    }
+
+    if (p.accumulate && p.use_bias) {
+        printf("Warning: Bias is not supported with accumulate, ignoring -b.\n");
+        p.use_bias=false;
     }
 
     if (!p.is_basic_gemm() && !(mykern->flags & KERN_CONV)) {

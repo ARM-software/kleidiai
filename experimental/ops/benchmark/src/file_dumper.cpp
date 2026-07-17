@@ -13,7 +13,7 @@
 #include "kai/ops/gemm/kai_ops.hpp"
 #include "gemm_lib.hpp"
 
-#define MAGIC 0x123456789abc0001
+#define MAGIC 0x123456789abc0002
 
 struct problem_dump {
     int64_t magic;
@@ -36,6 +36,7 @@ struct problem_dump {
     int64_t multis;
     Activation act;
     bool use_bias;
+    bool accumulate;
 };
 
 FILE *write_dump(const GemmProblem *p, const char *filename) {
@@ -68,6 +69,7 @@ FILE *write_dump(const GemmProblem *p, const char *filename) {
     pd.multis = p->multis;
     pd.act = p->act;
     pd.use_bias = p->use_bias;
+    pd.accumulate = p->accumulate;
 
     fwrite(&pd, sizeof(problem_dump), 1, fp);
 
@@ -111,15 +113,18 @@ FILE *read_dump(GemmProblem *p, const char *filename) {
     p->multis = pd.multis;
     p->act = pd.act;
     p->use_bias = pd.use_bias;
+    p->accumulate = pd.accumulate;
 
 #ifndef SILENT
+    const char *output_mode = p->accumulate ? "accumulate" : (p->use_bias ? "bias" : "no bias/accumulate");
+
     printf ("===============================================================================\n");
     printf ("Configuration loaded from dump:\n");
     printf (" Convolution: filter %" PRId64 "x%" PRId64 ", dilation %" PRId64 "x%" PRId64 ", stride %" PRId64 "x%" PRId64 ", output %" PRId64 "x%" PRId64 " (%" PRId64 " -> %" PRId64 " channels)\n",
             p->kernel_height, p->kernel_width, p->in_stride_h, p->in_stride_w, p->out_stride_h, p->out_stride_w,
             p->output_height, p->output_width, p->input_channels, p->output_channels);
-    printf (" Input: %" PRId64 "x%" PRId64 ", padding %" PRId64 "x%" PRId64 ", groups %" PRId64 ", batches %" PRId64 ", multis %" PRId64 ", bias %d\n",
-            p->input_height, p->input_width, p->padding_top, p->padding_left, p->groups, p->batches, p->multis, p->use_bias);
+    printf (" Input: %" PRId64 "x%" PRId64 ", padding %" PRId64 "x%" PRId64 ", groups %" PRId64 ", batches %" PRId64 ", multis %" PRId64 ", %s\n",
+            p->input_height, p->input_width, p->padding_top, p->padding_left, p->groups, p->batches, p->multis, output_mode);
     printf ("===============================================================================\n");
 #endif
 
