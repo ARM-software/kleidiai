@@ -196,6 +196,8 @@ void kai_run_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_qmx_mopa(
         " cntw x14 \n"
         // - ptrue
         " ptrue p0.b, all \n"
+        // Mask used to isolate the high nibble (already positioned in bits[7:4])
+        " dup z22.b, #-16 \n"
         // Predicate for loading fp16 scaling factors
         " ldr x5, [%x[args_ptr], %[offset_mr]]\n"
         " lsl x5, x5, #1 \n"
@@ -267,33 +269,33 @@ void kai_run_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_qmx_mopa(
 
         // Iterate over all values in the block
         // k_blk_idx = bl
-        // e.g. while(k_blk_idx > 0) {... k_blk_idx -= 4}
+        // e.g. while(k_blk_idx > 0) {... k_blk_idx += 1}
         " ldr x5, [%x[args_ptr], %[bl]] \n"
-        " mov x11, x5\n"
+        " lsr x5, x5, #3 \n"
+        " mov x11, #0 \n"
 
         " 4: // .LOOP_BL_START%=: \n"
 
-        " mov x6, x20 \n"
-        " .inst 0xa5464202 // ld1w z2.s, p0/z, [x16, x6, lsl #2] \n"
-        " .inst 0x04b0e3e6 // incw x6, all \n"
+        " mov x12, x20 \n"
+        " ld1w z2.s, p0/z, [x16, x20, lsl #2] \n"
+        " add x6, x20, x14 \n"
         " .inst 0xa5464203 // ld1w z3.s, p0/z, [x16, x6, lsl #2] \n"
-        // Load left matrix column
-        " ld1h {z8.h}, p0/z, [x22, x20, lsl #1] \n"
-        " inch x20, all \n"
+        " add x6, x6, x14 \n"
+        " .inst 0xa546420c // ld1w z12.s, p0/z, [x16, x6, lsl #2] \n"
+        " add x6, x6, x14 \n"
+        " .inst 0xa546420d // ld1w z13.s, p0/z, [x16, x6, lsl #2] \n"
+        " lsl x6, x14, #2 \n"
+        " add x20, x20, x6 \n"
 
-        // Convert Int4 -> Int8
-        " .inst 0x042c9447 // lsr z7.b, z2.b, #4 \n"
-        " .inst 0x05800662 // and z2.b, z2.b, #0x0F \n"
-        " .inst 0x05276044 // zip1 z4.b, z2.b, z7.b \n"
-        " .inst 0x05276445 // zip2 z5.b, z2.b, z7.b \n"
-        " .inst 0x2521c104 // sub z4.b, z4.b, #8 \n"
-        " .inst 0x2521c105 // sub z5.b, z5.b, #8 \n"
-        " .inst 0x042c9467 // lsr z7.b, z3.b, #4 \n"
-        " .inst 0x05800663 // and z3.b, z3.b, #0x0F \n"
-        " .inst 0x05276066 // zip1 z6.b, z3.b, z7.b \n"
-        " .inst 0x05276467 // zip2 z7.b, z3.b, z7.b \n"
-        " .inst 0x2521c106 // sub z6.b, z6.b, #8 \n"
-        " .inst 0x2521c107 // sub z7.b, z7.b, #8 \n"
+        // Load left matrix column
+        " ld1h {z8.h}, p0/z, [x22, x12, lsl #1] \n"
+        " add x6, x12, x14, lsl #1 \n"
+
+        // Convert Int4 -> Int8 (low nibbles)
+        " lsl z4.b, z2.b, #4 \n"
+        " lsl z5.b, z3.b, #4 \n"
+        " lsl z6.b, z12.b, #4 \n"
+        " lsl z7.b, z13.b, #4 \n"
 
         // Outer-products
         " .inst 0xa0840100 // smopa za0.s, p0/m, p0/m, z8.b, z4.b \n"
@@ -301,10 +303,25 @@ void kai_run_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_qmx_mopa(
         " .inst 0xa0860102 // smopa za2.s, p0/m, p0/m, z8.b, z6.b \n"
         " .inst 0xa0870103 // smopa za3.s, p0/m, p0/m, z8.b, z7.b \n"
 
-        // Decrement the block loop index
-        " subs x11, x11, #4 \n"
+        " ld1h {z8.h}, p0/z, [x22, x6, lsl #1] \n"
 
-        " b.gt 4b // .LOOP_BL_START%= \n"
+        // Convert Int4 -> Int8 (high nibbles)
+        " and z4.d, z2.d, z22.d \n"
+        " and z5.d, z3.d, z22.d \n"
+        " and z6.d, z12.d, z22.d \n"
+        " and z7.d, z13.d, z22.d \n"
+
+        // Outer-products
+        " .inst 0xa0840100 // smopa za0.s, p0/m, p0/m, z8.b, z4.b \n"
+        " .inst 0xa0850101 // smopa za1.s, p0/m, p0/m, z8.b, z5.b \n"
+        " .inst 0xa0860102 // smopa za2.s, p0/m, p0/m, z8.b, z6.b \n"
+        " .inst 0xa0870103 // smopa za3.s, p0/m, p0/m, z8.b, z7.b \n"
+
+        // Increment the block loop index
+        " add x11, x11, #1 \n"
+        " cmp x11, x5 \n"
+
+        " b.lt 4b // .LOOP_BL_START%= \n"
 
         // === End of the block loop ===
 

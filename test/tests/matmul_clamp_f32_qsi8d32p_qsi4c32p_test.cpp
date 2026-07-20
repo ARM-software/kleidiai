@@ -105,10 +105,10 @@ static const std::array<UKernelVariants, 9>
              rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon, false)},
          {UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_qmx_mopa, cpu_has_sme, lhs_quant_pack_qsi8d32p_f32_neon,
-             rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)},
+             rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon, false)},
          {UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_qmx_sdot, cpu_has_sme, lhs_quant_pack_qsi8d32p_f32_neon,
-             rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)},
+             rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon, false)},
          {UKERNEL_MATMUL_PACK_VARIANT(
              clamp_f32_qsi8d32p1x4_qsi4c32p8x4_1x8_sve_dotprod, (cpu_check<cpu_has_sve_vl256, cpu_has_dotprod>), lhs_quant_pack_qsi8d32p_f32,
              rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
@@ -154,10 +154,10 @@ static const std::array<UKernelVariants, 12>
             rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0, false)},
         {UKERNEL_MATMUL_PACK_VARIANT(
             clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_qmx_mopa, cpu_has_sme, lhs_quant_pack_qsi8d32p_f32_neon,
-            rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)},
+            rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon, false)},
         {UKERNEL_MATMUL_PACK_VARIANT(
             clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_qmx_sdot, cpu_has_sme, lhs_quant_pack_qsi8d32p_f32_neon,
-            rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, false)}}};
+            rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon, false)}}};
 // clang-format on
             
             
