@@ -8,23 +8,35 @@
 #   - Validate experimental/ops native benchmark builds with Clang and GCC.
 #   - Run GEMM, convolution and depthwise soak test plans against native builds.
 #   - Cover ASan variants with reduced test limits for diagnostic coverage.
-#   - Keep experimental/ops checks change-gated in MRs while preserving default
-#     branch and protected tag coverage when re-enabled.
+#   - Run experimental/ops checks automatically for protected release tags, or
+#     when explicitly enabled for a manually created pipeline.
 # Main jobs (high-level):
 #   - build-experimental-ops-* : compile experimental/ops benchmark binaries.
 #   - test-experimental-ops-*  : execute experimental/ops soak test plans.
 # Usage notes:
-#   - Temporarily disabled while the experimental/ops CI coverage is reworked.
+#   - Set KLEIDIAI_RUN_EXPERIMENTAL_OPS_CI=true when creating a pipeline to
+#     include these jobs.
+#   - The previous MR, default branch and protected tag rules remain temporarily
+#     disabled while the experimental/ops CI coverage is reworked.
 #   - Changes to shared root CI config are listed because shared defaults, runner
 #     settings and variables can affect experimental/ops when re-enabled.
 #
 
 # Base template: .experimental-ops-rules
-# Notice: Temporarily disabled while the experimental/ops CI coverage is reworked.
-# Purpose: Run experimental/ops checks only when relevant in MRs, and always on default branch/protected tags.
+# Notice: Previous experimental/ops CI coverage remains temporarily disabled
+#         while it is reworked. Release tags and explicit opt-in pipelines are
+#         enabled as exceptions before the disabled rules below.
+# Purpose: Run experimental/ops checks for protected release tags or pipelines
+#          explicitly created with KLEIDIAI_RUN_EXPERIMENTAL_OPS_CI=true.
 .experimental-ops-rules:
   timeout: 1h
   rules:
+    - if: $CI_COMMIT_TAG && $CI_COMMIT_REF_PROTECTED == "true"
+      exists:
+        - experimental/ops/CMakeLists.txt
+    - if: $KLEIDIAI_RUN_EXPERIMENTAL_OPS_CI == "true"
+      exists:
+        - experimental/ops/CMakeLists.txt
     - when: never
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
       changes:
