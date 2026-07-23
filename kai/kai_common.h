@@ -280,6 +280,13 @@ struct kai_rhs_pack_qsi8cx_params {
     float scale_multiplier;  ///< Product of input (refers to lhs and rhs) and output quantization scales.
 };
 
+/// Parameter struct for RHS matrix packing (Quantized Symmetric Integer 4-bit with per-channel quantization)
+struct kai_rhs_pack_qsi4cx_params {
+    int32_t lhs_zero_point;  ///< LHS Matrix quantization zero-point
+    float scale_multiplier;  ///< Product of input (refers to lhs and rhs) and output quantization scales.
+    int32_t rhs_zero_point;  ///< RHS input offset: 0 for signed symmetric i4, 8 for unsigned symmetric u4.
+};
+
 /// Parameter struct for RHS matrix packing (Quantized Symmetric Integer 4-bit with per-block quantizatio and s1s0
 /// nibble ordering)
 struct kai_rhs_pack_nxk_qsi4c32p_qsu4c32s1s0_params {
