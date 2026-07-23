@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -23,9 +23,13 @@ class DataFormat;
 /// @param[in] width Number of columns.
 /// @param[in] format Data format.
 /// @param[in] seed Random seed.
+/// @param[in] range_min Minimum value of range.
+/// @param[in] range_max Maximum value of range.
 ///
 /// @return The data buffer for the matrix.
-Buffer fill_matrix_random(size_t height, size_t width, const DataFormat& format, uint32_t seed);
+Buffer fill_matrix_random(
+    size_t height, size_t width, const DataFormat& format, uint32_t seed, float range_min = 0.0F,
+    float range_max = 0.0F);
 
 /// Creates a new data buffer filled with random data.
 ///
@@ -33,10 +37,12 @@ Buffer fill_matrix_random(size_t height, size_t width, const DataFormat& format,
 ///
 /// @param[in] length The number of elements.
 /// @param[in] seed The random seed.
+/// @param[in] range_min Minimum value of range.
+/// @param[in] range_max Maximum value of range.
 ///
 /// @return The data buffer.
 template <typename Value>
-Buffer fill_random(size_t length, uint32_t seed);
+Buffer fill_random(size_t length, uint32_t seed, float range_min = 0.0F, float range_max = 0.0F);
 
 /// Creates a new matrix filled with data produced by a generator function.
 ///

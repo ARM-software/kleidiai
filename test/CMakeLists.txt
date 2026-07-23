@@ -103,6 +103,7 @@ target_link_libraries(kleidiai_test_framework
 if(MSVC)
     set(KLEIDIAI_FILES_TESTS
         test/tests/bfloat16_test.cpp
+        test/tests/clamp_hard_test.cpp
         test/tests/float16_test.cpp
         test/tests/matmul_clamp_f32_qai8dxp_qsu2cxp_test.cpp
         test/tests/matmul_clamp_f32_qsi8d32p_qai4c32p_test.cpp
@@ -113,6 +114,7 @@ else()
     set(KLEIDIAI_FILES_TESTS
         test/tests/bfloat16_test.cpp
         test/tests/buffer_test.cpp
+        test/tests/clamp_hard_test.cpp
         test/tests/float16_test.cpp
         test/tests/imatmul_test.cpp
         test/tests/dwconv_test.cpp

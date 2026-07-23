@@ -6,6 +6,7 @@
 
 // Routine to dump a problem to a file, and read it back.
 
+#include <cinttypes>
 #include <cstdint>
 #include <cstdio>
 
@@ -86,7 +87,7 @@ FILE *read_dump(GemmProblem *p, const char *filename) {
     fread(&pd, sizeof(problem_dump), 1, fp);
 
     if (pd.magic != MAGIC) {
-        printf("Bad dump magic: %lx (not %lx).\n", pd.magic, MAGIC);
+        printf("Bad dump magic: %" PRIx64 " (not %" PRIx64 ").\n", static_cast<uint64_t>(pd.magic), static_cast<uint64_t>(MAGIC));
         printf("This probably means the dump was made with an incompatible version of gemm-linux.\n");
         exit(1);
     }
@@ -114,10 +115,10 @@ FILE *read_dump(GemmProblem *p, const char *filename) {
 #ifndef SILENT
     printf ("===============================================================================\n");
     printf ("Configuration loaded from dump:\n");
-    printf (" Convolution: filter %ldx%ld, dilation %ldx%ld, stride %ldx%ld, output %ldx%ld (%ld -> %ld channels)\n",
+    printf (" Convolution: filter %" PRId64 "x%" PRId64 ", dilation %" PRId64 "x%" PRId64 ", stride %" PRId64 "x%" PRId64 ", output %" PRId64 "x%" PRId64 " (%" PRId64 " -> %" PRId64 " channels)\n",
             p->kernel_height, p->kernel_width, p->in_stride_h, p->in_stride_w, p->out_stride_h, p->out_stride_w,
             p->output_height, p->output_width, p->input_channels, p->output_channels);
-    printf (" Input: %ldx%ld, padding %ldx%ld, groups %ld, batches %ld, multis %ld, bias %d\n",
+    printf (" Input: %" PRId64 "x%" PRId64 ", padding %" PRId64 "x%" PRId64 ", groups %" PRId64 ", batches %" PRId64 ", multis %" PRId64 ", bias %d\n",
             p->input_height, p->input_width, p->padding_top, p->padding_left, p->groups, p->batches, p->multis, p->use_bias);
     printf ("===============================================================================\n");
 #endif

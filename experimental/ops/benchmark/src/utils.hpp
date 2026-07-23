@@ -6,6 +6,11 @@
 
 #pragma once
 
+// Macro for unreachable code (e.g. impossible default cases on switch)
+#ifndef UNREACHABLE
+#define UNREACHABLE(why)  __builtin_unreachable()
+#endif
+
 inline int iceildiv(const int a, const int b) {
   return (a + b - 1) / b;
 }

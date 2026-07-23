@@ -46,6 +46,7 @@ public:
     [[nodiscard]] Buffer dequantize(
         DataType fp_dtype, Shape shape, Span<const std::byte> qdata, Span<const std::byte> qscale,
         Span<const std::byte> qzp) const override;
+    [[nodiscard]] std::string uid() const override;
 
 private:
     DataType m_qdata_dtype;

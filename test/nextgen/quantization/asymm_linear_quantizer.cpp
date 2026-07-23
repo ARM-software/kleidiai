@@ -63,4 +63,11 @@ Buffer AsymmLinearQuantizer::dequantize(
     return fp_data;
 }
 
+std::string AsymmLinearQuantizer::uid() const {
+    return "asymm_linear<qdata=" + data_type_uid(m_qdata_dtype) + ",qscale=" + data_type_uid(m_qscale_dtype) +
+        ",qzp=" + data_type_uid(m_qzp_dtype) + ",rqdata=" + std::to_string(static_cast<int>(m_qdata_round_mode)) +
+        ",rqzp=" + std::to_string(static_cast<int>(m_qzp_round_mode)) + ",block=" + std::to_string(m_block_height) +
+        "x" + std::to_string(m_block_width) + ">";
+}
+
 }  // namespace kai::test

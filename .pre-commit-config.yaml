@@ -30,12 +30,7 @@ repos:
       - id: check-yaml
         stages: [ pre-commit ]
         name: "YAML Syntax"
-        exclude: ^(\.clang-format|\.gitlab-ci\.yml)$
-      - id: check-yaml
-        stages: [ pre-commit ]
-        name: "GitLab CI YAML Syntax"
-        files: ^\.gitlab-ci\.yml$
-        args: [ "--unsafe" ]
+        exclude: ^\.clang-format$
       - id: trailing-whitespace
         stages: [ pre-commit ]
         exclude: ^LICENSES/

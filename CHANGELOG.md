@@ -13,6 +13,12 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 - New SVE2 micro-kernels:
   - Matrix multiplication (1xN and MxN) for QAI8DXP LHS and QSI8CXP RHS with F32 output, optimized for a 256-bit vector length.
 
+## v1.29.0
+
+- New SME2 micro-kernels
+  - Matrix Multiplication (1xN) Micro-Kernel of QAI8DXP LHS and QSI4CXP RHS with F16 output.
+- Improve performance of SME2 F32 elastic GEMM micro-kernels.
+
 ## v1.28.0
 
 - New SVE2.1 micro-kernels:

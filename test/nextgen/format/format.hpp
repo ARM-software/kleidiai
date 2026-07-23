@@ -9,6 +9,7 @@
 #include <cstddef>
 #include <functional>
 #include <ostream>
+#include <string>
 
 #include "test/common/assert.hpp"
 #include "test/common/buffer.hpp"
@@ -44,6 +45,9 @@ public:
     [[nodiscard]] virtual DataType dtype() const {
         KAI_TEST_ERROR("Not supported.");
     }
+
+    /// Gets a unique identifier for this format.
+    [[nodiscard]] virtual std::string uid() const = 0;
 
     /// Calculates the offset in bytes to locate data of this format in the memory.
     ///

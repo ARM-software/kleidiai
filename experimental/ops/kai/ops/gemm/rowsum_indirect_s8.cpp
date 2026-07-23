@@ -28,17 +28,17 @@ void row_sums_indirect(
     } ka;
 
     unsigned long flags=0;
-    void *input_ptr;
+    const void *input_ptr;
     size_t input_offset;
 
     if (A_arg.is_indirect) {
-        input_ptr=(void *)(A_arg.indirect.ptr);
+        input_ptr=A_arg.indirect.ptr;
         input_offset=A_arg.indirect.start_row;
         ka.input_initial_col=A_arg.indirect.start_col;
         flags |= 0x8;
     } else {
         assert(num_strings==1);
-        input_ptr=(void *)(A_arg.direct.base);
+        input_ptr=A_arg.direct.base;
         input_offset=A_arg.direct.stride;
     }
 

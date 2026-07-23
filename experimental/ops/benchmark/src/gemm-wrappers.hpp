@@ -480,10 +480,13 @@ void benchmark(GemmProblem *p, int iterations, int nthreads, int run_delay, mapf
         // In multithreaded mode, we start up the extra threads and have them indicate they are waiting first.
         // The actual timed operation consists of: Releasing the waiters, doing the thread 0 work and joining the worker threads.
         std::atomic_int waiters(0);
-        volatile int *completed = (volatile int *)malloc(COMPLETER_STRIDE * total_threads * sizeof(int));
+        int *completed_buffer = (int *)malloc(COMPLETER_STRIDE * total_threads * sizeof(int));
+        volatile int *completed = completed_buffer;
         std::vector<std::thread> thethreads;
         volatile int go=0;
+#ifdef BIND_THREADS
         unsigned int maxcpus = std::thread::hardware_concurrency();
+#endif
         volatile int reset=0;
         volatile int finished=0;
 
@@ -613,7 +616,7 @@ void benchmark(GemmProblem *p, int iterations, int nthreads, int run_delay, mapf
             thethreads[i-1].join();
         }
 
-        free((void *)completed);
+        free(completed_buffer);
     } else {
 #else /* THREADS */
     if (1) {
@@ -702,10 +705,8 @@ private:
     int res_mantissa_bits;
 
 public:
-    test_data_helper(GemmProblem *p) {
-        const int64_t input_hw = p->input_height * p->input_width;
+    test_data_helper(GemmProblem* p) {
         const int64_t kernel_hwi = p->kernel_height * p->kernel_width * (p->input_channels / p->groups);
-        const int64_t output_hw = p->output_height * p->output_width;
 
         if (std::is_same<Tres, bfloat16>::value) {
             // BF16 result implies BF16 operands
@@ -767,7 +768,7 @@ public:
         rhs_res_bits = std::max(1, (res_operand_bits - lhs_res_bits));
 
 #ifndef SILENT
-        printf("Generating test data: %d accumulator mantissa bits, %d result mantissa bits, %ld total accumulations, %d accumulation bits\n", acc_mantissa_bits, res_mantissa_bits, acc_depth, accu_bits);
+        printf("Generating test data: %d accumulator mantissa bits, %d result mantissa bits, %" PRId64 " total accumulations, %d accumulation bits\n", acc_mantissa_bits, res_mantissa_bits, acc_depth, accu_bits);
         printf("Accumulation: %d bits available, %d lhs, %d rhs\n", acc_operand_bits, lhs_acc_bits, rhs_acc_bits);
         printf("Result: %d bits available, %d lhs, %d rhs\n", res_operand_bits, lhs_res_bits, rhs_res_bits);
 #endif
@@ -799,7 +800,7 @@ public:
     }
 
     void check_max_val(uint64_t max_val) {
-        if (max_val > (1LL << res_mantissa_bits)) {
+        if (max_val > (1ULL << res_mantissa_bits)) {
             printf("Accumulated value too large - test data not reassociation safe.\n");
             printf("Aborting.");
             exit(1);

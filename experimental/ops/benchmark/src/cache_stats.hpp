@@ -9,6 +9,7 @@
 // It would be possible to create a bare metal version of this that hits the PMU registers directly, but for now
 // this is Linux only, using the perf interface.
 
+#include <cinttypes>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
@@ -142,7 +143,7 @@ public:
             ssize_t r = read(m_fds[0], &res, sizeof(res));
 
             if (r != sizeof(res)) {
-                printf("perf: bad read length %ld, expected %ld\n", r, sizeof(res));
+                printf("perf: bad read length %zd, expected %zu\n", r, sizeof(res));
             }
 
             if (res.nr != NUM_EVENTS) {
@@ -205,7 +206,7 @@ public:
             uint64_t accesses = totals[j*2+1];
             uint64_t fills = totals[j*2];
 
-            printf("%s cache: %lu accesses, %lu fills, %.1f%% miss rate.\n", descs[j], accesses, fills, (float)fills*100/accesses);
+            printf("%s cache: %" PRIu64 " accesses, %" PRIu64 " fills, %.1f%% miss rate.\n", descs[j], accesses, fills, (float)fills*100/accesses);
         }
     }
 };

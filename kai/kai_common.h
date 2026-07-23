@@ -134,7 +134,7 @@ enum {
 ///
 /// @return Project version as a string literal.
 inline const char* kai_get_version(void) {
-    return "1.28.0";
+    return "1.29.0";
 }
 
 /// KleidiAI data types

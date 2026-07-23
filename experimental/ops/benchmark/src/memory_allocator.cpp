@@ -45,10 +45,10 @@ void *allocate_aligned_memory(size_t alignment, size_t size) {
 
     if (offset) {
         r = aligned_ptr + (VICIOUS_PAGE_SIZE - offset);
-        printf("Allocating %ld bytes, offset=%ld, pointer=%p\n", size, offset, r);
+        printf("Allocating %zu bytes, offset=%zu, pointer=%p\n", size, offset, r);
     } else {
         r = aligned_ptr;
-        printf("Size already aligned: %ld bytes, pointer=%p\n", size, r);
+        printf("Size already aligned: %zu bytes, pointer=%p\n", size, r);
     }
 #else
     void *r=memalign(alignment, size);

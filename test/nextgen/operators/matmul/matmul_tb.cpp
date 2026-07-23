@@ -10,6 +10,7 @@
 #include <array>
 #include <cstddef>
 #include <optional>
+#include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -157,11 +158,19 @@ void MatMulTb::generate_lhs_data(Rng& rng) {
     const Poly<Format> format(std::in_place_type<PlainFormat>, m_op->lhs_dtype);
     Tensor& tensor = get_tensor(MatMulSlot::LHS_DATA);
 
+    const auto seed = rng();
+    Rng data_rng(seed);
+    const std::string uid = "fill_random(" + format->uid() + "," + std::to_string(seed) + ",{" +
+        std::to_string(m_shape_m) + "," + std::to_string(m_shape_k) + "})";
+
     // For deterministic debug inputs call fill_sequential or fill_constant
     tensor.set_shape(shape).set_format(format).set_data(
-        format->generate(shape, [&](Span<const size_t> gen_shape, DataType dtype, Span<std::byte> output) {
-            fill_random(gen_shape, dtype, output, rng);
-        }));
+        format->generate(
+            shape,
+            [&](Span<const size_t> gen_shape, DataType dtype, Span<std::byte> output) {
+                fill_random(gen_shape, dtype, output, data_rng);
+            }),
+        uid);
 }
 
 void MatMulTb::generate_rhs_data(Rng& rng) {
@@ -169,11 +178,19 @@ void MatMulTb::generate_rhs_data(Rng& rng) {
     const Poly<Format> format(std::in_place_type<PlainFormat>, m_op->rhs_dtype);
     Tensor& tensor = get_tensor(MatMulSlot::RHS_DATA);
 
+    const auto seed = rng();
+    Rng data_rng(seed);
+    const std::string uid = "fill_random(" + format->uid() + "," + std::to_string(seed) + ",{" +
+        std::to_string(m_shape_k) + "," + std::to_string(m_shape_n) + "})";
+
     // For deterministic debug inputs call fill_sequential or fill_constant
     tensor.set_shape(shape).set_format(format).set_data(
-        format->generate(shape, [&](Span<const size_t> gen_shape, DataType dtype, Span<std::byte> output) {
-            fill_random(gen_shape, dtype, output, rng);
-        }));
+        format->generate(
+            shape,
+            [&](Span<const size_t> gen_shape, DataType dtype, Span<std::byte> output) {
+                fill_random(gen_shape, dtype, output, data_rng);
+            }),
+        uid);
 }
 
 void MatMulTb::generate_acc_bias_m_data(Rng& rng) {
@@ -234,10 +251,19 @@ void MatMulTb::generate_scale_bias_n_data(Rng& rng) {
     const std::array shape{m_shape_n};
     Tensor& tensor = get_tensor(MatMulSlot::SCALE_BIAS_N_DATA);
 
+    const auto seed = rng();
+    Rng data_rng(seed);
+    const std::string uid =
+        "fill_random(" + format->uid() + "," + std::to_string(seed) + ",{" + std::to_string(m_shape_n) + "})";
+
+    // For deterministic debug inputs call fill_sequential or fill_constant
     tensor.set_shape(shape).set_format(format).set_data(
-        format->generate(shape, [&](Span<const size_t> gen_shape, DataType dtype, Span<std::byte> output) {
-            fill_random(gen_shape, dtype, output, rng);
-        }));
+        format->generate(
+            shape,
+            [&](Span<const size_t> gen_shape, DataType dtype, Span<std::byte> output) {
+                fill_random(gen_shape, dtype, output, data_rng);
+            }),
+        uid);
 }
 
 void MatMulTb::compute_rhs_t_data() {
@@ -246,8 +272,10 @@ void MatMulTb::compute_rhs_t_data() {
     Tensor& rhs_t_data = get_tensor(MatMulSlot::RHS_T_DATA);
     const Tensor& rhs_data = get_tensor(MatMulSlot::RHS_DATA);
 
+    const std::string uid = "transpose(" + std::string(rhs_data.id()) + ")";
+
     rhs_t_data.set_shape(shape).set_format(format).set_data(
-        transpose(rhs_data.data_ptr(), m_op->rhs_dtype, m_shape_k, m_shape_n));
+        transpose(rhs_data.data_ptr(), m_op->rhs_dtype, m_shape_k, m_shape_n), uid);
 }
 
 void MatMulTb::quantize_lhs() {
@@ -260,6 +288,11 @@ void MatMulTb::quantize_lhs() {
     Tensor& lhs_qzp = get_tensor(MatMulSlot::LHS_QZP);
 
     lhs_quant.dynamic_quantize(m_op->lhs_dtype, lhs_shape, lhs_data.data(), lhs_qdata, lhs_qscale, lhs_qzp);
+
+    const std::string uid = lhs_quant.uid() + "(" + std::string(lhs_data.id()) + ")";
+    lhs_qdata.set_id(uid + ".qdata");
+    lhs_qscale.set_id(uid + ".qscale");
+    lhs_qzp.set_id(uid + ".qzp");
 }
 
 void MatMulTb::quantize_rhs_t() {
@@ -272,6 +305,11 @@ void MatMulTb::quantize_rhs_t() {
     Tensor& rhs_t_qzp = get_tensor(MatMulSlot::RHS_T_QZP);
 
     rhs_quant.dynamic_quantize(m_op->rhs_dtype, rhs_t_shape, rhs_t_data.data(), rhs_t_qdata, rhs_t_qscale, rhs_t_qzp);
+
+    const std::string uid = rhs_quant.uid() + "(" + std::string(rhs_t_data.id()) + ")";
+    rhs_t_qdata.set_id(uid + ".qdata");
+    rhs_t_qscale.set_id(uid + ".qscale");
+    rhs_t_qzp.set_id(uid + ".qzp");
 }
 
 void MatMulTb::quantize_bias() {
@@ -285,10 +323,12 @@ void MatMulTb::compute_lhs_qzp_neg() {
     const Shape shape = lhs_qzp.shape();
     const Poly<Format>& format = lhs_qzp.format();
 
+    const std::string uid = "neg(" + std::string(lhs_qzp.id()) + ")";
+
     const UnaryElementwiseFn fn = make_negate(format->dtype());
     Buffer data = fn(shape, lhs_qzp.data());
 
-    lhs_qzp_neg.set_shape(shape).set_format(format).set_data(std::move(data));
+    lhs_qzp_neg.set_shape(shape).set_format(format).set_data(std::move(data), uid);
 }
 
 void MatMulTb::compute_rhs_t_qdata_sign() {
@@ -361,10 +401,15 @@ void MatMulTb::compute_ref_matmul() {
 
     Buffer tmp_mm_lhs;
     Span<const std::byte> mm_lhs_view;
+
     DataType mm_lhs_dtype = m_op->lhs_dtype;
+    std::string mm_lhs_id;
+
     Buffer tmp_mm_rhs_t;
     Span<const std::byte> mm_rhs_t_view;
+
     DataType mm_rhs_dtype = m_op->rhs_dtype;
+    std::string mm_rhs_id;
 
     // Prepares the input data for the reference matrix multiplication.
     //   * If the input data is floating-point, converts it to the accumulator type.
@@ -375,8 +420,10 @@ void MatMulTb::compute_ref_matmul() {
             m_op->acc_dtype, {m_shape_m, m_shape_k}, lhs_qdata.data(), lhs_qscale.data(), lhs_qzp.data());
         mm_lhs_view = tmp_mm_lhs.view();
         mm_lhs_dtype = m_op->acc_dtype;
+        mm_lhs_id = "dequantize(" + lhs_quant.uid() + "," + std::string(lhs_qdata.id()) + ")";
     } else {
         mm_lhs_view = lhs_data.data();
+        mm_lhs_id = std::string(lhs_data.id());
     }
 
     if (m_op->rhs_quant.has_value()) {
@@ -385,8 +432,10 @@ void MatMulTb::compute_ref_matmul() {
             rhs_quant.dequantize(m_op->acc_dtype, {m_shape_n, m_shape_k}, rhs_t_qdata.data(), rhs_t_qscale.data(), {});
         mm_rhs_t_view = tmp_mm_rhs_t.view();
         mm_rhs_dtype = m_op->acc_dtype;
+        mm_rhs_id = "dequantize(" + rhs_quant.uid() + "," + std::string(rhs_t_qdata.id()) + ")";
     } else {
         mm_rhs_t_view = rhs_t_data.data();
+        mm_rhs_id = std::string(rhs_t_data.id());
     }
 
     // Runs the reference matrix multiplication.
@@ -478,7 +527,8 @@ void MatMulTb::compute_ref_matmul() {
         }
     }
     kernel_args.set_value(std::move(clamp_args));
-    ref_dst_data.set_data(std::move(ref_dst));
+    std::string uid = "matmul(" + mm_lhs_id + "," + mm_rhs_id + ")";
+    ref_dst_data.set_data(std::move(ref_dst), uid);
 }
 
 std::tuple<size_t, size_t> MatMulTb::lhs_packing_steps() const {

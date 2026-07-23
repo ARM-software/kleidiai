@@ -10,9 +10,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
-#include <sstream>
 #include <string>
 #include <tuple>
+#include <vector>
 
 #include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi8cxp/kai_matmul_clamp_f16_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi8cxp/kai_matmul_clamp_f16_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot.h"
@@ -22,7 +22,6 @@
 #include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi8cxp/kai_matmul_clamp_f16_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm.h"
 #include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi8cxp/kai_matmul_clamp_f16_qai8dxp_qsi8cxp_interface.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp_f16_neon.h"
-#include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_qsi8cxp_qsi8cx_neon.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon.h"
 #include "test/common/buffer.hpp"
 #include "test/common/cache.hpp"
@@ -33,7 +32,6 @@
 #include "test/common/matmul_test_common.hpp"
 #include "test/common/matrix_portion.hpp"
 #include "test/common/memory.hpp"
-#include "test/common/round.hpp"
 #include "test/common/seed.hpp"
 #include "test/common/test_suite.hpp"
 #include "test/reference/cast.hpp"
@@ -41,7 +39,6 @@
 #include "test/reference/fill.hpp"
 #include "test/reference/matmul.hpp"
 #include "test/reference/pack.hpp"
-#include "test/reference/pad.hpp"
 #include "test/reference/quantize.hpp"
 
 namespace kai::test {
@@ -137,6 +134,7 @@ static const std::array<UkernelVariant<kai_matmul_clamp_f16_qai8dxp_qsi8cxp_uker
           "kai_matmul_clamp_f16_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot", cpu_has_sme2}}};
 
 class MatMulTest_f16_qai8dxp_qsi8cxp : public ::testing::TestWithParam<MatMulClampTestPortionedParamsWithBias> {};
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(MatMulTest_f16_qai8dxp_qsi8cxp);
 
 TEST_P(MatMulTest_f16_qai8dxp_qsi8cxp, EndToEnd) {
     const auto& [variant_index, matmul_shape, portion, clamp_keep_ratio, has_bias] = GetParam();
@@ -155,9 +153,7 @@ TEST_P(MatMulTest_f16_qai8dxp_qsi8cxp, EndToEnd) {
     const auto kr = ukernel_variant.interface.get_kr();
     const auto sr = ukernel_variant.interface.get_sr();
 
-    if (mr == 1 && M > 1) {
-        GTEST_SKIP() << "Kernel does not support M != 1";
-    }
+    ASSERT_FALSE(mr == 1 && M > 1);
 
     auto m_step = ukernel_variant.interface.get_m_step();
     ASSERT_TRUE(m_step % mr == 0);
@@ -236,53 +232,130 @@ TEST_P(MatMulTest_f16_qai8dxp_qsi8cxp, EndToEnd) {
     const auto success = compare(imp_dst.data(), ref_dst.data(), dst_format, M, N, rect, handler);
     ASSERT_TRUE(success);
 }
+
+static std::vector<size_t> variant_indices_with_mr(const size_t mr) {
+    std::vector<size_t> indices;
+    for (size_t variant_idx = 0; variant_idx < variants_kai_matmul_clamp_f16_qai8dxp_qsi8cxp.size(); ++variant_idx) {
+        const auto& variant = variants_kai_matmul_clamp_f16_qai8dxp_qsi8cxp.at(variant_idx);
+        if (variant.fn_is_supported && !variant.fn_is_supported()) {
+            continue;
+        }
+        if (variant.interface.get_mr() == mr) {
+            indices.emplace_back(variant_idx);
+        }
+    }
+    return indices;
+}
+
+static std::vector<size_t> variant_indices_without_mr(const size_t mr) {
+    std::vector<size_t> indices;
+    for (size_t variant_idx = 0; variant_idx < variants_kai_matmul_clamp_f16_qai8dxp_qsi8cxp.size(); ++variant_idx) {
+        const auto& variant = variants_kai_matmul_clamp_f16_qai8dxp_qsi8cxp.at(variant_idx);
+        if (variant.fn_is_supported && !variant.fn_is_supported()) {
+            continue;
+        }
+        if (variant.interface.get_mr() != mr) {
+            indices.emplace_back(variant_idx);
+        }
+    }
+    return indices;
+}
+
+static std::vector<size_t> unsupported_variant_indices() {
+    std::vector<size_t> indices;
+    for (size_t variant_idx = 0; variant_idx < variants_kai_matmul_clamp_f16_qai8dxp_qsi8cxp.size(); ++variant_idx) {
+        const auto& variant = variants_kai_matmul_clamp_f16_qai8dxp_qsi8cxp.at(variant_idx);
+        if (variant.fn_is_supported && !variant.fn_is_supported()) {
+            indices.emplace_back(variant_idx);
+        }
+    }
+    return indices;
+}
+
+static constexpr std::array<MatMulShape, 8> single_row_shapes = {{
+    MatMulShape{1, 2, 32},    //
+    MatMulShape{1, 3, 32},    //
+    MatMulShape{1, 4, 32},    //
+    MatMulShape{1, 5, 31},    //
+    MatMulShape{1, 71, 32},   //
+    MatMulShape{1, 64, 32},   //
+    MatMulShape{1, 35, 65},   //
+    MatMulShape{1, 128, 32},  //
+}};
+
+static constexpr std::array<MatMulShape, 18> all_shapes = {{
+    MatMulShape{1, 2, 32},     //
+    MatMulShape{1, 3, 32},     //
+    MatMulShape{1, 4, 32},     //
+    MatMulShape{1, 5, 31},     //
+    MatMulShape{1, 71, 32},    //
+    MatMulShape{3, 3, 32},     //
+    MatMulShape{4, 4, 32},     //
+    MatMulShape{5, 5, 31},     //
+    MatMulShape{16, 64, 32},   //
+    MatMulShape{1, 64, 32},    //
+    MatMulShape{16, 32, 36},   //
+    MatMulShape{15, 35, 65},   //
+    MatMulShape{8, 32, 64},    //
+    MatMulShape{15, 31, 45},   //
+    MatMulShape{1, 35, 65},    //
+    MatMulShape{1, 128, 32},   //
+    MatMulShape{64, 128, 32},  //
+    MatMulShape{77, 99, 64},
+}};
+
+static const std::array<MatrixPortion, 7> portions = {{
+    MatrixPortion(0, 0, 1, 1),         // Full matrix.
+    MatrixPortion(0, 0, 1, 0.25),      // Leftmost portion.
+    MatrixPortion(0, 0.75, 1, 1),      // Rightmost portion.
+    MatrixPortion(0, 0.5, 1, 0.8),     // Somewhere Middle
+    MatrixPortion(0.75, 0.75, 1, 1),   // Bottom-right corner.
+    MatrixPortion(0.75, 0, 1, 1),      // Partial rows
+    MatrixPortion(0.4, 0.5, 0.6, 0.8)  // Somewhere Middle
+}};
+
+static const auto test_name = [](const auto& info) {
+    const auto variant_idx = std::get<0>(info.param);
+    const std::string name{variants_kai_matmul_clamp_f16_qai8dxp_qsi8cxp.at(variant_idx).name};
+    const auto shape = std::get<MatMulShape>(info.param);
+    const auto portion = std::get<2>(info.param);
+    const auto clamp_keep_ratio = std::get<3>(info.param);
+    const auto has_bias = std::get<4>(info.param);
+
+    return test_description(name, shape, portion, has_bias, clamp_keep_ratio);
+};
+
+// Keep one skipped test per unavailable kernel in JUnit without calling get_mr() on unsupported hardware.
 INSTANTIATE_TEST_SUITE_P(
-    MatMul, MatMulTest_f16_qai8dxp_qsi8cxp,
+    UnsupportedCPU, MatMulTest_f16_qai8dxp_qsi8cxp,
     testing::Combine(
-        testing::Range<size_t>(0, variants_kai_matmul_clamp_f16_qai8dxp_qsi8cxp.size()),
-        testing::Values(
-            MatMulShape{1, 2, 32},     //
-            MatMulShape{1, 3, 32},     //
-            MatMulShape{1, 4, 32},     //
-            MatMulShape{1, 5, 31},     //
-            MatMulShape{1, 71, 32},    //
-            MatMulShape{3, 3, 32},     //
-            MatMulShape{4, 4, 32},     //
-            MatMulShape{5, 5, 31},     //
-            MatMulShape{16, 64, 32},   //
-            MatMulShape{1, 64, 32},    //
-            MatMulShape{16, 32, 36},   //
-            MatMulShape{15, 35, 65},   //
-            MatMulShape{8, 32, 64},    //
-            MatMulShape{15, 31, 45},   //
-            MatMulShape{1, 35, 65},    //
-            MatMulShape{1, 128, 32},   //
-            MatMulShape{64, 128, 32},  //
-            MatMulShape{77, 99, 64}),
-        testing::Values(
-            MatrixPortion(0, 0, 1, 1),         // Full matrix.
-            MatrixPortion(0, 0, 1, 0.25),      // Leftmost portion.
-            MatrixPortion(0, 0.75, 1, 1),      // Rightmost portion.
-            MatrixPortion(0, 0.5, 1, 0.8),     // Somewhere Middle
-            MatrixPortion(0.75, 0.75, 1, 1),   // Bottom-right corner.
-            MatrixPortion(0.75, 0, 1, 1),      // Partial rows
-            MatrixPortion(0.4, 0.5, 0.6, 0.8)  // Somewhere Middle
-            ),
+        testing::ValuesIn(unsupported_variant_indices()), testing::Values(MatMulShape{1, 2, 32}),
+        testing::Values(MatrixPortion(0, 0, 1, 1)), testing::Values(std::optional<float>{}), testing::Values(false)),
+    test_name);
+
+INSTANTIATE_TEST_SUITE_P(
+    MatMulMr1, MatMulTest_f16_qai8dxp_qsi8cxp,
+    testing::Combine(
+        testing::ValuesIn(variant_indices_with_mr(1)), testing::ValuesIn(single_row_shapes),
+        testing::ValuesIn(portions),
         testing::ValuesIn(std::initializer_list<std::optional<float>>{
             std::nullopt,  // Disable clamping
             1.0f,          // Clamp to full range
             0.9f,          // Clamp to 90% range
             0.5f}),        // Clamp to 50% range
         testing::Bool()),
-    [](const auto& info) {
-        const auto variant_idx = std::get<0>(info.param);
-        const std::string name{variants_kai_matmul_clamp_f16_qai8dxp_qsi8cxp.at(variant_idx).name};
-        const auto shape = std::get<MatMulShape>(info.param);
-        const auto portion = std::get<2>(info.param);
-        const auto clamp_keep_ratio = std::get<3>(info.param);
-        const auto has_bias = std::get<4>(info.param);
+    test_name);
 
-        return test_description(name, shape, portion, has_bias, clamp_keep_ratio);
-    });
+INSTANTIATE_TEST_SUITE_P(
+    MatMulMrN, MatMulTest_f16_qai8dxp_qsi8cxp,
+    testing::Combine(
+        testing::ValuesIn(variant_indices_without_mr(1)), testing::ValuesIn(all_shapes), testing::ValuesIn(portions),
+        testing::ValuesIn(std::initializer_list<std::optional<float>>{
+            std::nullopt,  // Disable clamping
+            1.0f,          // Clamp to full range
+            0.9f,          // Clamp to 90% range
+            0.5f}),        // Clamp to 50% range
+        testing::Bool()),
+    test_name);
 
 }  // namespace kai::test

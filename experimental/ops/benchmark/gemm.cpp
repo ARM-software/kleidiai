@@ -454,9 +454,9 @@ int main(int argc, char **argv) {
 
     int opt;
 #ifndef NO_LONG_OPT
-    while ((opt = getopt_long(argc, argv, "M:N:K:a:bcd:t:T:m:i:s:S:l:L:C:y:z:n:D:I:fg:hF:j:k:G:w:V:r:WABu:U:p:X:PqO:o:QZ", longopts, nullptr)) >= 0) {
+    while ((opt = getopt_long(argc, argv, "M:N:K:a:bcd:t:T:m:i:s:S:l:L:C:y:z:n:D:I:fhF:j:k:G:w:V:r:WABu:U:p:X:PqO:o:QZ", longopts, nullptr)) >= 0) {
 #else
-    while ((opt = getopt(argc, argv, "M:N:K:a:bcd:t:T:m:i:s:S:l:L:C:y:z:n:D:I:fg:hF:j:k:G:w:V:r:WABu:U:p:X:PqO:o:QZ")) >= 0) {
+    while ((opt = getopt(argc, argv, "M:N:K:a:bcd:t:T:m:i:s:S:l:L:C:y:z:n:D:I:fhF:j:k:G:w:V:r:WABu:U:p:X:PqO:o:QZ")) >= 0) {
 #endif
         switch(opt) {
             case 'M':
@@ -508,8 +508,8 @@ int main(int argc, char **argv) {
             case 'w':
                 p.schedule_shape_override = strtol(optarg, NULL, 0);
                 break;
-#ifdef BIND_THREADS
             case 'm':
+#ifdef BIND_THREADS
                 for (int i=0; themaps[i].name[0]; i++) {
                     if (!strcmp(themaps[i].name, optarg)) {
                         mapfn = themaps[i].fn;
@@ -519,10 +519,20 @@ int main(int argc, char **argv) {
 
                 if (!mapfn) {
                     printf("Unknown thread ID map '%s'.  Type %s -h for a list.\n", optarg, argv[0]);
-                    return 0;
+                    return 1;
                 }
-                break;
+#else
+                printf("Error: Thread binding not enabled on this build.\n");
+                return 1;
 #endif // BIND_THREADS
+                break;
+#else
+            case 't':
+            case 'T':
+            case 'w':
+            case 'm':
+                printf("Error: Threading not enabled on this build.\n");
+                return 1;
 #endif // THREADS
 
             case 'i':
@@ -766,6 +776,17 @@ int main(int argc, char **argv) {
             case 'h':
                 printhelp(argv[0]);
                 return 0;
+
+            case '?':
+                printhelp(argv[0]);
+                return 1;
+
+            default:
+                fprintf(stderr,
+                        "Internal error: getopt returned unhandled option %d. "
+                        "The getopt option list and switch cases are out of sync.\n",
+                        opt);
+                return 1;
         }
     }
 

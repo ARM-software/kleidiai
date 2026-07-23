@@ -10,11 +10,10 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <iomanip>
 #include <limits>
-#include <sstream>
 #include <string>
 #include <tuple>
+#include <vector>
 
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme_mopa.h"
@@ -168,7 +167,11 @@ using MatMulTestParams_f32_qsi8d32p_qsi4c32p =
     *os << "__bl_" << bl;
 }
 
-class MatMulTest_f32_qsi8d32p_qsi4c32p : public ::testing::TestWithParam<MatMulTestParams_f32_qsi8d32p_qsi4c32p> {};
+class MatMulTest_f32_qsi8d32p_qsi4c32p_Offset
+    : public ::testing::TestWithParam<MatMulTestParams_f32_qsi8d32p_qsi4c32p> {};
+class MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd
+    : public ::testing::TestWithParam<MatMulTestParams_f32_qsi8d32p_qsi4c32p> {};
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd);
 
 static const UKernelVariants& get_variant_entry(size_t variant_index, bool variable_bl) {
     if (!variable_bl) {
@@ -278,7 +281,7 @@ TEST(RhsPackNxkQsi4c32pS4s0Sf16Neon, ScalarFallback) {
     }
 }
 
-TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, Offset_RHS) {
+TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p_Offset, Offset_RHS) {
     const auto& [variant_index, matmul_shape, portion, clamp_keep_ratio, bl, variable_bl] = GetParam();
     const auto& ukernel_variant = get_variant_entry(variant_index, variable_bl).variant;
 
@@ -312,7 +315,7 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, Offset_RHS) {
     ASSERT_EQ(rhs_packed_offset, rhs_matmul_offset);
 }
 
-TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, Offset_LHS) {
+TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p_Offset, Offset_LHS) {
     const auto& [variant_index, matmul_shape, portion, clamp_keep_ratio, bl, variable_bl] = GetParam();
     const auto& ukernel_variant = get_variant_entry(variant_index, variable_bl).variant;
 
@@ -348,7 +351,7 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, Offset_LHS) {
     ASSERT_EQ(lhs_packed_offset, lhs_matmul_offset);
 }
 
-TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, EndToEnd) {
+TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd, EndToEnd) {
     const auto& [variant_index, matmul_shape, portion, clamp_keep_ratio, bl, variable_bl] = GetParam();
     const auto& ukernel_variant = get_variant_entry(variant_index, variable_bl).variant;
 
@@ -369,9 +372,7 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, EndToEnd) {
     const auto kr = ukernel_variant.ukernel.interface.get_kr();
     const auto sr = ukernel_variant.ukernel.interface.get_sr();
 
-    if (mr == 1 && M > 1) {
-        GTEST_SKIP() << "Kernel does not support M != 1";
-    }
+    ASSERT_TRUE(!(mr == 1 && M > 1));
 
     auto m_step = ukernel_variant.ukernel.interface.get_m_step();
     ASSERT_TRUE(m_step % mr == 0);
@@ -497,41 +498,131 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p, EndToEnd) {
     }
 }
 
+static std::vector<size_t> variant_indices_with_mr(const bool variable_bl, const bool mr_is_1) {
+    const size_t num_variants = variable_bl ? variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.size()
+                                            : variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p.size();
+    std::vector<size_t> indices;
+    for (size_t variant_idx = 0; variant_idx < num_variants; ++variant_idx) {
+        const auto& variant = get_variant_entry(variant_idx, variable_bl).variant.ukernel;
+        if (variant.fn_is_supported && !variant.fn_is_supported()) {
+            continue;
+        }
+        const auto mr = variant.interface.get_mr();
+        if ((mr == 1) == mr_is_1) {
+            indices.emplace_back(variant_idx);
+        }
+    }
+    return indices;
+}
+
+static std::vector<size_t> unsupported_variant_indices(const bool variable_bl) {
+    const size_t num_variants = variable_bl ? variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.size()
+                                            : variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p.size();
+    std::vector<size_t> indices;
+    for (size_t variant_idx = 0; variant_idx < num_variants; ++variant_idx) {
+        const auto& variant = get_variant_entry(variant_idx, variable_bl).variant.ukernel;
+        if (variant.fn_is_supported && !variant.fn_is_supported()) {
+            indices.emplace_back(variant_idx);
+        }
+    }
+    return indices;
+}
+
+template <size_t N>
+static std::vector<MatMulShape> shapes_with_mr_support(const std::array<MatMulShape, N>& shapes, const bool mr_is_1) {
+    std::vector<MatMulShape> filtered_shapes;
+    for (const auto shape : shapes) {
+        if (!mr_is_1 || shape.m == 1) {
+            filtered_shapes.emplace_back(shape);
+        }
+    }
+    return filtered_shapes;
+}
+
+static constexpr std::array fixed_shapes{
+    MatMulShape{1, 2, 32},    //
+    MatMulShape{1, 40, 32},   //
+    MatMulShape{1, 33, 32},   //
+    MatMulShape{32, 64, 64},  //
+    MatMulShape{16, 32, 64},  //
+    MatMulShape{8, 32, 64},   //
+    MatMulShape{15, 32, 32},  //
+    MatMulShape{77, 99, 64},
+};
+
+static const std::array fixed_portions{
+    MatrixPortion(0, 0, 1, 1),     // Full matrix.
+    MatrixPortion(0, 0, 1, 0.25),  // Leftmost portion.
+    MatrixPortion(0, 0.75, 1, 1),  // Rightmost portion.
+    MatrixPortion(0, 0.5, 1, 0.8)  // Somewhere Middle
+};
+
+static const auto fixed_test_name = [](const auto& info) {
+    const auto variant_idx = std::get<0>(info.param);
+    const std::string name{variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p.at(variant_idx).variant.ukernel.name};
+    const auto shape = std::get<MatMulShape>(info.param);
+    const auto portion = std::get<2>(info.param);
+    const auto clamp_keep_ratio = std::get<3>(info.param);
+    const auto bl = std::get<4>(info.param);
+
+    return test_description(name, shape, portion, true, clamp_keep_ratio) + "_bl" + std::to_string(bl);
+};
+
+// Keep one skipped test per unavailable kernel in JUnit without calling get_mr() on unsupported hardware.
 INSTANTIATE_TEST_SUITE_P(
-    MatMul, MatMulTest_f32_qsi8d32p_qsi4c32p,
+    UnsupportedFixedCPU, MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd,
+    testing::Combine(
+        testing::ValuesIn(unsupported_variant_indices(false)), testing::Values(MatMulShape{1, 2, 32}),
+        testing::Values(MatrixPortion(0, 0, 1, 1)), testing::Values(std::optional<float>{}), testing::Values(32),
+        testing::Values(false)),
+    testing::PrintToStringParamName());
+
+INSTANTIATE_TEST_SUITE_P(
+    UnsupportedVariableCPU, MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd,
+    testing::Combine(
+        testing::ValuesIn(unsupported_variant_indices(true)), testing::Values(MatMulShape{1, 2, 32}),
+        testing::Values(MatrixPortion(0, 0, 1, 1)), testing::Values(std::optional<float>{}), testing::Values(32),
+        testing::Values(true)),
+    testing::PrintToStringParamName());
+
+INSTANTIATE_TEST_SUITE_P(
+    MatMul, MatMulTest_f32_qsi8d32p_qsi4c32p_Offset,
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p.size()),
-        testing::Values(
-            MatMulShape{1, 2, 32},    //
-            MatMulShape{1, 40, 32},   //
-            MatMulShape{1, 33, 32},   //
-            MatMulShape{32, 64, 64},  //
-            MatMulShape{16, 32, 64},  //
-            MatMulShape{8, 32, 64},   //
-            MatMulShape{15, 32, 32},  //
-            MatMulShape{77, 99, 64}),
-        testing::Values(
-            MatrixPortion(0, 0, 1, 1),     // Full matrix.
-            MatrixPortion(0, 0, 1, 0.25),  // Leftmost portion.
-            MatrixPortion(0, 0.75, 1, 1),  // Rightmost portion.
-            MatrixPortion(0, 0.5, 1, 0.8)  // Somewhere Middle
-            ),
+        testing::ValuesIn(fixed_shapes), testing::ValuesIn(fixed_portions),
         testing::ValuesIn(std::initializer_list<std::optional<float>>{
             std::nullopt,  // Disable clamping
             1.0f,          // Clamp to full range
             0.9f,          // Clamp to 90% range
             0.5f}),        // Clamp to 50% range
         testing::Values(32), testing::Values(false)),
-    [](const auto& info) {
-        const auto variant_idx = std::get<0>(info.param);
-        const std::string name{variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p.at(variant_idx).variant.ukernel.name};
-        const auto shape = std::get<MatMulShape>(info.param);
-        const auto portion = std::get<2>(info.param);
-        const auto clamp_keep_ratio = std::get<3>(info.param);
-        const auto bl = std::get<4>(info.param);
+    fixed_test_name);
 
-        return test_description(name, shape, portion, true, clamp_keep_ratio) + "_bl" + std::to_string(bl);
-    });
+INSTANTIATE_TEST_SUITE_P(
+    MatMulMr1, MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd,
+    testing::Combine(
+        testing::ValuesIn(variant_indices_with_mr(false, true)),
+        testing::ValuesIn(shapes_with_mr_support(fixed_shapes, true)), testing::ValuesIn(fixed_portions),
+        testing::ValuesIn(std::initializer_list<std::optional<float>>{
+            std::nullopt,  // Disable clamping
+            1.0f,          // Clamp to full range
+            0.9f,          // Clamp to 90% range
+            0.5f}),        // Clamp to 50% range
+        testing::Values(32), testing::Values(false)),
+    fixed_test_name);
+
+INSTANTIATE_TEST_SUITE_P(
+    MatMulMrN, MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd,
+    testing::Combine(
+        testing::ValuesIn(variant_indices_with_mr(false, false)), testing::ValuesIn(fixed_shapes),
+        testing::ValuesIn(fixed_portions),
+        testing::ValuesIn(std::initializer_list<std::optional<float>>{
+            std::nullopt,  // Disable clamping
+            1.0f,          // Clamp to full range
+            0.9f,          // Clamp to 90% range
+            0.5f}),        // Clamp to 50% range
+        testing::Values(32), testing::Values(false)),
+    fixed_test_name);
 
 // Test kernels with variable block length support
 static constexpr std::array shapes_k32{
@@ -590,7 +681,7 @@ static constexpr std::array portions{
     MatrixPortion(0, 0.5, 1, 0.8)  // Somewhere Middle
 };
 INSTANTIATE_TEST_SUITE_P(
-    MatMulVariableBL_bl32, MatMulTest_f32_qsi8d32p_qsi4c32p,
+    MatMulVariableBL_bl32, MatMulTest_f32_qsi8d32p_qsi4c32p_Offset,
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.size()),
         testing::ValuesIn(shapes_k32), testing::ValuesIn(portions),
@@ -604,7 +695,7 @@ INSTANTIATE_TEST_SUITE_P(
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMulVariableBL_bl64, MatMulTest_f32_qsi8d32p_qsi4c32p,
+    MatMulVariableBL_bl64, MatMulTest_f32_qsi8d32p_qsi4c32p_Offset,
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.size()),
         testing::ValuesIn(shapes_k64), testing::ValuesIn(portions),
@@ -618,7 +709,7 @@ INSTANTIATE_TEST_SUITE_P(
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMulVariableBL_bl96, MatMulTest_f32_qsi8d32p_qsi4c32p,
+    MatMulVariableBL_bl96, MatMulTest_f32_qsi8d32p_qsi4c32p_Offset,
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.size()),
         testing::ValuesIn(shapes_k96), testing::ValuesIn(portions),
@@ -632,7 +723,7 @@ INSTANTIATE_TEST_SUITE_P(
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMulVariableBL_bl128, MatMulTest_f32_qsi8d32p_qsi4c32p,
+    MatMulVariableBL_bl128, MatMulTest_f32_qsi8d32p_qsi4c32p_Offset,
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.size()),
         testing::ValuesIn(shapes_k128), testing::ValuesIn(portions),
@@ -646,7 +737,7 @@ INSTANTIATE_TEST_SUITE_P(
     testing::PrintToStringParamName());
 
 INSTANTIATE_TEST_SUITE_P(
-    MatMulVariableBL_bl256, MatMulTest_f32_qsi8d32p_qsi4c32p,
+    MatMulVariableBL_bl256, MatMulTest_f32_qsi8d32p_qsi4c32p_Offset,
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_variable_bl.size()),
         testing::ValuesIn(shapes_k256), testing::ValuesIn(portions),
@@ -655,6 +746,136 @@ INSTANTIATE_TEST_SUITE_P(
             1.0f,          // Clamp to full range
             0.9f,          // Clamp to 90% range
             0.5f}),        // Clamp to 50% range
+        testing::Values(256), testing::Values(true)),
+    testing::PrintToStringParamName());
+
+INSTANTIATE_TEST_SUITE_P(
+    MatMulVariableBL_bl32_Mr1, MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd,
+    testing::Combine(
+        testing::ValuesIn(variant_indices_with_mr(true, true)),
+        testing::ValuesIn(shapes_with_mr_support(shapes_k32, true)), testing::ValuesIn(portions),
+        testing::ValuesIn(std::initializer_list<std::optional<float>>{
+            std::nullopt,  // Disable clamping
+            1.0F,          // Clamp to full range
+            0.9F,          // Clamp to 90% range
+            0.5F}),        // Clamp to 50% range
+        testing::Values(32), testing::Values(true)),
+    testing::PrintToStringParamName());
+
+INSTANTIATE_TEST_SUITE_P(
+    MatMulVariableBL_bl32_MrN, MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd,
+    testing::Combine(
+        testing::ValuesIn(variant_indices_with_mr(true, false)), testing::ValuesIn(shapes_k32),
+        testing::ValuesIn(portions),
+        testing::ValuesIn(std::initializer_list<std::optional<float>>{
+            std::nullopt,  // Disable clamping
+            1.0F,          // Clamp to full range
+            0.9F,          // Clamp to 90% range
+            0.5F}),        // Clamp to 50% range
+        testing::Values(32), testing::Values(true)),
+    testing::PrintToStringParamName());
+
+INSTANTIATE_TEST_SUITE_P(
+    MatMulVariableBL_bl64_Mr1, MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd,
+    testing::Combine(
+        testing::ValuesIn(variant_indices_with_mr(true, true)),
+        testing::ValuesIn(shapes_with_mr_support(shapes_k64, true)), testing::ValuesIn(portions),
+        testing::ValuesIn(std::initializer_list<std::optional<float>>{
+            std::nullopt,  // Disable clamping
+            1.0F,          // Clamp to full range
+            0.9F,          // Clamp to 90% range
+            0.5F}),        // Clamp to 50% range
+        testing::Values(64), testing::Values(true)),
+    testing::PrintToStringParamName());
+
+INSTANTIATE_TEST_SUITE_P(
+    MatMulVariableBL_bl64_MrN, MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd,
+    testing::Combine(
+        testing::ValuesIn(variant_indices_with_mr(true, false)), testing::ValuesIn(shapes_k64),
+        testing::ValuesIn(portions),
+        testing::ValuesIn(std::initializer_list<std::optional<float>>{
+            std::nullopt,  // Disable clamping
+            1.0F,          // Clamp to full range
+            0.9F,          // Clamp to 90% range
+            0.5F}),        // Clamp to 50% range
+        testing::Values(64), testing::Values(true)),
+    testing::PrintToStringParamName());
+
+INSTANTIATE_TEST_SUITE_P(
+    MatMulVariableBL_bl96_Mr1, MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd,
+    testing::Combine(
+        testing::ValuesIn(variant_indices_with_mr(true, true)),
+        testing::ValuesIn(shapes_with_mr_support(shapes_k96, true)), testing::ValuesIn(portions),
+        testing::ValuesIn(std::initializer_list<std::optional<float>>{
+            std::nullopt,  // Disable clamping
+            1.0F,          // Clamp to full range
+            0.9F,          // Clamp to 90% range
+            0.5F}),        // Clamp to 50% range
+        testing::Values(96), testing::Values(true)),
+    testing::PrintToStringParamName());
+
+INSTANTIATE_TEST_SUITE_P(
+    MatMulVariableBL_bl96_MrN, MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd,
+    testing::Combine(
+        testing::ValuesIn(variant_indices_with_mr(true, false)), testing::ValuesIn(shapes_k96),
+        testing::ValuesIn(portions),
+        testing::ValuesIn(std::initializer_list<std::optional<float>>{
+            std::nullopt,  // Disable clamping
+            1.0F,          // Clamp to full range
+            0.9F,          // Clamp to 90% range
+            0.5F}),        // Clamp to 50% range
+        testing::Values(96), testing::Values(true)),
+    testing::PrintToStringParamName());
+
+INSTANTIATE_TEST_SUITE_P(
+    MatMulVariableBL_bl128_Mr1, MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd,
+    testing::Combine(
+        testing::ValuesIn(variant_indices_with_mr(true, true)),
+        testing::ValuesIn(shapes_with_mr_support(shapes_k128, true)), testing::ValuesIn(portions),
+        testing::ValuesIn(std::initializer_list<std::optional<float>>{
+            std::nullopt,  // Disable clamping
+            1.0F,          // Clamp to full range
+            0.9F,          // Clamp to 90% range
+            0.5F}),        // Clamp to 50% range
+        testing::Values(128), testing::Values(true)),
+    testing::PrintToStringParamName());
+
+INSTANTIATE_TEST_SUITE_P(
+    MatMulVariableBL_bl128_MrN, MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd,
+    testing::Combine(
+        testing::ValuesIn(variant_indices_with_mr(true, false)), testing::ValuesIn(shapes_k128),
+        testing::ValuesIn(portions),
+        testing::ValuesIn(std::initializer_list<std::optional<float>>{
+            std::nullopt,  // Disable clamping
+            1.0F,          // Clamp to full range
+            0.9F,          // Clamp to 90% range
+            0.5F}),        // Clamp to 50% range
+        testing::Values(128), testing::Values(true)),
+    testing::PrintToStringParamName());
+
+INSTANTIATE_TEST_SUITE_P(
+    MatMulVariableBL_bl256_Mr1, MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd,
+    testing::Combine(
+        testing::ValuesIn(variant_indices_with_mr(true, true)),
+        testing::ValuesIn(shapes_with_mr_support(shapes_k256, true)), testing::ValuesIn(portions),
+        testing::ValuesIn(std::initializer_list<std::optional<float>>{
+            std::nullopt,  // Disable clamping
+            1.0F,          // Clamp to full range
+            0.9F,          // Clamp to 90% range
+            0.5F}),        // Clamp to 50% range
+        testing::Values(256), testing::Values(true)),
+    testing::PrintToStringParamName());
+
+INSTANTIATE_TEST_SUITE_P(
+    MatMulVariableBL_bl256_MrN, MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd,
+    testing::Combine(
+        testing::ValuesIn(variant_indices_with_mr(true, false)), testing::ValuesIn(shapes_k256),
+        testing::ValuesIn(portions),
+        testing::ValuesIn(std::initializer_list<std::optional<float>>{
+            std::nullopt,  // Disable clamping
+            1.0F,          // Clamp to full range
+            0.9F,          // Clamp to 90% range
+            0.5F}),        // Clamp to 50% range
         testing::Values(256), testing::Values(true)),
     testing::PrintToStringParamName());
 

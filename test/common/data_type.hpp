@@ -9,6 +9,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <string>
 
 namespace kai::test {
 
@@ -76,6 +77,13 @@ enum class DataType : uint16_t {
 ///
 /// @return The data type name.
 [[nodiscard]] const char* to_cstring(DataType dt);
+
+/// Gets a short unique identifier for the data type (e.g. f32, bf16, i8).
+///
+/// @param[in] dt The data type.
+///
+/// @return String identifier.
+[[nodiscard]] std::string data_type_uid(DataType dt);
 
 /// Gets the size in bits of the specified data type.
 ///
