@@ -49,11 +49,17 @@ The naming of micro-kernels must follow the convention below.
 | instruction                     | Predominant SIMD instruction used in the micro-kernel                                                                              | `mla`, `mmla`, `mopa`, `dot`                                                                                                                                                 |
 | uarch                           | Microarchitecture for which the micro-kernel has been optimized for                                                                | `cortexa55` to represent the Arm® Cortex®-A55 processor                                                                                                                      |
 
-## Block
+### Block
 
 `m_block` and `n_block` refer to the primary tile sizes - the number of rows and number of columns, respectively - computed by the micro kernel. This is encoded only in the file name. Some micro kernels can output only the primary tile size where as some can output more than one tile size.
 
-## Buffer descriptors
+### Input parameters
+
+Input descriptors follow the micro-kernel parameter order. For matmul
+micro-kernels this means LHS, RHS, and then any additional operands in the
+order documented by the corresponding API declaration.
+
+#### Buffer descriptors
 
 Input and output buffers can be described using the following form:
 
@@ -63,17 +69,27 @@ Input and output buffers can be described using the following form:
 | f16                   | Half-precision floating-point                                                                     |
 | bf16                  | Brain floating-point                                                                              |
 | x                     | Data type agnostic. Usually used when describing moving data around like in packing micro-kernels |
-| qs                    | Quantized symmetric                                                                               |
-| qa                    | Quantized asymmetric                                                                              |
+| q                     | Quantized. Data requires scale values for interpretation.                                         |
+|(q)s                   | Quantized symmetric. Scale only.                                                                  |
+|(q)a                   | Quantized asymmetric. Scale and zero point.                                                       |
 | i                     | Signed integer                                                                                    |
 | u                     | Unsigned integer                                                                                  |
 | 4                     | 4-bit quantized                                                                                   |
 | 8                     | 8-bit quantized                                                                                   |
 | dx                    | Per dimension quantized                                                                           |
+| dbl                   | Per block(bl) quantization                                                                        |
 | cx                    | Per channel quantized                                                                             |
 | d32                   | Per-dimension block quantization, with block length multiple of 32                                |
 | c32                   | Per block quantization, with block length multiple of 32                                          |
+| c2bl                  | 2D(blxbl) block quantization                                                                      |
+| scalef16              | **Deprecated** Scale factors stored as floating-point 16-bit                                      |
 | p\[<width>x<height>\] | Indicates data is packed, see _Packing description_ for details                                   |
+| s16s0                 | Packing order of data is interleaved                                                              |
+| s4s0                  | Packing order of data is interleaved with nibble distance of 4                                    |
+| s1s0                  | Packing order of data is sequential                                                               |
+| s<type>               | Scale factors of type `<type>` are packed into buffer                                             |
+| b<type>               | Bias values of type `<type>` are packed into buffer                                               |
+| biasf32               | **Deprecated** Bias values are packed into buffer as `f32`                                        |
 
 Example: `qsi4cxp` which means quantized symmetric (`qs`) signed integer 4-bit
 data (`i4`) with per channel quantization (`cx`) that has been packed (`p`).
@@ -81,7 +97,7 @@ data (`i4`) with per channel quantization (`cx`) that has been packed (`p`).
 For high level naming, the above is sufficient. This is used to name
 directories. For the specific files the packing format must also be specified.
 
-### Packing description
+#### Packing description
 
 If buffers are packed they must also include information about the packing
 layout. For LHS buffer it would be `<type>p<MR>x<BD>...`, and for RHS buffer it

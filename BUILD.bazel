@@ -29,12 +29,19 @@ config_setting(
 )
 
 cc_library(
+    name = "types",
+    hdrs = ["kai/ukernels/kai_types.h"],
+)
+
+cc_library(
     name = "common",
     srcs = [
+        "kai/kai_common_f8_asm.S",
         "kai/kai_common_sme_asm.S",
         "kai/kai_common_sve_asm.S",
     ],
     hdrs = ["kai/kai_common.h"],
+    deps = [":types"],
 )
 
 kai_c_library(

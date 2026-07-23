@@ -5,7 +5,7 @@
 //
 #pragma once
 
-#if defined(__ARM_NEON)
+#ifdef __ARM_NEON
 #include <arm_neon.h>
 #endif  // defined(__ARM_NEON)
 
@@ -14,6 +14,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "kai/ukernels/kai_types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -165,7 +167,7 @@ inline static size_t kai_get_datatype_size_in_bytes(enum kai_datatype dt) {
 /// @param[in] f16 The f16 value
 ///
 /// @return the f32 value
-#if defined(__ARM_NEON)
+#ifdef __ARM_NEON
 inline static float kai_cast_f32_f16(uint16_t f16) {
     float16_t f32 = 0;
     memcpy(&f32, &f16, sizeof(uint16_t));
@@ -203,7 +205,7 @@ inline static uint16_t kai_cast_bf16_f32(float f32) {
 /// @param[in] f32 The f32 value
 ///
 /// @return the f16 value
-#if defined(__ARM_NEON)
+#ifdef __ARM_NEON
 inline static uint16_t kai_cast_f16_f32(float f32) {
     uint16_t f16 = 0;
     float16_t tmp = (float16_t)f32;
@@ -221,6 +223,70 @@ inline static size_t kai_div_ceil(size_t a, size_t b) {
 inline static size_t kai_roundup(size_t a, size_t b) {
     return kai_div_ceil(a, b) * b;
 }
+
+inline static uint64_t kai_f8_mode_to_reg(enum kai_f8_mode mode) {
+    KAI_ASSUME(mode >= 0 && mode < KAI_F8_MODE_END);
+    static const uint64_t kai_f8_mode_to_reg_map[KAI_F8_MODE_END] = {0x49, 0xC049, 0x0, 0xC000};
+    return kai_f8_mode_to_reg_map[mode];
+}
+
+// Get the absolute finite max value for a given F8 mode.
+inline static float32_t kai_get_abs_max_f8(enum kai_f8_mode mode) {
+    KAI_ASSUME(mode >= 0 && mode < KAI_F8_MODE_END);
+    switch (mode) {
+        case KAI_F8_MODE_E4M3_INF:
+        case KAI_F8_MODE_E4M3_SAT:
+            return 448.0F;
+        case KAI_F8_MODE_E5M2_INF:
+        case KAI_F8_MODE_E5M2_SAT:
+            return 57344.0F;
+        default:
+            return 0;
+    }
+}
+
+/// Convert F32 values to F8 bytes without requiring streaming mode.
+///
+/// The conversion uses `fcvtl`, which consumes the
+/// `fpmr` system register to select F8 format and conversion behaviour.
+///
+/// @param[in]  input Input F8 buffer with at least `length` elements.
+/// @param[out] output Output FP32 buffer that receives `length` elements.
+/// @param[in]  length Number of elements to convert.
+void kai_convert_f32_f8_neon(uint8_t* input, float* output, size_t length);
+
+/// Convert F32 values to F8 bytes without requiring streaming mode.
+///
+/// NOTE: This function does not conserve the previous value of the FPMR system register.
+///       Restoring this register value is the responsibility of the caller.
+///
+/// @param[in]  ip Input F32 buffer with at least `length` elements.
+/// @param[out] output Output buffer that receives `length` raw F8 bytes.
+/// @param[in]  fpm Encoded `fpmr` value to use for the conversion (see FPMR documentation).
+/// @param[in]  length Number of elements to convert.
+/// @param[in]  scale Scale multiplier applied to each input element before
+///                 conversion (e.g. `inv_scale` for per-row/column
+///                 quantization).
+void kai_convert_f8_f32_neon(const float* ip, uint8_t* output, uint64_t fpm, size_t length, float scale);
+
+/// Convert two F32 vectors to one F8 vector without requiring streaming mode.
+///
+/// The conversion uses `fcvtn`, which consumes the `fpmr` system register to
+/// select F8 format and conversion behaviour.
+///
+/// @param[in] a First input F32 vector.
+/// @param[in] b Second input F32 vector.
+///
+/// @return Output vector with 8 F8 bytes.
+uint8x8_t kai_convert_f8_f32x4x2_neon(float32x4_t a, float32x4_t b);
+
+/// Set value of `fpmr` register using provided value.
+/// @param[in] fmpr Register value to set
+void kai_write_fpmr_raw(uint64_t v);
+
+/// Read value of `fpmr` register and return
+/// @param[out] fmpr Register value read
+uint64_t kai_read_fpmr_raw(void);
 
 #if defined(__ARM_FEATURE_SVE2) || defined(_M_ARM64)
 /// Gets the SME vector length for 8-bit elements.

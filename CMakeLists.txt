@@ -340,6 +340,16 @@ set(KLEIDIAI_FILES_SVE_I8MM_ASM
     kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p4x8_qsi4c32p8x8_16x8_sve_i8mm.c
 )
 
+set(KLEIDIAI_FILES_NEON_FP8_ASM
+    kai/kai_common_f8_asm.S
+)
+
+set(KLEIDIAI_FILES_NEON_FP8
+    ${KLEIDIAI_FILES_NEON_FP8_ASM}
+    kai/ukernels/matmul/pack/kai_rhs_pack_nxk_f8dxp_f32_f32_neon.c
+    kai/ukernels/matmul/pack/kai_lhs_pack_f8dxp_f32_neon.c
+)
+
 set(KLEIDIAI_FILES_SVE
     ${KLEIDIAI_FILES_SVE_ASM}
 )
@@ -433,6 +443,7 @@ set(KLEIDIAI_FILES_SME_ASM
 set(KLEIDIAI_FILES_SME
     ${KLEIDIAI_FILES_SME_ASM}
 
+    kai/ukernels/matmul/pack/kai_lhs_pack_qsf8d32p4vsx4sf32_f32_sme.c
     kai/ukernels/matmul/pack/kai_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme.c
     kai/ukernels/matmul/pack/kai_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme.c
     kai/ukernels/matmul/pack/kai_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme.c
@@ -461,6 +472,10 @@ set(KLEIDIAI_FILES_SME2_ASM
     kai/ukernels/matmul/matmul_clamp_f16_qsi8d32p_qai4c32p/kai_matmul_clamp_f16_qsi8d32p1vlx4_qai4c32p4vlx4_1vlx4vl_sme2_mopa.c
     kai/ukernels/matmul/matmul_clamp_f16_qsi8d32p_qai4c32p/kai_matmul_clamp_f16_qsi8d32p1x4_qai4c32p4vlx4_1x4vl_sme2_dot_asm.S
     kai/ukernels/matmul/matmul_clamp_f16_qsi8d32p_qai4c32p/kai_matmul_clamp_f16_qsi8d32p1x4_qai4c32p4vlx4_1x4vl_sme2_dot.c
+    kai/ukernels/matmul/matmul_clamp_f32_f8p_f8p/kai_matmul_clamp_f32_f8p1vlx4_f8p1vlx4sb_2vlx2vl_sme2_mopa.c
+    kai/ukernels/matmul/matmul_clamp_f32_f8p_f8p/kai_matmul_clamp_f32_f8p1vlx4_f8p1vlx4sb_2vlx2vl_sme2_mopa_asm.S
+    kai/ukernels/matmul/matmul_clamp_f32_f8p_f8p/kai_matmul_clamp_f32_qsf8dblp4vsx4_qsf8c2blp4vsx4_f32_f32_4vsx16vs_sme2_mopa.c
+    kai/ukernels/matmul/matmul_clamp_f32_f8p_f8p/kai_matmul_clamp_f32_qsf8dblp4vsx4_qsf8c2blp4vsx4_f32_f32_4vsx16vs_sme2_mopa_asm.S
     kai/ukernels/matmul/matmul_clamp_f32_f16p_qsi4c32p/kai_matmul_clamp_f32_f16p1vlx2_qsi4c32p4vlx2_1vlx4vl_sme2_mopa.c
     kai/ukernels/matmul/matmul_clamp_f32_f16p_qsi4c32p/kai_matmul_clamp_f32_f16p1vlx2_qsi4c32p4vlx2_1vlx4vl_sme2_mopa_asm.S
     kai/ukernels/matmul/matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p16vlx1b_1x16vl_sme2_mla_asm.S
@@ -543,6 +558,7 @@ if(NOT MSVC)
     target_sources(kleidiai PRIVATE ${KLEIDIAI_FILES_NEON_FP16_BF16})
     target_sources(kleidiai PRIVATE ${KLEIDIAI_FILES_NEON_DOTPROD})
     target_sources(kleidiai PRIVATE ${KLEIDIAI_FILES_NEON_I8MM})
+    target_sources(kleidiai PRIVATE ${KLEIDIAI_FILES_NEON_FP8})
     target_sources(kleidiai PRIVATE ${KLEIDIAI_FILES_SVE})
     target_sources(kleidiai PRIVATE ${KLEIDIAI_FILES_SVE_DOTPROD})
     target_sources(kleidiai PRIVATE ${KLEIDIAI_FILES_SVE_I8MM})
@@ -551,6 +567,7 @@ if(NOT MSVC)
 
     set_source_files_properties(${KLEIDIAI_FILES_SCALAR}            PROPERTIES COMPILE_OPTIONS -march=armv8-a${KLEIDIAI_INTERNAL_EXTRA_ARCH})
     set_source_files_properties(${KLEIDIAI_FILES_NEON}              PROPERTIES COMPILE_OPTIONS -march=armv8-a${KLEIDIAI_INTERNAL_EXTRA_ARCH})
+    set_source_files_properties(${KLEIDIAI_FILES_NEON_FP8}          PROPERTIES COMPILE_OPTIONS -march=armv8.2-a${KLEIDIAI_INTERNAL_EXTRA_ARCH})
     set_source_files_properties(${KLEIDIAI_FILES_NEON_FP16}         PROPERTIES COMPILE_OPTIONS -march=armv8.2-a+fp16${KLEIDIAI_INTERNAL_EXTRA_ARCH})
     set_source_files_properties(${KLEIDIAI_FILES_NEON_FP16_DOTPROD} PROPERTIES COMPILE_OPTIONS -march=armv8.2-a+fp16+dotprod${KLEIDIAI_INTERNAL_EXTRA_ARCH})
     set_source_files_properties(${KLEIDIAI_FILES_NEON_FP16_I8MM}    PROPERTIES COMPILE_OPTIONS -march=armv8.2-a+fp16+i8mm${KLEIDIAI_INTERNAL_EXTRA_ARCH})
@@ -577,6 +594,7 @@ else()
     target_sources(kleidiai PRIVATE ${KLEIDIAI_FILES_NEON_FP16_BF16_ASM})
     target_sources(kleidiai PRIVATE ${KLEIDIAI_FILES_NEON_BF16_DOTPROD})
     target_sources(kleidiai PRIVATE ${KLEIDIAI_FILES_NEON_BF16_I8MM})
+    target_sources(kleidiai PRIVATE ${KLEIDIAI_FILES_NEON_FP8_ASM})
     target_sources(kleidiai PRIVATE ${KLEIDIAI_FILES_SVE_ASM})
     target_sources(kleidiai PRIVATE ${KLEIDIAI_FILES_SVE_I8MM_ASM})
     target_sources(kleidiai PRIVATE ${KLEIDIAI_FILES_SVE_DOTPROD_ASM})
@@ -587,6 +605,7 @@ else()
     set_source_files_properties(${KLEIDIAI_FILES_NEON_I8MM_ASM}          PROPERTIES COMPILE_OPTIONS /arch:armv8.2${KLEIDIAI_INTERNAL_EXTRA_ARCH})
     set_source_files_properties(${KLEIDIAI_FILES_NEON_DOTPROD_ASM}       PROPERTIES COMPILE_OPTIONS /arch:armv8.2${KLEIDIAI_INTERNAL_EXTRA_ARCH})
     set_source_files_properties(${KLEIDIAI_FILES_NEON_FP16_ASM}          PROPERTIES COMPILE_OPTIONS /arch:armv8.2${KLEIDIAI_INTERNAL_EXTRA_ARCH})
+    set_source_files_properties(${KLEIDIAI_FILES_NEON_FP8_ASM}           PROPERTIES COMPILE_OPTIONS /arch:armv8.2${KLEIDIAI_INTERNAL_EXTRA_ARCH})
     set_source_files_properties(${KLEIDIAI_FILES_NEON_FP16_BF16_ASM}     PROPERTIES COMPILE_OPTIONS /arch:armv8.2${KLEIDIAI_INTERNAL_EXTRA_ARCH})
     set_source_files_properties(${KLEIDIAI_FILES_NEON_BF16_DOTPROD_ASM}  PROPERTIES COMPILE_OPTIONS /arch:armv8.2${KLEIDIAI_INTERNAL_EXTRA_ARCH})
     set_source_files_properties(${KLEIDIAI_FILES_NEON_BF16_I8MM_ASM}     PROPERTIES COMPILE_OPTIONS /arch:armv8.2${KLEIDIAI_INTERNAL_EXTRA_ARCH})

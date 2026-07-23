@@ -24,11 +24,15 @@ kai_cxx_library(
             "common/*.cpp",
             "common/*.S",
         ],
-        exclude = ["common/sme.cpp"],
+        exclude = [
+            "common/sme.cpp",
+        ],
     ),
     hdrs = glob(
         ["common/*.hpp"],
-        exclude = ["common/sme.hpp"],
+        exclude = [
+            "common/sme.hpp",
+        ],
     ),
     # compare.cpp requires fp16 and bf16 support
     cpu_uarch = kai_cpu_bf16() + kai_cpu_fp16(),

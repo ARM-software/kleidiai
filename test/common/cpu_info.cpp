@@ -49,19 +49,21 @@ enum class CpuFeature : size_t {
     SVE2,         //
     SME,          //
     SME2,         //
+    SME_F8F32,    //
     LAST          // This should be last element, please add new CPU capabilities before it
 };
 
 constexpr std::array<std::tuple<CpuFeature, std::string_view>, n_elements<CpuFeature>()> cpu_features{{
-    {CpuFeature::ADVSIMD, "ADVSIMD"},  //
-    {CpuFeature::DOTPROD, "DOTPROD"},  //
-    {CpuFeature::I8MM, "I8MM"},        //
-    {CpuFeature::FP16, "FP16"},        //
-    {CpuFeature::BF16, "BF16"},        //
-    {CpuFeature::SVE, "SVE"},          //
-    {CpuFeature::SVE2, "SVE2"},        //
-    {CpuFeature::SME, "SME"},          //
-    {CpuFeature::SME2, "SME2"},        //
+    {CpuFeature::ADVSIMD, "ADVSIMD"},      //
+    {CpuFeature::DOTPROD, "DOTPROD"},      //
+    {CpuFeature::I8MM, "I8MM"},            //
+    {CpuFeature::FP16, "FP16"},            //
+    {CpuFeature::BF16, "BF16"},            //
+    {CpuFeature::SVE, "SVE"},              //
+    {CpuFeature::SVE2, "SVE2"},            //
+    {CpuFeature::SME, "SME"},              //
+    {CpuFeature::SME2, "SME2"},            //
+    {CpuFeature::SME_F8F32, "SME_F8F32"},  //
 }};
 
 constexpr const char* forced_cpu_features_env_name = "KAI_TEST_FORCE_CPU_FEATURES";
@@ -179,6 +181,9 @@ constexpr uint64_t HWCAP2_SME = 1UL << 23;
 #ifndef HWCAP2_SME2
 constexpr uint64_t HWCAP2_SME2 = 1UL << 37;
 #endif
+#ifndef HWCAP2_SME_F8F32
+constexpr uint64_t HWCAP2_SME_F8F32 = 1UL << 59;
+#endif
 
 const std::array<std::tuple<CpuFeature, uint64_t, uint64_t>, n_elements<CpuFeature>()> cpu_caps{{
     {CpuFeature::ADVSIMD, AT_HWCAP, HWCAP_ASIMD},              //
@@ -190,6 +195,7 @@ const std::array<std::tuple<CpuFeature, uint64_t, uint64_t>, n_elements<CpuFeatu
     {CpuFeature::SVE2, AT_HWCAP2, HWCAP2_SVE2},                //
     {CpuFeature::SME, AT_HWCAP2, HWCAP2_SME},                  //
     {CpuFeature::SME2, AT_HWCAP2, HWCAP2_SME2},                //
+    {CpuFeature::SME_F8F32, AT_HWCAP2, HWCAP2_SME_F8F32},      //
 }};
 
 bool get_cap_support(CpuFeature feature) {
@@ -219,6 +225,7 @@ const std::array<std::tuple<CpuFeature, std::string_view>, n_elements<CpuFeature
     {CpuFeature::SVE2, ""},  // not supported
     {CpuFeature::SME, "hw.optional.arm.FEAT_SME"},
     {CpuFeature::SME2, "hw.optional.arm.FEAT_SME2"},
+    {CpuFeature::SME_F8F32, ""},  // not supported
 }};
 
 bool get_cap_support(CpuFeature feature) {
@@ -268,6 +275,7 @@ const std::array<std::tuple<CpuFeature, DWORD, const char*, uint64_t>, n_element
     {CpuFeature::SVE2, 47, nullptr, 0},
     {CpuFeature::SME, 0, nullptr, 0},
     {CpuFeature::SME2, 0, nullptr, 0},
+    {CpuFeature::SME_F8F32, 0, nullptr, 0},
 }};
 
 uint64_t read_sysreg(const char* name) {
@@ -332,7 +340,8 @@ struct CpuInfo {
         has_sve(get_cap_support(CpuFeature::SVE)),
         has_sve2(get_cap_support(CpuFeature::SVE2)),
         has_sme(get_cap_support(CpuFeature::SME)),
-        has_sme2(get_cap_support(CpuFeature::SME2)) {
+        has_sme2(get_cap_support(CpuFeature::SME2)),
+        has_sme_f8f32(get_cap_support(CpuFeature::SME_F8F32)) {
     }
 
     /// Gets the singleton @ref CpuInfo object.
@@ -341,15 +350,16 @@ struct CpuInfo {
         return cpu_info;
     }
 
-    const bool has_advsimd{};  ///< AdvSIMD is supported.
-    const bool has_dotprod{};  ///< DotProd is supported.
-    const bool has_i8mm{};     ///< I8MM is supported.
-    const bool has_fp16{};     ///< FP16 is supported.
-    const bool has_bf16{};     ///< B16 is supported.
-    const bool has_sve{};      ///< SVE is supported.
-    const bool has_sve2{};     ///< SVE2 is supported.
-    const bool has_sme{};      ///< SME is supported.
-    const bool has_sme2{};     ///< SME2 is supported.
+    const bool has_advsimd{};    ///< AdvSIMD is supported.
+    const bool has_dotprod{};    ///< DotProd is supported.
+    const bool has_i8mm{};       ///< I8MM is supported.
+    const bool has_fp16{};       ///< FP16 is supported.
+    const bool has_bf16{};       ///< B16 is supported.
+    const bool has_sve{};        ///< SVE is supported.
+    const bool has_sve2{};       ///< SVE2 is supported.
+    const bool has_sme{};        ///< SME is supported.
+    const bool has_sme2{};       ///< SME2 is supported.
+    const bool has_sme_f8f32{};  ///< SME F8F32 is supported
 };
 
 }  // namespace
@@ -404,6 +414,10 @@ bool cpu_has_sme() {
 
 bool cpu_has_sme2() {
     return CpuInfo::current().has_sme2;
+}
+
+bool cpu_has_sme_f8f32() {
+    return CpuInfo::current().has_sme_f8f32;
 }
 
 bool cpu_has_dotprod_and_bf16() {

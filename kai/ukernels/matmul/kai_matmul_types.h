@@ -13,9 +13,12 @@
 extern "C" {
 #endif
 
+#include "kai/ukernels/kai_types.h"
+
 /// Data format configuration for matrix multiplication micro-kernel.
 struct kai_matmul_uker_format_config {
-    size_t bl;
+    size_t bl;                 ///< Quantization block length
+    enum kai_f8_mode f8_mode;  ///< Encoding for F8 data type type and overflow behavior
 };
 
 /// Micro-kernel configuration for matrix multiplication micro-kernel.
@@ -56,6 +59,39 @@ struct kai_matmul_uker_rhs_dim_args {
 /// Strides in bytes of the RHS buffer for matrix multiplication micro-kernel.
 struct kai_matmul_uker_rhs_stride_args {
     size_t n;  ///< Stride in bytes in N dimension.
+};
+
+/// Strides in bytes of the RHS scale buffer.
+struct kai_matmul_uker_rhs_scale_stride_args {
+    size_t n;  ///< Stride in bytes in N dimension.
+};
+
+/// Strides in bytes of the LHS scale buffer.
+struct kai_matmul_uker_lhs_scale_stride_args {
+    size_t m;  ///< Stride in bytes in M dimension.
+};
+
+/// Strides in bytes of the RHS bias buffer.
+struct kai_matmul_uker_rhs_bias_stride_args {
+    size_t n;  ///< Stride in bytes in N dimension.
+};
+
+/// RHS scale buffer.
+struct kai_matmul_uker_rhs_scale_args {
+    const void* ptr;
+    struct kai_matmul_uker_rhs_scale_stride_args stride;
+};
+
+/// RHS bias buffer.
+struct kai_matmul_uker_rhs_bias_args {
+    const void* ptr;
+    struct kai_matmul_uker_rhs_bias_stride_args stride;
+};
+
+/// LHS scale buffer.
+struct kai_matmul_uker_lhs_scale_args {
+    const void* ptr;
+    struct kai_matmul_uker_lhs_scale_stride_args stride;
 };
 
 /// RHS buffer for matrix multiplication micro-kernel.
@@ -185,11 +221,14 @@ struct kai_matmul_uker_activation_args {
 
 /// Operands for matrix multiplication micro-kernel.
 struct kai_matmul_uker_operand_args {
-    struct kai_matmul_uker_dst_args dst;      ///< Output buffer.
-    struct kai_matmul_uker_lhs_args lhs;      ///< LHS buffer.
-    struct kai_matmul_uker_rhs_args rhs;      ///< RHS buffer.
-    struct kai_matmul_uker_bias_args bias;    ///< Bias parameters
-    struct kai_matmul_uker_scale_args scale;  ///< Scale parameters
+    struct kai_matmul_uker_dst_args dst;              ///< Output buffer.
+    struct kai_matmul_uker_lhs_args lhs;              ///< LHS buffer.
+    struct kai_matmul_uker_rhs_args rhs;              ///< RHS buffer.
+    struct kai_matmul_uker_lhs_scale_args lhs_scale;  ///< LHS scale buffer.
+    struct kai_matmul_uker_rhs_scale_args rhs_scale;  ///< RHS scale buffer.
+    struct kai_matmul_uker_rhs_bias_args rhs_bias;    ///< RHS bias buffer.
+    struct kai_matmul_uker_bias_args bias;            ///< Bias parameters
+    struct kai_matmul_uker_scale_args scale;          ///< Scale parameters
 };
 
 /// Matrix multiplication micro-kernel run arguments.

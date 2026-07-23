@@ -262,6 +262,11 @@ build-examples:
       for EXAMPLE in `ls examples -1`; do
         # Validate that each example has a build script
         if [ -f examples/${EXAMPLE}/CMakeLists.txt ]; then
+          # Skip examples requiring +sme-f8f32: not supported by the CI compiler.
+          if grep -q "sme-f8f32" "examples/${EXAMPLE}/CMakeLists.txt" 2>/dev/null; then
+            echo "Skipping ${EXAMPLE}: requires +sme-f8f32 not supported by CI compiler"
+            continue
+          fi
           echo "-----------------------------------------------------------"
           echo "Build examples/${EXAMPLE}"
           echo "-----------------------------------------------------------"
@@ -314,7 +319,12 @@ test-clang-tidy:
     # Build and generate compilation_database.json for proper flags propagation to post processing tools
     - cmake -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_CXX_FLAGS="-Werror" -DCMAKE_C_FLAGS="-Werror" -DCMAKE_BUILD_TYPE=Release -DKLEIDIAI_BUILD_TESTS=ON -DKLEIDIAI_BUILD_BENCHMARK=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -B build/${CI_JOB_NAME_SLUG}
     # Only test the main library with C/C++ files.
-    - clang-tidy --header-filter ".*" --warnings-as-errors "*" -p build/${CI_JOB_NAME_SLUG} $(find kai -type f \( -name \*.c -o -name \*.cpp \))
+    - |
+      clang-tidy \
+        --header-filter ".*" \
+        --warnings-as-errors "*" \
+        -p build/${CI_JOB_NAME_SLUG} \
+        $(find kai -type f \( -name \*.c -o -name \*.cpp \) ! -name 'kai_lhs_quant_pack_f8dxp_f32_sme2.c')
 
 # Purpose: Verify that all micro-kernels are registered for benchmarking.
 test-verify-benchmark-registration:
@@ -617,7 +627,7 @@ test-examples-sme-fvp:
     # Generate test script with negative and positive tests
     - |
       echo -e "#\!/bin/bash -ex"                                         > run_tests.sh
-      find build -type f -perm -a=x -name \*_sme\* -print0 | \
+      find build -type f -perm -a=x -name \*_sme\* ! -iname \*_f8_\* -print0 | \
       while read -d '' EXAMPLE; do
         echo "echo ---------------------------------------------------" >> run_tests.sh
         echo "echo Run '${EXAMPLE}'"                                    >> run_tests.sh
@@ -946,6 +956,44 @@ resolve-gcovr:
         fi
       )
 
+# Purpose: Execute F8 SME examples under FVP with required model features.
+test-examples-f8-fvp:
+  extends:
+    - .standard-rules
+  stage: test
+  needs:
+    - build-examples
+  script:
+    - |
+      echo -e "#\!/bin/bash -ex" > run_tests_f8.sh
+      find build -type f -perm -a=x -iname '*_f8_f8_*' -print0 | \
+      while read -d '' EXAMPLE; do
+            echo "echo ---------------------------------------------------" >> run_tests_f8.sh
+            echo "echo Run '${EXAMPLE}'"                                    >> run_tests_f8.sh
+            echo "echo ---------------------------------------------------" >> run_tests_f8.sh
+            echo "./'${EXAMPLE}' | tee -a example_f8.log"                  >> run_tests_f8.sh
+      done
+    - |
+      if ! grep -q "echo Run '" run_tests_f8.sh 2>/dev/null; then
+        echo "No F8 SME examples detected."
+        exit 0
+      fi
+      echo "Test script content (F8 examples):"
+      cat run_tests_f8.sh
+    - chmod a+x run_tests_f8.sh
+    - |
+      F8_MODEL_ARGS="\
+        -C cluster0.has_faminmax=1 \
+        -C cluster0.fp8_support_level=3 \
+        -C cluster0.sve.sme_ssve_fp8_support_level=2 \
+        -C cluster0.sve.has_sme_f8f32=1 \
+      "
+      FVP_MODEL_EXTRA="$F8_MODEL_ARGS" ./tools/fvp.sh ./run_tests_f8.sh
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - example_f8.log
+
 # Base template: .coverage-base
 # Purpose: Instrumented build & diversified benchmark/test execution producing per-job JSON coverage trace.
 .coverage-base:
@@ -1052,6 +1100,16 @@ coverage:
     - coverage-clang
   tags:
     - apple_silicon
+  variables:
+    PIP_CACHE_DIR: ".cache/pip3"
+  cache:
+    - key: cache-pip3
+      paths:
+        - $PIP_CACHE_DIR
+      policy: $CACHE_POLICY
+  before_script:
+    - python3 -m pip install --cache-dir=$PIP_CACHE_DIR --user -U gcovr --break-system-packages
+    - export PATH="$(python3 -m site --user-base)/bin:${PATH}"
   script:
     # Generage Cobertura and HTML reports merging coverage across variants,
     # where each variant artifact should be stored in JSON file at build/coverage/

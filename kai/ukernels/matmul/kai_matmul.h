@@ -42,6 +42,25 @@ extern "C" {
 /// @return The micro-kernel API.
 struct kai_matmul_uker_api kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8vs_sme2_mopa(void);
 
+/// F8 matrix multiplication with 2D RHS matrix scales.
+///
+/// Required configuration parameters:
+///   * bl, f8_mode
+///
+/// Required operands:
+///   * lhs, rhs, dst
+///   * rhs_scale - F32 RHS 2D scales in [N/bl, K/bl] layout.
+///   * rhs_bias  - F32 vector of N values. `stride` is unused.
+/// Optional arguments:
+///   * clamp - F32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
+///
+/// @note   Parameter constraints exist for this micro-kernel. Refer to the
+///         implementation for details.
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_f32_qsf8dblp4vsx4_qsf8c2blp4vsx4_f32_f32_4vsx16vs_sme2_mopa(void);
+
 /// Matrix multiplication with 32-bit integer accumulation using SME2 MOPA instruction.
 ///
 /// Required operands:

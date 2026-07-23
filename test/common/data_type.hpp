@@ -39,6 +39,7 @@ enum class DataType : uint16_t {
 
     FP32 = 0b0'1'0'0'0000'00100000,  ///< Single-precision floating-point.
     FP16 = 0b0'1'0'0'0000'00010000,  ///< Half-precision floating-point.
+    FP8 = 0b0'1'0'0'0000'00001000,   ///< 8-bit precision floating-point.
 
     BF16 = 0b0'1'1'0'0000'00010000,  ///< Half-precision brain floating-point.
 

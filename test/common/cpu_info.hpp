@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -43,6 +43,9 @@ bool cpu_has_sme();
 
 /// Returns a value indicating whether the current CPU supports FEAT_SME2.
 bool cpu_has_sme2();
+
+/// Returns a value indicating whether the current CPU supports FEAT_SME_F8F32.
+bool cpu_has_sme_f8f32();
 
 /// Returns a value indicating whether the current CPU supports FEAT_BF16 and FEAT_DotProd
 bool cpu_has_dotprod_and_bf16();

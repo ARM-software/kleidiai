@@ -9,6 +9,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "kai/ukernels/kai_types.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -18,6 +20,9 @@ struct kai_matmul_pack_lhs_uker_format_config {
     size_t mr;
     size_t kr;
     size_t sr;
+
+    size_t bl;                 ///< Quantization block length.
+    enum kai_f8_mode f8_mode;  ///< Encoding for F8 data type and overflow behavior.
 };
 
 /// Micro-kernel configuration for matrix multiplication LHS packing micro-kernel.
