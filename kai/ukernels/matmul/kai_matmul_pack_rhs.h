@@ -148,7 +148,7 @@ struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32
 ///
 /// Required operands:
 ///   * rhs_packed - INT32 bias, INT4 RHS in 8vsx4 blocked format, and FP32 scale.
-///   * rhs - Packed INT4 RHS matrix in KxN layout.
+///   * rhs - INT4 data in plain format, non-transposed.
 ///   * bias_n - Per-N INT32 bias.
 ///   * k_sum_scale_global - LHS zero point as an INT32 scalar.
 ///   * rhs_zero_point_global - RHS zero point as an INT32 scalar; supported values are 0 and 8.
@@ -167,7 +167,7 @@ struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_kxn_qsi4cxp8vsx4sf32bi32
 ///
 /// Required operands:
 ///   * rhs_packed - INT32 bias, INT4 RHS in 8vsx4 blocked format, and FP32 scale.
-///   * rhs - Packed INT4 RHS matrix in NxK layout.
+///   * rhs - INT4 data in plain format, transposed.
 ///   * bias_n - Per-N INT32 bias.
 ///   * k_sum_scale_global - LHS zero point as an INT32 scalar.
 ///   * rhs_zero_point_global - RHS zero point as an INT32 scalar; supported values are 0 and 8.

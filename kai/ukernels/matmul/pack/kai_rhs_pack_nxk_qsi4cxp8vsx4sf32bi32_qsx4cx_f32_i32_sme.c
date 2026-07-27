@@ -25,7 +25,7 @@ enum {
     NR_TILE = 4,
     K_MULTIPLE = 32,
 
-    MAX_BL = KAI_SME_VEC_LENGTH_MAX_BYTES,
+    MAX_NR = NR_VSCALE * KAI_VSCALE_MAX,
 };
 
 static size_t get_nr(void) {
@@ -36,7 +36,7 @@ static struct kai_matmul_pack_rhs_uker_dim_args get_step(const struct kai_matmul
     KAI_UNUSED(config);
     const size_t nr = get_nr();
     KAI_ASSUME(nr > 0);
-    KAI_ASSUME(nr <= MAX_BL / 2);
+    KAI_ASSUME(nr <= MAX_NR);
     const struct kai_matmul_pack_rhs_uker_dim_args step = {
         .n = nr,
         .k = 0,
@@ -60,7 +60,7 @@ static size_t get_rhs_offset(
     KAI_UNUSED(config);
     const size_t nr = get_nr();
     KAI_ASSUME(nr > 0);
-    KAI_ASSUME(nr <= MAX_BL / 2);
+    KAI_ASSUME(nr <= MAX_NR);
     KAI_ASSUME(index->n % nr == 0);
     KAI_ASSUME(index->k == 0);
     return index->n * stride->n;
@@ -72,7 +72,7 @@ static struct kai_matmul_pack_rhs_uker_rhs_packed_stride_args get_rhs_packed_str
     KAI_UNUSED(config);
     const size_t nr = get_nr();
     KAI_ASSUME(nr > 0);
-    KAI_ASSUME(nr <= MAX_BL / 2);
+    KAI_ASSUME(nr <= MAX_NR);
     const struct kai_matmul_pack_rhs_uker_rhs_packed_stride_args stride = {
         .n = nr * (BIAS_ELEM_BYTES + (kai_roundup(shape->k, K_MULTIPLE) / RHS_ELEM_RECIP_BYTES) + SCALE_ELEM_BYTES),
     };
@@ -86,7 +86,7 @@ static size_t get_rhs_packed_offset(
     KAI_UNUSED(config);
     const size_t nr = get_nr();
     KAI_ASSUME(nr > 0);
-    KAI_ASSUME(nr <= MAX_BL / 2);
+    KAI_ASSUME(nr <= MAX_NR);
     KAI_ASSUME(index->n % nr == 0);
     KAI_ASSUME(index->k == 0);
     return index->n / nr * stride->n;
@@ -99,7 +99,7 @@ static size_t get_rhs_packed_size(
     KAI_UNUSED(config);
     const size_t nr = get_nr();
     KAI_ASSUME(nr > 0);
-    KAI_ASSUME(nr <= MAX_BL / 2);
+    KAI_ASSUME(nr <= MAX_NR);
     return kai_roundup(shape->n, nr) / nr * stride->n;
 }
 
@@ -133,7 +133,7 @@ static void run(
     KAI_UNUSED(config);
     const size_t nr = get_nr();
     KAI_ASSUME(nr > 0);
-    KAI_ASSUME(nr <= MAX_BL / 2);
+    KAI_ASSUME(nr <= MAX_NR);
     const size_t rhs_stride_row = args->operand.rhs.stride.n;
     const int32_t lhs_zero_point = *(const int32_t*)args->operand.k_sum_scale_global.ptr;
     const int32_t rhs_zero_point = *(const int32_t*)args->operand.rhs_zero_point_global.ptr;
@@ -153,7 +153,7 @@ static void run(
 
     for (size_t n_base = 0; n_base < n; n_base += nr) {
         const size_t block_width = KAI_MIN(n - n_base, nr);
-        int32_t sums[KAI_SME_VEC_LENGTH_MAX_BYTES / 2];
+        int32_t sums[MAX_NR];
         for (size_t group = 0; group < block_width; ++group) {
             sums[group] = 0;
         }

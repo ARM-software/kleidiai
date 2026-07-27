@@ -26,7 +26,7 @@ enum {
     KR = 4,
     K_MULTIPLE = 32,
 
-    MAX_NR = KAI_SME_VEC_LENGTH_MAX_BYTES / 2,
+    MAX_NR = NR_VSCALE * KAI_VSCALE_MAX,
 };
 
 static size_t get_nr(void) {
@@ -162,7 +162,7 @@ static void run(
 
     for (size_t n_base = 0; n_base < n; n_base += nr) {
         const size_t block_width = KAI_MIN(n - n_base, nr);
-        int32_t sums[KAI_SME_VEC_LENGTH_MAX_BYTES / 2] = {0};
+        int32_t sums[MAX_NR] = {0};
         uint8_t* payload = packed_ptr + nr * BIAS_ELEM_BYTES;
 
         for (size_t k_base = 0; k_base < rounded_k; k_base += KR) {
