@@ -264,6 +264,8 @@ SME_KERNELS_NOHDR = [
     "pack/kai_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme",
     "pack/kai_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme",
     "pack/kai_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme",
+    "pack/kai_rhs_pack_kxn_qsi4cxp8vsx4sf32bi32_qsx4cx_f32_i32_sme",
+    "pack/kai_rhs_pack_nxk_qsi4cxp8vsx4sf32bi32_qsx4cx_f32_i32_sme",
 ]
 
 # buildifier: keep sorted
