@@ -50,9 +50,9 @@ namespace winograd
 struct WinogradConfig
 {
     unsigned int output_rows = 0, output_cols = 0;
-    std::string  input_transform_filter;
-    std::string  output_transform_filter;
-    std::string  weight_transform_filter;
+    std::string  input_transform_filter  = "";
+    std::string  output_transform_filter = "";
+    std::string  weight_transform_filter = "";
 };
 
 /* Struct describing (suggested) memory layout within the Winograd domain.
@@ -80,7 +80,7 @@ namespace weight_transform
 class ITransform : public ITransformCommon
 {
 public:
-    ~ITransform() override = default;
+    ~ITransform() = default;
 
     virtual unsigned int get_kernel_rows(void) const = 0;
     virtual unsigned int get_kernel_cols(void) const = 0;
@@ -114,7 +114,7 @@ namespace input_transform
 class ITransform : public ITransformCommon
 {
 public:
-    ~ITransform() override = default;
+    ~ITransform() = default;
 
     virtual unsigned int get_input_rows(void) const = 0;
     virtual unsigned int get_input_cols(void) const = 0;
@@ -149,7 +149,7 @@ namespace output_transform
 class ITransform : public ITransformCommon
 {
 public:
-    ~ITransform() override = default;
+    ~ITransform() = default;
 
     virtual unsigned int get_input_rows(void) const = 0;
     virtual unsigned int get_input_cols(void) const = 0;

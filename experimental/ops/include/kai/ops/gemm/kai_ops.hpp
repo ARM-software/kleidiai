@@ -11,7 +11,6 @@
 #include <cstring>
 #include <limits>
 #include <memory>
-#include <utility>
 #include <vector>
 
 namespace kai {
@@ -58,25 +57,29 @@ enum class WeightFormat
 
 struct KernelDescription
 {
-    std::string name;
+    std::string name           = "";
     bool        is_default     = false;
     uint64_t    cycle_estimate = 0;
 
     KernelDescription(std::string n, bool d = false, uint64_t c = 0)
-        : name(std::move(n)), is_default(d), cycle_estimate(c)
+        : name(n), is_default(d), cycle_estimate(c)
     {
     }
-    KernelDescription() noexcept = default;
+    KernelDescription() noexcept
+    {
+    }
 };
 
 struct GemmConfig
 {
-    std::string  filter;
+    std::string  filter           = "";
     unsigned int inner_block_size = 0;
     unsigned int outer_block_size = 0;
     WeightFormat weight_format    = WeightFormat::ANY;
 
-    GemmConfig() = default;
+    GemmConfig()
+    {
+    }
 };
 
 struct Activation

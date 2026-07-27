@@ -158,7 +158,9 @@ public:
     virtual GemmConfig get_config() = 0;
 
     // Destructor
-    virtual ~IGemmCommon() = default;
+    virtual ~IGemmCommon()
+    {
+    }
 };
 
 /* "Real" GemmCommon class which is templated on the operand and return types.

@@ -128,7 +128,7 @@ extern int force_cpu;
  * method to extract values from std::strings
  */
 inline unsigned long string_to_value(const std::string &str, int base=0) {
-    return strtoul(str.c_str(), nullptr, base);
+    return strtoul(str.c_str(), NULL, base);
 }
 
 /*
@@ -176,7 +176,7 @@ private:
         bool      model_set  = false;
     };
 
-    std::vector<PerCPUData> _percpu;
+    std::vector<PerCPUData> _percpu={};
 
 #ifndef BARE_METAL
     bool _cpuid   = false;
