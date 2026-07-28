@@ -20,7 +20,7 @@ where:
 
 ## API definition
 
-The micro-kernel API definition is implemented in `kai/ukernels/<op>/kai_<uker>_types.h`. It consists of 3 main components:
+The micro-kernel API definition is implemented in `kai/ukernels/<op>/kai_<uker>_types.h`. It consists of 3 main components (along with other supporting types):
 
 - `kai_<uker>_api` structure containing all the function pointers.
 - `kai_<uker>_config` structure containing the set of parameters to configure the functionality of the micro-kernel. All functions in the micro-kernel API take the config as an input.
@@ -40,7 +40,7 @@ The API structure `kai_<uker>_api` contains the following function pointers:
 
 ### Configuration structure
 
-The configuration structure is organized in multiple level of structures, all of them has the type name with `kai_<uker>_` prefix and `_config` suffix. The specific design of the configuration structure is highly dependent on each micro-kernel family, but the top-level structure `kai_<uker>_config` always consists of the following fields:
+The configuration structure is organized in multiple levels of structures, all of them have the type name with `kai_<uker>_` prefix and `_config` suffix. The specific design of the configuration structure is highly dependent on each micro-kernel family, but the top-level structure `kai_<uker>_config` always consists of the following fields:
 
 | Name | Type | Description |
 |-|-|-|
@@ -50,7 +50,7 @@ The configuration structure should be used only when there are certain configura
 
 ### Run arguments structure
 
-The run argument structure is organized in multiple level of structures, all of them has the type name with `kai_<uker>_` prefix and `_args` suffix. The top-level structure `kai_<uker>_args` consists of the following fields:
+The run argument structure is organized in multiple levels of structures, all of them have the type name with `kai_<uker>_` prefix and `_args` suffix. The top-level structure `kai_<uker>_args` consists of the following fields:
 
 | Name | Type | Description |
 |-|-|-|
@@ -73,7 +73,7 @@ The operands structure `kai_<uker>_operands_args` contains a list of fields name
 
 | Name | Type | Description |
 |-|-|-|
-| `ptr` | `const void*` or `void*` | The function pointer to the data buffer. Constantness is determined by whether this is input, output or scratch operands. Only `void` pointer is used since the same API is shared by micro-kernels operating on different data type. |
+| `ptr` | `const void*` or `void*` | The function pointer to the data buffer. Constantness is determined by whether this is input, output or scratch operands. Only `void` pointer is used since the same API is shared by micro-kernels operating on different data types. |
 | `stride_<dim>` | `size_t` | The strides in bytes of dimension `<dim>`. Depending on the rank of the operand and the actual data format, different number of strides is needed. |
 
 ## API creation
@@ -88,5 +88,5 @@ Each micro-kernel variant `<variant>` provides the following functions:
 
 Notes:
 
-- The creation function always return the API structure **by value**.
+- The creation function always returns the API structure **by value**.
 - The creation function does not take any input. If the functionality of the micro-kernel is configurable, the caller needs to populate necessary information to the configuration structure and/or the run arguments structure.
