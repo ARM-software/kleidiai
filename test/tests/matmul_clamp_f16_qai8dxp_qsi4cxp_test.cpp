@@ -22,6 +22,7 @@
 #include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi4cxp/kai_matmul_clamp_f16_qai8dxp1x8_qsi4cxp4x8_1x4_neon_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi4cxp/kai_matmul_clamp_f16_qai8dxp4x4_qsi4cxp4x4_16x4_neon_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi4cxp/kai_matmul_clamp_f16_qai8dxp4x8_qsi4cxp4x8_16x4_neon_i8mm.h"
+#include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi4cxp/kai_matmul_clamp_f16_qai8dxp4x8_qsi4cxp8x8_16x8_sve2p1_i8mm.h"
 #include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi4cxp/kai_matmul_clamp_f16_qai8dxp_qsi4cxp_interface.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp_f16_neon.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4cxp_qs4cxs1s0.h"
@@ -153,7 +154,7 @@ F16Qai8Qsi4CacheData ReferenceGenerator<F16Qai8Qsi4CacheDataId, F16Qai8Qsi4Cache
     return out;
 }
 
-static const std::array<UkernelVariantCustom<kai_matmul_clamp_f16_qai8dxp_qsi4cxp_ukernel>, 6>
+static const std::array<UkernelVariantCustom<kai_matmul_clamp_f16_qai8dxp_qsi4cxp_ukernel>, 7>
     variants_kai_matmul_clamp_f16_qai8dxp_qsi4cxp = {{
         {UKERNEL_MATMUL_VARIANT(clamp_f16_qai8dxp1x4_qsi4cxp4x4_1x4_neon_dotprod),
          "kai_matmul_clamp_f16_qai8dxp1x4_qsi4cxp4x4_1x4_neon_dotprod", cpu_has_dotprod_and_fp16,
@@ -170,6 +171,11 @@ static const std::array<UkernelVariantCustom<kai_matmul_clamp_f16_qai8dxp_qsi4cx
         {UKERNEL_MATMUL_VARIANT(clamp_f16_qai8dxp4x8_qsi4cxp4x8_16x4_neon_i8mm),
          "kai_matmul_clamp_f16_qai8dxp4x8_qsi4cxp4x8_16x4_neon_i8mm", cpu_has_i8mm_and_fp16,
          kai_run_rhs_pack_nxk_qsi4cxp_qs4cxs1s0, kai_get_rhs_packed_size_rhs_pack_nxk_qsi4cxp_qs4cxs1s0,
+         kai_get_rhs_packed_offset_rhs_pack_nxk_qsi4cxp_qs4cxs1s0},
+        {UKERNEL_MATMUL_VARIANT(clamp_f16_qai8dxp4x8_qsi4cxp8x8_16x8_sve2p1_i8mm),
+         "kai_matmul_clamp_f16_qai8dxp4x8_qsi4cxp8x8_16x8_sve2p1_i8mm",
+         (cpu_check<cpu_has_sve2p1, cpu_has_sve_vl256, cpu_has_i8mm>), kai_run_rhs_pack_nxk_qsi4cxp_qs4cxs1s0,
+         kai_get_rhs_packed_size_rhs_pack_nxk_qsi4cxp_qs4cxs1s0,
          kai_get_rhs_packed_offset_rhs_pack_nxk_qsi4cxp_qs4cxs1s0},
         {UKERNEL_MATMUL_VARIANT(clamp_f16_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa),
          "kai_matmul_clamp_f16_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa", cpu_has_sme2,
