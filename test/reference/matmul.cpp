@@ -630,6 +630,13 @@ template Buffer matmul_clamp_nt_t<int8_t, float, int32_t, int8_t, float, int32_t
     const void* biases,                                                                                 //
     float min_value, float max_value);
 
+template Buffer matmul_clamp_nt_t<int8_t, float, int32_t, int8_t, BFloat16<false>, int32_t, float, int32_t, float>(
+    size_t m, size_t n, size_t k,                                                                       //
+    const void* lhs_data, const void* lhs_scales, const void* lhs_zero_points, size_t lhs_quant_width,  //
+    const void* rhs_data, const void* rhs_scales, const void* rhs_zero_points, size_t rhs_quant_width,  //
+    const void* biases,                                                                                 //
+    float min_value, float max_value);
+
 template <
     typename LhsData, typename LhsScale, typename LhsZeroPoint, typename RhsData, typename RhsScale,
     typename RhsZeroPoint, typename Bias, typename IntAcc, typename DstData>

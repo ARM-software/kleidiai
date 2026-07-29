@@ -167,10 +167,19 @@ using MatMulTestParams_f32_qsi8d32p_qsi4c32p =
     *os << "__bl_" << bl;
 }
 
+static std::string test_name(const testing::TestParamInfo<MatMulTestParams_f32_qsi8d32p_qsi4c32p>& info) {
+    std::ostringstream name;
+    PrintTo(info.param, &name);
+    return name.str();
+}
+
+class MatMulTest_f32_qsi8d32p_qsi4c32p : public ::testing::TestWithParam<MatMulTestParams_f32_qsi8d32p_qsi4c32p> {};
+
 class MatMulTest_f32_qsi8d32p_qsi4c32p_Offset
     : public ::testing::TestWithParam<MatMulTestParams_f32_qsi8d32p_qsi4c32p> {};
 class MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd
     : public ::testing::TestWithParam<MatMulTestParams_f32_qsi8d32p_qsi4c32p> {};
+
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd);
 
 static const UKernelVariants& get_variant_entry(size_t variant_index, bool variable_bl) {
@@ -575,7 +584,7 @@ INSTANTIATE_TEST_SUITE_P(
         testing::ValuesIn(unsupported_variant_indices(false)), testing::Values(MatMulShape{1, 2, 32}),
         testing::Values(MatrixPortion(0, 0, 1, 1)), testing::Values(std::optional<float>{}), testing::Values(32),
         testing::Values(false)),
-    testing::PrintToStringParamName());
+    test_name);
 
 INSTANTIATE_TEST_SUITE_P(
     UnsupportedVariableCPU, MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd,
@@ -583,7 +592,7 @@ INSTANTIATE_TEST_SUITE_P(
         testing::ValuesIn(unsupported_variant_indices(true)), testing::Values(MatMulShape{1, 2, 32}),
         testing::Values(MatrixPortion(0, 0, 1, 1)), testing::Values(std::optional<float>{}), testing::Values(32),
         testing::Values(true)),
-    testing::PrintToStringParamName());
+    test_name);
 
 INSTANTIATE_TEST_SUITE_P(
     MatMul, MatMulTest_f32_qsi8d32p_qsi4c32p_Offset,
@@ -692,7 +701,7 @@ INSTANTIATE_TEST_SUITE_P(
             0.5F,          // Clamp to 50% range
         }),
         testing::Values(32), testing::Values(true)),
-    testing::PrintToStringParamName());
+    test_name);
 
 INSTANTIATE_TEST_SUITE_P(
     MatMulVariableBL_bl64, MatMulTest_f32_qsi8d32p_qsi4c32p_Offset,
@@ -706,7 +715,7 @@ INSTANTIATE_TEST_SUITE_P(
             0.5F,          // Clamp to 50% range
         }),
         testing::Values(64), testing::Values(true)),
-    testing::PrintToStringParamName());
+    test_name);
 
 INSTANTIATE_TEST_SUITE_P(
     MatMulVariableBL_bl96, MatMulTest_f32_qsi8d32p_qsi4c32p_Offset,
@@ -720,7 +729,7 @@ INSTANTIATE_TEST_SUITE_P(
             0.5F,          // Clamp to 50% range
         }),
         testing::Values(96), testing::Values(true)),
-    testing::PrintToStringParamName());
+    test_name);
 
 INSTANTIATE_TEST_SUITE_P(
     MatMulVariableBL_bl128, MatMulTest_f32_qsi8d32p_qsi4c32p_Offset,
@@ -734,7 +743,7 @@ INSTANTIATE_TEST_SUITE_P(
             0.5F,          // Clamp to 50% range
         }),
         testing::Values(128), testing::Values(true)),
-    testing::PrintToStringParamName());
+    test_name);
 
 INSTANTIATE_TEST_SUITE_P(
     MatMulVariableBL_bl256, MatMulTest_f32_qsi8d32p_qsi4c32p_Offset,
@@ -747,7 +756,7 @@ INSTANTIATE_TEST_SUITE_P(
             0.9f,          // Clamp to 90% range
             0.5f}),        // Clamp to 50% range
         testing::Values(256), testing::Values(true)),
-    testing::PrintToStringParamName());
+    test_name);
 
 INSTANTIATE_TEST_SUITE_P(
     MatMulVariableBL_bl32_Mr1, MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd,
@@ -760,7 +769,7 @@ INSTANTIATE_TEST_SUITE_P(
             0.9F,          // Clamp to 90% range
             0.5F}),        // Clamp to 50% range
         testing::Values(32), testing::Values(true)),
-    testing::PrintToStringParamName());
+    test_name);
 
 INSTANTIATE_TEST_SUITE_P(
     MatMulVariableBL_bl32_MrN, MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd,
@@ -773,7 +782,7 @@ INSTANTIATE_TEST_SUITE_P(
             0.9F,          // Clamp to 90% range
             0.5F}),        // Clamp to 50% range
         testing::Values(32), testing::Values(true)),
-    testing::PrintToStringParamName());
+    test_name);
 
 INSTANTIATE_TEST_SUITE_P(
     MatMulVariableBL_bl64_Mr1, MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd,
@@ -786,7 +795,7 @@ INSTANTIATE_TEST_SUITE_P(
             0.9F,          // Clamp to 90% range
             0.5F}),        // Clamp to 50% range
         testing::Values(64), testing::Values(true)),
-    testing::PrintToStringParamName());
+    test_name);
 
 INSTANTIATE_TEST_SUITE_P(
     MatMulVariableBL_bl64_MrN, MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd,
@@ -799,7 +808,7 @@ INSTANTIATE_TEST_SUITE_P(
             0.9F,          // Clamp to 90% range
             0.5F}),        // Clamp to 50% range
         testing::Values(64), testing::Values(true)),
-    testing::PrintToStringParamName());
+    test_name);
 
 INSTANTIATE_TEST_SUITE_P(
     MatMulVariableBL_bl96_Mr1, MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd,
@@ -812,7 +821,7 @@ INSTANTIATE_TEST_SUITE_P(
             0.9F,          // Clamp to 90% range
             0.5F}),        // Clamp to 50% range
         testing::Values(96), testing::Values(true)),
-    testing::PrintToStringParamName());
+    test_name);
 
 INSTANTIATE_TEST_SUITE_P(
     MatMulVariableBL_bl96_MrN, MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd,
@@ -825,7 +834,7 @@ INSTANTIATE_TEST_SUITE_P(
             0.9F,          // Clamp to 90% range
             0.5F}),        // Clamp to 50% range
         testing::Values(96), testing::Values(true)),
-    testing::PrintToStringParamName());
+    test_name);
 
 INSTANTIATE_TEST_SUITE_P(
     MatMulVariableBL_bl128_Mr1, MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd,
@@ -838,7 +847,7 @@ INSTANTIATE_TEST_SUITE_P(
             0.9F,          // Clamp to 90% range
             0.5F}),        // Clamp to 50% range
         testing::Values(128), testing::Values(true)),
-    testing::PrintToStringParamName());
+    test_name);
 
 INSTANTIATE_TEST_SUITE_P(
     MatMulVariableBL_bl128_MrN, MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd,
@@ -851,7 +860,7 @@ INSTANTIATE_TEST_SUITE_P(
             0.9F,          // Clamp to 90% range
             0.5F}),        // Clamp to 50% range
         testing::Values(128), testing::Values(true)),
-    testing::PrintToStringParamName());
+    test_name);
 
 INSTANTIATE_TEST_SUITE_P(
     MatMulVariableBL_bl256_Mr1, MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd,
@@ -864,7 +873,7 @@ INSTANTIATE_TEST_SUITE_P(
             0.9F,          // Clamp to 90% range
             0.5F}),        // Clamp to 50% range
         testing::Values(256), testing::Values(true)),
-    testing::PrintToStringParamName());
+    test_name);
 
 INSTANTIATE_TEST_SUITE_P(
     MatMulVariableBL_bl256_MrN, MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd,
@@ -877,6 +886,6 @@ INSTANTIATE_TEST_SUITE_P(
             0.9F,          // Clamp to 90% range
             0.5F}),        // Clamp to 50% range
         testing::Values(256), testing::Values(true)),
-    testing::PrintToStringParamName());
+    test_name);
 
 }  // namespace kai::test

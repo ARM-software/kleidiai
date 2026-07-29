@@ -259,6 +259,9 @@ std::tuple<Buffer, Buffer> quantize_symmetric_per_block_dynamic(
                 case DataType::FP32:
                     return quantize_symmetric_per_block_dynamic<float, int8_t, float>(
                         src, height, width, qinfo.quant_width);
+                case DataType::BF16:
+                    return quantize_symmetric_per_block_dynamic<float, int8_t, BFloat16<>>(
+                        src, height, width, qinfo.quant_width);
                 default:
                     break;
             }

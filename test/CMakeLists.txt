@@ -124,6 +124,7 @@ else()
         test/tests/matmul_clamp_f32_qai8dxp_qsu2cxp_test.cpp
         test/tests/matmul_clamp_f32_f16p_qsi4c32p_test.cpp
         test/tests/matmul_clamp_f32_qai8dxp_qsi4cxp_test.cpp
+        test/tests/matmul_clamp_f32_qai8dxp_qsi8c32p_test.cpp
         test/tests/matmul_clamp_f32_qai8dxp_qsi8cxp_test.cpp
         test/tests/matmul_clamp_f32_qsi8d32p_qsi4c32p_test.cpp
         test/tests/matmul_clamp_f32_qsi8d32p_qai4c32p_test.cpp
