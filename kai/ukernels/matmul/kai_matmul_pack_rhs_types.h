@@ -82,11 +82,6 @@ struct kai_matmul_pack_rhs_uker_k_sum_scale_global_args {
     const void* ptr;  ///< Per-matrix K sum scale buffer.
 };
 
-/// Per-matrix RHS zero point buffer for matrix multiplication RHS packing micro-kernel.
-struct kai_matmul_pack_rhs_uker_rhs_zero_point_global_args {
-    const void* ptr;  ///< Per-matrix RHS zero point buffer.
-};
-
 /// Dimensions of the per-N scale buffer for matrix multiplication RHS packing micro-kernel.
 struct kai_matmul_pack_rhs_uker_scale_n_dim_args {
     size_t n;  ///< Length or coordinate in N dimension.
@@ -108,10 +103,8 @@ struct kai_matmul_pack_rhs_uker_operand_args {
     struct kai_matmul_pack_rhs_uker_rhs_packed_args rhs_packed;                  ///< Packed RHS buffer.
     struct kai_matmul_pack_rhs_uker_bias_n_args bias_n;                          ///< Per-N bias buffer.
     struct kai_matmul_pack_rhs_uker_k_sum_scale_global_args k_sum_scale_global;  ///< Per-matrix K sum scale buffer.
-    struct kai_matmul_pack_rhs_uker_rhs_zero_point_global_args
-        rhs_zero_point_global;                                       ///< Per-matrix RHS zero point buffer.
-    struct kai_matmul_pack_rhs_uker_scale_n_args scale_n;            ///< Per-N scale buffer.
-    struct kai_matmul_pack_rhs_uker_scale_global_args scale_global;  ///< Per-matrix scale buffer.
+    struct kai_matmul_pack_rhs_uker_scale_n_args scale_n;                        ///< Per-N scale buffer.
+    struct kai_matmul_pack_rhs_uker_scale_global_args scale_global;              ///< Per-matrix scale buffer.
 };
 
 /// Matrix multiplication RHS packing micro-kernel arguments.
