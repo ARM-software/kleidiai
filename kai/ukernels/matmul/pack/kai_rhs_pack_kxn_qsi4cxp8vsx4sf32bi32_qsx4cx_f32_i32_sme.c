@@ -14,8 +14,11 @@
 #include <string.h>
 
 #include "kai/kai_common.h"
-#include "kai/ukernels/matmul/kai_matmul_pack_rhs.h"
 #include "kai/ukernels/matmul/kai_matmul_pack_rhs_types.h"
+
+extern void kai_run_rhs_pack_kxn_qsi4cxp8vsx4sf32bi32_qsx4cx_f32_i32_sme(
+    const struct kai_matmul_pack_rhs_uker_config* config, const struct kai_matmul_pack_rhs_uker_args* args,
+    int32_t rhs_zero_point);
 
 enum {
     BIAS_ELEM_BYTES = sizeof(int32_t),
@@ -33,105 +36,14 @@ static size_t get_nr(void) {
     return NR_VSCALE * kai_get_sme_vscale();
 }
 
-static struct kai_matmul_pack_rhs_uker_dim_args get_step(const struct kai_matmul_pack_rhs_uker_config* config) {
-    KAI_UNUSED(config);
-    const size_t nr = get_nr();
-    KAI_ASSUME(nr > 0);
-    KAI_ASSUME(nr % 2 == 0);
-    KAI_ASSUME(nr <= MAX_NR);
-    const struct kai_matmul_pack_rhs_uker_dim_args step = {
-        .n = nr,
-        .k = 0,
-    };
-    return step;
-}
-
-static struct kai_matmul_pack_rhs_uker_rhs_stride_args get_rhs_stride(
-    const struct kai_matmul_pack_rhs_uker_config* config, const struct kai_matmul_pack_rhs_uker_rhs_dim_args* shape) {
-    KAI_UNUSED(config);
-    const struct kai_matmul_pack_rhs_uker_rhs_stride_args stride = {
-        .n = 0,
-        .k = kai_roundup(shape->n, 2) / 2,
-    };
-    return stride;
-}
-
-static size_t get_rhs_offset(
-    const struct kai_matmul_pack_rhs_uker_config* config, const struct kai_matmul_pack_rhs_uker_rhs_dim_args* index,
-    const struct kai_matmul_pack_rhs_uker_rhs_stride_args* stride) {
-    KAI_UNUSED(stride);
-    KAI_UNUSED(config);
-    const size_t nr = get_nr();
-    KAI_ASSUME(nr > 0);
-    KAI_ASSUME(nr % 2 == 0);
-    KAI_ASSUME(nr <= MAX_NR);
-    KAI_ASSUME(index->n % nr == 0);
-    KAI_ASSUME(index->k == 0);
-    return index->n / 2;
-}
-
-static struct kai_matmul_pack_rhs_uker_rhs_packed_stride_args get_rhs_packed_stride(
-    const struct kai_matmul_pack_rhs_uker_config* config,
-    const struct kai_matmul_pack_rhs_uker_rhs_packed_dim_args* shape) {
-    KAI_UNUSED(config);
-    const size_t nr = get_nr();
-    KAI_ASSUME(nr > 0);
-    KAI_ASSUME(nr % 2 == 0);
-    KAI_ASSUME(nr <= MAX_NR);
-    const struct kai_matmul_pack_rhs_uker_rhs_packed_stride_args stride = {
-        .n = nr * (BIAS_ELEM_BYTES + (kai_roundup(shape->k, K_MULTIPLE) / RHS_ELEM_RECIP_BYTES) + SCALE_ELEM_BYTES),
-    };
-    return stride;
-}
-
-static size_t get_rhs_packed_offset(
-    const struct kai_matmul_pack_rhs_uker_config* config,
-    const struct kai_matmul_pack_rhs_uker_rhs_packed_dim_args* index,
-    const struct kai_matmul_pack_rhs_uker_rhs_packed_stride_args* stride) {
-    KAI_UNUSED(config);
-    const size_t nr = get_nr();
-    KAI_ASSUME(nr > 0);
-    KAI_ASSUME(nr % 2 == 0);
-    KAI_ASSUME(nr <= MAX_NR);
-    KAI_ASSUME(index->n % nr == 0);
-    KAI_ASSUME(index->k == 0);
-    return index->n / nr * stride->n;
-}
-
-static size_t get_rhs_packed_size(
-    const struct kai_matmul_pack_rhs_uker_config* config,
-    const struct kai_matmul_pack_rhs_uker_rhs_packed_dim_args* shape,
-    const struct kai_matmul_pack_rhs_uker_rhs_packed_stride_args* stride) {
-    KAI_UNUSED(config);
-    const size_t nr = get_nr();
-    KAI_ASSUME(nr > 0);
-    KAI_ASSUME(nr % 2 == 0);
-    KAI_ASSUME(nr <= MAX_NR);
-    return kai_roundup(shape->n, nr) / nr * stride->n;
-}
-
-static size_t get_bias_n_offset(
-    const struct kai_matmul_pack_rhs_uker_config* config,
-    const struct kai_matmul_pack_rhs_uker_bias_n_dim_args* index) {
-    KAI_UNUSED(config);
-    return index->n * BIAS_ELEM_BYTES;
-}
-
-static size_t get_scale_n_offset(
-    const struct kai_matmul_pack_rhs_uker_config* config,
-    const struct kai_matmul_pack_rhs_uker_scale_n_dim_args* index) {
-    KAI_UNUSED(config);
-    return index->n * SCALE_ELEM_BYTES;
-}
-
-static void run(
-    const struct kai_matmul_pack_rhs_uker_config* config, const struct kai_matmul_pack_rhs_uker_args* args) {
+void kai_run_rhs_pack_kxn_qsi4cxp8vsx4sf32bi32_qsx4cx_f32_i32_sme(
+    const struct kai_matmul_pack_rhs_uker_config* config, const struct kai_matmul_pack_rhs_uker_args* args,
+    const int32_t rhs_zero_point) {
     KAI_ASSUME(args->flags == 0);
     KAI_ASSUME(args->operand.rhs.ptr != NULL);
     KAI_ASSUME(args->operand.rhs_packed.ptr != NULL);
     KAI_ASSUME(args->operand.bias_n.ptr != NULL);
     KAI_ASSUME(args->operand.k_sum_scale_global.ptr != NULL);
-    KAI_ASSUME(args->operand.rhs_zero_point_global.ptr != NULL);
     KAI_ASSUME(args->operand.scale_n.ptr != NULL);
     KAI_ASSUME(args->operand.scale_global.ptr != NULL);
 
@@ -143,8 +55,7 @@ static void run(
     KAI_ASSUME(nr % 2 == 0);
     KAI_ASSUME(nr <= MAX_NR);
     const size_t rhs_stride_row = args->operand.rhs.stride.k;
-    const int32_t lhs_zero_point = *(const int32_t*)args->operand.k_sum_scale_global.ptr;
-    const int32_t rhs_zero_point = *(const int32_t*)args->operand.rhs_zero_point_global.ptr;
+    const int32_t k_sum_scale = -(*(const int32_t*)args->operand.k_sum_scale_global.ptr);
     const float scale_multiplier = *(const float*)args->operand.scale_global.ptr;
     KAI_ASSUME(rhs_zero_point == 0 || rhs_zero_point == 8);
 
@@ -328,13 +239,13 @@ static void run(
             const int32x4_t input_bias = vld1q_s32(bias_ptr + n_base + group);
             const int32x4_t rhs_sums = vld1q_s32(sums + group);
             vst1q_s32(
-                (int32_t*)(packed_ptr + group * BIAS_ELEM_BYTES), vmlsq_n_s32(input_bias, rhs_sums, lhs_zero_point));
+                (int32_t*)(packed_ptr + group * BIAS_ELEM_BYTES), vmlsq_n_s32(input_bias, rhs_sums, -k_sum_scale));
             vst1q_f32(
                 (float*)(scale_out + group * SCALE_ELEM_BYTES),
                 vmulq_n_f32(vld1q_f32(scale_ptr + n_base + group), scale_multiplier));
         }
         for (; group < block_width; ++group) {
-            ((int32_t*)packed_ptr)[group] = bias_ptr[n_base + group] - lhs_zero_point * sums[group];
+            ((int32_t*)packed_ptr)[group] = bias_ptr[n_base + group] + k_sum_scale * sums[group];
             ((float*)scale_out)[group] = scale_ptr[n_base + group] * scale_multiplier;
         }
         for (; group < nr; ++group) {
@@ -344,21 +255,6 @@ static void run(
 
         packed_ptr += packed_stride;
     }
-}
-
-struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_kxn_qsi4cxp8vsx4sf32bi32_qsx4cx_f32_i32_sme(void) {
-    struct kai_matmul_pack_rhs_uker_api api = {
-        .run = run,
-        .get_step = get_step,
-        .get_rhs_stride = get_rhs_stride,
-        .get_rhs_offset = get_rhs_offset,
-        .get_rhs_packed_stride = get_rhs_packed_stride,
-        .get_rhs_packed_offset = get_rhs_packed_offset,
-        .get_rhs_packed_size = get_rhs_packed_size,
-        .get_bias_n_offset = get_bias_n_offset,
-        .get_scale_n_offset = get_scale_n_offset,
-    };
-    return api;
 }
 
 #endif  // Architectural features check.
