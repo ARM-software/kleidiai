@@ -13,6 +13,7 @@ import sys
 
 ALLOWED_TYPES = "major, feat, fix, docs, chore"
 TITLE_RE = re.compile(r"^(?:major|feat|fix|docs|chore): \S(?:.*\S)?$")
+SIGNED_OFF_BY_RE = re.compile(r"^Signed-off-by: .+$", re.MULTILINE)
 
 
 def main() -> int:
@@ -20,16 +21,28 @@ def main() -> int:
         "CI_MERGE_REQUEST_TITLE" in os.environ
     ), "CI_MERGE_REQUEST_TITLE environment variable is not set."
     title = os.environ["CI_MERGE_REQUEST_TITLE"]
+    description = os.environ["CI_MERGE_REQUEST_DESCRIPTION"]
 
     if os.environ["CI_MERGE_REQUEST_DRAFT"] == "true":
         print("Merge request squash-commit validation skipped for draft merge request.")
         raise SystemExit(0)
+
+    validation_failed = False
 
     if not TITLE_RE.fullmatch(title.strip()):
         print("Merge request squash-commit validation failed:")
         print("- Merge request title must match '<type>: <description>'.")
         print(f"- Allowed types: {ALLOWED_TYPES}.")
         print(f"- Received title: {title!r}")
+        validation_failed = True
+
+    if not SIGNED_OFF_BY_RE.search(description.strip()):
+        print("Merge request squash-commit validation failed:")
+        print("- Merge request description must include a 'Signed-off-by' line.")
+        print(f"- Received description: {description!r}")
+        validation_failed = True
+
+    if validation_failed:
         raise SystemExit(1)
 
     print("Merge request squash-commit validation passed.")

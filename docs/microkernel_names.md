@@ -115,7 +115,7 @@ Describes the predominant `FEAT_<feature>` used by the implementation.
 
 Describes the predominant SIMD instruction family used by the implementation.
 
-**`instruction`** = `"dot" | "i8mm" | "mla" | "mmla" | "mopa" | "sdot"`
+**`instruction`** = `"dot" | "i8mm" | "mla" | "mmla" | "mopa" | "mop4a" | "sdot"`
 
 ### Convolution stride
 
@@ -274,7 +274,7 @@ dwconv_ukernel_name = "kai_" ("dwconv_clamp" ("_" buffer)+ ("_" filter_size) ("_
 uarch = "cortexa55"
 tech = "neon" | "sve" | "sve2" | "sve2p1" | "sme" | "sme2" | "sme2p1"
 feature = "i8mm" | "dotprod"
-instruction = "dot" | "i8mm" | "mla" | "mmla" | "mopa" | "sdot"
+instruction = "dot" | "i8mm" | "mla" | "mmla" | "mopa" | "mop4a" | "sdot"
 dw_stride = "s" @natural_int
 filter_size = @natural_int "x" @natural_int
 matmul_fused_ops = ["i"] "matmul" ["_clamp"] | "lhs_pack" | "rhs_pack_kxn" | "rhs_pack_nxk"

@@ -8,6 +8,7 @@
 #error This file must be compiled for AArch64, FEAT_SVE2.
 #else  // Architectural features check.
 
+#include <float.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -187,6 +188,9 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
 
         clamp_min_max[0] = *(const float*)args->activation.clamp.min_ptr;
         clamp_min_max[1] = *(const float*)args->activation.clamp.max_ptr;
+    } else {
+        clamp_min_max[0] = -FLT_MAX;
+        clamp_min_max[1] = FLT_MAX;
     }
 
     kai_commit_za();

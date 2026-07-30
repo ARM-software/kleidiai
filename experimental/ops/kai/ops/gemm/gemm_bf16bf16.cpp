@@ -58,7 +58,7 @@ GemmImplementation<bfloat16, bfloat16, bfloat16>::with_estimate(
 ),
 GemmImplementation<bfloat16, bfloat16, bfloat16>::with_estimate(
     "sve_ffinterleaved_bf16fp32_dot_8x3VL",
-    KernelWeightFormat::VL2VL_BL64,
+    KernelWeightFormat::VL1VL_BL32,
     [](const GemmArgs &args) { return args._ci->has_svebf16(); },
     [](const GemmArgs &args) { return GemmInterleavedFixedFormat<cls_sve_ffinterleaved_bf16fp32_dot_8x3VL, bfloat16, bfloat16, bfloat16>::estimate_cycles<bfloat16>(args); },
     [](const GemmArgs &args) { return new GemmInterleavedFixedFormat<cls_sve_ffinterleaved_bf16fp32_dot_8x3VL, bfloat16, bfloat16, bfloat16>(args); }

@@ -8,6 +8,7 @@
 # cmake-format: off
 
 set(CMAKE_SYSTEM_NAME Android)
+set(CMAKE_SYSTEM_PROCESSOR aarch64)
 
 if(NOT DEFINED CMAKE_ANDROID_NDK)
     if(DEFINED ENV{ANDROID_NDK_HOME})

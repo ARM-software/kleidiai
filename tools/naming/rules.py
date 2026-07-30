@@ -231,7 +231,7 @@ def dw_stride() -> Expr:
     description="Describes the predominant SIMD instruction family used by the implementation.",
 )
 def instruction() -> Expr:
-    return OneOf("dot", "i8mm", "mla", "mmla", "mopa", "sdot")
+    return OneOf("dot", "i8mm", "mla", "mmla", "mopa", "mop4a", "sdot")
 
 
 @grammar.rule(
