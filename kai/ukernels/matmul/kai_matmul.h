@@ -149,6 +149,27 @@ struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32
 /// @return The micro-kernel API.
 struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8_qsi8cxp4vsx4bi32sf32_1x32vs_sme2_dot(void);
 
+/// Statically quantized INT8 vector-matrix multiplication with packed INT4 RHS using SME2 DOT instruction.
+///
+/// Required CPU features:
+///   * FEAT_SME2
+///
+/// Required operands:
+///   * dst
+///   * lhs
+///   * rhs - Packed RHS matrix with per-N bias and per-N scale.
+///   * bias
+///     * scale_bias_global - Output zero point as an I32 scalar.
+///
+/// Optional arguments:
+///   * clamp - I32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
+///
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8_qsi4cxp8vsx4sf32bi32_1x64vs_sme2_dot(void);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif
