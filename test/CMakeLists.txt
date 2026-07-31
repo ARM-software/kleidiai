@@ -109,6 +109,8 @@ if(MSVC)
         test/tests/matmul_clamp_f32_qsi8d32p_qai4c32p_test.cpp
         test/tests/matmul_clamp_bf16_qai8dxp_qsi4cxp_test.cpp
         test/tests/matmul_clamp_qai8dxp_qsi4c32p_test.cpp
+        test/tests/matmul_clamp_f32_qai8dxp_qsi4cxp_test.cpp
+        test/tests/matmul_clamp_f32_qai8dxp_qsi8cxp_test.cpp
     )
 else()
     set(KLEIDIAI_FILES_TESTS

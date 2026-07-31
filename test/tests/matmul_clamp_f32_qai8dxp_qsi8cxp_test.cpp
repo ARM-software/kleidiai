@@ -136,6 +136,15 @@ F32Qai8Qsi8CacheData ReferenceGenerator<F32Qai8Qsi8CacheDataId, F32Qai8Qsi8Cache
     return out;
 }
 
+#ifdef _MSC_VER
+static const std::array<UkernelVariant<kai_matmul_clamp_f32_qai8dxp_qsi8cxp_ukernel>, 2>
+    variants_kai_matmul_clamp_f32_qai8dxp_qsi8cxp = {{
+        {UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp1x4_qsi8cxp4x4_1x4_neon_dotprod),
+         "kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4x4_1x4_neon_dotprod", cpu_has_dotprod},
+        {UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm),
+         "kai_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm", cpu_has_i8mm},
+    }};
+#else
 static const std::array<UkernelVariant<kai_matmul_clamp_f32_qai8dxp_qsi8cxp_ukernel>, 8>
     variants_kai_matmul_clamp_f32_qai8dxp_qsi8cxp = {{
         {UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod),
@@ -155,6 +164,7 @@ static const std::array<UkernelVariant<kai_matmul_clamp_f32_qai8dxp_qsi8cxp_uker
         {UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa),
          "kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa", cpu_has_sme2},
     }};
+#endif
 
 using MatMulClampTestPortionedParams = std::tuple<size_t, MatMulShape, MatrixPortion, std::optional<float>>;
 
@@ -265,7 +275,7 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi8cxp, EndToEnd_RHS_nxk_qsi8cx) {
     const auto imp_packed_rhs_size = kai_get_rhs_packed_size_rhs_pack_nxk_qsi8cxp_qsi8cx_neon(N, K, nr, kr, sr);
 
     Buffer imp_packed_rhs(imp_packed_rhs_size);
-    const kai_rhs_pack_qsi8cx_params params{.lhs_zero_point = 1, .scale_multiplier = 1.0f};
+    const kai_rhs_pack_qsi8cx_params params{1, 1.0f};
     kai_run_rhs_pack_nxk_qsi8cxp_qsi8cx_neon(
         1, N, K, nr, kr, sr, reinterpret_cast<const int8_t*>(ref_rhs_qsi8.data()),
         reinterpret_cast<const float*>(ref_bias.data()), reinterpret_cast<const float*>(ref_rhs_scales.data()),
@@ -361,7 +371,7 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi8cxp, EndToEnd_RHS_kxn_qsi8cx) {
     const auto imp_packed_rhs_size = kai_get_rhs_packed_size_rhs_pack_kxn_qsi8cxp_qsi8cx_neon(N, K, nr, kr, sr);
 
     Buffer imp_packed_rhs(imp_packed_rhs_size);
-    const kai_rhs_pack_qsi8cx_params params{.lhs_zero_point = 1, .scale_multiplier = 1.0f};
+    const kai_rhs_pack_qsi8cx_params params{1, 1.0f};
     kai_run_rhs_pack_kxn_qsi8cxp_qsi8cx_neon(
         1, N, K, nr, kr, sr, reinterpret_cast<const int8_t*>(ref_rhs_qsi8.data()),
         reinterpret_cast<const float*>(ref_bias.data()), reinterpret_cast<const float*>(ref_rhs_scales.data()),

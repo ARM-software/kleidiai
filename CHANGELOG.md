@@ -15,6 +15,11 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 - New SME2 micro-kernels
   - Matrix Multiplication (1xN) Micro-Kernel of QAI8DXP LHS and QSI4CXP RHS with F16 output.
 - Improve performance of SME2 F32 elastic GEMM micro-kernels.
+- Added MSVC support for NEON Dotprod and I8MM matmul micro-kernels:
+  - kai_matmul_clamp_f32_qai8dxp4x8_qsi4cxp4x4_16x4x32_neon_dotprod
+  - kai_matmul_clamp_f32_qai8dxp4x8_qsi4cxp8x8_8x8x32_neon_i8mm
+  - kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4x4_1x4_neon_dotprod
+  - kai_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm
 
 ## v1.28.0
 
