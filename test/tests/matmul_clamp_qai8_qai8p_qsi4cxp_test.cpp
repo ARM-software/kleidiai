@@ -257,9 +257,9 @@ Buffer pack_lhs(const Buffer& lhs, const MatMulShape& shape, const Rect& portion
 
 Buffer pack_rhs(
     const kai_matmul_pack_rhs_uker_api& api, const Buffer& rhs, const Buffer& bias, const Buffer& rhs_scales,
-    const MatMulShape& shape, const Rect& portion, size_t nr, size_t kr, size_t sr, size_t bl, int32_t lhs_zero_point,
+    const MatMulShape& shape, const Rect& portion, size_t nr, size_t kr, size_t sr, int32_t lhs_zero_point,
     float scale_multiplier) {
-    const kai_matmul_pack_rhs_uker_config config{{nr, kr, sr, bl}};
+    const kai_matmul_pack_rhs_uker_config config{};
     const kai_matmul_pack_rhs_uker_dim_args step = api.get_step(&config);
     KAI_ASSERT_ALWAYS(step.n == nr);
     KAI_ASSERT_ALWAYS(step.k == 0);
@@ -300,10 +300,8 @@ Buffer pack_rhs(
     return packed_rhs;
 }
 
-size_t get_packed_rhs_offset(
-    const kai_matmul_pack_rhs_uker_api& api, const MatMulShape& shape, size_t n_idx, size_t nr, size_t kr, size_t sr,
-    size_t bl) {
-    const kai_matmul_pack_rhs_uker_config config{{nr, kr, sr, bl}};
+size_t get_packed_rhs_offset(const kai_matmul_pack_rhs_uker_api& api, const MatMulShape& shape, size_t n_idx) {
+    const kai_matmul_pack_rhs_uker_config config{};
     const kai_matmul_pack_rhs_uker_rhs_packed_dim_args packed_shape = {shape.n, shape.k};
     const kai_matmul_pack_rhs_uker_rhs_packed_stride_args packed_stride =
         api.get_rhs_packed_stride(&config, &packed_shape);
@@ -437,7 +435,6 @@ TEST_P(MatMulClampQai8Qsi4cxpTest, EndToEnd) {
     const size_t nr = variant.acc_pack.n;
     const size_t kr = variant.acc_pack.k;
     constexpr size_t sr = 1;
-    constexpr size_t bl = 32;
 
     if (variant.lhs_is_packed) {
         KAI_ASSERT_ALWAYS(kai_get_m_step_lhs_pack_x8p2vlx4_x8_sme(mr) == mr);
@@ -482,15 +479,14 @@ TEST_P(MatMulClampQai8Qsi4cxpTest, EndToEnd) {
                                              std::string_view packer_name) {
                 SCOPED_TRACE(packer_name);
                 const Buffer packed_rhs = pack_rhs(
-                    api, rhs, reference.bias_qsi32, reference.rhs_scales, shape, full_area, nr, kr, sr, bl,
-                    lhs_zero_point, scale_multiplier);
+                    api, rhs, reference.bias_qsi32, reference.rhs_scales, shape, full_area, nr, kr, sr, lhs_zero_point,
+                    scale_multiplier);
                 const Buffer portioned_packed_rhs = pack_rhs(
-                    api, rhs, reference.bias_qsi32, reference.rhs_scales, shape, pack_portion, nr, kr, sr, bl,
+                    api, rhs, reference.bias_qsi32, reference.rhs_scales, shape, pack_portion, nr, kr, sr,
                     lhs_zero_point, scale_multiplier);
-                const size_t packed_rhs_start =
-                    get_packed_rhs_offset(api, shape, pack_portion.start_col(), nr, kr, sr, bl);
+                const size_t packed_rhs_start = get_packed_rhs_offset(api, shape, pack_portion.start_col());
                 const size_t packed_rhs_end = pack_portion.end_col() < shape.n
-                    ? get_packed_rhs_offset(api, shape, pack_portion.end_col(), nr, kr, sr, bl)
+                    ? get_packed_rhs_offset(api, shape, pack_portion.end_col())
                     : packed_rhs.size();
                 compare_packed_result(portioned_packed_rhs, packed_rhs, packed_rhs_start, packed_rhs_end, "RHS");
 
