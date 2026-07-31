@@ -200,10 +200,14 @@ struct MatMulVariant {
 };
 
 const kai_matmul_uker_config matmul_config{};
-const kai_matmul_pack_rhs_uker_api rhs_pack_kxn_neon_api =
-    kai_matmul_pack_rhs_kxn_qsi4cxp8vsx4sf32bi32_qsx4cx_f32_i32_sme();
-const kai_matmul_pack_rhs_uker_api rhs_pack_nxk_neon_api =
-    kai_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsx4cx_f32_i32_sme();
+const kai_matmul_pack_rhs_uker_api rhs_pack_kxn_qsi4_api =
+    kai_matmul_pack_rhs_kxn_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme();
+const kai_matmul_pack_rhs_uker_api rhs_pack_kxn_qsu4_api =
+    kai_matmul_pack_rhs_kxn_qsi4cxp8vsx4sf32bi32_qsu4cx_f32_i32_sme();
+const kai_matmul_pack_rhs_uker_api rhs_pack_nxk_qsi4_api =
+    kai_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme();
+const kai_matmul_pack_rhs_uker_api rhs_pack_nxk_qsu4_api =
+    kai_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsu4cx_f32_i32_sme();
 
 const std::array<MatMulVariant, 1>& get_gemm_variants() {
     static const size_t sme_vscale = get_sme_vector_scale();
@@ -253,8 +257,8 @@ Buffer pack_lhs(const Buffer& lhs, const MatMulShape& shape, const Rect& portion
 
 Buffer pack_rhs(
     const kai_matmul_pack_rhs_uker_api& api, const Buffer& rhs, const Buffer& bias, const Buffer& rhs_scales,
-    const MatMulShape& shape, const Rect& portion, size_t nr, size_t kr, size_t sr, size_t bl,
-    const kai_rhs_pack_qsi4cx_params& params) {
+    const MatMulShape& shape, const Rect& portion, size_t nr, size_t kr, size_t sr, size_t bl, int32_t lhs_zero_point,
+    float scale_multiplier) {
     const kai_matmul_pack_rhs_uker_config config{{nr, kr, sr, bl}};
     const kai_matmul_pack_rhs_uker_dim_args step = api.get_step(&config);
     KAI_ASSERT_ALWAYS(step.n == nr);
@@ -287,10 +291,9 @@ Buffer pack_rhs(
     args.operand.rhs_packed.ptr = packed_rhs.data() + packed_offset;
     args.operand.rhs_packed.stride = packed_stride;
     args.operand.bias_n.ptr = bias.data() + bias_offset;
-    args.operand.k_sum_scale_global.ptr = &params.lhs_zero_point;
-    args.operand.rhs_zero_point_global.ptr = &params.rhs_zero_point;
+    args.operand.k_sum_scale_global.ptr = &lhs_zero_point;
     args.operand.scale_n.ptr = rhs_scales.data() + scale_offset;
-    args.operand.scale_global.ptr = &params.scale_multiplier;
+    args.operand.scale_global.ptr = &scale_multiplier;
 
     abi_check(api.run, &config, &args);
 
@@ -472,20 +475,18 @@ TEST_P(MatMulClampQai8Qsi4cxpTest, EndToEnd) {
         for (const int32_t rhs_zero_point : std::array<int32_t, 2>{0, 8}) {
             SCOPED_TRACE(testing::Message() << "RHS zero point " << rhs_zero_point);
 
-            kai_rhs_pack_qsi4cx_params pack_params{};
-            pack_params.lhs_zero_point = reference.lhs_quantization.zero_point;
-            pack_params.scale_multiplier = reference.lhs_quantization.scale / reference.dst_quantization.scale;
-            pack_params.rhs_zero_point = rhs_zero_point;
+            const int32_t lhs_zero_point = reference.lhs_quantization.zero_point;
+            const float scale_multiplier = reference.lhs_quantization.scale / reference.dst_quantization.scale;
 
             const auto test_rhs_packer = [&](const kai_matmul_pack_rhs_uker_api& api, const Buffer& rhs,
                                              std::string_view packer_name) {
                 SCOPED_TRACE(packer_name);
                 const Buffer packed_rhs = pack_rhs(
                     api, rhs, reference.bias_qsi32, reference.rhs_scales, shape, full_area, nr, kr, sr, bl,
-                    pack_params);
+                    lhs_zero_point, scale_multiplier);
                 const Buffer portioned_packed_rhs = pack_rhs(
                     api, rhs, reference.bias_qsi32, reference.rhs_scales, shape, pack_portion, nr, kr, sr, bl,
-                    pack_params);
+                    lhs_zero_point, scale_multiplier);
                 const size_t packed_rhs_start =
                     get_packed_rhs_offset(api, shape, pack_portion.start_col(), nr, kr, sr, bl);
                 const size_t packed_rhs_end = pack_portion.end_col() < shape.n
@@ -499,10 +500,14 @@ TEST_P(MatMulClampQai8Qsi4cxpTest, EndToEnd) {
             };
 
             const Buffer& rhs_kxn = rhs_zero_point == 0 ? reference.rhs_qsi4_kxn : reference.rhs_qsu4_kxn;
-            test_rhs_packer(rhs_pack_kxn_neon_api, rhs_kxn, "KxN RHS packer");
+            const kai_matmul_pack_rhs_uker_api& rhs_pack_kxn_api =
+                rhs_zero_point == 0 ? rhs_pack_kxn_qsi4_api : rhs_pack_kxn_qsu4_api;
+            test_rhs_packer(rhs_pack_kxn_api, rhs_kxn, "KxN RHS packer");
 
             const Buffer& rhs_nxk = rhs_zero_point == 0 ? reference.rhs_qsi4_nxk : reference.rhs_qsu4_nxk;
-            test_rhs_packer(rhs_pack_nxk_neon_api, rhs_nxk, "NxK RHS packer");
+            const kai_matmul_pack_rhs_uker_api& rhs_pack_nxk_api =
+                rhs_zero_point == 0 ? rhs_pack_nxk_qsi4_api : rhs_pack_nxk_qsu4_api;
+            test_rhs_packer(rhs_pack_nxk_api, rhs_nxk, "NxK RHS packer");
         }
     };
 
