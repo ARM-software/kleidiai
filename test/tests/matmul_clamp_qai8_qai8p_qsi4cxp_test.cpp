@@ -507,12 +507,13 @@ TEST_P(MatMulClampQai8Qsi4cxpTest, EndToEnd) {
         }
     };
 
-    const Qai8Qsi4TestReference& clamped_reference =
-        getV<Qai8Qsi4TestDataId, Qai8Qsi4TestReference>({shape, clamp_keep_ratio, 1.0F});
+    const Qai8Qsi4TestDataId clamped_data_id = {shape, clamp_keep_ratio, 1.0F};
+    const Qai8Qsi4TestReference& clamped_reference = getV<Qai8Qsi4TestDataId, Qai8Qsi4TestReference>(clamped_data_id);
     test_reference(clamped_reference, false);
 
+    const Qai8Qsi4TestDataId saturated_data_id = {shape, 1.0F, scale_ratio};
     const Qai8Qsi4TestReference& saturated_reference =
-        getV<Qai8Qsi4TestDataId, Qai8Qsi4TestReference>({shape, 1.0F, scale_ratio});
+        getV<Qai8Qsi4TestDataId, Qai8Qsi4TestReference>(saturated_data_id);
     test_reference(saturated_reference, true);
 }
 
