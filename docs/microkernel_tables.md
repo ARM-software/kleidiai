@@ -202,8 +202,10 @@ Micro-kernel categories:
 | i4 | channelwise symmetric | i4 | channelwise symmetric | - | f32 | - | - | <a id="pack-kai-rhs-pack-nxk-qsi4cxp-qs4cxs1s0"></a>`kai_rhs_pack_nxk_qsi4cxp_qs4cxs1s0` |
 | i4 | channelwise symmetric | i4 | channelwise symmetric | i32 | f32 | - | SME | <a id="pack-kai-rhs-pack-kxn-qsi4cxp8vsx4sf32bi32-qsi4cx-f32-i32-sme"></a>`kai_rhs_pack_kxn_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme` |
 | i4 | channelwise symmetric | u4 | channelwise symmetric | i32 | f32 | - | SME | <a id="pack-kai-rhs-pack-kxn-qsi4cxp8vsx4sf32bi32-qsu4cx-f32-i32-sme"></a>`kai_rhs_pack_kxn_qsi4cxp8vsx4sf32bi32_qsu4cx_f32_i32_sme` |
+| i4 | channelwise symmetric | x4 | channelwise symmetric | i32 | f32 | - | SME | <a id="pack-kai-rhs-pack-kxn-qsi4cxp8vsx4sf32bi32-qsx4cx-f32-i32-sme"></a>`kai_rhs_pack_kxn_qsi4cxp8vsx4sf32bi32_qsx4cx_f32_i32_sme` |
 | i4 | channelwise symmetric | i4 | channelwise symmetric | i32 | f32 | - | SME | <a id="pack-kai-rhs-pack-nxk-qsi4cxp8vsx4sf32bi32-qsi4cx-f32-i32-sme"></a>`kai_rhs_pack_nxk_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme` |
 | i4 | channelwise symmetric | u4 | channelwise symmetric | i32 | f32 | - | SME | <a id="pack-kai-rhs-pack-nxk-qsi4cxp8vsx4sf32bi32-qsu4cx-f32-i32-sme"></a>`kai_rhs_pack_nxk_qsi4cxp8vsx4sf32bi32_qsu4cx_f32_i32_sme` |
+| i4 | channelwise symmetric | x4 | channelwise symmetric | i32 | f32 | - | SME | <a id="pack-kai-rhs-pack-nxk-qsi4cxp8vsx4sf32bi32-qsx4cx-f32-i32-sme"></a>`kai_rhs_pack_nxk_qsi4cxp8vsx4sf32bi32_qsx4cx_f32_i32_sme` |
 | i4 | channelwise symmetric | u4 | channelwise symmetric | f32 | f32 | - | Advanced SIMD | <a id="pack-kai-rhs-pack-nxk-qsi4cxps1s0-qsu4cxs1s0-neon"></a>`kai_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon` |
 | i8 | channelwise symmetric | i8 | channelwise symmetric | f32 | f32 | - | Advanced SIMD | <a id="pack-kai-rhs-pack-kxn-qsi8cxp-qsi8cx-neon"></a>`kai_rhs_pack_kxn_qsi8cxp_qsi8cx_neon` |
 | i8 | channelwise symmetric | i8 | channelwise symmetric | f32 | f32 | - | Advanced SIMD | <a id="pack-kai-rhs-pack-nxk-qsi8cxp-qsi8cx-neon"></a>`kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon` |
