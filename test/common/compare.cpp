@@ -237,6 +237,14 @@ bool compare(
     switch (format.pack_format()) {
         case DataFormat::PackFormat::NONE:
             switch (data_type) {
+                case DataType::U8:
+                    return compare_raw<uint8_t>(imp_data, ref_data, format, full_height, full_width, rect, handler);
+
+                case DataType::I8:
+                case DataType::QAI8:
+                case DataType::QSI8:
+                    return compare_raw<int8_t>(imp_data, ref_data, format, full_height, full_width, rect, handler);
+
                 case DataType::FP32:
                     return compare_raw<float>(imp_data, ref_data, format, full_height, full_width, rect, handler);
 
