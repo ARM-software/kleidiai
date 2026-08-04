@@ -152,8 +152,7 @@ Qai8Qsi4TestReference ReferenceGenerator<Qai8Qsi4TestDataId, Qai8Qsi4TestReferen
     const int8_t dst_clamp_max =
         quantize_asymmetric<float, int8_t, int32_t>(dst_clamp_max_f32, dst_scale, dst_zero_point);
 
-    Buffer dst_f32_clamped =
-        clamp<float>(dst_f32.data(), shape.m * shape.n, dst_clamp_min_f32, dst_clamp_max_f32);
+    Buffer dst_f32_clamped = clamp<float>(dst_f32.data(), shape.m * shape.n, dst_clamp_min_f32, dst_clamp_max_f32);
     Buffer dst_qsi8_clamped = quantize_asymmetric_per_block<float, int8_t, float, int32_t>(
         dst_f32_clamped.data(), &dst_scale, &dst_zero_point, 1, shape.m * shape.n, shape.m * shape.n);
     Buffer dst_qsi8_saturated = quantize_asymmetric_per_block<float, int8_t, float, int32_t>(
