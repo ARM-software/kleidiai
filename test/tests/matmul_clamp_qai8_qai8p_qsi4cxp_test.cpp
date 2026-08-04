@@ -151,7 +151,7 @@ Qai8Qsi4TestReference ReferenceGenerator<Qai8Qsi4TestDataId, Qai8Qsi4TestReferen
     const int8_t dst_clamp_max =
         quantize_asymmetric<float, int8_t, int32_t>(dst_clamp_max_f32, dst_scale, dst_zero_point);
 
-    const Buffer dst_f32_clamped =
+    Buffer dst_f32_clamped =
         clamp<float>(dst_f32.data(), shape.m * shape.n, dst_clamp_min_f32, dst_clamp_max_f32);
     Buffer dst_qsi8_clamped = quantize_asymmetric_per_block<float, int8_t, float, int32_t>(
         dst_f32_clamped.data(), &dst_scale, &dst_zero_point, 1, shape.m * shape.n, shape.m * shape.n);
@@ -209,7 +209,7 @@ const kai_matmul_pack_rhs_uker_api rhs_pack_nxk_qsi4_api =
 const kai_matmul_pack_rhs_uker_api rhs_pack_nxk_qsu4_api =
     kai_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsu4cx_f32_i32_sme();
 
-const std::array<MatMulVariant, 1>& get_gemm_variants() {
+const auto& get_gemm_variants() {
     static const size_t sme_vscale = get_sme_vector_scale();
     static const std::array<MatMulVariant, 1> variants{{
         {
@@ -224,7 +224,7 @@ const std::array<MatMulVariant, 1>& get_gemm_variants() {
     return variants;
 }
 
-const std::array<MatMulVariant, 1>& get_gemv_variants() {
+const auto& get_gemv_variants() {
     static const size_t sme_vscale = get_sme_vector_scale();
     static const std::array<MatMulVariant, 1> variants{{
         {
