@@ -8,7 +8,6 @@
 
 #include <algorithm>
 #include <array>
-#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -30,7 +29,9 @@
 #include "test/common/abi_checker.hpp"
 #include "test/common/buffer.hpp"
 #include "test/common/cache.hpp"
+#include "test/common/compare.hpp"
 #include "test/common/cpu_info.hpp"
+#include "test/common/data_format.hpp"
 #include "test/common/data_type.hpp"
 #include "test/common/int4.hpp"
 #include "test/common/matmul_test_common.hpp"
@@ -353,44 +354,20 @@ void compare_packed_result(
     std::string_view operand_name) {
     ASSERT_EQ(actual.size(), expected.size());
 
-    size_t mismatches = 0;
-    std::ostringstream stream;
-    for (size_t idx = 0; idx < actual.size(); ++idx) {
-        const uint8_t actual_value = read_array<uint8_t>(actual.data(), idx);
-        const uint8_t expected_value =
-            idx >= portion_start && idx < portion_end ? read_array<uint8_t>(expected.data(), idx) : 0;
-        if (actual_value != expected_value) {
-            ++mismatches;
-            stream << "offset=" << idx << " actual=" << static_cast<uint32_t>(actual_value)
-                   << " expected=" << static_cast<uint32_t>(expected_value) << "\n";
-        }
-    }
-
-    ASSERT_EQ(mismatches, 0) << "Mismatches in portioned " << operand_name << " packing:\n" << stream.str();
+    const DataFormat format{DataType::U8};
+    const Rect portion{0, portion_start, 1, portion_end - portion_start};
+    DefaultMismatchHandler handler(0, -1, 0, 0);
+    const bool success = compare(actual.data(), expected.data(), format, 1, actual.size(), portion, handler);
+    ASSERT_TRUE(success) << "Mismatches in portioned " << operand_name << " packing";
 }
 
 void compare_result(const Buffer& actual, const Buffer& expected, const MatMulShape& shape, const Rect& output_area) {
     ASSERT_EQ(actual.size(), expected.size());
 
-    size_t mismatches = 0;
-    std::ostringstream stream;
-    for (size_t idx = 0; idx < shape.m * shape.n; ++idx) {
-        const size_t m_idx = idx / shape.n;
-        const size_t n_idx = idx % shape.n;
-        const bool in_output_area = output_area.contains(m_idx, n_idx);
-        const int32_t actual_value = read_array<int8_t>(actual.data(), idx);
-        const int32_t expected_value = in_output_area ? read_array<int8_t>(expected.data(), idx) : 0;
-        const int32_t error = std::abs(actual_value - expected_value);
-        const int32_t threshold = in_output_area ? 1 : 0;
-        if (error > threshold) {
-            ++mismatches;
-            stream << "m=" << m_idx << " n=" << n_idx << " actual=" << actual_value << " expected=" << expected_value
-                   << "\n";
-        }
-    }
-
-    ASSERT_EQ(mismatches, 0) << "Mismatches for M=" << shape.m << ", N=" << shape.n << ", K=" << shape.k << ":\n"
-                             << stream.str();
+    const DataFormat format{DataType::QAI8};
+    DefaultMismatchHandler handler(1, -1, 0, 0);
+    const bool success = compare(actual.data(), expected.data(), format, shape.m, shape.n, output_area, handler);
+    ASSERT_TRUE(success) << "Mismatches for M=" << shape.m << ", N=" << shape.n << ", K=" << shape.k;
 }
 
 }  // namespace
