@@ -283,6 +283,7 @@ Buffer pack_rhs(
     const size_t bias_offset = api.get_bias_n_offset(&config, &bias_index);
     const kai_matmul_pack_rhs_uker_scale_n_dim_args scale_index = {portion.start_col()};
     const size_t scale_offset = api.get_scale_n_offset(&config, &scale_index);
+    const int32_t neg_lhs_zp = -lhs_zero_point;
 
     kai_matmul_pack_rhs_uker_args args{};
     args.shape = {portion.width(), shape.k};
@@ -291,7 +292,7 @@ Buffer pack_rhs(
     args.operand.rhs_packed.ptr = packed_rhs.data() + packed_offset;
     args.operand.rhs_packed.stride = packed_stride;
     args.operand.bias_n.ptr = bias.data() + bias_offset;
-    args.operand.k_sum_scale_global.ptr = &lhs_zero_point;
+    args.operand.k_sum_scale_global.ptr = &neg_lhs_zp;
     args.operand.scale_n.ptr = rhs_scales.data() + scale_offset;
     args.operand.scale_global.ptr = &scale_multiplier;
 

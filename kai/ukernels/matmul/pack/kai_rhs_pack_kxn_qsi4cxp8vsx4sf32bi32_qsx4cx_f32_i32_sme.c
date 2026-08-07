@@ -55,7 +55,7 @@ void kai_run_rhs_pack_kxn_qsi4cxp8vsx4sf32bi32_qsx4cx_f32_i32_sme(
     KAI_ASSUME(nr % 2 == 0);
     KAI_ASSUME(nr <= MAX_NR);
     const size_t rhs_stride_row = args->operand.rhs.stride.k;
-    const int32_t k_sum_scale = -(*(const int32_t*)args->operand.k_sum_scale_global.ptr);
+    const int32_t k_sum_scale = *(const int32_t*)args->operand.k_sum_scale_global.ptr;
     const float scale_multiplier = *(const float*)args->operand.scale_global.ptr;
     KAI_ASSUME(rhs_zero_point == 0 || rhs_zero_point == 8);
 
@@ -238,8 +238,7 @@ void kai_run_rhs_pack_kxn_qsi4cxp8vsx4sf32bi32_qsx4cx_f32_i32_sme(
         for (; group + 4 <= block_width; group += 4) {
             const int32x4_t input_bias = vld1q_s32(bias_ptr + n_base + group);
             const int32x4_t rhs_sums = vld1q_s32(sums + group);
-            vst1q_s32(
-                (int32_t*)(packed_ptr + group * BIAS_ELEM_BYTES), vmlsq_n_s32(input_bias, rhs_sums, -k_sum_scale));
+            vst1q_s32((int32_t*)(packed_ptr + group * BIAS_ELEM_BYTES), vmlaq_n_s32(input_bias, rhs_sums, k_sum_scale));
             vst1q_f32(
                 (float*)(scale_out + group * SCALE_ELEM_BYTES),
                 vmulq_n_f32(vld1q_f32(scale_ptr + n_base + group), scale_multiplier));
