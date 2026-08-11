@@ -28,6 +28,34 @@ namespace kai::test {
 /// Multidimensional data slot.
 class Tensor {
 public:
+    Tensor() = default;
+
+    Tensor(const Tensor& other) : m_shape(other.m_shape), m_format(other.m_format), m_id(other.m_id) {
+        if (other.m_data.size() > 0) {
+            m_data = Buffer(other.m_data.size(), 0);
+            std::copy(other.m_data.data(), other.m_data.data() + other.m_data.size(), m_data.data());
+        }
+    }
+
+    Tensor& operator=(const Tensor& other) {
+        if (this != &other) {
+            m_shape = other.m_shape;
+            m_format = other.m_format;
+            m_id = other.m_id;
+
+            if (other.m_data.size() > 0) {
+                m_data = Buffer(other.m_data.size(), 0);
+                std::copy(other.m_data.data(), other.m_data.data() + other.m_data.size(), m_data.data());
+            } else {
+                m_data = Buffer();
+            }
+        }
+        return *this;
+    }
+
+    Tensor(Tensor&&) noexcept = default;
+    Tensor& operator=(Tensor&&) noexcept = default;
+
     /// Gets the size of the multidimensional array.
     [[nodiscard]] Shape shape() const {
         return m_shape;

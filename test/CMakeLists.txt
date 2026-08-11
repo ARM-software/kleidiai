@@ -47,6 +47,7 @@ add_library(kleidiai_test_framework
 
     test/nextgen/common/test_config.cpp
     test/nextgen/common/test_registry.cpp
+    test/nextgen/harness/tensor_cache.cpp
     test/nextgen/reference/unary_elementwise.cpp
     test/nextgen/reference/binary_elementwise.cpp
     test/nextgen/reference/reduce.cpp
