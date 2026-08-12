@@ -226,6 +226,7 @@ Micro-kernel categories:
 | i8 | blockwise per dimension symmetric | f32 | - | - | - | - | Advanced SIMD | <a id="pack-kai-lhs-quant-pack-qsi8d32p4x8sb-f32-neon"></a>`kai_lhs_quant_pack_qsi8d32p4x8sb_f32_neon` |
 | i8 | blockwise per dimension symmetric | f16 | - | - | - | - | Advanced SIMD | <a id="pack-kai-lhs-quant-pack-qsi8d32pscalef32-f16-neon"></a>`kai_lhs_quant_pack_qsi8d32pscalef32_f16_neon` |
 | i8 | blockwise per dimension symmetric | f32 | - | - | - | - | Advanced SIMD | <a id="pack-kai-lhs-quant-pack-qsi8d32pscalef32-f32-neon"></a>`kai_lhs_quant_pack_qsi8d32pscalef32_f32_neon` |
+| i8 | blockwise per dimension symmetric | f32 | - | - | - | - | Advanced SIMD | <a id="pack-kai-lhs-pack-qsi8d32p1x4sf16-f32-neon"></a>`kai_lhs_pack_qsi8d32p1x4sf16_f32_neon` |
 | u2 | channelwise symmetric | u2 | channelwise symmetric | f32 | f32 | - | Advanced SIMD | <a id="pack-kai-rhs-pack-nxk-qsu2cxp4vlx4-qsu2cx-neon"></a>`kai_rhs_pack_nxk_qsu2cxp4vlx4_qsu2cx_neon` |
 | u2 | channelwise symmetric | u2 | channelwise symmetric | f32 | f32 | - | Advanced SIMD | <a id="pack-kai-rhs-pack-nxk-qsu2cxp4x4bf32sf32-qsu2cx-neon"></a>`kai_rhs_pack_nxk_qsu2cxp4x4bf32sf32_qsu2cx_neon` |
 | x16 | - | x16 | - | - | - | - | SME | <a id="pack-kai-lhs-pack-x16p2vlx2-x16-sme"></a>`kai_lhs_pack_x16p2vlx2_x16_sme` |
