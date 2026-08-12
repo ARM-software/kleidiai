@@ -65,6 +65,11 @@ NEON_KERNELS_ASM = [
 ]
 
 # buildifier: keep sorted
+NEON_KERNELS_NOHDR = [
+    "pack/kai_lhs_pack_qsi8d32p1x4sf16_f32_neon",
+]
+
+# buildifier: keep sorted
 FP16_KERNELS = [
     "matmul_clamp_f16_f16_f16p/kai_matmul_clamp_f16_f16_f16p16x1biasf16_6x16x8_neon_mla",
     "pack/kai_lhs_pack_f16pmrx2_f32_neon",
@@ -394,6 +399,11 @@ kai_c_library(
     name = "neon_impl",
     cpu_uarch = kai_cpu_neon(),
     kernels = NEON_KERNELS,
+    kernels_nohdr = NEON_KERNELS_NOHDR,
+    textual_hdrs = [
+        "kai_matmul_pack_lhs.h",
+        "kai_matmul_pack_lhs_types.h",
+    ],
 )
 
 kai_c_library(
