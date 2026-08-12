@@ -514,6 +514,29 @@ test-linux-aarch64-sve2p1-fvp:
     reports:
       junit: kleidiai_test_results-${BUILD_JOB_PROVIDER}.xml
 
+# Purpose: FVP SME2.1 unit tests.
+test-linux-aarch64-sme2p1-fvp:
+  extends:
+    - .test-linux-aarch64-fvp
+  timeout: 2h
+  variables:
+    # Enable SME2.1 support explicitly for this feature-specific FVP run.
+    FVP_MODEL_EXTRA: "-C cluster0.sve.has_sme2=1 -C cluster0.sve.sme2_version=1 -C cluster0.sve.has_sme_mop4=1"
+    # Run only SME2.1 unit tests.
+    GTEST_FILTER: "*sme2p1*"
+    FVP_TEST_EXECUTABLE: "KLEIDIAI_TEST_CI_QUIET=1 ./build-${BUILD_JOB_PROVIDER}/kleidiai_test --gtest_brief=1 --test_size small --gtest_output=xml:kleidiai_test_results-${BUILD_JOB_PROVIDER}.xml --gtest_random_seed=${GLOBAL_TEST_SEED:-42}"
+  script:
+    - ./tools/fvp.sh -- "${FVP_TEST_EXECUTABLE}" | tee output.txt
+    - "grep -qE 'Features\\s+:.*sme2p1' output.txt"
+  artifacts:
+    when: always
+    expire_in: 1 day
+    paths:
+      - kleidiai_test_results-${BUILD_JOB_PROVIDER}.xml
+      - output.txt
+    reports:
+      junit: kleidiai_test_results-${BUILD_JOB_PROVIDER}.xml
+
 # Purpose: FVP v8-only model; expect Illegal instruction for examples; validates CPU feature detection path.
 test-linux-aarch64-v8only-fvp:
   extends:
