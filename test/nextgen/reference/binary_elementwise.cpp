@@ -69,12 +69,30 @@ template <typename T>
 }
 
 template <typename T>
+[[nodiscard]] Buffer subtract(
+    size_t lhs_height, size_t lhs_width, Span<const std::byte> lhs_data, size_t rhs_height, size_t rhs_width,
+    Span<const std::byte> rhs_data) {
+    return binary_elementwise_2d<T>(
+        lhs_height, lhs_width, lhs_data, rhs_height, rhs_width, rhs_data,
+        [](T lhs_value, T rhs_value) { return lhs_value - rhs_value; });
+}
+
+template <typename T>
 [[nodiscard]] Buffer multiply(
     size_t lhs_height, size_t lhs_width, Span<const std::byte> lhs_data, size_t rhs_height, size_t rhs_width,
     Span<const std::byte> rhs_data) {
     return binary_elementwise_2d<T>(
         lhs_height, lhs_width, lhs_data, rhs_height, rhs_width, rhs_data,
         [](T lhs_value, T rhs_value) { return lhs_value * rhs_value; });
+}
+
+template <typename T>
+[[nodiscard]] Buffer divide(
+    size_t lhs_height, size_t lhs_width, Span<const std::byte> lhs_data, size_t rhs_height, size_t rhs_width,
+    Span<const std::byte> rhs_data) {
+    return binary_elementwise_2d<T>(
+        lhs_height, lhs_width, lhs_data, rhs_height, rhs_width, rhs_data,
+        [](T lhs_value, T rhs_value) { return lhs_value / rhs_value; });
 }
 
 }  // namespace
@@ -99,6 +117,19 @@ BinaryElementwiseFn make_add_2d(DataType dtype) {
     }
 }
 
+BinaryElementwiseFn make_subtract_2d(DataType dtype) {
+    switch (dtype) {
+        case DataType::FP32:
+            return subtract<float>;
+
+        case DataType::I32:
+            return subtract<int32_t>;
+
+        default:
+            KAI_TEST_ERROR("Not supported.");
+    }
+}
+
 BinaryElementwiseFn make_multiply_2d(DataType dtype) {
     switch (dtype) {
         case DataType::FP32:
@@ -109,6 +140,16 @@ BinaryElementwiseFn make_multiply_2d(DataType dtype) {
 
         case DataType::I32:
             return multiply<int32_t>;
+
+        default:
+            KAI_TEST_ERROR("Not supported.");
+    }
+}
+
+BinaryElementwiseFn make_divide_2d(DataType dtype) {
+    switch (dtype) {
+        case DataType::FP32:
+            return divide<float>;
 
         default:
             KAI_TEST_ERROR("Not supported.");

@@ -32,6 +32,12 @@ enum class MatMulClampMode {
     REQUIRED,     ///< Clamping parameters are required.
 };
 
+/// Source of bias quantization information.
+enum class MatMulBiasQuantInfoSource {
+    DYNAMIC,                             ///< Bias quantization information is derived from the bias data.
+    STATIC_FROM_INPUT_AND_OUTPUT_QUANT,  ///< Bias quantization information is derived from operand quantization.
+};
+
 /// Matrix multiplication operator.
 struct MatMulOperator {
     std::string_view name;
@@ -45,12 +51,15 @@ struct MatMulOperator {
     std::optional<std::unique_ptr<Quantizer>> lhs_quant;
     std::optional<std::unique_ptr<Quantizer>> rhs_quant;
     std::optional<std::unique_ptr<Quantizer>> bias_quant;
+    std::optional<std::unique_ptr<Quantizer>> dst_quant;
+    MatMulBiasQuantInfoSource bias_quant_info_source = MatMulBiasQuantInfoSource::DYNAMIC;
 
     DataType lhs_dtype;
     DataType rhs_dtype;
     DataType bias_dtype;
     DataType acc_dtype;
     DataType dst_dtype;
+    DataType ref_dtype = DataType::FP32;  ///< Data type used by the reference implementation.
 
     std::optional<MatPackKernelPtr> pack_lhs;
     std::optional<MatPackKernelPtr> pack_rhs;

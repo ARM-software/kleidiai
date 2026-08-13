@@ -82,6 +82,15 @@ using MatMulUkerStageParameterLayoutSet = FlagSet<MatMulUkerStageParameterLayout
 struct MatMulUkerOutputStageConfig {
     MatMulUkerStageParameterLayoutSet acc_scale;   ///< Accumulator scaling parameter layouts.
     MatMulUkerStageParameterLayoutSet scale_bias;  ///< Scaled accumulator bias parameter layouts.
+
+    MatMulSlot acc_scale_global_slot = MatMulSlot::ACC_SCALE_GLOBAL_DATA;
+    MatMulSlot acc_scale_m_slot = MatMulSlot::ACC_SCALE_M_DATA;
+    MatMulSlot acc_scale_n_slot = MatMulSlot::ACC_SCALE_N_DATA;
+    MatMulSlot scale_bias_global_slot = MatMulSlot::SCALE_BIAS_GLOBAL_DATA;
+    MatMulSlot scale_bias_m_slot = MatMulSlot::SCALE_BIAS_M_DATA;
+    MatMulSlot scale_bias_n_slot = MatMulSlot::SCALE_BIAS_N_DATA;
+
+    std::vector<MatMulSlot> extra_ref_inputs;  ///< Extra tensors needed only for reference generation.
 };
 
 /// Wrapper for uker-api matrix multiplication micro-kernel.

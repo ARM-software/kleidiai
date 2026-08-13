@@ -78,6 +78,10 @@ ReduceFn make_reduce_add(DataType src_dtype, DataType dst_dtype) {
         return reduce<AddOp<Int4, int32_t>>;
     }
 
+    if (dtypes == std::make_tuple(DataType::I8, DataType::I32)) {
+        return reduce<AddOp<int8_t, int32_t>>;
+    }
+
     KAI_TEST_ERROR("Not implemented.");
 }
 

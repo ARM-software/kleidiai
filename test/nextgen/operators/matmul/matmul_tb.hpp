@@ -88,29 +88,42 @@ private:
     /// or reference implementation.
     void determine_required_tensors();
 
-    void generate_lhs_data(Rng& rng);               ///< Generates the LHS data.
-    void generate_rhs_data(Rng& rng);               ///< Generates the RHS data.
-    void generate_acc_bias_m_data(Rng& rng);        ///< Generates the per-M accumulator bias data.
-    void generate_acc_bias_n_data(Rng& rng);        ///< Generates the per-N accumulator bias data.
-    void generate_acc_scale_global_data(Rng& rng);  ///< Generates the global accumulator scale data.
-    void generate_scale_bias_n_data(Rng& rng);      ///< Generates the per-N scaled-accumulator bias data.
+    void generate_lhs_data(Rng& rng);                              ///< Generates the LHS data.
+    void generate_rhs_data(Rng& rng);                              ///< Generates the RHS data.
+    void generate_acc_bias_m_data(Rng& rng, bool required);        ///< Generates the per-M accumulator bias data.
+    void generate_acc_bias_n_data(Rng& rng, bool required);        ///< Generates the per-N accumulator bias data.
+    void generate_acc_scale_global_data(Rng& rng, bool required);  ///< Generates the global accumulator scale data.
+    void generate_scale_bias_n_data(Rng& rng, bool required);  ///< Generates the per-N scaled-accumulator bias data.
 
-    void compute_rhs_t_data();  ///< Computes the transposed RHS data.
-    void quantize_lhs();        ///< Quantizes the LHS data.
-    void quantize_rhs_t();      ///< Quantizes the RHS data.
-    void quantize_bias();       ///< Quantizes the bias data.
+    void compute_rhs_t_data(bool required);       ///< Computes the transposed RHS data.
+    void quantize_lhs(bool required);             ///< Quantizes the LHS data.
+    void quantize_rhs_t(bool required);           ///< Quantizes the RHS data.
+    void quantize_bias(Rng& rng, bool required);  ///< Quantizes the bias data.
 
-    void compute_lhs_qzp_neg();  ///< Computes the negative LHS quantization zero-point.
+    void compute_rhs_qdata(bool required);                  ///< Computes the non-transposed quantized RHS data.
+    void compute_lhs_qzp_neg(bool required);                ///< Computes the negative LHS quantization zero-point.
+    void compute_dst_quantization_info(bool required);      ///< Computes destination quantization information.
+    void compute_lhs_qscale_div_dst_qscale(bool required);  ///< Computes LHS_QSCALE / DST_QSCALE.
+    void compute_rhs_t_qscale_mul_lhs_qscale_div_dst_qscale(
+        bool required);  ///< Computes static Int8 RHS scale component.
+    void compute_acc_bias_n_qdata_minus_lhs_qzp_mul_rhs_t_qdata_row_sum(
+        Rng& rng,
+        bool required);  ///< Computes static Int8 bias component.
 
-    void compute_rhs_t_qdata_sign();      ///< Computes the quantized RHS data with opposite signedness.
-    void compute_rhs_t_qdata_sign_sum();  ///< Computes the row sum of quantized RHS data with opposite signedness.
+    void compute_rhs_t_qdata_sign(bool required);  ///< Computes the quantized RHS data with opposite signedness.
+    void compute_rhs_t_qdata_sign_sum(
+        bool required);  ///< Computes the row sum of quantized RHS data with opposite signedness.
 
-    void compute_ref_packed_lhs();  ///< Computes the reference packed LHS.
-    void compute_ref_packed_rhs();  ///< Computes the reference packed RHS.
-    void compute_ref_matmul();      ///< Computes the reference matrix multiplication.
+    void compute_ref_acc_matmul_data(
+        bool required);  ///< Computes matrix multiplication accumulator without pre or post processing.
+
+    void compute_ref_packed_lhs();      ///< Computes the reference packed LHS.
+    void compute_ref_packed_rhs();      ///< Computes the reference packed RHS.
+    void compute_ref_matmul(Rng& rng);  ///< Computes the reference matrix multiplication.
 
     void set_tensor_required(MatMulSlot slot);  ///< Mark tensor as required
     bool is_tensor_required(MatMulSlot slot);   ///< Check if tensor is required
+    bool is_tensor_generated(MatMulSlot slot);  ///< Check if tensor is generated
     Tensor& get_tensor(MatMulSlot slot);        ///< retrieve tensor
 
     size_t m_shape_m;

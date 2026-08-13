@@ -19,6 +19,7 @@
 #include "test/nextgen/harness/kernel_wrapper.hpp"
 #include "test/nextgen/harness/tensor.hpp"
 #include "test/nextgen/operators/matmul/matmul_dims.hpp"
+#include "test/nextgen/operators/matmul/matmul_slots.hpp"
 
 namespace kai::test {
 
@@ -32,8 +33,9 @@ public:
     /// @param[in] dst_format The output data format.
     MatMulPackLhsUkerApiWrapper(
         std::string_view name, kai_matmul_pack_lhs_uker_api uker_api, Poly<Format>&& src_format,
-        Poly<Format>&& dst_format) :
+        Poly<Format>&& dst_format, MatMulSlot src_slot = MatMulSlot::LHS_DATA) :
         m_name(name),
+        m_src_slot(src_slot),
         m_uker_config({}),
         m_uker_api(uker_api),
         m_src_format(std::move(src_format)),
@@ -51,6 +53,7 @@ public:
 
 private:
     std::string m_name;
+    MatMulSlot m_src_slot;
     kai_matmul_pack_lhs_uker_config m_uker_config;
     kai_matmul_pack_lhs_uker_api m_uker_api;
     Poly<Format> m_src_format;

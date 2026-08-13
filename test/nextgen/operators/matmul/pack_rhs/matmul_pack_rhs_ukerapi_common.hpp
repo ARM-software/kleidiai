@@ -6,10 +6,11 @@
 
 #pragma once
 
-#include <array>
+#include <cstddef>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "kai/ukernels/matmul/kai_matmul_pack_rhs_types.h"
@@ -33,21 +34,29 @@ enum class RhsLayout {
     NxK,
 };
 
+struct MatMulPackRhsOperandSlots {
+    std::optional<MatMulSlot> bias_n;
+    std::optional<MatMulSlot> k_sum_scale_global;
+    std::optional<MatMulSlot> scale_n;
+    std::optional<MatMulSlot> scale_global;
+};
+
 class MatMulPackRhsUkerApiCommon : public KernelWrapper<MatShape> {
 public:
     MatMulPackRhsUkerApiCommon(
         std::string_view name, MatMulSlot run_rhs_slot, RhsLayout layout, kai_matmul_pack_rhs_uker_api api,
-        const Poly<Format>& src_data_format, const Poly<Format>& src_bias_format, const Poly<Format>& dst_format,
-        MatMulUkerApiBiasDeliveryStage bias_delivery_stage) :
+        const Poly<Format>& src_data_format, const Poly<Format>&, const Poly<Format>& dst_format,
+        MatMulUkerApiBiasDeliveryStage, MatMulPackRhsOperandSlots operand_slots = {},
+        std::vector<MatMulSlot> reference_component_slots = {MatMulSlot::RHS_T_DATA}) :
         m_name(name),
         m_run_rhs_slot(run_rhs_slot),
         m_layout(layout),
         m_uker_config(),
         m_api(api),
         m_src_data_format(src_data_format),
-        m_src_bias_format(src_bias_format),
         m_dst_format(dst_format),
-        m_bias_delivery_stage(bias_delivery_stage) {
+        m_operand_slots(operand_slots),
+        m_reference_component_slots(std::move(reference_component_slots)) {
     }
 
     [[nodiscard]] std::string_view name() const override {
@@ -55,25 +64,27 @@ public:
     }
 
     [[nodiscard]] std::vector<MatMulSlot> run_inputs(ConstTensorSet tensors) const override {
+        const MatMulConfig& config = tensors.at(MatMulSlot::CONFIG).value<MatMulConfig>();
         std::vector<MatMulSlot> inputs = {m_run_rhs_slot};
 
-        const std::optional<MatMulSlot> bias_id = determine_bias_tensor_id(tensors);
-        if (bias_id.has_value()) {
-            inputs.emplace_back(bias_id.value());
+        if (m_operand_slots.bias_n.has_value() && config.bias_modes.has(MatMulBiasMode::ACCUMULATION_PER_N)) {
+            inputs.emplace_back(m_operand_slots.bias_n.value());
+        }
+        if (m_operand_slots.k_sum_scale_global.has_value()) {
+            inputs.emplace_back(m_operand_slots.k_sum_scale_global.value());
+        }
+        if (m_operand_slots.scale_n.has_value()) {
+            inputs.emplace_back(m_operand_slots.scale_n.value());
+        }
+        if (m_operand_slots.scale_global.has_value()) {
+            inputs.emplace_back(m_operand_slots.scale_global.value());
         }
 
         return inputs;
     }
 
-    [[nodiscard]] std::vector<MatMulSlot> ref_inputs(ConstTensorSet tensors) const override {
-        std::vector<MatMulSlot> inputs = {MatMulSlot::RHS_T_DATA};
-
-        const std::optional<MatMulSlot> bias_id = determine_bias_tensor_id(tensors);
-        if (bias_id.has_value()) {
-            inputs.emplace_back(bias_id.value());
-        }
-
-        return inputs;
+    [[nodiscard]] std::vector<MatMulSlot> ref_inputs([[maybe_unused]] ConstTensorSet tensors) const override {
+        return m_reference_component_slots;
     }
 
     [[nodiscard]] std::vector<size_t> steps(MatShape shape, [[maybe_unused]] ConstTensorSet tensors) const override {
@@ -90,6 +101,7 @@ public:
     }
 
     void populate_constant_info(TensorSet tensors) const override {
+        tensors.at(m_run_rhs_slot).set_format(m_src_data_format);
         tensors.at(MatMulSlot::RHS_PACKED_IMP).set_format(m_dst_format);
     }
 
@@ -110,8 +122,6 @@ public:
 
         KAI_TEST_ASSERT(start_k == 0);
         KAI_TEST_ASSERT(size_k == full_k);
-
-        const std::optional<MatMulSlot> bias_tensor_id = determine_bias_tensor_id(tensors);
 
         const Tensor& rhs_data = tensors.at(m_run_rhs_slot);
         Tensor& packed_rhs = tensors.at(MatMulSlot::RHS_PACKED_IMP);
@@ -145,14 +155,6 @@ public:
             imp_packed_rhs_size == packed_rhs_size, "RHS packing: Calculated RHS kernel data size mismatch.");
 
         const Span<const std::byte> rhs_tile = rhs_data.data().subspan(rhs_offset);
-        Span<const std::byte> bias_tile;
-        if (m_bias_delivery_stage == MatMulUkerApiBiasDeliveryStage::PACK_RHS) {
-            if (bias_tensor_id.has_value()) {
-                const Tensor& bias_data = tensors.at(bias_tensor_id.value());
-                const size_t bias_offset = m_src_bias_format->compute_offset({full_n}, {start_n});
-                bias_tile = bias_data.data().subspan(bias_offset);
-            }
-        }
         const Span<std::byte> packed_rhs_tile = packed_rhs.data().subspan(packed_rhs_offset);
 
         kai_matmul_pack_rhs_uker_args args = {};
@@ -168,7 +170,23 @@ public:
         args.operand.rhs_packed.ptr = packed_rhs_tile.data();
         args.operand.rhs_packed.stride = imp_packed_rhs_stride;
 
-        args.operand.bias_n.ptr = bias_tile.data();
+        const MatMulConfig& config = tensors.at(MatMulSlot::CONFIG).value<MatMulConfig>();
+        if (m_operand_slots.bias_n.has_value() && config.bias_modes.has(MatMulBiasMode::ACCUMULATION_PER_N)) {
+            const Tensor& bias_n = tensors.at(m_operand_slots.bias_n.value());
+            const size_t bias_offset = bias_n.format()->compute_offset({full_n}, {start_n});
+            args.operand.bias_n.ptr = bias_n.data().subspan(bias_offset).data();
+        }
+        if (m_operand_slots.k_sum_scale_global.has_value()) {
+            args.operand.k_sum_scale_global.ptr = tensors.at(m_operand_slots.k_sum_scale_global.value()).data().data();
+        }
+        if (m_operand_slots.scale_n.has_value()) {
+            const Tensor& scale_n = tensors.at(m_operand_slots.scale_n.value());
+            const size_t scale_offset = scale_n.format()->compute_offset({full_n}, {start_n});
+            args.operand.scale_n.ptr = scale_n.data().subspan(scale_offset).data();
+        }
+        if (m_operand_slots.scale_global.has_value()) {
+            args.operand.scale_global.ptr = tensors.at(m_operand_slots.scale_global.value()).data().data();
+        }
 
         abi_check([&] { m_api.run(&m_uker_config, &args); });
     }
@@ -176,56 +194,30 @@ public:
     void compute_reference(MatShape shape, TensorSet tensors) const override {
         KAI_TEST_ASSERT_MSG(shape.size() == 2, "Only N and K dimensions are expected.");
 
-        const std::optional<MatMulSlot> bias_tensor_id = determine_bias_tensor_id(tensors);
+        const MatMulConfig& config = tensors.at(MatMulSlot::CONFIG).value<MatMulConfig>();
 
-        const Tensor& rhs_t_data = tensors.at(MatMulSlot::RHS_T_DATA);
+        std::vector<Buffer> zeros;
+        std::vector<Span<const std::byte>> components;
+        components.reserve(m_reference_component_slots.size());
+        for (const MatMulSlot slot : m_reference_component_slots) {
+            bool is_zero = false;
+
+            is_zero |= (slot == m_operand_slots.bias_n && !config.bias_modes.has(MatMulBiasMode::ACCUMULATION_PER_N));
+
+            if (is_zero) {
+                const size_t size = tensors.at(slot).data().size();
+                const Buffer& zero = zeros.emplace_back(size);
+                components.emplace_back(zero.view());
+            } else {
+                components.emplace_back(tensors.at(slot).data());
+            }
+        }
+
         Tensor& ref_packed_rhs = tensors.at(MatMulSlot::RHS_PACKED);
-
-        if (m_bias_delivery_stage != MatMulUkerApiBiasDeliveryStage::PACK_RHS) {
-            ref_packed_rhs.set_shape(shape)
-                .set_format(m_dst_format)
-                .set_data(m_dst_format->pack(shape, std::array{rhs_t_data.data()}));
-            return;
-        }
-
-        Buffer empty_bias;
-        Span<const std::byte> bias_data_view;
-        if (bias_tensor_id.has_value()) {
-            const Tensor& bias_data = tensors.at(bias_tensor_id.value());
-            bias_data_view = bias_data.data();
-        } else {
-            const size_t shape_n = shape.at(MatDim::R);
-            empty_bias = Buffer(m_src_bias_format->compute_size({shape_n}));
-            bias_data_view = empty_bias.view();
-        }
-
-        ref_packed_rhs.set_shape(shape)
-            .set_format(m_dst_format)
-            .set_data(m_dst_format->pack(shape, std::array{bias_data_view, rhs_t_data.data()}));
+        ref_packed_rhs.set_shape(shape).set_format(m_dst_format).set_data(m_dst_format->pack(shape, components));
     }
 
 private:
-    std::optional<MatMulSlot> determine_bias_tensor_id(ConstTensorSet tensors) const {
-        const MatMulConfig& config = tensors.at(MatMulSlot::CONFIG).value<MatMulConfig>();
-
-        if (m_bias_delivery_stage != MatMulUkerApiBiasDeliveryStage::PACK_RHS) {
-            return std::nullopt;
-        }
-
-        if (!config.bias_modes.has(MatMulBiasMode::ACCUMULATION_PER_N)) {
-            return std::nullopt;
-        }
-
-        return MatMulSlot::ACC_BIAS_N_DATA;
-    }
-
-    size_t compute_rhs_stride(size_t n, size_t k) const {
-        if (m_layout == RhsLayout::KxN) {
-            return m_src_data_format->compute_size({1, n});
-        }
-        return m_src_data_format->compute_size({1, k});
-    }
-
     size_t compute_rhs_offset(size_t n, size_t k, size_t start_n, size_t start_k) const {
         if (m_layout == RhsLayout::KxN) {
             return m_src_data_format->compute_offset({k, n}, {start_k, start_n});
@@ -240,9 +232,10 @@ private:
     kai_matmul_pack_rhs_uker_api m_api;
 
     Poly<Format> m_src_data_format;
-    Poly<Format> m_src_bias_format;
     Poly<Format> m_dst_format;
-    MatMulUkerApiBiasDeliveryStage m_bias_delivery_stage;
+
+    MatMulPackRhsOperandSlots m_operand_slots;
+    std::vector<MatMulSlot> m_reference_component_slots;
 };
 
 }  // namespace kai::test

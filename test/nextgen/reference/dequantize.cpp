@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -69,6 +69,14 @@ DequantizeLinearFn make_dequantize_linear(
 
     if (dtypes == std::make_tuple(DataType::FP32, DataType::U4, DataType::FP32, DataType::UNKNOWN)) {
         return dequantize_linear<float, UInt4, float, void>;
+    }
+
+    if (dtypes == std::make_tuple(DataType::FP32, DataType::I8, DataType::FP32, DataType::UNKNOWN)) {
+        return dequantize_linear<float, int8_t, float, void>;
+    }
+
+    if (dtypes == std::make_tuple(DataType::FP32, DataType::I32, DataType::FP32, DataType::UNKNOWN)) {
+        return dequantize_linear<float, int32_t, float, void>;
     }
 
     KAI_TEST_ERROR("Not implemented.");

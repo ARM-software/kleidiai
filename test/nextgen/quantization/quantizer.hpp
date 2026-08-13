@@ -27,6 +27,29 @@ public:
     Quantizer& operator=(Quantizer&&) = default;      ///< Move assignment.
 
     [[nodiscard]] virtual std::string uid() const = 0;
+
+    /// Determines dynamic quantization information.
+    ///
+    /// @param[in] fp_dtype The floating-point data type.
+    /// @param[in] shape The size of multidimensional array.
+    /// @param[in] fp_data The floating-point data buffer.
+    /// @param[out] qscale The quantization scale.
+    /// @param[out] qzp The quantization zero-point.
+    virtual void determine_qinfo(
+        DataType fp_dtype, Shape shape, Span<const std::byte> fp_data, Tensor& qscale, Tensor& qzp) const = 0;
+
+    /// Quantizes the data using pre-computed quantization information.
+    ///
+    /// @param[in] fp_dtype The floating-point data type.
+    /// @param[in] shape The size of multidimensional array.
+    /// @param[in] fp_data The floating-point data buffer.
+    /// @param[in] qscale The quantization scale.
+    /// @param[in] qzp The quantization zero-point.
+    /// @param[out] qdata The quantized data.
+    virtual void quantize(
+        DataType fp_dtype, Shape shape, Span<const std::byte> fp_data, Span<const std::byte> qscale,
+        Span<const std::byte> qzp, Tensor& qdata) const = 0;
+
     /// Dynamically quantizes the data.
     ///
     /// This method determines the quantization information automatically from the input data.
@@ -39,7 +62,10 @@ public:
     /// @param[out] qzp The quantization zero-point.
     virtual void dynamic_quantize(
         DataType fp_dtype, Shape shape, Span<const std::byte> fp_data, Tensor& qdata, Tensor& qscale,
-        Tensor& qzp) const = 0;
+        Tensor& qzp) const {
+        determine_qinfo(fp_dtype, shape, fp_data, qscale, qzp);
+        quantize(fp_dtype, shape, fp_data, qscale.data(), qzp.data(), qdata);
+    }
 
     /// Dequantizes the data.
     ///

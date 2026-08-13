@@ -95,6 +95,16 @@ std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_lhs_mxk_x8p4vsx4_x8_
             std::array<DataType, 0>{}));
 }
 
+std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_lhs_mxk_x8p4vsx4_i8_sme() {
+    return std::make_unique<MatMulPackLhsUkerApiWrapper>(
+        "matmul_pack_lhs_mxk_x8p4vsx4_i8_sme", kai_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme(),
+        make_poly<PlainFormat>(DataType::I8),
+        make_poly<Block2dRowFormat>(
+            4 * get_sme_vector_scale(), 4, 4, false, DataType::I8, std::array<DataType, 0>{},
+            std::array<DataType, 0>{}),
+        MatMulSlot::LHS_QDATA);
+}
+
 std::unique_ptr<KernelWrapper<MatShape>> create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32() {
     return create_matmul_lhs_quant_pack_qai8dxp_f32("1vlx4", 1 * get_sme_vector_length<float>(), 4);
 }

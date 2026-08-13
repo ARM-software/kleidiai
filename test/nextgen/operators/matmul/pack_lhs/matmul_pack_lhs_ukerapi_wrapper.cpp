@@ -29,11 +29,11 @@ std::string_view MatMulPackLhsUkerApiWrapper::name() const {
 }
 
 std::vector<MatMulSlot> MatMulPackLhsUkerApiWrapper::run_inputs([[maybe_unused]] ConstTensorSet tensors) const {
-    return {MatMulSlot::LHS_DATA};
+    return {m_src_slot};
 }
 
 std::vector<MatMulSlot> MatMulPackLhsUkerApiWrapper::ref_inputs([[maybe_unused]] ConstTensorSet tensors) const {
-    return {MatMulSlot::LHS_DATA};
+    return {m_src_slot};
 }
 
 std::vector<size_t> MatMulPackLhsUkerApiWrapper::steps(MatShape shape, [[maybe_unused]] ConstTensorSet tensors) const {
@@ -50,7 +50,7 @@ std::vector<size_t> MatMulPackLhsUkerApiWrapper::steps(MatShape shape, [[maybe_u
 }
 
 void MatMulPackLhsUkerApiWrapper::populate_constant_info(TensorSet tensors) const {
-    Tensor& lhs_data = tensors.at(MatMulSlot::LHS_DATA);
+    Tensor& lhs_data = tensors.at(m_src_slot);
     Tensor& packed_lhs = tensors.at(MatMulSlot::LHS_PACKED_IMP);
 
     lhs_data.set_format(m_src_format);
@@ -75,7 +75,7 @@ void MatMulPackLhsUkerApiWrapper::run(
     KAI_TEST_ASSERT(start_k == 0);
     KAI_TEST_ASSERT(size_k == full_k);
 
-    const Tensor& lhs_data = tensors.at(MatMulSlot::LHS_DATA);
+    const Tensor& lhs_data = tensors.at(m_src_slot);
     Tensor& packed_lhs_data = tensors.at(MatMulSlot::LHS_PACKED_IMP);
 
     packed_lhs_data.set_shape({full_m, full_k}).allocate();
@@ -124,7 +124,7 @@ void MatMulPackLhsUkerApiWrapper::run(
 }
 
 void MatMulPackLhsUkerApiWrapper::compute_reference(MatShape shape, TensorSet tensors) const {
-    const Tensor& lhs_data = tensors.at(MatMulSlot::LHS_DATA);
+    const Tensor& lhs_data = tensors.at(m_src_slot);
     Tensor& ref_packed_lhs = tensors.at(MatMulSlot::LHS_PACKED);
 
     ref_packed_lhs.set_shape(shape)

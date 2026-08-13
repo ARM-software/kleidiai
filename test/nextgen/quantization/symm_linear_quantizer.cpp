@@ -23,24 +23,70 @@
 
 namespace kai::test {
 
-void SymmLinearQuantizer::dynamic_quantize(
-    DataType fp_dtype, Shape shape, Span<const std::byte> fp_data, Tensor& qdata, Tensor& qscale,
-    [[maybe_unused]] Tensor& qzp) const {
-    KAI_TEST_ASSERT_MSG(shape.size() == 2, "Only 2D quantization is supported.");
+namespace {
 
-    const size_t height = shape.at(0);
-    const size_t width = shape.at(1);
+std::tuple<size_t, size_t> shape_as_2d(Shape shape) {
+    KAI_TEST_ASSERT_MSG(shape.size() == 1 || shape.size() == 2, "Only 1D and 2D quantization is supported.");
+
+    if (shape.size() == 1) {
+        return {1, shape.at(0)};
+    }
+
+    return {shape.at(0), shape.at(1)};
+}
+
+std::array<size_t, 2> quant_shape_2d(size_t height, size_t width, size_t block_height, size_t block_width) {
+    return {round_up_division(height, block_height), round_up_division(width, block_width)};
+}
+
+}  // namespace
+
+void SymmLinearQuantizer::determine_qinfo(
+    DataType fp_dtype, Shape shape, Span<const std::byte> fp_data, Tensor& qscale, [[maybe_unused]] Tensor& qzp) const {
+    const auto [height, width] = shape_as_2d(shape);
 
     const size_t block_height = m_block_height != 0 ? m_block_height : height;
     const size_t block_width = m_block_width != 0 ? m_block_width : width;
 
-    const size_t quant_height = round_up_division(height, block_height);
-    const size_t quant_width = round_up_division(width, block_width);
-    const std::array quant_shape{quant_height, quant_width};
+    const std::array quant_shape = quant_shape_2d(height, width, block_height, block_width);
+
+    const DetermineQuantizationInfoFn qinfo_fn =
+        make_determine_symmetric_quantization_info(fp_dtype, m_qdata_dtype, m_qscale_dtype);
+    auto [qscale_buffer, qzp_buffer] = qinfo_fn(height, width, block_height, block_width, fp_data);
+    KAI_UNUSED(qzp_buffer);
+
+    qscale.set_shape(quant_shape).set_format(make_poly<PlainFormat>(m_qscale_dtype)).set_data(std::move(qscale_buffer));
+}
+
+void SymmLinearQuantizer::quantize(
+    DataType fp_dtype, Shape shape, Span<const std::byte> fp_data, Span<const std::byte> qscale,
+    Span<const std::byte> qzp, Tensor& qdata) const {
+    const auto [height, width] = shape_as_2d(shape);
+
+    const size_t block_height = m_block_height != 0 ? m_block_height : height;
+    const size_t block_width = m_block_width != 0 ? m_block_width : width;
+
+    const QuantizeLinearFn quantize_fn =
+        make_symmetric_quantize_linear(fp_dtype, m_qdata_dtype, m_qscale_dtype, m_qdata_round_mode);
+    Buffer qdata_buffer = quantize_fn(height, width, block_height, block_width, fp_data, qscale, qzp);
+
+    qdata.set_shape(shape).set_format(make_poly<PlainFormat>(m_qdata_dtype)).set_data(std::move(qdata_buffer));
+}
+
+void SymmLinearQuantizer::dynamic_quantize(
+    DataType fp_dtype, Shape shape, Span<const std::byte> fp_data, Tensor& qdata, Tensor& qscale,
+    [[maybe_unused]] Tensor& qzp) const {
+    const auto [height, width] = shape_as_2d(shape);
+
+    const size_t block_height = m_block_height != 0 ? m_block_height : height;
+    const size_t block_width = m_block_width != 0 ? m_block_width : width;
+
+    const std::array quant_shape = quant_shape_2d(height, width, block_height, block_width);
 
     const DynamicQuantizeLinearFn quantize_fn =
         make_dynamic_symmetric_quantize_linear(fp_dtype, m_qdata_dtype, m_qscale_dtype, m_qdata_round_mode);
     auto [qdata_buffer, qscale_buffer, qzp_buffer] = quantize_fn(height, width, block_height, block_width, fp_data);
+    KAI_UNUSED(qzp_buffer);
 
     qdata.set_shape(shape).set_format(make_poly<PlainFormat>(m_qdata_dtype)).set_data(std::move(qdata_buffer));
     qscale.set_shape(quant_shape).set_format(make_poly<PlainFormat>(m_qscale_dtype)).set_data(std::move(qscale_buffer));
@@ -49,10 +95,7 @@ void SymmLinearQuantizer::dynamic_quantize(
 Buffer SymmLinearQuantizer::dequantize(
     DataType fp_dtype, Shape shape, Span<const std::byte> qdata, Span<const std::byte> qscale,
     Span<const std::byte> qzp) const {
-    KAI_TEST_ASSERT_MSG(shape.size() == 2, "Only 2D quantization is supported.");
-
-    const size_t height = shape.at(0);
-    const size_t width = shape.at(1);
+    const auto [height, width] = shape_as_2d(shape);
 
     const size_t block_height = m_block_height != 0 ? m_block_height : height;
     const size_t block_width = m_block_width != 0 ? m_block_width : width;
