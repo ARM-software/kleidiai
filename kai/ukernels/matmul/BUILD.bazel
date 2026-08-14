@@ -182,12 +182,14 @@ I8MM_KERNELS_ASM = [
 
 # buildifier: keep sorted
 SVE2_DOTPROD_KERNELS_ASM = [
+    "matmul_clamp_f16_qai8dxp_qsi8cxp/kai_matmul_clamp_f16_qai8dxp1x4_qsi8cxp8x4_1x8_sve2_dotprod",
     "matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod",
     "matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod",
 ]
 
 # buildifier: keep sorted
 SVE2_I8MM_KERNELS_ASM = [
+    "matmul_clamp_f16_qai8dxp_qsi8cxp/kai_matmul_clamp_f16_qai8dxp4x8_qsi8cxp8x8_16x8_sve2_i8mm",
     "matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp4x8_qsi8cxp8x8_16x8_sve_i8mm",
 ]
 
