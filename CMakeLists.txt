@@ -12,6 +12,12 @@ project(KleidiAI
 
 if(MSVC)
     enable_language(ASM_MARMASM)
+
+    # Preprocess .S assembly files with cl.exe before assembling with armasm64
+    set(CMAKE_ASM_MARMASM_COMPILE_OBJECT
+        "<CMAKE_C_COMPILER> /nologo /EP /P /Tc <SOURCE> <DEFINES> <INCLUDES> /Fi<OBJECT>.asm"
+        "<CMAKE_ASM_MARMASM_COMPILER> -o <OBJECT> <OBJECT>.asm"
+    )
 else()
     enable_language(ASM)
 endif()
