@@ -58,6 +58,7 @@ add_library(kleidiai_test_framework
     test/nextgen/reference/print.cpp
     test/nextgen/reference/pack.cpp
     test/nextgen/reference/compare.cpp
+    test/nextgen/reference/cast.cpp
     test/nextgen/format/plain_format.cpp
     test/nextgen/format/block2d_row_format.cpp
     test/nextgen/quantization/asymm_linear_quantizer.cpp

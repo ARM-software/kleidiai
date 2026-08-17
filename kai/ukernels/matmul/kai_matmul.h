@@ -28,6 +28,20 @@ extern "C" {
 ///     to be populated.
 ///
 
+/// Half-precision floating-point matrix multiplication using SME2 MOPA instruction.
+///
+/// Required operands:
+///   * lhs, dst
+///   * rhs - rhs with per-n accumulator bias
+/// Optional arguments:
+///   * clamp - F32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
+///
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_f16_f16p4vsx2_f16p4vsx2bf16_8vsx8vs_sme2_mopa(void);
+
 /// Single-precision floating-point matrix multiplication using SME2 MOPA instruction.
 ///
 /// Required operands:
@@ -108,6 +122,22 @@ struct kai_matmul_uker_api kai_matmul_clamp_f32_f32_f32p4vsx1bf32_1x32vs_sme2_ml
 ///
 /// @return The micro-kernel API.
 struct kai_matmul_uker_api kai_matmul_clamp_f16_f16_f16p16vsx2bf16_6x16vs_sve2p1_dot(void);
+
+/// Half-precision floating-point vector-matrix multiplication using SME2 DOT instruction.
+///
+/// Required operands:
+///   * dst
+///   * lhs
+///   * rhs - rhs matrix and per-n accumulator bias vector.
+///
+/// Optional arguments:
+///   * clamp - F32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
+///
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_f16_f16_f16p4vsx2bf16_1x32vs_sme2_dot(void);
 
 /// Statically quantized INT8 matrix multiplication with INT4 RHS using SME2 MOPA instruction.
 ///

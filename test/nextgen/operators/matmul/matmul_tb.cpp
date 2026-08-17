@@ -36,6 +36,7 @@
 #include "test/nextgen/operators/matmul/matmul_slots.hpp"
 #include "test/nextgen/quantization/quantizer.hpp"
 #include "test/nextgen/reference/binary_elementwise.hpp"
+#include "test/nextgen/reference/cast.hpp"
 #include "test/nextgen/reference/matmul.hpp"
 #include "test/nextgen/reference/reduce.hpp"
 #include "test/nextgen/reference/unary_elementwise.hpp"
@@ -878,6 +879,7 @@ void MatMulTb::compute_ref_matmul(Rng& rng) {
 
         ref_dst = add_fn(m_shape_m, m_shape_n, ref_dst, m_shape_m, 1, bias_view);
     }
+
     if (config.bias_modes.has(MatMulBiasMode::ACCUMULATION_PER_N)) {
         Buffer tmp_bias;
         Span<const std::byte> bias_view = acc_bias_n_data.data();
@@ -892,7 +894,9 @@ void MatMulTb::compute_ref_matmul(Rng& rng) {
                 m_op->ref_dtype, {m_shape_n}, acc_bias_n_qdata.data(), acc_bias_n_qscale.data(), {});
             bias_view = tmp_bias.view();
         } else if (m_op->bias_dtype != m_op->ref_dtype) {
-            tmp_bias = cast(acc_bias_n_data.data_ptr(), m_op->bias_dtype, m_op->ref_dtype, 1, m_shape_n);
+            const CastFn cast_fn = make_cast(m_op->bias_dtype, m_op->acc_dtype);
+            tmp_bias = cast_fn({m_shape_n}, bias_view);
+
             bias_view = tmp_bias.view();
         }
 

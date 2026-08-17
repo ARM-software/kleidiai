@@ -207,6 +207,9 @@ def matmul_fused_ops() -> Expr:
         "lhs_pack",
         "rhs_pack_kxn",
         "rhs_pack_nxk",
+        Seq(Optional("i"), "matmul_pack_lhs_mxk"),
+        Seq(Optional("i"), "matmul_pack_rhs_nxk"),
+        Seq(Optional("i"), "matmul_pack_rhs_kxn"),
     )
 
 

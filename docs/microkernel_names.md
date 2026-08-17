@@ -133,7 +133,7 @@ Describes the height-by-width filter shape used by a depthwise convolution micro
 
 Describes the primary matmul-family operation and any encoded fused operation.
 
-**`matmul_fused_ops`** = `["i"] "matmul" ["_clamp"] | "lhs_pack" | "rhs_pack_kxn" | "rhs_pack_nxk"`
+**`matmul_fused_ops`** = `["i"] "matmul" ["_clamp"] | "lhs_pack" | "rhs_pack_kxn" | "rhs_pack_nxk" | ["i"] "matmul_pack_lhs_mxk" | ["i"] "matmul_pack_rhs_nxk" | ["i"] "matmul_pack_rhs_kxn"`
 
 ### Directory buffer descriptor
 
@@ -277,7 +277,7 @@ feature = "i8mm" | "dotprod"
 instruction = "dot" | "i8mm" | "mla" | "mmla" | "mopa" | "mop4a" | "sdot"
 dw_stride = "s" @natural_int
 filter_size = @natural_int "x" @natural_int
-matmul_fused_ops = ["i"] "matmul" ["_clamp"] | "lhs_pack" | "rhs_pack_kxn" | "rhs_pack_nxk"
+matmul_fused_ops = ["i"] "matmul" ["_clamp"] | "lhs_pack" | "rhs_pack_kxn" | "rhs_pack_nxk" | ["i"] "matmul_pack_lhs_mxk" | ["i"] "matmul_pack_rhs_nxk" | ["i"] "matmul_pack_rhs_kxn"
 simplified_buffer = [quantization] @operand_type [quantization_axis] ["p"]
 buffer = [quantization] @operand_type [quantization_axis] [pack_description]
 pack_description = packing_layout [pack_order] [scale_type] [bias_type]

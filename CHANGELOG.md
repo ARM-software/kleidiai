@@ -10,6 +10,9 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+- New micro-kernels
+  - SME2 FP16 elastic GEMM/GEMV kernels with corresponding packing kernels.
+
 ## v1.30.0
 
 - New SME2 micro-kernels
