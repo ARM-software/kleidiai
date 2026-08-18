@@ -26,17 +26,18 @@ std::string_view MatMulPackLhsFpWrapper::name() const {
 }
 
 std::vector<MatMulSlot> MatMulPackLhsFpWrapper::run_inputs([[maybe_unused]] ConstTensorSet tensors) const {
-    return {MatMulSlot::LHS_DATA};
+    return {m_src_slot};
 }
 
 std::vector<MatMulSlot> MatMulPackLhsFpWrapper::ref_inputs([[maybe_unused]] ConstTensorSet tensors) const {
-    return {MatMulSlot::LHS_DATA};
+    return {m_src_slot};
 }
 
 std::vector<size_t> MatMulPackLhsFpWrapper::steps(MatShape shape, ConstTensorSet tensors) const {
     KAI_TEST_ASSERT_MSG(shape.size() == 2, "Only M and K dimensions are expected.");
 
-    const auto& pack_args = tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
+    const auto& pack_args =
+        m_fixed_pack_args ? *m_fixed_pack_args : tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
 
     const size_t m_step = m_kernel.get_m_step(pack_args.mr);
     const size_t shape_k = shape.at(MatDim::C);
@@ -45,7 +46,7 @@ std::vector<size_t> MatMulPackLhsFpWrapper::steps(MatShape shape, ConstTensorSet
 }
 
 void MatMulPackLhsFpWrapper::populate_constant_info(TensorSet tensors) const {
-    Tensor& lhs_data = tensors.at(MatMulSlot::LHS_DATA);
+    Tensor& lhs_data = tensors.at(m_src_slot);
     Tensor& packed_lhs = tensors.at(MatMulSlot::LHS_PACKED_IMP);
 
     lhs_data.set_format(m_src_format);
@@ -70,10 +71,11 @@ void MatMulPackLhsFpWrapper::run(
     KAI_TEST_ASSERT_MSG(start_k == 0, "This micro-kernel API doesn't allow K splitting.");
     KAI_TEST_ASSERT_MSG(size_k == full_k, "This micro-kernel API doesn't allow K splitting.");
 
-    const Tensor& lhs_data = tensors.at(MatMulSlot::LHS_DATA);
+    const Tensor& lhs_data = tensors.at(m_src_slot);
     Tensor& packed_lhs = tensors.at(MatMulSlot::LHS_PACKED_IMP);
 
-    const auto& pack_args = tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
+    const auto& pack_args =
+        m_fixed_pack_args ? *m_fixed_pack_args : tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
 
     packed_lhs.set_shape({full_m, full_k}).allocate();
 
@@ -104,7 +106,7 @@ void MatMulPackLhsFpWrapper::run(
 }
 
 void MatMulPackLhsFpWrapper::compute_reference(MatShape shape, TensorSet tensors) const {
-    const Tensor& lhs_data = tensors.at(MatMulSlot::LHS_DATA);
+    const Tensor& lhs_data = tensors.at(m_src_slot);
     Tensor& ref_packed_lhs = tensors.at(MatMulSlot::LHS_PACKED);
 
     ref_packed_lhs.set_shape(shape)

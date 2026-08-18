@@ -353,6 +353,10 @@ DynamicQuantizeLinearFn make_dynamic_symmetric_quantize_linear(
         return dynamic_symmetric_quantize_linear<float, UInt4, float, RoundMode::CURRENT>;
     }
 
+    if (params == std::make_tuple(DataType::FP32, DataType::I4, DataType::FP32, RoundMode::CURRENT)) {
+        return dynamic_symmetric_quantize_linear<float, Int4, float, RoundMode::CURRENT>;
+    }
+
     if (params == std::make_tuple(DataType::FP32, DataType::I8, DataType::FP32, RoundMode::CURRENT)) {
         return dynamic_symmetric_quantize_linear<float, int8_t, float, RoundMode::CURRENT>;
     }

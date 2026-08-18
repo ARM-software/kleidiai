@@ -18,6 +18,7 @@
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_pack_f32p2vlx1_f32_sme.h"
+#include "kai/ukernels/matmul/pack/kai_lhs_pack_x8p2vlx4_x8_sme.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp_f32.h"
 #include "test/common/data_type.hpp"
 #include "test/common/matrix_portion.hpp"
@@ -112,6 +113,20 @@ std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_lhs_mxk_x8p4vsx4_i8_
             4 * get_sme_vector_scale(), 4, 4, false, DataType::I8, std::array<DataType, 0>{},
             std::array<DataType, 0>{}),
         MatMulSlot::LHS_QDATA);
+}
+
+std::unique_ptr<KernelWrapper<MatShape>> create_matmul_lhs_pack_x8p8vsx4_i8_sme() {
+    const size_t mr = 8 * get_sme_vector_scale();
+    return std::make_unique<MatMulPackLhsFpWrapper>(
+        "matmul_lhs_pack_x8p8vsx4_i8_sme",
+        MatMulPackLhsFpInterface{
+            kai_get_m_step_lhs_pack_x8p2vlx4_x8_sme, kai_get_lhs_offset_lhs_pack_x8p2vlx4_x8_sme,
+            kai_get_lhs_packed_offset_lhs_pack_x8p2vlx4_x8_sme, kai_get_lhs_packed_size_lhs_pack_x8p2vlx4_x8_sme,
+            kai_run_lhs_pack_x8p2vlx4_x8_sme},
+        make_poly<PlainFormat>(DataType::I8),
+        make_poly<Block2dRowFormat>(
+            mr, 4, 4, false, DataType::I8, std::array<DataType, 0>{}, std::array<DataType, 0>{}),
+        MatMulSlot::LHS_QDATA, MatMulPackArgs{mr, 8 * get_sme_vector_scale(), 4, 1, 0});
 }
 
 std::unique_ptr<KernelWrapper<MatShape>> create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32() {

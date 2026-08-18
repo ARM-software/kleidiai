@@ -35,6 +35,8 @@ namespace kai::test {
 /// Creates a wrapper for kai_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme with I8 quantized input.
 [[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_lhs_mxk_x8p4vsx4_i8_sme();
 
+[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_lhs_pack_x8p8vsx4_i8_sme();
+
 /// Checks if the portion produces non-empty LHS packing tiles for the x32p4vsx1 matmul operator.
 [[nodiscard]] bool is_shape_suitable_lhs_x32p4vsx1_x32_sme(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);

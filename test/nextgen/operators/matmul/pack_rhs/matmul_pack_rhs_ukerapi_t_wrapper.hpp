@@ -23,10 +23,11 @@ public:
         std::string_view name, kai_matmul_pack_rhs_uker_api api, const Poly<Format>& src_data_format,
         const Poly<Format>& src_bias_format, const Poly<Format>& dst_format,
         MatMulUkerApiBiasDeliveryStage bias_delivery_stage, MatMulPackRhsOperandSlots operand_slots = {},
-        std::vector<MatMulSlot> reference_component_slots = {MatMulSlot::RHS_T_DATA}) :
+        std::vector<MatMulSlot> reference_component_slots = {MatMulSlot::RHS_T_DATA},
+        MatMulSlot run_rhs_slot = MatMulSlot::RHS_T_DATA) :
         MatMulPackRhsUkerApiCommon(
-            name, MatMulSlot::RHS_T_DATA, RhsLayout::NxK, api, src_data_format, src_bias_format, dst_format,
-            bias_delivery_stage, operand_slots, std::move(reference_component_slots)) {
+            name, run_rhs_slot, RhsLayout::NxK, api, src_data_format, src_bias_format, dst_format, bias_delivery_stage,
+            operand_slots, std::move(reference_component_slots)) {
     }
 };
 
