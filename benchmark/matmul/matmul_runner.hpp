@@ -219,7 +219,7 @@ inline void MatMulRunner<MatMulUkernelApiInterface>::run(const void* lhs, const 
     };
 
     const auto api = matmul_interface_.get_api();
-    const auto config = matmul_interface_.get_config();
+    auto config = matmul_interface_.get_config();
 
     const ClampArgs clamp_args{-FLT_MAX, FLT_MAX};
     const bool has_clamp = (matmul_interface_.flags & KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP) != 0;
@@ -229,6 +229,8 @@ inline void MatMulRunner<MatMulUkernelApiInterface>::run(const void* lhs, const 
 
     kai_matmul_uker_args args = {};
     args.flags = matmul_interface_.flags;
+
+    config.format.bl = bl_;
 
     args.shape.m = m_;
     args.shape.n = n_;
