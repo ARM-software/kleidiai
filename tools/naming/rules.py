@@ -113,6 +113,10 @@ def pack_order() -> Expr:
             description="Packing order of data is interleaved with nibble distance of 4",
         ),
         Doc("s16s0", description="Packing order of data is interleaved"),
+        Doc(
+            "s32s0",
+            description="Packing order of data is interleaved with nibble distance of 32",
+        ),
     )
 
 
@@ -135,6 +139,22 @@ def packing_layout() -> Expr:
 )
 def scale_type() -> Expr:
     return Seq("s", OperandType())
+
+
+@grammar.rule(
+    title="Superblock description",
+    description="Describes superblocks.",
+)
+def superblock_description() -> Expr:
+    return Seq(
+        "k",
+        Doc(
+            NaturalInt(),
+            description="Number of values in each K-dimension superblock",
+        ),
+        Optional(scale_type),
+        Optional(pack_order),
+    )
 
 
 @grammar.rule(
@@ -174,8 +194,13 @@ def buffer() -> Expr:
             description="If quantized, indicates quantization granularity",
         ),
         Doc(
-            Optional(pack_description),
-            description="If packed, indicates packing properties",
+            Optional(
+                OneOf(
+                    pack_description,
+                    superblock_description,
+                )
+            ),
+            description="Buffer can either be packed, superblocked, or neither",
         ),
     )
 

@@ -195,6 +195,7 @@ Micro-kernel categories:
 | i4 | blockwise asymmetric | u4 | blockwise asymmetric | f32 | f32 | f32 | Advanced SIMD | <a id="pack-kai-rhs-pack-nxk-qai4c32p-qau4c32s0s1-f32-f32-f32-neon"></a>`kai_rhs_pack_nxk_qai4c32p_qau4c32s0s1_f32_f32_f32_neon` |
 | i4 | blockwise asymmetric | u4 | blockwise asymmetric | f32 | f32 | f32 | Advanced SIMD | <a id="pack-kai-rhs-pack-nxk-qai4c32ps1s0nrx4-qau4c32s0s1-f32-f32-f32-neon"></a>`kai_rhs_pack_nxk_qai4c32ps1s0nrx4_qau4c32s0s1_f32_f32_f32_neon` |
 | i4 | blockwise asymmetric | u4 | blockwise asymmetric | f32 | f32 | f32 | Advanced SIMD | <a id="pack-kai-rhs-pack-nxk-qai4c32ps1s0nrx4-qau4c32s1s0-f32-f32-f32-neon"></a>`kai_rhs_pack_nxk_qai4c32ps1s0nrx4_qau4c32s1s0_f32_f32_f32_neon` |
+| i4 | blockwise asymmetric | i4 | blockwise asymmetric | - | - | - | SME | <a id="pack-kai-rhs-pack-nxk-qai4c32p16vsx4s1s0sf16-qai4c32k256sf16s32s0-sme"></a>`kai_rhs_pack_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme` |
 | i8 | dimensionwise asymmetric | bf16 | - | - | - | - | Advanced SIMD | <a id="pack-kai-lhs-quant-pack-qai8dxp-bf16-neon"></a>`kai_lhs_quant_pack_qai8dxp_bf16_neon` |
 | i8 | dimensionwise asymmetric | f16 | - | - | - | - | Advanced SIMD | <a id="pack-kai-lhs-quant-pack-qai8dxp-f16-neon"></a>`kai_lhs_quant_pack_qai8dxp_f16_neon` |
 | i8 | dimensionwise asymmetric | f32 | - | - | - | - | - | <a id="pack-kai-lhs-quant-pack-qai8dxp-f32"></a>`kai_lhs_quant_pack_qai8dxp_f32` |

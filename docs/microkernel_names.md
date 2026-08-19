@@ -148,14 +148,14 @@ Describes an input or output buffer in a micro-kernel directory name. Directory 
 
 Describes an input or output buffer in a full micro-kernel name. Packed buffers include their concrete packed layout.
 
-**`buffer`** = `[quantization] @operand_type [quantization_axis] [pack_description]`
+**`buffer`** = `[quantization] @operand_type [quantization_axis] [pack_description | superblock_description]`
 
 where:
 
 - **`[quantization]`**: Quantization indication
 - **`@operand_type`**: The main data-type stored in buffer
 - **`[quantization_axis]`**: If quantized, indicates quantization granularity
-- **`[pack_description]`**: If packed, indicates packing properties
+- **`[pack_description | superblock_description]`**: Buffer can either be packed, superblocked, or neither
 
 ### Packed buffer layout description
 
@@ -168,6 +168,16 @@ Describes the packed-buffer suffix of a full buffer descriptor.
 Describes the operand type used for bias values stored in a packed buffer.
 
 **`bias_type`** = `"b" @operand_type`
+
+### Superblock description
+
+Describes superblocks.
+
+**`superblock_description`** = `"k" @natural_int [scale_type] [pack_order]`
+
+where:
+
+- **`@natural_int`**: Number of values in each K-dimension superblock
 
 ### Packed scale type
 
@@ -190,13 +200,14 @@ where:
 
 Describes the ordering of values inside a packed buffer.
 
-**`pack_order`** = `"s1s0" | "s4s0" | "s16s0"`
+**`pack_order`** = `"s1s0" | "s4s0" | "s16s0" | "s32s0"`
 
 where:
 
 - **`"s1s0"`**: Packing order of data is sequential
 - **`"s4s0"`**: Packing order of data is interleaved with nibble distance of 4
 - **`"s16s0"`**: Packing order of data is interleaved
+- **`"s32s0"`**: Packing order of data is interleaved with nibble distance of 32
 
 ### Depthwise output block size
 
@@ -281,12 +292,13 @@ dw_stride = "s" @natural_int
 filter_size = @natural_int "x" @natural_int
 matmul_fused_ops = ["i"] "matmul" ["_clamp"] | "lhs_pack" | "rhs_pack_kxn" | "rhs_pack_nxk" | ["i"] "matmul_pack_lhs_mxk" | ["i"] "matmul_pack_rhs_nxk" | ["i"] "matmul_pack_rhs_kxn"
 simplified_buffer = [quantization] @operand_type [quantization_axis] ["p"]
-buffer = [quantization] @operand_type [quantization_axis] [pack_description]
+buffer = [quantization] @operand_type [quantization_axis] [pack_description | superblock_description]
 pack_description = packing_layout [pack_order] [scale_type] [bias_type]
 bias_type = "b" @operand_type
+superblock_description = "k" @natural_int [scale_type] [pack_order]
 scale_type = "s" @operand_type
 packing_layout = "p" size "x" size
-pack_order = "s1s0" | "s4s0" | "s16s0"
+pack_order = "s1s0" | "s4s0" | "s16s0" | "s32s0"
 dwconv_output_block_size = @natural_int "x" (@natural_int | "c")
 tile_size = size "x" size
 size = @natural_int | @natural_int "vl" | @natural_int "vs" | "mr" | "nr"
