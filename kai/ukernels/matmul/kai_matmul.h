@@ -242,6 +242,29 @@ struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8_qsi8cxp4vsx4bi32sf32_1x32v
 /// @return The micro-kernel API.
 struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8_qsi4cxp8vsx4sf32bi32_1x64vs_sme2_dot(void);
 
+/// Matrix multiplication with FP16 packed LHS and QAI4C32P RHS with FP32 output using SME2 MOPA.
+///
+/// Required CPU features:
+///   * FEAT_SME2
+///   * FEAT_FP16
+///
+/// Configuration parameters:
+///   * format.bl - Block length. Must be 32.
+///
+/// Required operands:
+///   * lhs - FP16 data packed in 4vsx2 panels.
+///   * rhs - qai4c32p16vsx4s1s0sf16 packed with per-block FP16 offset and scale.
+///   * dst - FP32 output matrix.
+///
+/// Optional arguments:
+///   * clamp - FP32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP is set.
+///
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_f32_f16p4vsx2_qai4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa(void);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif
