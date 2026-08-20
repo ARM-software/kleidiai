@@ -10,11 +10,13 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <limits>
 #include <string>
 #include <tuple>
 #include <vector>
 
+#include "kai/ukernels/matmul/kai_matmul.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1vlx4_qsi4c32p4vlx4_1vlx4vl_sme_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot.h"
@@ -495,6 +497,141 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd, EndToEnd) {
                 compare(one_sided_imp_dst.data(), one_sided_out_clamped.data(), DataType::FP32, M, N, rect, handler);
             ASSERT_TRUE(one_sided_success);
         }
+    }
+}
+
+TEST(MatMulClampF32Qsi8d32pQsi4c32pLut, DefaultLutArgument) {
+    struct Variant {
+        kai_matmul_uker_api (*factory)(void);
+        bool (*supported)(void);
+        bool sme2_order;
+        bool gemv;
+    };
+    const std::array<Variant, 1> variants = {{
+        {kai_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s16s0sf16_1x16vs_sme2_dot, cpu_has_sme2, true, true},
+    }};
+    const std::array<int32_t, 16> qsi4_lut = {-8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7};
+
+    size_t exercised = 0;
+    for (const auto& variant : variants) {
+        if (!variant.supported()) {
+            continue;
+        }
+        ++exercised;
+        const kai_matmul_uker_api api = variant.factory();
+        for (const size_t block_length : {32, 64, 128, 256}) {
+            SCOPED_TRACE("block_length=" + std::to_string(block_length));
+            const kai_matmul_uker_config config{.format = {.bl = block_length}};
+            const auto step = api.get_step(&config);
+            const size_t M = variant.gemv ? 1 : step.m + 1;
+            const size_t N = step.n + 3;
+            const size_t K = 256;
+            const size_t mr = step.m;
+            const size_t nr = step.n;
+            const kai_matmul_uker_lhs_dim_args full_lhs_shape{M, K};
+            const kai_matmul_uker_rhs_dim_args full_rhs_shape{N, K};
+            const kai_matmul_uker_dst_dim_args full_dst_shape{M, N};
+            const auto lhs_stride = api.get_lhs_stride(&config, &full_lhs_shape);
+            const auto rhs_stride = api.get_rhs_stride(&config, &full_rhs_shape);
+            const auto dst_stride = api.get_dst_stride(&config, &full_dst_shape);
+            const kai_matmul_uker_lhs_dim_args lhs_index{variant.gemv ? 0 : step.m, 0};
+            const kai_matmul_uker_rhs_dim_args rhs_index{step.n, 0};
+            const kai_matmul_uker_dst_dim_args dst_index{variant.gemv ? 0 : step.m, step.n};
+            ASSERT_EQ(api.get_lhs_offset(&config, &lhs_index, &lhs_stride), variant.gemv ? 0 : lhs_stride.m);
+            ASSERT_EQ(api.get_rhs_offset(&config, &rhs_index, &rhs_stride), rhs_stride.n);
+            ASSERT_EQ(
+                api.get_dst_offset(&config, &dst_index, &dst_stride),
+                (variant.gemv ? 0 : step.m * dst_stride.m) + step.n * sizeof(float));
+            const auto lhs = fill_random<float>(M * K, 11);
+            const auto rhs = fill_random<float>(N * K, 12);
+
+            QuantizationInfo lhs_qinfo{
+                .quant_width = block_length, .dst_type = DataType::QSI8, .scale_type = DataType::FP16};
+            QuantizationInfo rhs_qinfo{
+                .quant_width = block_length, .dst_type = DataType::QSI4, .scale_type = DataType::FP16};
+            const auto [lhs_quant, lhs_qoutputs] = quantize_dynamic(lhs.data(), DataType::FP32, M, K, lhs_qinfo);
+            const auto [rhs_quant, rhs_qoutputs] = quantize_dynamic(rhs.data(), DataType::FP32, N, K, rhs_qinfo);
+
+            Buffer packed_lhs(kai_get_lhs_packed_size_lhs_quant_pack_qsi8d32p_f32_neon(M, K, block_length, mr, 4, 2));
+            abi_check(
+                kai_run_lhs_quant_pack_qsi8d32p_f32_neon, M, K, block_length, mr, 4, 2, 0,
+                reinterpret_cast<const float*>(lhs.data()), K * sizeof(float), packed_lhs.data());
+            const auto rhs_qsu4 = cast_qsu4_qsi4(rhs_quant.data(), N * K);
+            const auto rhs_src = pack_data_scales_interleave_block<UInt4, Float16>(
+                rhs_qsu4.data(), rhs_qoutputs.scales.data(), N, K, block_length);
+            const size_t packed_rhs_size = variant.sme2_order
+                ? kai_get_rhs_packed_size_rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon(N, K, nr, 4, block_length)
+                : kai_get_rhs_packed_size_rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon(N, K, nr, 4, block_length);
+            Buffer packed_rhs(packed_rhs_size);
+            const kai_rhs_pack_qs4cxs1s0_param pack_params{.lhs_zero_point = 1, .rhs_zero_point = 8};
+            if (variant.sme2_order) {
+                abi_check(
+                    kai_run_rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon, 1, N, K, nr, 4, 2, block_length,
+                    reinterpret_cast<const uint8_t*>(rhs_src.data()), nullptr, packed_rhs.data(), 0, &pack_params);
+            } else {
+                abi_check(
+                    kai_run_rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon, 1, N, K, nr, 4, 2, block_length,
+                    reinterpret_cast<const uint8_t*>(rhs_src.data()), nullptr, packed_rhs.data(), 0, &pack_params);
+            }
+
+            std::array<Buffer, 2> null_outputs;
+            for (const bool has_lut : {false, true}) {
+                SCOPED_TRACE(std::string("has_lut=") + (has_lut ? "true" : "false"));
+                const int32_t* lut = has_lut ? qsi4_lut.data() : nullptr;
+                Buffer decoded_rhs(N * K * sizeof(int8_t));
+                for (size_t index = 0; index < N * K; ++index) {
+                    const int32_t quantized = read_array<Int4>(rhs_quant.data(), index);
+                    write_array<int8_t>(decoded_rhs.data(), index, (int8_t)qsi4_lut[quantized + 8]);
+                }
+                for (const bool enable_clamp : {false, true}) {
+                    constexpr float clamp_min = -0.5F;
+                    constexpr float clamp_max = 0.5F;
+                    Buffer reference(M * N * sizeof(float));
+                    for (size_t m = 0; m < M; ++m) {
+                        for (size_t n = 0; n < N; ++n) {
+                            float value = 0;
+                            for (size_t block = 0; block < K / block_length; ++block) {
+                                int32_t accumulator = 0;
+                                for (size_t index = 0; index < block_length; ++index) {
+                                    const size_t k_index = block * block_length + index;
+                                    accumulator += read_array<int8_t>(lhs_quant.data(), m * K + k_index) *
+                                        read_array<int8_t>(decoded_rhs.data(), n * K + k_index);
+                                }
+                                value += accumulator *
+                                    static_cast<float>(read_array<Float16>(
+                                        lhs_qoutputs.scales.data(), m * (K / block_length) + block)) *
+                                    static_cast<float>(read_array<Float16>(
+                                        rhs_qoutputs.scales.data(), n * (K / block_length) + block));
+                            }
+                            write_array<float>(
+                                reference.data(), m * N + n,
+                                enable_clamp ? std::max(clamp_min, std::min(clamp_max, value)) : value);
+                        }
+                    }
+                    Buffer output(M * N * sizeof(float));
+                    kai_matmul_uker_args args{};
+                    args.flags = enable_clamp ? KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP : 0;
+                    args.lut = lut;
+                    args.shape = {.m = M, .n = N, .k = K};
+                    args.operand.lhs = {.ptr = packed_lhs.data(), .stride = lhs_stride};
+                    args.operand.rhs = {.ptr = packed_rhs.data(), .stride = rhs_stride};
+                    args.operand.dst = {.ptr = output.data(), .stride = {.m = N * sizeof(float)}};
+                    args.activation.clamp = {.min_ptr = &clamp_min, .max_ptr = &clamp_max};
+                    abi_check(api.run, &config, &args);
+                    DefaultMismatchHandler handler(0, 0.02, 0, 0.05);
+                    const Rect full_rect = MatrixPortion(0, 0, 1, 1).compute_portion(M, N, M, N);
+                    ASSERT_TRUE(compare(output.data(), reference.data(), DataType::FP32, M, N, full_rect, handler));
+                    if (!has_lut) {
+                        null_outputs[enable_clamp] = std::move(output);
+                    } else {
+                        ASSERT_EQ(0, std::memcmp(null_outputs[enable_clamp].data(), output.data(), output.size()));
+                    }
+                }
+            }
+        }
+    }
+    if (exercised == 0) {
+        GTEST_SKIP() << "SME2 is not supported";
     }
 }
 

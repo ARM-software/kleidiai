@@ -194,11 +194,16 @@ struct kai_matmul_uker_operand_args {
 
 /// Matrix multiplication micro-kernel run arguments.
 struct kai_matmul_uker_args {
-    uint64_t flags;  ///< Control flags.
-
+    uint64_t flags;                                     ///< Control flags.
     struct kai_matmul_uker_dim_args shape;              ///< Problem shape.
     struct kai_matmul_uker_operand_args operand;        ///< Operands.
     struct kai_matmul_uker_activation_args activation;  ///< Fused activation function.
+
+    /// Optional micro-kernel-specific lookup table.
+    ///
+    /// Representation, size, indexing, and behaviour when NULL are defined by
+    /// each micro-kernel. Micro-kernels without lookup table support ignore it.
+    const void* lut;
 };
 
 /// Matrix multiplication micro-kernel run flags.
