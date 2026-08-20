@@ -594,6 +594,15 @@ inline constexpr MatMulUkernelApiInterface
         .scale_bias_elem_size = sizeof(int32_t),
     };
 
+inline constexpr MatMulUkernelApiInterface
+    kai_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4sf32bi32_8vsx8vs_sme2p1_mop4_mopa_interface{
+        .get_config = [] { return kai_matmul_uker_config{}; },
+        .get_api = kai_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4sf32bi32_8vsx8vs_sme2p1_mop4_mopa,
+        .flags = KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP,
+        .args_flags = KAI_BENCHMARK_MATMUL_UKER_ARGS_SCALE_BIAS_GLOBAL,
+        .scale_bias_elem_size = sizeof(int32_t),
+    };
+
 // matmul_i32_u8p_u8p
 inline constexpr MatMulUkernelApiInterface kai_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa_interface{
     .get_config = [] { return kai_matmul_uker_config{}; },
@@ -1143,6 +1152,11 @@ inline const std::array matmul_benchmarks{
         kai_benchmark_matmul<MatMulUkernelApiInterface>,
         kai_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx8vs_sme2_mopa_interface, DataType::QAI8,
         MatMulOp::GEMM, test::cpu_has_sme2),
+    RegisterBenchmark(
+        "kai_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4sf32bi32_8vsx8vs_sme2p1_mop4_mopa",
+        kai_benchmark_matmul<MatMulUkernelApiInterface>,
+        kai_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4sf32bi32_8vsx8vs_sme2p1_mop4_mopa_interface, DataType::QAI8,
+        MatMulOp::GEMM, test::cpu_has_sme_mop4),
 
     // matmul_i32_u8p_u8p
     RegisterBenchmark(

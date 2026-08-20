@@ -242,7 +242,7 @@ def instruction() -> Expr:
     description="Describes the predominant `FEAT_<feature>` used by the implementation.",
 )
 def feature() -> Expr:
-    return OneOf("i8mm", "dotprod")
+    return OneOf("i8mm", "dotprod", "mop4")
 
 
 @grammar.rule(

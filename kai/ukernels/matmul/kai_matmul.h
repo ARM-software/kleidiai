@@ -159,6 +159,28 @@ struct kai_matmul_uker_api kai_matmul_clamp_f16_f16_f16p4vsx2bf16_1x32vs_sme2_do
 /// @return The micro-kernel API.
 struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8p8vsx4_qsi4cxp8vsx4sf32bi32_8vsx8vs_sme2_mopa(void);
 
+/// Statically quantized INT8 matrix multiplication using SME2 outer product (MOPA) and SME2.1 quarter tile outer
+/// product (MOP4A) instructions.
+///
+/// Required CPU features:
+///   * FEAT_SME2.1
+///   * FEAT_SME_MOP4
+///
+/// Required operands:
+///   * dst
+///   * lhs
+///   * rhs - RHS matrix with per-N bias and per-N scale.
+///   * dst_bias_global
+///
+/// Optional arguments:
+///   * clamp - INT32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
+///
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4sf32bi32_8vsx8vs_sme2p1_mop4_mopa(void);
+
 /// Statically quantized INT8 matrix multiplication using SME2 MOPA instruction.
 ///
 /// Required CPU features:

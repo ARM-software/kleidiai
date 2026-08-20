@@ -86,6 +86,12 @@ def kai_cpu_sme():
 def kai_cpu_sme2():
     return ["sme2"]
 
+def kai_cpu_sme2p1():
+    return ["sme2p1"]
+
+def kai_cpu_sme_mop4():
+    return ["sme-mop4"]
+
 # MSVC compiler options
 def kai_msvc_std_copts():
     return ["/Wall"]
@@ -133,7 +139,11 @@ def _kai_c_cxx_common(name, copts_def_func, **kwargs):
     extra_copts = []
 
     # Indicate if SME flags should be replaced since a toolchain may not support it
-    replace_sme_flags = _kai_list_check(any, kai_cpu_sme() + kai_cpu_sme2(), cpu_uarch)
+    replace_sme_flags = _kai_list_check(
+        any,
+        kai_cpu_sme() + kai_cpu_sme2() + kai_cpu_sme2p1() + kai_cpu_sme_mop4(),
+        cpu_uarch,
+    )
 
     if replace_sme_flags:
         if _kai_list_check(all, kai_cpu_sme(), cpu_uarch):
@@ -144,7 +154,15 @@ def _kai_c_cxx_common(name, copts_def_func, **kwargs):
             for uarch in kai_cpu_sme2():
                 cpu_uarch.remove(uarch)
 
-        # Replace SME/SME2 with SVE+SVE2, but disable compiler vectorization
+        if _kai_list_check(all, kai_cpu_sme2p1(), cpu_uarch):
+            for uarch in kai_cpu_sme2p1():
+                cpu_uarch.remove(uarch)
+
+        if _kai_list_check(all, kai_cpu_sme_mop4(), cpu_uarch):
+            for uarch in kai_cpu_sme_mop4():
+                cpu_uarch.remove(uarch)
+
+        # Replace SME feature flags with SVE+SVE2, but disable compiler vectorization
         cpu_uarch.extend(kai_cpu_sve())
         cpu_uarch.extend(kai_cpu_sve2())
 
