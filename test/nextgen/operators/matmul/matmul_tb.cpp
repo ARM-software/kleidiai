@@ -29,6 +29,7 @@
 #include "test/nextgen/format/format.hpp"
 #include "test/nextgen/format/plain_format.hpp"
 #include "test/nextgen/harness/kernel_wrapper.hpp"
+#include "test/nextgen/harness/tensor_cache.hpp"
 #include "test/nextgen/operators/matmul/matmul_config.hpp"
 #include "test/nextgen/operators/matmul/matmul_dims.hpp"
 #include "test/nextgen/operators/matmul/matmul_main_args.hpp"
@@ -160,6 +161,13 @@ void MatMulTb::generate_lhs_data(Rng& rng) {
     const std::string uid = "fill_random(" + format->uid() + "," + std::to_string(seed) + ",{" +
         std::to_string(m_shape_m) + "," + std::to_string(m_shape_k) + "})";
 
+    static TensorCache cache;
+
+    if (auto cached = cache.get(uid)) {
+        tensor = std::move(*cached);
+        return;
+    }
+
     // For deterministic debug inputs call fill_sequential or fill_constant
     tensor.set_shape(shape).set_format(format).set_data(
         format->generate(
@@ -168,6 +176,7 @@ void MatMulTb::generate_lhs_data(Rng& rng) {
                 fill_random(gen_shape, dtype, output, data_rng);
             }),
         uid);
+    cache.set(tensor);
 }
 
 void MatMulTb::generate_rhs_data(Rng& rng) {
