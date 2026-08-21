@@ -99,7 +99,8 @@ Use items here as checklist when reviewing, or making changes,
 
 #### Pure Assembly Micro-kernels
 
-- Conform to [AAPCS64]; save `d8`–`d15` and `x19`–`x28` if modified.
+- Conform to [AAPCS64]; save `d8`–`d15` and `x19`–`x28` if modified. Do not use
+  register `x18`.
 - Emit exactly one `ret` and avoid calling other functions (`bl`), except
   approved [SME support routines][sme_support] with proper `LR`/`FP`
   preservation and `__ARM_FEATURE_SME` guards.
