@@ -304,7 +304,7 @@ def matmul_ukernel_name() -> Expr:
         Doc(Seq("_", buffer), description="Destination buffer"),
         Doc(OneOrMore(Seq("_", buffer)), description="Input buffer(s)"),
         Doc(Optional(Seq("_", tile_size)), description="Tile size"),
-        Doc(Optional(Seq("_", tech)), description="SIMD engine"),
+        Doc(Seq("_", tech), description="SIMD engine"),
         Doc(Optional(Seq("_", feature)), description="Primary feature"),
         Doc(Optional(Seq("_", instruction)), description="Primary instruction"),
         Doc(Optional(Seq("_", uarch)), description="Target micro-architecture"),

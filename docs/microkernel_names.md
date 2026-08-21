@@ -75,14 +75,14 @@ Describes every micro-kernel name accepted by the naming rules.
 
 Describes names for matmul-family compute and packing micro-kernels.
 
-**`matmul_ukernel_name`** = `"kai_" matmul_fused_ops ("_" buffer) ("_" buffer)+ ["_" tile_size] ["_" tech] ["_" feature] ["_" instruction] ["_" uarch]`
+**`matmul_ukernel_name`** = `"kai_" matmul_fused_ops ("_" buffer) ("_" buffer)+ ["_" tile_size] ("_" tech) ["_" feature] ["_" instruction] ["_" uarch]`
 
 where:
 
 - **`"_" buffer`**: Destination buffer
 - **`("_" buffer)+`**: Input buffer(s)
 - **`["_" tile_size]`**: Tile size
-- **`["_" tech]`**: SIMD engine
+- **`"_" tech`**: SIMD engine
 - **`["_" feature]`**: Primary feature
 - **`["_" instruction]`**: Primary instruction
 - **`["_" uarch]`**: Target micro-architecture
@@ -269,7 +269,7 @@ The grammar below is generated from the naming rules.
 ```text
 directory_name = "pack" | matmul_fused_ops "_" simplified_buffer ("_" simplified_buffer)+ | "dwconv" "_" simplified_buffer ("_" simplified_buffer)+
 kernel_name = matmul_ukernel_name | dwconv_ukernel_name
-matmul_ukernel_name = "kai_" matmul_fused_ops ("_" buffer) ("_" buffer)+ ["_" tile_size] ["_" tech] ["_" feature] ["_" instruction] ["_" uarch]
+matmul_ukernel_name = "kai_" matmul_fused_ops ("_" buffer) ("_" buffer)+ ["_" tile_size] ("_" tech) ["_" feature] ["_" instruction] ["_" uarch]
 dwconv_ukernel_name = "kai_" ("dwconv_clamp" ("_" buffer)+ ("_" filter_size) ("_" dw_stride) ("_" dwconv_output_block_size) ("_" tech) ["_" instruction] | "rhs_dwconv_pack" ("_" buffer)+ ("_" tech))
 uarch = "cortexa55"
 tech = "neon" | "sve" | "sve2" | "sve2p1" | "sme" | "sme2" | "sme2p1"

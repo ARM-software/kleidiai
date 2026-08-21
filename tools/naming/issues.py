@@ -418,41 +418,6 @@ KNOWN_UKERNEL_PROBLEMS.update(
     _known_issues(
         description=(
             "Uses the generic `matmul_pack_*` API prefix instead of the "
-            "naming-rule pack operation."
-        ),
-        issues=(
-            (
-                "kai_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme",
-                "kai_lhs_pack_x32p4vsx1_x32_sme",
-            ),
-            (
-                "kai_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme",
-                "kai_lhs_pack_x8p4vsx4_x8_sme",
-            ),
-            (
-                "kai_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme",
-                "kai_rhs_pack_kxn_x32p4vsx1bx32_x32_x32_sme",
-            ),
-            (
-                "kai_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme",
-                "kai_rhs_pack_kxn_x8p4vsx4_x8_sme",
-            ),
-            (
-                "kai_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme",
-                "kai_rhs_pack_nxk_x32p4vsx1bx32_x32_x32_sme",
-            ),
-            (
-                "kai_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme",
-                "kai_rhs_pack_nxk_x8p4vsx4_x8_sme",
-            ),
-        ),
-    )
-)
-
-KNOWN_UKERNEL_PROBLEMS.update(
-    _known_issues(
-        description=(
-            "Uses the generic `matmul_pack_*` API prefix instead of the "
             "naming-rule pack operation. Uses untyped, misplaced, or reversed "
             "scale/bias suffixes; the grammar requires `s<type>` before "
             "`b<type>`."
