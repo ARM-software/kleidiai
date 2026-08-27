@@ -28,6 +28,30 @@ extern "C" {
 ///     to be populated.
 ///
 
+/// Single-precision floating-point matrix multiplication using SME2 MOPA instruction.
+///
+/// Required CPU features:
+///   * FEAT_SME2
+///   * FEAT_FP16
+///
+/// Configuration parameters:
+///   * format.bl - Block length. Must be a non-zero multiple of 32.
+///
+/// Required operands:
+///   * lhs - f16p4vsx2 packed FP16 values.
+///   * rhs - qsi4c32p16vsx4s1s0sf16 packed with per-block FP16 scale.
+///   * dst - FP32 output matrix.
+///
+/// Optional arguments:
+///   * lut - 16 32-bit entries mapping packed 4-bit RHS codes to FP16 values. NULL selects the default QSI4 mapping.
+///   * clamp - F32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
+///
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa(void);
+
 /// Single-precision floating-point vector-matrix multiplication using SME2 DOT instruction.
 ///
 /// Required CPU features:
