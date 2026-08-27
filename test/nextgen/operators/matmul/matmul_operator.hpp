@@ -55,6 +55,7 @@ struct MatMulOperator {
     MatMulBiasQuantInfoSource bias_quant_info_source = MatMulBiasQuantInfoSource::DYNAMIC;
 
     DataType lhs_dtype;
+    std::optional<DataType> lhs_cvt_dtype;  ///< Converted LHS data type, if the micro-kernel converts its input.
     DataType rhs_dtype;
     DataType bias_dtype;
     DataType acc_dtype;

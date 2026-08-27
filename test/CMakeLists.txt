@@ -59,10 +59,13 @@ add_library(kleidiai_test_framework
     test/nextgen/reference/pack.cpp
     test/nextgen/reference/compare.cpp
     test/nextgen/reference/cast.cpp
-    test/nextgen/format/plain_format.cpp
     test/nextgen/format/block2d_row_format.cpp
+    test/nextgen/format/flattened_blockwise_packed_format.cpp
+    test/nextgen/format/plain_format.cpp
+    test/nextgen/format/two_level_blockwise_format.cpp
     test/nextgen/quantization/asymm_linear_quantizer.cpp
     test/nextgen/quantization/symm_linear_quantizer.cpp
+    test/nextgen/quantization/two_level_asym_block_quantizer.cpp
     test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_wrapper_registry.cpp
     test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_dq_wrapper.cpp
     test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_fp_wrapper.cpp

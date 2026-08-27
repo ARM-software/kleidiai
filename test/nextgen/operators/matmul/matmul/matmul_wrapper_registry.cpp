@@ -6,6 +6,7 @@
 
 #include "test/nextgen/operators/matmul/matmul/matmul_wrapper_registry.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <memory>
@@ -19,7 +20,9 @@
 #include "test/common/sme.hpp"
 #include "test/common/sve.hpp"
 #include "test/nextgen/format/block2d_row_format.hpp"
+#include "test/nextgen/format/flattened_blockwise_packed_format.hpp"
 #include "test/nextgen/format/plain_format.hpp"
+#include "test/nextgen/format/two_level_blockwise_format.hpp"
 #include "test/nextgen/functions/round.hpp"
 #include "test/nextgen/harness/kernel_wrapper.hpp"
 #include "test/nextgen/operators/matmul/matmul/matmul_dq_wrapper.hpp"
@@ -55,6 +58,45 @@ std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f16_f16p4vsx2_f1
             std::array<DataType, 0>{}),
         make_poly<PlainFormat>(DataType::FP16), DataType::FP32, MatMulUkerClampConfig::optional(DataType::FP32),
         MatMulUkerApiBiasDeliveryStage::PACK_RHS);
+}
+
+std::unique_ptr<KernelWrapper<MatMulShape>>
+create_matmul_clamp_f32_f16p4vsx2_qai4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa() {
+    return std::make_unique<MatMulUkerApiWrapper>(
+        "matmul_clamp_f32_f16p4vsx2_qai4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa",      // name
+        kai_matmul_clamp_f32_f16p4vsx2_qai4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa(),  // api
+        MatMulSlot::LHS_PACKED,                                                      // lhs_input_slot
+        make_poly<Block2dRowFormat>(                                                 // lhs_format
+            4 * get_sme_vector_scale(), 2, 2, false, DataType::FP16, std::array<DataType, 0>{},
+            std::array<DataType, 0>{}),
+        make_poly<FlattenedBlockwisePackedFormat>(  // rhs_format
+            qai4c32k256_format_config, 16 * std::max<uint64_t>(get_sme_vector_scale(), 1)),
+        make_poly<PlainFormat>(DataType::FP32),                           // dst_format
+        DataType::FP32,                                                   // acc_dtype
+        MatMulUkerClampConfig::optional(DataType::FP32),                  // clamp_config
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS,                         // bias_delivery_stage
+        MatMulUkerOutputStageConfig{},                                    // output_stage_config
+        kai_matmul_uker_config{{qai4c32k256_format_config.block_length}}  // uker_config
+    );
+}
+
+std::unique_ptr<KernelWrapper<MatMulShape>>
+create_matmul_clamp_f32_qsi8d32p1x4_qai4c32p16vsx4s1s0sf16_1x16vs_sme2_dot() {
+    return std::make_unique<MatMulUkerApiWrapper>(
+        "matmul_clamp_f32_qsi8d32p1x4_qai4c32p16vsx4s1s0sf16_1x16vs_sme2_dot",      // name
+        kai_matmul_clamp_f32_qsi8d32p1x4_qai4c32p16vsx4s1s0sf16_1x16vs_sme2_dot(),  // api
+        MatMulSlot::LHS_PACKED,                                                     // lhs_input_slot
+        make_poly<Block2dRowFormat>(                                                // lhs_format
+            1, 4, 32, false, DataType::I8, std::array<DataType, 0>{}, std::array{DataType::FP16, DataType::FP16}, 32),
+        make_poly<FlattenedBlockwisePackedFormat>(  // rhs_format
+            qai4c32k256_format_config, 16 * std::max<uint64_t>(get_sme_vector_scale(), 1)),
+        make_poly<PlainFormat>(DataType::FP32),                           // dst_format
+        DataType::FP32,                                                   // acc_dtype
+        MatMulUkerClampConfig::optional(DataType::FP32),                  // clamp_config
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS,                         // bias_delivery_stage
+        MatMulUkerOutputStageConfig{},                                    // output_stage_config
+        kai_matmul_uker_config{{qai4c32k256_format_config.block_length}}  // uker_config
+    );
 }
 
 std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa() {
