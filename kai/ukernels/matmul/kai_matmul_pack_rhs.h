@@ -234,6 +234,26 @@ struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32
 /// @return The micro-kernel API.
 struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsu4cx_f32_i32_sme(void);
 
+/// Transposed RHS packing micro-kernel for static quantized int4 data with block-wise quantization and super block meta
+/// data.
+///
+/// Required CPU features:
+///   * FEAT_SME
+///
+/// Configuration parameters: none.
+///
+/// Operands:
+///   * rhs_packed - The packed RHS matrix.
+///     * RHS matrix: qai4c32p16vsx4s1s0sf16 data with 16vsx4-ordered per-block FP16 scale and offset metadata.
+///   * rhs - The RHS matrix.
+///     * RHS matrix: qai4c32k256sf16s32s0 4-bit data in NxK layout, stored as 256-value super-blocks. K must be a
+///     multiple of 256
+///
+/// Supported flags: none.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme(void);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

@@ -20,6 +20,14 @@ namespace kai::test {
 [[nodiscard]] std::unique_ptr<KernelWrapper<MatMulShape>>
 create_matmul_clamp_f16_f16p4vsx2_f16p4vsx2bf16_8vsx8vs_sme2_mopa();
 
+/// Creates a wrapper for matmul_clamp_f32_f16p4vsx2_qai4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa kernel.
+[[nodiscard]] std::unique_ptr<KernelWrapper<MatMulShape>>
+create_matmul_clamp_f32_f16p4vsx2_qai4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa();
+
+/// Creates a wrapper for matmul_clamp_f32_qsi8d32p1x4_qai4c32p16vsx4s1s0sf16_1x16vs_sme2_dot micro-kernel.
+[[nodiscard]] std::unique_ptr<KernelWrapper<MatMulShape>>
+create_matmul_clamp_f32_qsi8d32p1x4_qai4c32p16vsx4s1s0sf16_1x16vs_sme2_dot();
+
 /// Creates a wrapper for matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa kernel.
 [[nodiscard]] std::unique_ptr<KernelWrapper<MatMulShape>>
 create_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa();

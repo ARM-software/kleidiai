@@ -30,7 +30,7 @@ std::vector<MatMulSlot> MatMulPackLhsFpWrapper::run_inputs([[maybe_unused]] Cons
 }
 
 std::vector<MatMulSlot> MatMulPackLhsFpWrapper::ref_inputs([[maybe_unused]] ConstTensorSet tensors) const {
-    return {m_src_slot};
+    return {m_reference_lhs_slot};
 }
 
 std::vector<size_t> MatMulPackLhsFpWrapper::steps(MatShape shape, ConstTensorSet tensors) const {
@@ -87,12 +87,12 @@ void MatMulPackLhsFpWrapper::run(
 
     const size_t packed_lhs_offset = m_dst_format->compute_offset(full_shape, tile_coords);
     const size_t imp_packed_lhs_offset =
-        m_kernel.get_lhs_packed_offset(start_m, full_k, pack_args.mr, pack_args.kr, pack_args.sr);
+        m_kernel.get_lhs_packed_offset(start_m, full_k, pack_args.bl, pack_args.mr, pack_args.kr, pack_args.sr);
     KAI_TEST_ASSERT(imp_packed_lhs_offset == packed_lhs_offset);
 
     const size_t packed_lhs_size = packed_lhs.data().size();
     const size_t imp_packed_lhs_size =
-        m_kernel.get_lhs_packed_size(full_m, full_k, pack_args.mr, pack_args.kr, pack_args.sr);
+        m_kernel.get_lhs_packed_size(full_m, full_k, pack_args.bl, pack_args.mr, pack_args.kr, pack_args.sr);
     KAI_TEST_ASSERT(imp_packed_lhs_size == packed_lhs_size);
 
     const Span<const std::byte> lhs_tile = lhs_data.data().subspan(lhs_offset);
@@ -100,13 +100,13 @@ void MatMulPackLhsFpWrapper::run(
 
     abi_check([&] {
         m_kernel.run(
-            size_m, size_k, pack_args.mr, pack_args.kr, pack_args.sr, 0,
-            reinterpret_cast<const float*>(lhs_tile.data()), lhs_stride, packed_lhs_tile.data());
+            size_m, size_k, pack_args.bl, pack_args.mr, pack_args.kr, pack_args.sr, 0, lhs_tile.data(), lhs_stride,
+            packed_lhs_tile.data());
     });
 }
 
 void MatMulPackLhsFpWrapper::compute_reference(MatShape shape, TensorSet tensors) const {
-    const Tensor& lhs_data = tensors.at(m_src_slot);
+    const Tensor& lhs_data = tensors.at(m_reference_lhs_slot);
     Tensor& ref_packed_lhs = tensors.at(MatMulSlot::LHS_PACKED);
 
     ref_packed_lhs.set_shape(shape)
