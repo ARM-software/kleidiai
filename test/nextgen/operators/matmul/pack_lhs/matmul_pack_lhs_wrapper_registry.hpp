@@ -23,8 +23,8 @@ namespace kai::test {
 /// Creates a wrapper for kai_lhs_quant_pack_qai8dxp_f32 micro-kernel.
 [[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_lhs_quant_pack_qai8dxp1x4_f32();
 
-/// Creates a wrapper for kai_lhs_pack_qsi8d32p1x4sf16_f32_neon micro-kernel.
-[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_lhs_pack_qsi8d32p1x4sf16_f32_neon();
+/// Creates a wrapper for kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon micro-kernel.
+[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon();
 
 /// Creates a wrapper for kai_lhs_pack_f32p2vlx1_f32_sme micro-kernel.
 [[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_lhs_pack_f32p2vlx1_f32_sme();

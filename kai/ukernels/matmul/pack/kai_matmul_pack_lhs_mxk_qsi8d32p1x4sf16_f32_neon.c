@@ -183,7 +183,7 @@ static void run(
         args->operand.lhs_packed.stride.m);
 }
 
-struct kai_matmul_pack_lhs_uker_api kai_lhs_pack_qsi8d32p1x4sf16_f32_neon(void) {
+struct kai_matmul_pack_lhs_uker_api kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon(void) {
     const struct kai_matmul_pack_lhs_uker_api api = {
         .run = run,
 

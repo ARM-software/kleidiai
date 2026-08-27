@@ -332,7 +332,7 @@ static void run(
         args->operand.rhs_packed.stride.n);
 }
 
-struct kai_matmul_pack_rhs_uker_api kai_rhs_pack_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme(void) {
+struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme(void) {
     struct kai_matmul_pack_rhs_uker_api api = {
         .run = run,
 

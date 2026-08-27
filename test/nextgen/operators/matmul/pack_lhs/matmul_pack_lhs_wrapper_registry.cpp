@@ -173,14 +173,14 @@ std::unique_ptr<KernelWrapper<MatShape>> create_matmul_lhs_quant_pack_qai8dxp1x4
     return create_matmul_lhs_quant_pack_qai8dxp_f32("1x4", 1, 4);
 }
 
-std::unique_ptr<KernelWrapper<MatShape>> create_matmul_lhs_pack_qsi8d32p1x4sf16_f32_neon() {
+std::unique_ptr<KernelWrapper<MatShape>> create_matmul_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon() {
     constexpr size_t bl = qai4c32k256_format_config.block_length;
 
     return std::make_unique<MatMulPackLhsUkerApiWrapper>(
-        "lhs_pack_qsi8d32p1x4sf16_f32_neon",      // name
-        kai_lhs_pack_qsi8d32p1x4sf16_f32_neon(),  // uker_api
-        make_poly<PlainFormat>(DataType::FP32),   // src_format
-        make_poly<Block2dRowFormat>(              // dst_format
+        "matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon",      // name
+        kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon(),  // uker_api
+        make_poly<PlainFormat>(DataType::FP32),              // src_format
+        make_poly<Block2dRowFormat>(                         // dst_format
             1, 4, bl, false, DataType::I8, std::array<DataType, 0>{}, std::array{DataType::FP16, DataType::FP16}, bl),
         MatMulSlot::LHS_DATA,  // src_slot
         std::vector{
@@ -234,7 +234,8 @@ bool is_shape_suitable_lhs_f16p4vsx2_qai4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa(
 
 bool is_shape_suitable_lhs_qsi8d32p1x4_qai4c32p16vsx4s1s0sf16_1x16vs_sme2_dot(
     size_t shape_m, [[maybe_unused]] size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
-    return is_shape_suitable_lhs_uker_api(shape_m, shape_k, portion, kai_lhs_pack_qsi8d32p1x4sf16_f32_neon());
+    return is_shape_suitable_lhs_uker_api(
+        shape_m, shape_k, portion, kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon());
 }
 
 bool is_shape_suitable_lhs_x8p4vsx4_x8_sme(

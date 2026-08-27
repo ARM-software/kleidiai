@@ -170,14 +170,14 @@ std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_nxk_x8p4vsx4_x8_
 }
 
 std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme() {
-    const kai_matmul_pack_rhs_uker_api api = kai_rhs_pack_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme();
+    const kai_matmul_pack_rhs_uker_api api = kai_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme();
 
     return std::make_unique<MatMulPackRhsUkerApiTWrapper>(
-        "rhs_pack_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme",  // name
-        api,                                                             // api
-        make_poly<TwoLevelBlockwiseFormat>(qai4c32k256_format_config),   // src_data_format
-        unused_bias_format(),                                            // src_bias_format
-        make_poly<FlattenedBlockwisePackedFormat>(                       // dst_format
+        "matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme",  // name
+        api,                                                                    // api
+        make_poly<TwoLevelBlockwiseFormat>(qai4c32k256_format_config),          // src_data_format
+        unused_bias_format(),                                                   // src_bias_format
+        make_poly<FlattenedBlockwisePackedFormat>(                              // dst_format
             qai4c32k256_format_config, 16 * std::max<uint64_t>(get_sme_vector_scale(), 1)),
         MatMulUkerApiBiasDeliveryStage::PACK_RHS,  // bias_delivery_stage
         MatMulPackRhsOperandSlots{},               // operand_slots
@@ -338,7 +338,7 @@ bool is_shape_suitable_rhs_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme(
     }
 
     return is_shape_suitable_rhs_uker_api(
-        shape_n, shape_k, portion, kai_rhs_pack_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme());
+        shape_n, shape_k, portion, kai_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme());
 }
 
 bool is_shape_suitable_rhs_kxn_x8p4vsx4_x8_sme(

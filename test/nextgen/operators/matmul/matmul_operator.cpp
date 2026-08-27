@@ -577,7 +577,7 @@ Span<const MatMulOperator> get_available_matmul_operators() {
     operators[21].bias_dtype = DataType::FP32;
     operators[21].acc_dtype = DataType::FP32;
     operators[21].dst_dtype = DataType::FP32;
-    operators[21].pack_lhs = create_matmul_lhs_pack_qsi8d32p1x4sf16_f32_neon();
+    operators[21].pack_lhs = create_matmul_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon();
     operators[21].pack_rhs = create_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme();
     operators[21].matmul = create_matmul_clamp_f32_qsi8d32p1x4_qai4c32p16vsx4s1s0sf16_1x16vs_sme2_dot();
 
