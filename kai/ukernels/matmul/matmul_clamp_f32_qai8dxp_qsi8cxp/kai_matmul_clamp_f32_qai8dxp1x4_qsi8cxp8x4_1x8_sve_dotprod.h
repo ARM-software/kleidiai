@@ -14,7 +14,7 @@ extern "C" {
 
 /// Micro-kernel dependencies
 ///
-/// -# @ref kai_lhs_quant_pack_qai8dxp_f32_neon to dynamically quantize and pack the LHS matrix in a single step.
+/// -# @ref kai_lhs_quant_pack_qai8dxp_f32 to dynamically quantize and pack the LHS matrix in a single step.
 /// -# @ref kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon to pack the RHS NxK matrix.
 /// -# @ref kai_rhs_pack_kxn_qsi8cxp_qsi8cx_neon to pack the RHS KxN matrix.
 
