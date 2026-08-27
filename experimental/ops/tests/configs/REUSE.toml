@@ -20,3 +20,18 @@ SPDX-License-Identifier = "Apache-2.0"
 path = ["gemm_tests.cfg"]
 SPDX-FileCopyrightText = "2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com"
 SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ["conv_tests_new_reduced.cfg"]
+SPDX-FileCopyrightText = "2026 Arm Limited and/or its affiliates <open-source-office@arm.com"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ["depthwise_tests_new_reduced.cfg"]
+SPDX-FileCopyrightText = "2026 Arm Limited and/or its affiliates <open-source-office@arm.com"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ["gemm_tests_new_reduced.cfg"]
+SPDX-FileCopyrightText = "2026 Arm Limited and/or its affiliates <open-source-office@arm.com"
+SPDX-License-Identifier = "Apache-2.0"

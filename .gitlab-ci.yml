@@ -101,3 +101,310 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event' && $CI_MERGE_REQUEST_DRAFT == "true"
       when: never
     - when: always
+
+# Purpose: Resolve and lock gcovr version for consistent coverage reporting.
+resolve-gcovr:
+  extends: .stable-rules
+  stage: analyze
+  needs: []
+  variables:
+    PIP_CACHE_DIR: ".cache/pip3"
+  cache:
+    - key: "cache-pip3"
+      paths:
+        - $PIP_CACHE_DIR
+      policy: $CACHE_POLICY
+  script:
+    # Install latest gcovr once, then record the exact version
+    - python3 -m pip install --cache-dir=$PIP_CACHE_DIR --user -U --break-system-packages gcovr
+    - export PATH="$(python3 -m site --user-base)/bin:${PATH}"
+    - GCOVR_VERSION=$(gcovr --version | awk 'NR==1 {print $2; exit}')
+    - echo "GCOVR_VERSION=${GCOVR_VERSION}" | tee gcovr.env
+  artifacts:
+    paths:
+      - gcovr.env
+
+# Base template: .gcovr-install
+# Purpose: Install cached gcovr version from resolve-gcovr job.
+.gcovr-install:
+  variables:
+    PIP_CACHE_DIR: ".cache/pip3"
+  cache:
+    - key: "cache-pip3"
+      paths:
+        - $PIP_CACHE_DIR
+      policy: $CACHE_POLICY
+  before_script:
+    # Prefer Homebrew python3.13 -> 3.10 on macOS, otherwise keep python3 on PATH
+    - |
+      PYTHON_BIN="python3"
+      if [ "$(uname)" = "Darwin" ]; then
+        export PATH="/opt/homebrew/bin:/usr/local/bin:${PATH}"
+        for ver in 3.13 3.12 3.11 3.10; do
+          if [ -x "/opt/homebrew/bin/python${ver}" ]; then
+            PYTHON_BIN="/opt/homebrew/bin/python${ver}"
+            break
+          fi
+        done
+      fi
+      # Ensure the selected python is present on PATH.
+      if ! command -v "${PYTHON_BIN}" >/dev/null 2>&1; then
+        echo "Missing ${PYTHON_BIN} on PATH" >&2
+        exit 1
+      fi
+      # Enforce minimum python version required by gcovr tooling.
+      if ! "$PYTHON_BIN" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)'; then
+        echo "Python ${PYTHON_BIN} is too old; need >= 3.10" >&2
+        exit 1
+      fi
+      echo "Using python: ${PYTHON_BIN}"
+      "$PYTHON_BIN" -V
+
+    # Load the locked GCOVR_VERSION from resolve-gcovr
+    - |
+      if [ -f gcovr.env ]; then
+        set -a
+        . gcovr.env
+        set +a
+        echo "Using gcovr ${GCOVR_VERSION} from resolve-gcovr"
+      else
+        echo "gcovr.env not found; ensure resolve-gcovr is listed in needs." >&2
+        exit 1
+      fi
+
+    # Install pip + gcovr==$GCOVR_VERSION
+    - |
+      if "$PYTHON_BIN" -m pip help install 2>&1 | grep -q -- "--break-system-packages"; then
+        PIP_BREAK_SYSTEM_PACKAGES_FLAG="--break-system-packages"
+      else
+        PIP_BREAK_SYSTEM_PACKAGES_FLAG=""
+      fi
+      $PYTHON_BIN -m pip install --cache-dir=$PIP_CACHE_DIR --user -U ${PIP_BREAK_SYSTEM_PACKAGES_FLAG} pip
+      $PYTHON_BIN -m pip install --cache-dir=$PIP_CACHE_DIR --user ${PIP_BREAK_SYSTEM_PACKAGES_FLAG} "gcovr==${GCOVR_VERSION}"
+    - export PATH="$("$PYTHON_BIN" -m site --user-base)/bin:${PATH}"
+
+    # Sanity check the installed gcovr version
+    - |
+      (
+        set -euo pipefail
+        INSTALLED_GCOVR_VERSION=$(gcovr --version | awk 'NR==1 {print $2; exit}')
+        echo "gcovr ${INSTALLED_GCOVR_VERSION}"
+        if [ "${INSTALLED_GCOVR_VERSION}" != "${GCOVR_VERSION}" ]; then
+          echo "Expected gcovr ${GCOVR_VERSION} but found ${INSTALLED_GCOVR_VERSION}" >&2
+          exit 1
+        fi
+      )
+
+# Base template: .coverage-base
+# Purpose: Instrumented build & diversified benchmark/test execution producing per-job JSON coverage trace.
+.coverage-base:
+  extends:
+    - .stable-rules
+  needs: []
+  variables:
+    GCOV_EXECUTABLE: ""
+  script:
+    # Configure and build with coverage instrumentation
+    - cmake -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+      -DCMAKE_CXX_FLAGS="-Werror --coverage" -DCMAKE_C_FLAGS="-Werror --coverage" -DCMAKE_BUILD_TYPE=Release
+      -DKLEIDIAI_BUILD_TESTS=ON -DKLEIDIAI_BUILD_BENCHMARK=ON
+      -DKLEIDIAI_OPS_ENABLE_BUILD_BENCHMARK=ON
+      ${CMAKE_EXTRA_FLAGS}
+      -S . -B ${CI_JOB_NAME_SLUG}
+    - cmake --build ${CI_JOB_NAME_SLUG} -j${PARALLEL_JOBS} --verbose
+    # Run kleidiai_test to generate coverage report for unit tests
+    - KLEIDIAI_TEST_CI_QUIET=${KLEIDIAI_TEST_CI_QUIET:-1} ./${CI_JOB_NAME_SLUG}/kleidiai_test --gtest_brief=1 --gtest_random_seed=${GLOBAL_TEST_SEED:-42}
+    # Run combined benchmark for all subcommands (backwards compatibility, matmul, imatmul, dwconv)
+    - |
+      declare -a BENCHMARKS=(
+        ""        "--benchmark_dry_run=true -m 1 -n 30 -k 64"
+        "matmul"  "--benchmark_dry_run=true -m 1 -n 30 -k 64"
+        "pack_matmul" "--benchmark_dry_run=true -m 1 -n 30 -k 64"
+        "imatmul" "--benchmark_dry_run=true -m 1 -n 30 -c 4 -l 15"
+        "dwconv"  "--benchmark_dry_run=true --input_height 32 --input_width 32 --channels 64 --padding 1,1,1,1"
+      )
+      for ((i=0; i<${#BENCHMARKS[@]}; i+=2)); do
+        KT="${BENCHMARKS[i]}"
+        ARGS="${BENCHMARKS[i+1]}"
+        # Run benchmark
+        if [ -z "$KT" ]; then
+          ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark $ARGS > /dev/null 2>&1
+          ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark --benchmark_list_tests > /dev/null 2>&1
+          ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark > /dev/null 2>&1 || true
+        else
+          ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark $KT $ARGS > /dev/null 2>&1
+          ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark $KT --benchmark_list_tests > /dev/null 2>&1
+          ./${CI_JOB_NAME_SLUG}/kleidiai_benchmark $KT > /dev/null 2>&1 || true
+        fi
+      done
+
+    # Collect coverage for experimental/ops soak tests (conv, depthwise, gemm) with reduced test plans
+    - |
+      # SOAK_TEST_THREADS controls concurrent soak cases; each plan entry's
+      # -t option controls inner GEMM threads. The divisor represents an estimated
+      # average cost of roughly 3.5 inner threads per case, rounded to four.
+      # This intentionally targets average utilization rather than a hard cap, so a
+      # -t 7 case can temporarily exceed PARALLEL_JOBS.
+      SOAK_TEST_THREADS=$(( PARALLEL_JOBS / 4 ))
+      if [ "${SOAK_TEST_THREADS}" -lt 1 ]; then
+        SOAK_TEST_THREADS=1
+      fi
+      export SOAK_TEST_THREADS
+    - echo "Running soak tests with ${SOAK_TEST_THREADS} concurrent soak cases for coverage collection"
+    - echo "Running conv soak tests!"
+    - |
+      set -o pipefail
+      python3 experimental/ops/scripts/soak-full.py \
+        --test_plan_file experimental/ops/tests/configs/conv_tests_new_reduced.cfg \
+        --run_test_plan \
+        --conv \
+        --threads ${SOAK_TEST_THREADS} \
+        ${EXPERIMENTAL_OPS_SOAK_EXTRA_ARGS:-} \
+        ${EXPERIMENTAL_OPS_SOAK_CONV_EXTRA_ARGS:-} \
+        --binary ${PWD}/${CI_JOB_NAME_SLUG}/experimental/ops/benchmark/gemm 2>&1 \
+        | tee conv_tests.log
+    - echo "Running depthwise soak tests!"
+    - |
+      python3 experimental/ops/scripts/soak-full.py \
+        --test_plan_file experimental/ops/tests/configs/depthwise_tests_new_reduced.cfg \
+        --run_test_plan \
+        --conv \
+        --kernel_filter depthwise \
+        --threads ${SOAK_TEST_THREADS} \
+        ${EXPERIMENTAL_OPS_SOAK_EXTRA_ARGS:-} \
+        ${EXPERIMENTAL_OPS_SOAK_DEPTHWISE_EXTRA_ARGS:-} \
+        --binary ${PWD}/${CI_JOB_NAME_SLUG}/experimental/ops/benchmark/gemm 2>&1 \
+        | tee depthwise_tests.log
+    - echo "Running gemm soak tests!"
+    - |
+      python3 experimental/ops/scripts/soak-full.py \
+        --test_plan_file experimental/ops/tests/configs/gemm_tests_new_reduced.cfg \
+        --run_test_plan \
+        --threads ${SOAK_TEST_THREADS} \
+        ${EXPERIMENTAL_OPS_SOAK_EXTRA_ARGS:-} \
+        ${EXPERIMENTAL_OPS_SOAK_GEMM_EXTRA_ARGS:-} \
+        --binary ${PWD}/${CI_JOB_NAME_SLUG}/experimental/ops/benchmark/gemm 2>&1 \
+        | tee gemm_tests.log
+
+    # Generate gcovr configuration tuned to exclude build dir, unreachable branches, and assertion macros.
+    - mkdir -p build/coverage
+    - |
+      echo -e "
+      root=${PWD}
+      exclude=${PWD}/${CI_JOB_NAME_SLUG}
+      exclude=${PWD}/experimental/ops/benchmark
+      gcov-ignore-parse-errors=suspicious_hits.warn
+      gcov-executable=$GCOV_EXECUTABLE
+      exclude-unreachable-branches=yes
+      exclude-lines-by-pattern=.*KAI_(?:ASSERT|ASSUME|ERROR).*
+      exclude-branches-by-pattern=.*KAI_(?:ASSERT|ASSUME).*" > build/gcovr.cfg
+    # Post-process generated coverage report into JSON for later aggregation.
+    - gcovr --json=build/coverage/${CI_JOB_NAME_SLUG}.json -j ${PARALLEL_JOBS} --config build/gcovr.cfg --merge-mode-functions=merge-use-line-min
+  artifacts:
+    when: always
+    expire_in: 1 day
+    paths:
+      - build/coverage/${CI_JOB_NAME_SLUG}.json
+      - conv_tests.log
+      - depthwise_tests.log
+      - gemm_tests.log
+      - soak-*/
+
+# Purpose: Coverage generation using llvm-cov gcov with cached gcovr install.
+coverage-linux:
+  extends:
+    - .coverage-base
+    - .gcovr-install
+  stage: analyze
+  needs:
+    - resolve-gcovr
+  variables:
+    GCOV_EXECUTABLE: "llvm-cov gcov"
+
+# Purpose: SVE256 coverage variant (focus on *_sve_* tests) to extend line/function coverage set.
+coverage-linux-sve256:
+  extends:
+    - coverage-linux
+  variables:
+    # Use instance with SVE VL 256
+    KUBERNETES_NODE_SELECTOR_INSTANCE_GENERATION: "karpenter.k8s.aws/instance-generation=7"
+    GTEST_FILTER: "*_sve_*"
+
+# Purpose: Coverage build for SME/SME2 architecture.
+coverage-clang:
+  extends:
+    - .coverage-base
+    - .gcovr-install
+  stage: analyze
+  needs:
+    - resolve-gcovr
+  tags:
+    - apple_silicon
+  variables:
+    GCOV_EXECUTABLE: "xcrun llvm-cov gcov"
+    CMAKE_EXTRA_FLAGS: "-DKLEIDIAI_INTERNAL_EXTRA_ARCH='+sme'"
+
+# Purpose: Aggregate all JSON coverage traces into Cobertura & HTML reports for publication.
+coverage:
+  extends:
+    - .stable-rules
+    - .gcovr-install
+  stage: deploy
+  needs:
+    - resolve-gcovr
+    - coverage-linux
+    - coverage-linux-sve256
+    - coverage-clang
+  tags:
+    - apple_silicon
+  script:
+    # Generage Cobertura and HTML reports merging coverage across variants,
+    # where each variant artifact should be stored in JSON file at build/coverage/
+    # Merge different reports with merge-lines and separate function coverage with same name.
+    # It's required to handle different build/OS options properly.
+    - mkdir -p build/html/coverage
+    - gcovr --json-add-tracefile "build/coverage/*.json" --print-summary
+      --cobertura=build/coverage.xml --html-details=build/html/coverage/coverage_report.html
+      --html-title="KleidiAI Coverage Report" --merge-mode-functions=separate --merge-lines
+      -j ${PARALLEL_JOBS}
+  # Publish line coverage metric for pipeline reports
+  coverage: '/^lines:\s+(\d+.\d)%\s+/'
+  artifacts:
+    name: ${CI_JOB_NAME}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}
+    expire_in: 1 day
+    reports:
+      # Publish coverage report for MR visualisation
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
+    paths:
+      - build
+
+# Purpose: Publish coverage HTML via Pages (index auto-redirects to detailed report).
+pages:
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  timeout: 30m
+  stage: deploy
+  tags:
+    - apple_silicon
+  needs:
+    - coverage
+  script:
+    # Generate simple redirect page
+    - |
+      echo '
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta http-equiv="refresh" content="5; url=coverage/coverage_report.html" />
+            <title>Redirecting...</title>
+          </head>
+          <body>
+            <p>If you are not redirected soon, <a href="coverage/coverage_report.html">click here</a>.</p>
+          </body>
+        </html>' > build/html/index.html
+  artifacts:
+    paths:
+      - build/html
+  publish: build/html

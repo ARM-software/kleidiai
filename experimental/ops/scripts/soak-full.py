@@ -378,13 +378,15 @@ def legacy_dump_entry_from_filename(path, known_kerns=None):
     ]
 
 
-def sidecar_dump_entries(directory):
+def sidecar_dump_entries(directory, case_index=None):
     sidecar = Path(directory) / SIDECAR_FILENAME
     with open(sidecar, "r") as f:
         metadata = json.load(f)
 
     entries = []
     for filename, dump_metadata in metadata.get("dumps", {}).items():
+        if case_index is not None and dump_metadata.get("case_index") != case_index:
+            continue
         path = Path(directory) / filename
         if not path.is_file():
             logging.warning("Skipping missing dump: %s", path)
@@ -399,12 +401,17 @@ def sidecar_dump_entries(directory):
     return entries
 
 
-def iter_dump_entries(directory, known_kerns=None):
+def iter_dump_entries(directory, known_kerns=None, case_index=None):
     directory = Path(directory)
     if (directory / SIDECAR_FILENAME).is_file():
-        return sidecar_dump_entries(directory)
+        return sidecar_dump_entries(directory, case_index)
 
     entries = []
+    if case_index is not None:
+        raise ValueError(
+            "--dump-case-index requires a dump directory with soak-dumps.json"
+        )
+
     for file in iter_dump_files(directory):
         entries.extend(legacy_dump_entry_from_filename(file, known_kerns))
 
@@ -772,6 +779,9 @@ def create_dumpdir(tm, kerns, args):
         "failed": failed,
     }
 
+    if created == 0:
+        raise ValueError(f"No usable dumps created from {args.test_plan_file}")
+
     sidecar = output_dir / SIDECAR_FILENAME
     with open(sidecar, "w") as f:
         json.dump(metadata, f, indent=2)
@@ -792,7 +802,12 @@ if __name__ == "__main__":
         action="store_true",
     )
     parser.add_argument("--binary", help="Set binary to run", default=BINARY)
-    parser.add_argument("--threads", help="Set thread count", default=1, type=int)
+    parser.add_argument(
+        "--threads",
+        help="Set the maximum number of concurrent soak cases",
+        default=1,
+        type=int,
+    )
     parser.add_argument(
         "--conv", help="Generate convolution testcases", action="store_true"
     )
@@ -808,6 +823,11 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--dumpdir", help="Directory of dumps to run", default=None, type=str
+    )
+    parser.add_argument(
+        "--dump-case-index",
+        help="Replay only dumps for this original test-plan case index",
+        type=int,
     )
     parser.add_argument(
         "--create_dumpdir",
@@ -871,6 +891,12 @@ if __name__ == "__main__":
     if args.overwrite_dumpdir and not args.create_dumpdir:
         parser.error("--overwrite_dumpdir requires --create_dumpdir")
 
+    if args.dump_case_index is not None:
+        if args.dumpdir is None:
+            parser.error("--dump-case-index requires --dumpdir")
+        if args.dump_case_index < 0:
+            parser.error("--dump-case-index must be non-negative")
+
     if args.skip_cases < 0:
         parser.error("--skip_cases must be non-negative")
 
@@ -891,7 +917,15 @@ if __name__ == "__main__":
 
     if args.dumpdir:
         logging.info("Test Dump Mode")
-        for dump_file, kernel, extra_args in iter_dump_entries(args.dumpdir, kerns):
+        try:
+            dump_entries = iter_dump_entries(args.dumpdir, kerns, args.dump_case_index)
+        except ValueError as e:
+            parser.error(str(e))
+        if not dump_entries:
+            if args.dump_case_index is not None:
+                parser.error(f"No dumps found for case index {args.dump_case_index}")
+            parser.error(f"No usable dumps found in {args.dumpdir}")
+        for dump_file, kernel, extra_args in dump_entries:
             make_case(tm, [kernel], args, dump_file=dump_file, extra_args=extra_args)
     elif args.create_dumpdir:
         logging.info("Create Dump Mode")
@@ -926,6 +960,10 @@ if __name__ == "__main__":
                 break
 
     tm.shutdown()
+
+    if args.dumpdir and TESTS_RUN == 0:
+        logging.error("Dump replay did not execute any compatible kernels")
+        sys.exit(1)
 
     if failed_tests:
         logging.info("Failed Tests")
