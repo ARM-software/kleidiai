@@ -215,6 +215,7 @@ Micro-kernel categories:
 | i4 | channelwise symmetric | i4 | channelwise symmetric | i32 | f32 | - | SME | <a id="pack-kai-rhs-pack-kxn-qsi4cxp8vsx4sf32bi32-qsi4cx-f32-i32-sme"></a>`kai_rhs_pack_kxn_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme` |
 | i4 | channelwise symmetric | u4 | channelwise symmetric | i32 | f32 | - | SME | <a id="pack-kai-rhs-pack-kxn-qsi4cxp8vsx4sf32bi32-qsu4cx-f32-i32-sme"></a>`kai_rhs_pack_kxn_qsi4cxp8vsx4sf32bi32_qsu4cx_f32_i32_sme` |
 | i4 | channelwise symmetric | x4 | channelwise symmetric | i32 | f32 | - | SME | <a id="pack-kai-rhs-pack-kxn-qsi4cxp8vsx4sf32bi32-qsx4cx-f32-i32-sme"></a>`kai_rhs_pack_kxn_qsi4cxp8vsx4sf32bi32_qsx4cx_f32_i32_sme` |
+| u2 | channelwise symmetric | u2 | channelwise symmetric | i32 | f32 | - | SME | <a id="pack-kai-matmul-pack-rhs-kxn-qsu2cxp16vsx4sf32bi32-qsu2cx-f32-i32-sme"></a>`kai_matmul_pack_rhs_kxn_qsu2cxp16vsx4sf32bi32_qsu2cx_f32_i32_sme` |
 | i4 | channelwise symmetric | i4 | channelwise symmetric | i32 | f32 | - | SME | <a id="pack-kai-rhs-pack-nxk-qsi4cxp8vsx4sf32bi32-qsi4cx-f32-i32-sme"></a>`kai_rhs_pack_nxk_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme` |
 | i4 | channelwise symmetric | u4 | channelwise symmetric | i32 | f32 | - | SME | <a id="pack-kai-rhs-pack-nxk-qsi4cxp8vsx4sf32bi32-qsu4cx-f32-i32-sme"></a>`kai_rhs_pack_nxk_qsi4cxp8vsx4sf32bi32_qsu4cx_f32_i32_sme` |
 | i4 | channelwise symmetric | x4 | channelwise symmetric | i32 | f32 | - | SME | <a id="pack-kai-rhs-pack-nxk-qsi4cxp8vsx4sf32bi32-qsx4cx-f32-i32-sme"></a>`kai_rhs_pack_nxk_qsi4cxp8vsx4sf32bi32_qsx4cx_f32_i32_sme` |
@@ -230,6 +231,7 @@ Micro-kernel categories:
 | i8 | blockwise per dimension symmetric | f16 | - | - | - | - | Advanced SIMD | <a id="pack-kai-lhs-quant-pack-qsi8d32pscalef32-f16-neon"></a>`kai_lhs_quant_pack_qsi8d32pscalef32_f16_neon` |
 | i8 | blockwise per dimension symmetric | f32 | - | - | - | - | Advanced SIMD | <a id="pack-kai-lhs-quant-pack-qsi8d32pscalef32-f32-neon"></a>`kai_lhs_quant_pack_qsi8d32pscalef32_f32_neon` |
 | i8 | blockwise per dimension symmetric | f32 | - | - | - | - | Advanced SIMD | <a id="pack-kai-matmul-pack-lhs-mxk-qsi8d32p1x4sf16-f32-neon"></a>`kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon` |
+| u2 | channelwise symmetric | u2 | channelwise symmetric | i32 | f32 | - | SME | <a id="pack-kai-matmul-pack-rhs-nxk-qsu2cxp16vsx4sf32bi32-qsu2cx-f32-i32-sme"></a>`kai_matmul_pack_rhs_nxk_qsu2cxp16vsx4sf32bi32_qsu2cx_f32_i32_sme` |
 | u2 | channelwise symmetric | u2 | channelwise symmetric | f32 | f32 | - | Advanced SIMD | <a id="pack-kai-rhs-pack-nxk-qsu2cxp4vlx4-qsu2cx-neon"></a>`kai_rhs_pack_nxk_qsu2cxp4vlx4_qsu2cx_neon` |
 | u2 | channelwise symmetric | u2 | channelwise symmetric | f32 | f32 | - | Advanced SIMD | <a id="pack-kai-rhs-pack-nxk-qsu2cxp4x4bf32sf32-qsu2cx-neon"></a>`kai_rhs_pack_nxk_qsu2cxp4x4bf32sf32_qsu2cx_neon` |
 | x16 | - | x16 | - | - | - | - | SME | <a id="pack-kai-lhs-pack-x16p2vlx2-x16-sme"></a>`kai_lhs_pack_x16p2vlx2_x16_sme` |
