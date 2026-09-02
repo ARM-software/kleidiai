@@ -13,6 +13,7 @@
 #include "test/common/assert.hpp"
 #include "test/common/buffer.hpp"
 #include "test/common/data_type.hpp"
+#include "test/common/int2.hpp"
 #include "test/common/int4.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/round.hpp"
@@ -76,6 +77,9 @@ ReduceFn make_reduce_add(DataType src_dtype, DataType dst_dtype) {
 
     if (dtypes == std::make_tuple(DataType::I4, DataType::I32)) {
         return reduce<AddOp<Int4, int32_t>>;
+    }
+    if (dtypes == std::make_tuple(DataType::QSI2, DataType::I32)) {
+        return reduce<AddOp<Int2, int32_t>>;
     }
 
     if (dtypes == std::make_tuple(DataType::I8, DataType::I32)) {

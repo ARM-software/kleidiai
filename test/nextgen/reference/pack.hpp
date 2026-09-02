@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -7,6 +7,7 @@
 #pragma once
 
 #include <cstddef>
+#include <optional>
 
 #include "test/common/data_type.hpp"
 #include "test/common/span.hpp"
@@ -51,6 +52,7 @@ namespace kai::test {
 /// @param[in] width_align The input data is padded so that the width is multiple of this value
 ///                        before the data is packed. This value must be divisible by block width.
 /// @param[in] pad_right_same Right padding with the last element instead of 0.
+/// @param[in] pad_value Value used for padding, or no value to pad with 0.
 /// @param[in] height The data height.
 /// @param[in] width The data width.
 /// @param[out] packed_data The packed data buffer.
@@ -58,8 +60,8 @@ namespace kai::test {
 ///
 /// @return The size of packed data.
 using PackBlock2dFn = size_t (*)(
-    size_t block_height, size_t block_width, size_t width_align, bool pad_right_same, size_t height, size_t width,
-    Span<std::byte> packed_data, Span<const std::byte> data);
+    size_t block_height, size_t block_width, size_t width_align, bool pad_right_same, std::optional<double> pad_value,
+    size_t height, size_t width, Span<std::byte> packed_data, Span<const std::byte> data);
 
 /// Gets the 2D block packing function for the specified data type.
 ///

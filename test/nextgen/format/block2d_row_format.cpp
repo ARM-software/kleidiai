@@ -147,8 +147,8 @@ Buffer Block2dRowFormat::pack(Shape shape, Span<const Span<const std::byte>> buf
     const size_t data_size = num_block_rows * layout.num_component_blocks * component_data_size;
     Buffer block_data_buffer(data_size, 0);
     const size_t packed_data_size = pack_data_fn(
-        m_block_height, m_block_width, layout.width_alignment, m_pad_right_same, height, width, block_data_buffer,
-        data_buffer);
+        m_block_height, m_block_width, layout.width_alignment, m_pad_right_same, m_pad_value, height, width,
+        block_data_buffer, data_buffer);
     KAI_TEST_ASSERT(packed_data_size == data_size);
     const Span<const std::byte> block_data = block_data_buffer;
 
@@ -209,9 +209,10 @@ bool Block2dRowFormat::compare(
     KAI_TEST_ASSERT(tile_col + tile_width == width || (tile_col + tile_width) % m_block_width == 0);
 
     const Block2dRowLayout layout = get_block2d_row_layout(width, m_width_align, m_block_width, m_block_length);
-    if (m_pad_right_same) {
+    if (m_pad_right_same || m_pad_value.has_value()) {
         // If the tile includes the last block column, extends the tile to cover the right padding blocks.
-        // In SAME padding mode, these blocks contain data even though they are outside the tile of interests.
+        // In SAME or specific value padding mode, these blocks contain data even though they are outside the tile of
+        // interests.
         // If we don't extend the tile, there will be mismatched because these data points are outside the tile
         // and the data is not 0.
         tile_width = round_up_multiple(tile_col + tile_width, layout.width_alignment) - tile_col;
@@ -391,7 +392,7 @@ std::string Block2dRowFormat::uid() const {
     std::string uid = "block2d_row";
     uid += "_" + std::to_string(m_block_height) + "x" + std::to_string(m_block_width);
     uid += "_wa" + std::to_string(m_width_align);
-    uid += (m_pad_right_same ? "_same" : "_zero");
+    uid += m_pad_right_same ? "_same" : m_pad_value.has_value() ? "_value" + std::to_string(*m_pad_value) : "_zero";
     if (m_block_length != 0) {
         uid += "_bl" + std::to_string(m_block_length);
     }
@@ -423,6 +424,7 @@ bool Block2dRowFormat::operator==(const Format& other) const {
         m_block_width == rhs->m_block_width &&        //
         m_width_align == rhs->m_width_align &&        //
         m_pad_right_same == rhs->m_pad_right_same &&  //
+        m_pad_value == rhs->m_pad_value &&            //
         m_dtype == rhs->m_dtype &&                    //
         m_pre_dtypes == rhs->m_pre_dtypes &&          //
         m_post_dtypes == rhs->m_post_dtypes &&        //

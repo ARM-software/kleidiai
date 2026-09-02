@@ -62,6 +62,8 @@ const char* to_cstring(DataType dt) {
             return "U8";
         case DataType::U4:
             return "U4";
+        case DataType::U2:
+            return "U2";
         case DataType::QAI8:
             return "QAI8";
         case DataType::QSI8:
@@ -107,6 +109,8 @@ std::string data_type_uid(DataType dt) {
             return "u8";
         case DataType::U4:
             return "u4";
+        case DataType::U2:
+            return "u2";
         case DataType::QAI8:
             return "qai8";
         case DataType::QSI8:
