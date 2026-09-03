@@ -29,6 +29,7 @@
 #include "test/nextgen/format/format.hpp"
 #include "test/nextgen/format/plain_format.hpp"
 #include "test/nextgen/harness/kernel_wrapper.hpp"
+#include "test/nextgen/harness/tensor_cache.hpp"
 #include "test/nextgen/operators/matmul/matmul_config.hpp"
 #include "test/nextgen/operators/matmul/matmul_dims.hpp"
 #include "test/nextgen/operators/matmul/matmul_main_args.hpp"
@@ -36,6 +37,7 @@
 #include "test/nextgen/operators/matmul/matmul_slots.hpp"
 #include "test/nextgen/quantization/quantizer.hpp"
 #include "test/nextgen/reference/binary_elementwise.hpp"
+#include "test/nextgen/reference/cast.hpp"
 #include "test/nextgen/reference/matmul.hpp"
 #include "test/nextgen/reference/reduce.hpp"
 #include "test/nextgen/reference/unary_elementwise.hpp"
@@ -85,18 +87,24 @@ void MatMulTb::generate_test_data(Rng& rng) {
     generate_scale_bias_n_data(rng, false);
 
     // Computes any derived inputs requested by the wrappers.
-    compute_rhs_t_data(false);
+    compute_lhs_cvt_data(false);
     quantize_lhs(false);
-    quantize_rhs_t(false);
-    quantize_bias(rng, false);
-    compute_dst_quantization_info(false);
+    compute_lhs_qdata_sum(false);
+    compute_lhs_qscale_cvt(false);
+    compute_lhs_qscale_mul_lhs_qdata_sum(false);
     compute_lhs_qzp_neg(false);
-    compute_rhs_qdata(false);
     compute_lhs_qscale_div_dst_qscale(false);
+
+    compute_rhs_t_data(false);
+    quantize_rhs_t(false);
+    compute_rhs_qdata(false);
     compute_rhs_t_qscale_mul_lhs_qscale_div_dst_qscale(false);
-    compute_acc_bias_n_qdata_minus_lhs_qzp_mul_rhs_t_qdata_row_sum(rng, false);
     compute_rhs_t_qdata_sign(false);
     compute_rhs_t_qdata_sign_sum(false);
+
+    quantize_bias(rng, false);
+    compute_dst_quantization_info(false);
+    compute_acc_bias_n_qdata_minus_lhs_qzp_mul_rhs_t_qdata_row_sum(rng, false);
 
     // Generates reference output.
     if (m_op->pack_lhs.has_value()) {
@@ -159,6 +167,13 @@ void MatMulTb::generate_lhs_data(Rng& rng) {
     const std::string uid = "fill_random(" + format->uid() + "," + std::to_string(seed) + ",{" +
         std::to_string(m_shape_m) + "," + std::to_string(m_shape_k) + "})";
 
+    static TensorCache cache;
+
+    if (auto cached = cache.get(uid)) {
+        tensor = std::move(*cached);
+        return;
+    }
+
     // For deterministic debug inputs call fill_sequential or fill_constant
     tensor.set_shape(shape).set_format(format).set_data(
         format->generate(
@@ -167,6 +182,7 @@ void MatMulTb::generate_lhs_data(Rng& rng) {
                 fill_random(gen_shape, dtype, output, data_rng);
             }),
         uid);
+    cache.set(tensor);
 }
 
 void MatMulTb::generate_rhs_data(Rng& rng) {
@@ -311,6 +327,31 @@ void MatMulTb::generate_scale_bias_n_data(Rng& rng, bool required) {
         uid);
 }
 
+void MatMulTb::compute_lhs_cvt_data(bool required) {
+    if (!required && !is_tensor_required(MatMulSlot::LHS_CVT_DATA)) {
+        return;
+    }
+
+    if (is_tensor_generated(MatMulSlot::LHS_CVT_DATA)) {
+        return;
+    }
+
+    KAI_TEST_ASSERT_MSG(m_op->lhs_cvt_dtype.has_value(), "LHS conversion is not supported by this operator.");
+
+    const DataType cvt_dtype = m_op->lhs_cvt_dtype.value();
+    KAI_TEST_ASSERT_MSG(cvt_dtype != m_op->lhs_dtype, "Converted LHS data type must differ from its source data type.");
+
+    const std::array shape{m_shape_m, m_shape_k};
+    const Tensor& lhs_data = get_tensor(MatMulSlot::LHS_DATA);
+    Tensor& lhs_cvt_data = get_tensor(MatMulSlot::LHS_CVT_DATA);
+
+    const std::string uid = "cast<" + data_type_uid(cvt_dtype) + ">(" + std::string(lhs_data.id()) + ")";
+
+    lhs_cvt_data.set_shape(shape)
+        .set_format(make_poly<PlainFormat>(cvt_dtype))
+        .set_data(cast(lhs_data.data_ptr(), m_op->lhs_dtype, cvt_dtype, m_shape_m, m_shape_k), uid);
+}
+
 void MatMulTb::compute_rhs_t_data(bool required) {
     if (!required && !is_tensor_required(MatMulSlot::RHS_T_DATA)) {
         return;
@@ -358,6 +399,111 @@ void MatMulTb::quantize_lhs(bool required) {
     lhs_qdata.set_id(uid + ".qdata");
     lhs_qscale.set_id(uid + ".qscale");
     lhs_qzp.set_id(uid + ".qzp");
+}
+
+void MatMulTb::compute_lhs_qdata_sum(bool required) {
+    if (!required && !is_tensor_required(MatMulSlot::LHS_QDATA_SUM)) {
+        return;
+    }
+
+    if (is_tensor_generated(MatMulSlot::LHS_QDATA_SUM)) {
+        return;
+    }
+
+    quantize_lhs(true);
+
+    const Tensor& lhs_qdata = get_tensor(MatMulSlot::LHS_QDATA);
+    const Tensor& lhs_qscale = get_tensor(MatMulSlot::LHS_QSCALE);
+    Tensor& result = get_tensor(MatMulSlot::LHS_QDATA_SUM);
+
+    const Shape qdata_shape = lhs_qdata.shape();
+    const Shape qscale_shape = lhs_qscale.shape();
+    KAI_TEST_ASSERT(qdata_shape.size() == 2);
+    KAI_TEST_ASSERT(qscale_shape.size() == 2);
+    KAI_TEST_ASSERT(qscale_shape.at(1) != 0);
+    KAI_TEST_ASSERT(qdata_shape.at(1) % qscale_shape.at(1) == 0);
+
+    // Each scale describes one K block. Matching row counts lets qscale_shape represent the [row, K-block] grid.
+    KAI_TEST_ASSERT(qdata_shape.at(0) == qscale_shape.at(0));
+    const size_t num_blocks = qscale_shape.at(0) * qscale_shape.at(1);
+    const size_t block_length = qdata_shape.at(1) / qscale_shape.at(1);
+    const DataType src_dtype = lhs_qdata.format()->dtype();
+    constexpr DataType dst_dtype = DataType::I32;
+
+    const ReduceFn reduce_fn = make_reduce_add(src_dtype, dst_dtype);
+    Buffer data = reduce_fn(0, std::array{num_blocks, block_length}, lhs_qdata.data());
+
+    // Reduction produces one sum per block, logically [num_blocks, 1]. Use qscale_shape because each sum
+    // corresponds to one scale, preserving the [row, K-block] layout.
+    const std::string id = "reduce_add_blocks(" + std::string(lhs_qdata.id()) + ")";
+    result.set_shape(qscale_shape).set_format(make_poly<PlainFormat>(dst_dtype)).set_data(std::move(data), id);
+}
+
+void MatMulTb::compute_lhs_qscale_cvt(bool required) {
+    if (!required && !is_tensor_required(MatMulSlot::LHS_QSCALE_CVT)) {
+        return;
+    }
+
+    if (is_tensor_generated(MatMulSlot::LHS_QSCALE_CVT)) {
+        return;
+    }
+
+    quantize_lhs(true);
+
+    const Tensor& lhs_qscale = get_tensor(MatMulSlot::LHS_QSCALE);
+    Tensor& result = get_tensor(MatMulSlot::LHS_QSCALE_CVT);
+
+    const Shape shape = lhs_qscale.shape();
+    KAI_TEST_ASSERT(shape.size() == 2);
+
+    const DataType src_dtype = lhs_qscale.format()->dtype();
+    const DataType dst_dtype = result.format()->dtype();
+    KAI_TEST_ASSERT_MSG(
+        src_dtype != dst_dtype, "Converted LHS quantization scale type must differ from its source type.");
+    Buffer data = cast(lhs_qscale.data_ptr(), src_dtype, dst_dtype, shape.at(0), shape.at(1));
+
+    const std::string id = "cast<" + data_type_uid(dst_dtype) + ">(" + std::string(lhs_qscale.id()) + ")";
+    result.set_shape(shape).set_data(std::move(data), id);
+}
+
+void MatMulTb::compute_lhs_qscale_mul_lhs_qdata_sum(bool required) {
+    if (!required && !is_tensor_required(MatMulSlot::LHS_QSCALE_MUL_LHS_QDATA_SUM)) {
+        return;
+    }
+
+    if (is_tensor_generated(MatMulSlot::LHS_QSCALE_MUL_LHS_QDATA_SUM)) {
+        return;
+    }
+
+    quantize_lhs(true);
+    compute_lhs_qdata_sum(true);
+
+    const Tensor& lhs_qscale = get_tensor(MatMulSlot::LHS_QSCALE);
+    const Tensor& lhs_qdata_sum = get_tensor(MatMulSlot::LHS_QDATA_SUM);
+    Tensor& result = get_tensor(MatMulSlot::LHS_QSCALE_MUL_LHS_QDATA_SUM);
+
+    const Shape shape = lhs_qscale.shape();
+    KAI_TEST_ASSERT(shape.size() == 2);
+    const Shape qdata_sum_shape = lhs_qdata_sum.shape();
+    KAI_TEST_ASSERT(qdata_sum_shape.size() == shape.size());
+    KAI_TEST_ASSERT(std::equal(shape.begin(), shape.end(), qdata_sum_shape.begin()));
+
+    const DataType scale_dtype = lhs_qscale.format()->dtype();
+    KAI_TEST_ASSERT(scale_dtype == DataType::FP32);
+    KAI_TEST_ASSERT(lhs_qdata_sum.format()->dtype() == DataType::I32);
+
+    Buffer lhs_qdata_sum_fp32 = cast(lhs_qdata_sum.data_ptr(), DataType::I32, DataType::FP32, shape.at(0), shape.at(1));
+    const BinaryElementwiseFn multiply_fn = make_multiply_2d(scale_dtype);
+    Buffer data =
+        multiply_fn(shape.at(0), shape.at(1), lhs_qscale.data(), shape.at(0), shape.at(1), lhs_qdata_sum_fp32);
+
+    const DataType dst_dtype = result.format()->dtype();
+    if (dst_dtype != scale_dtype) {
+        data = cast(data.data(), scale_dtype, dst_dtype, shape.at(0), shape.at(1));
+    }
+
+    const std::string id = "multiply(" + std::string(lhs_qscale.id()) + ", " + std::string(lhs_qdata_sum.id()) + ")";
+    result.set_shape(shape).set_data(std::move(data), id);
 }
 
 void MatMulTb::quantize_rhs_t(bool required) {
@@ -792,8 +938,9 @@ void MatMulTb::compute_ref_acc_matmul_data(bool required) {
     DataType mm_rhs_dtype = m_op->rhs_dtype;
     std::string mm_rhs_id;
 
-    // Dequantize quantized inputs to the reference type. Non-quantized inputs retain their
-    // storage type and are converted by the reference matrix multiplication.
+    // Dequantize quantized inputs to the reference type. Converted inputs retain the conversion
+    // rounding before being promoted to the reference type. Other non-quantized inputs retain
+    // their storage type and are converted by the reference matrix multiplication.
     if (m_op->lhs_quant.has_value()) {
         quantize_lhs(true);
 
@@ -807,6 +954,22 @@ void MatMulTb::compute_ref_acc_matmul_data(bool required) {
         mm_lhs_view = tmp_mm_lhs.view();
         mm_lhs_dtype = m_op->ref_dtype;
         mm_lhs_id = "dequantize(" + lhs_quant.uid() + "," + std::string(lhs_qdata.id()) + ")";
+    } else if (m_op->lhs_cvt_dtype.has_value()) {
+        compute_lhs_cvt_data(true);
+
+        const Tensor& lhs_cvt_data = get_tensor(MatMulSlot::LHS_CVT_DATA);
+        const DataType cvt_dtype = m_op->lhs_cvt_dtype.value();
+
+        if (cvt_dtype == m_op->ref_dtype) {
+            mm_lhs_view = lhs_cvt_data.data();
+            mm_lhs_dtype = cvt_dtype;
+            mm_lhs_id = std::string(lhs_cvt_data.id());
+        } else {
+            tmp_mm_lhs = cast(lhs_cvt_data.data_ptr(), cvt_dtype, m_op->ref_dtype, m_shape_m, m_shape_k);
+            mm_lhs_view = tmp_mm_lhs.view();
+            mm_lhs_dtype = m_op->ref_dtype;
+            mm_lhs_id = "cast<" + data_type_uid(m_op->ref_dtype) + ">(" + std::string(lhs_cvt_data.id()) + ")";
+        }
     } else {
         const Tensor& lhs_data = get_tensor(MatMulSlot::LHS_DATA);
 
@@ -878,6 +1041,7 @@ void MatMulTb::compute_ref_matmul(Rng& rng) {
 
         ref_dst = add_fn(m_shape_m, m_shape_n, ref_dst, m_shape_m, 1, bias_view);
     }
+
     if (config.bias_modes.has(MatMulBiasMode::ACCUMULATION_PER_N)) {
         Buffer tmp_bias;
         Span<const std::byte> bias_view = acc_bias_n_data.data();
@@ -892,7 +1056,9 @@ void MatMulTb::compute_ref_matmul(Rng& rng) {
                 m_op->ref_dtype, {m_shape_n}, acc_bias_n_qdata.data(), acc_bias_n_qscale.data(), {});
             bias_view = tmp_bias.view();
         } else if (m_op->bias_dtype != m_op->ref_dtype) {
-            tmp_bias = cast(acc_bias_n_data.data_ptr(), m_op->bias_dtype, m_op->ref_dtype, 1, m_shape_n);
+            const CastFn cast_fn = make_cast(m_op->bias_dtype, m_op->acc_dtype);
+            tmp_bias = cast_fn({m_shape_n}, bias_view);
+
             bias_view = tmp_bias.view();
         }
 

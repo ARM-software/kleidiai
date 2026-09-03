@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -13,12 +13,16 @@
 #include "kai/kai_common.h"
 #include "test/common/buffer.hpp"
 #include "test/common/data_type.hpp"
+#include "test/common/int4.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/round.hpp"
 
 namespace kai::test {
 
 Buffer transpose(const void* data, DataType data_type, size_t height, size_t width) {
+    if (data_type == DataType::I4) {
+        return transpose<Int4>(data, height, width);
+    }
     KAI_ASSUME_ALWAYS(data_type_size_in_bits(data_type) % 8 == 0);
     const auto element_size = data_type_size_in_bits(data_type) / 8;
 
@@ -63,11 +67,13 @@ template Buffer transpose_with_padding<int8_t>(
 
 template <typename T>
 Buffer transpose(const void* src, size_t height, size_t width) {
-    Buffer dst(round_up_division(height * width * size_in_bits<T>, 8));
+    Buffer dst(width * round_up_division(height * size_in_bits<T>, 8));
+    const Span<const std::byte> src_data(
+        reinterpret_cast<const std::byte*>(src), height * round_up_division(width * size_in_bits<T>, 8));
 
     for (size_t y = 0; y < width; ++y) {
         for (size_t x = 0; x < height; ++x) {
-            write_array<T>(dst.data(), y * height + x, read_array<T>(src, x * width + y));
+            write_2d<T>(dst.view(), height, y, x, read_2d<T>(src_data, width, x, y));
         }
     }
 
@@ -76,5 +82,6 @@ Buffer transpose(const void* src, size_t height, size_t width) {
 
 template Buffer transpose<float>(const void* src, size_t height, size_t width);
 template Buffer transpose<int8_t>(const void* src, size_t height, size_t width);
+template Buffer transpose<Int4>(const void* src, size_t height, size_t width);
 
 }  // namespace kai::test

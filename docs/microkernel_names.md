@@ -75,23 +75,22 @@ Describes every micro-kernel name accepted by the naming rules.
 
 Describes names for matmul-family compute and packing micro-kernels.
 
-**`matmul_ukernel_name`** = `"kai_" matmul_fused_ops ("_" buffer) ("_" buffer)+ ["_" tile_size] ["_" tech] ["_" feature] ["_" instruction] ["_" uarch]`
+**`matmul_ukernel_name`** = `"kai_" matmul_fused_ops ("_" buffer) ("_" buffer)+ ["_" tile_size] ("_" engine) ["_" tech] ["_" uarch]`
 
 where:
 
 - **`"_" buffer`**: Destination buffer
 - **`("_" buffer)+`**: Input buffer(s)
 - **`["_" tile_size]`**: Tile size
-- **`["_" tech]`**: SIMD engine
-- **`["_" feature]`**: Primary feature
-- **`["_" instruction]`**: Primary instruction
+- **`"_" engine`**: SIMD engine
+- **`["_" tech]`**: Micro-kernel accelerator
 - **`["_" uarch]`**: Target micro-architecture
 
 ### Depthwise micro-kernel name
 
 Describes names for depthwise convolution and depthwise RHS packing micro-kernels.
 
-**`dwconv_ukernel_name`** = `"kai_" ("dwconv_clamp" ("_" buffer)+ ("_" filter_size) ("_" dw_stride) ("_" dwconv_output_block_size) ("_" tech) ["_" instruction] | "rhs_dwconv_pack" ("_" buffer)+ ("_" tech))`
+**`dwconv_ukernel_name`** = `"kai_" ("dwconv_clamp" ("_" buffer)+ ("_" filter_size) ("_" dw_stride) ("_" dwconv_output_block_size) ("_" engine) ["_" tech] | "rhs_dwconv_pack" ("_" buffer)+ ("_" engine))`
 
 ### Target microarchitecture
 
@@ -103,19 +102,23 @@ Describes a target microarchitecture for which a micro-kernel is optimized.
 
 Describes the SIMD engine targeted by the implementation.
 
-**`tech`** = `"neon" | "sve" | "sve2" | "sve2p1" | "sme" | "sme2" | "sme2p1"`
+**`engine`** = `"neon" | "sve" | "sve2" | "sve2p1" | "sme" | "sme2" | "sme2p1"`
 
-### Primary feature
+### Primary instruction or feature
 
-Describes the predominant `FEAT_<feature>` used by the implementation.
+Describes the primary instruction or feature that most distinguishes the implementation from other implementations targeting the same SIMD engine.
 
-**`feature`** = `"i8mm" | "dotprod"`
+**`tech`** = `"dot" | "dotprod" | "i8mm" | "mla" | "mmla" | "mopa" | "mop4_mopa"`
 
-### Primary instruction family
+where:
 
-Describes the predominant SIMD instruction family used by the implementation.
-
-**`instruction`** = `"dot" | "i8mm" | "mla" | "mmla" | "mopa" | "mop4a" | "sdot"`
+- **`"dot"`**: Dot product instruction family for SVE and SME
+- **`"dotprod"`**: 8-bit integer dot product feature for Advanced SIMD
+- **`"i8mm"`**: 8-bit integer matrix multiplication feature for Advanced SIMD and SVE
+- **`"mla"`**: Multiply-accumulate instruction family
+- **`"mmla"`**: Matrix multiply-accumulate instruction family
+- **`"mopa"`**: Matrix outer product and accumulate instruction family
+- **`"mop4_mopa"`**: Quarter-tile outer product and accumulate feature, using both `mop4a` and `mopa` instructions
 
 ### Convolution stride
 
@@ -133,7 +136,7 @@ Describes the height-by-width filter shape used by a depthwise convolution micro
 
 Describes the primary matmul-family operation and any encoded fused operation.
 
-**`matmul_fused_ops`** = `["i"] "matmul" ["_clamp"] | "lhs_pack" | "rhs_pack_kxn" | "rhs_pack_nxk"`
+**`matmul_fused_ops`** = `["i"] "matmul" ["_clamp"] | "lhs_pack" | "rhs_pack_kxn" | "rhs_pack_nxk" | ["i"] "matmul_pack_lhs_mxk" | ["i"] "matmul_pack_rhs_nxk" | ["i"] "matmul_pack_rhs_kxn"`
 
 ### Directory buffer descriptor
 
@@ -145,14 +148,14 @@ Describes an input or output buffer in a micro-kernel directory name. Directory 
 
 Describes an input or output buffer in a full micro-kernel name. Packed buffers include their concrete packed layout.
 
-**`buffer`** = `[quantization] @operand_type [quantization_axis] [pack_description]`
+**`buffer`** = `[quantization] @operand_type [quantization_axis] [pack_description | superblock_description]`
 
 where:
 
 - **`[quantization]`**: Quantization indication
 - **`@operand_type`**: The main data-type stored in buffer
 - **`[quantization_axis]`**: If quantized, indicates quantization granularity
-- **`[pack_description]`**: If packed, indicates packing properties
+- **`[pack_description | superblock_description]`**: Buffer can either be packed, superblocked, or neither
 
 ### Packed buffer layout description
 
@@ -165,6 +168,16 @@ Describes the packed-buffer suffix of a full buffer descriptor.
 Describes the operand type used for bias values stored in a packed buffer.
 
 **`bias_type`** = `"b" @operand_type`
+
+### Superblock description
+
+Describes superblocks.
+
+**`superblock_description`** = `"k" @natural_int [scale_type] [pack_order]`
+
+where:
+
+- **`@natural_int`**: Number of values in each K-dimension superblock
 
 ### Packed scale type
 
@@ -187,13 +200,14 @@ where:
 
 Describes the ordering of values inside a packed buffer.
 
-**`pack_order`** = `"s1s0" | "s4s0" | "s16s0"`
+**`pack_order`** = `"s1s0" | "s4s0" | "s16s0" | "s32s0"`
 
 where:
 
 - **`"s1s0"`**: Packing order of data is sequential
 - **`"s4s0"`**: Packing order of data is interleaved with nibble distance of 4
 - **`"s16s0"`**: Packing order of data is interleaved
+- **`"s32s0"`**: Packing order of data is interleaved with nibble distance of 32
 
 ### Depthwise output block size
 
@@ -269,22 +283,22 @@ The grammar below is generated from the naming rules.
 ```text
 directory_name = "pack" | matmul_fused_ops "_" simplified_buffer ("_" simplified_buffer)+ | "dwconv" "_" simplified_buffer ("_" simplified_buffer)+
 kernel_name = matmul_ukernel_name | dwconv_ukernel_name
-matmul_ukernel_name = "kai_" matmul_fused_ops ("_" buffer) ("_" buffer)+ ["_" tile_size] ["_" tech] ["_" feature] ["_" instruction] ["_" uarch]
-dwconv_ukernel_name = "kai_" ("dwconv_clamp" ("_" buffer)+ ("_" filter_size) ("_" dw_stride) ("_" dwconv_output_block_size) ("_" tech) ["_" instruction] | "rhs_dwconv_pack" ("_" buffer)+ ("_" tech))
+matmul_ukernel_name = "kai_" matmul_fused_ops ("_" buffer) ("_" buffer)+ ["_" tile_size] ("_" engine) ["_" tech] ["_" uarch]
+dwconv_ukernel_name = "kai_" ("dwconv_clamp" ("_" buffer)+ ("_" filter_size) ("_" dw_stride) ("_" dwconv_output_block_size) ("_" engine) ["_" tech] | "rhs_dwconv_pack" ("_" buffer)+ ("_" engine))
 uarch = "cortexa55"
-tech = "neon" | "sve" | "sve2" | "sve2p1" | "sme" | "sme2" | "sme2p1"
-feature = "i8mm" | "dotprod"
-instruction = "dot" | "i8mm" | "mla" | "mmla" | "mopa" | "mop4a" | "sdot"
+engine = "neon" | "sve" | "sve2" | "sve2p1" | "sme" | "sme2" | "sme2p1"
+tech = "dot" | "dotprod" | "i8mm" | "mla" | "mmla" | "mopa" | "mop4_mopa"
 dw_stride = "s" @natural_int
 filter_size = @natural_int "x" @natural_int
-matmul_fused_ops = ["i"] "matmul" ["_clamp"] | "lhs_pack" | "rhs_pack_kxn" | "rhs_pack_nxk"
+matmul_fused_ops = ["i"] "matmul" ["_clamp"] | "lhs_pack" | "rhs_pack_kxn" | "rhs_pack_nxk" | ["i"] "matmul_pack_lhs_mxk" | ["i"] "matmul_pack_rhs_nxk" | ["i"] "matmul_pack_rhs_kxn"
 simplified_buffer = [quantization] @operand_type [quantization_axis] ["p"]
-buffer = [quantization] @operand_type [quantization_axis] [pack_description]
+buffer = [quantization] @operand_type [quantization_axis] [pack_description | superblock_description]
 pack_description = packing_layout [pack_order] [scale_type] [bias_type]
 bias_type = "b" @operand_type
+superblock_description = "k" @natural_int [scale_type] [pack_order]
 scale_type = "s" @operand_type
 packing_layout = "p" size "x" size
-pack_order = "s1s0" | "s4s0" | "s16s0"
+pack_order = "s1s0" | "s4s0" | "s16s0" | "s32s0"
 dwconv_output_block_size = @natural_int "x" (@natural_int | "c")
 tile_size = size "x" size
 size = @natural_int | @natural_int "vl" | @natural_int "vs" | "mr" | "nr"

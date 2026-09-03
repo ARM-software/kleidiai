@@ -6,7 +6,6 @@
 
 #include "test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_ukerapi_wrapper.hpp"
 
-#include <array>
 #include <cstddef>
 #include <string_view>
 #include <vector>
@@ -33,7 +32,7 @@ std::vector<MatMulSlot> MatMulPackLhsUkerApiWrapper::run_inputs([[maybe_unused]]
 }
 
 std::vector<MatMulSlot> MatMulPackLhsUkerApiWrapper::ref_inputs([[maybe_unused]] ConstTensorSet tensors) const {
-    return {m_src_slot};
+    return m_reference_src_slots;
 }
 
 std::vector<size_t> MatMulPackLhsUkerApiWrapper::steps(MatShape shape, [[maybe_unused]] ConstTensorSet tensors) const {
@@ -55,6 +54,14 @@ void MatMulPackLhsUkerApiWrapper::populate_constant_info(TensorSet tensors) cons
 
     lhs_data.set_format(m_src_format);
     packed_lhs.set_format(m_dst_format);
+
+    KAI_TEST_ASSERT(m_reference_src_dtypes.empty() || m_reference_src_dtypes.size() == m_reference_src_slots.size());
+    for (size_t index = 0; index < m_reference_src_dtypes.size(); ++index) {
+        const DataType dtype = m_reference_src_dtypes.at(index);
+        if (dtype != DataType::UNKNOWN) {
+            tensors.at(m_reference_src_slots.at(index)).set_format(make_poly<PlainFormat>(dtype));
+        }
+    }
 }
 
 void MatMulPackLhsUkerApiWrapper::run(
@@ -124,12 +131,15 @@ void MatMulPackLhsUkerApiWrapper::run(
 }
 
 void MatMulPackLhsUkerApiWrapper::compute_reference(MatShape shape, TensorSet tensors) const {
-    const Tensor& lhs_data = tensors.at(m_src_slot);
     Tensor& ref_packed_lhs = tensors.at(MatMulSlot::LHS_PACKED);
 
-    ref_packed_lhs.set_shape(shape)
-        .set_format(m_dst_format)
-        .set_data(m_dst_format->pack(shape, std::array{lhs_data.data()}));
+    std::vector<Span<const std::byte>> src_data;
+    src_data.reserve(m_reference_src_slots.size());
+    for (const MatMulSlot slot : m_reference_src_slots) {
+        src_data.emplace_back(tensors.at(slot).data());
+    }
+
+    ref_packed_lhs.set_shape(shape).set_format(m_dst_format).set_data(m_dst_format->pack(shape, src_data));
 }
 
 }  // namespace kai::test

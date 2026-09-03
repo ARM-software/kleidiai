@@ -58,8 +58,10 @@ std::tuple<FpData, FpData, QZp> get_scale_zero_point_from_range(FpData min_value
 
 template <typename FpData, typename QData>
 std::tuple<FpData, FpData> get_scale_from_max_abs(FpData max_abs) {
-    const FpData scale = max_abs / static_cast<FpData>((static_cast<uint64_t>(1) << (size_in_bits<QData> - 1)) - 1);
-    const FpData inv_scale = static_cast<FpData>(1) / scale;
+    const FpData qmax = static_cast<FpData>((static_cast<uint64_t>(1) << (size_in_bits<QData> - 1)) - 1);
+    // Compute the inverted scale first to match dynamic quantization micro-kernels exactly.
+    const FpData inv_scale = max_abs != 0 ? qmax / max_abs : 0;
+    const FpData scale = inv_scale != 0 ? static_cast<FpData>(1) / inv_scale : 0;
 
     return {scale, inv_scale};
 }
@@ -351,6 +353,10 @@ DynamicQuantizeLinearFn make_dynamic_symmetric_quantize_linear(
 
     if (params == std::make_tuple(DataType::FP32, DataType::U4, DataType::FP32, RoundMode::CURRENT)) {
         return dynamic_symmetric_quantize_linear<float, UInt4, float, RoundMode::CURRENT>;
+    }
+
+    if (params == std::make_tuple(DataType::FP32, DataType::I4, DataType::FP32, RoundMode::CURRENT)) {
+        return dynamic_symmetric_quantize_linear<float, Int4, float, RoundMode::CURRENT>;
     }
 
     if (params == std::make_tuple(DataType::FP32, DataType::I8, DataType::FP32, RoundMode::CURRENT)) {

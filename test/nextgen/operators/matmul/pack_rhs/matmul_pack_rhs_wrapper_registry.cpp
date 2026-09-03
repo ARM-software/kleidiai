@@ -6,6 +6,7 @@
 
 #include "test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_wrapper_registry.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <memory>
@@ -22,7 +23,9 @@
 #include "test/common/sve.hpp"
 #include "test/nextgen/common/poly.hpp"
 #include "test/nextgen/format/block2d_row_format.hpp"
+#include "test/nextgen/format/flattened_blockwise_packed_format.hpp"
 #include "test/nextgen/format/plain_format.hpp"
+#include "test/nextgen/format/two_level_blockwise_format.hpp"
 #include "test/nextgen/harness/kernel_wrapper.hpp"
 #include "test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_fp_nt_wrapper.hpp"
 #include "test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_interface.hpp"
@@ -114,6 +117,20 @@ std::unique_ptr<KernelWrapper<MatShape>> create_matmul_rhs_pack_kxn_x16p16vsx2bx
         std::vector{MatMulSlot::ACC_BIAS_N_DATA, MatMulSlot::RHS_T_DATA});
 }
 
+std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_kxn_x16p4vsx2bx16_x16_x16_sme() {
+    MatMulPackRhsOperandSlots operand_slots{};
+    operand_slots.bias_n = MatMulSlot::ACC_BIAS_N_DATA;
+
+    return std::make_unique<MatMulPackRhsUkerApiWrapper>(
+        "create_matmul_pack_rhs_kxn_x16p4vsx2bx16_x16_x16_sme", kai_matmul_pack_rhs_kxn_x16p4vsx2bx16_x16_x16_sme(),
+        make_poly<PlainFormat>(DataType::FP16), make_poly<PlainFormat>(DataType::FP16),
+        make_poly<Block2dRowFormat>(
+            4 * get_sme_vector_scale(), 2, 2, false, DataType::FP16, std::array{DataType::FP16},
+            std::array<DataType, 0>{}),
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS, MatMulSlot::RHS_DATA, operand_slots,
+        std::vector{MatMulSlot::ACC_BIAS_N_DATA, MatMulSlot::RHS_T_DATA});
+}
+
 std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme() {
     MatMulPackRhsOperandSlots operand_slots{};
     operand_slots.bias_n = MatMulSlot::ACC_BIAS_N_DATA;
@@ -152,6 +169,23 @@ std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_nxk_x8p4vsx4_x8_
         MatMulUkerApiBiasDeliveryStage::MATMUL);
 }
 
+std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme() {
+    const kai_matmul_pack_rhs_uker_api api = kai_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme();
+
+    return std::make_unique<MatMulPackRhsUkerApiTWrapper>(
+        "matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme",  // name
+        api,                                                                    // api
+        make_poly<TwoLevelBlockwiseFormat>(qai4c32k256_format_config),          // src_data_format
+        unused_bias_format(),                                                   // src_bias_format
+        make_poly<FlattenedBlockwisePackedFormat>(                              // dst_format
+            qai4c32k256_format_config, 16 * std::max<uint64_t>(get_sme_vector_scale(), 1)),
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS,  // bias_delivery_stage
+        MatMulPackRhsOperandSlots{},               // operand_slots
+        std::vector{MatMulSlot::RHS_T_QDATA},      // reference_component_slots
+        MatMulSlot::RHS_T_QDATA                    // run_rhs_slot
+    );
+}
+
 std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme() {
     return std::make_unique<MatMulPackRhsUkerApiWrapper>(
         "matmul_pack_rhs_kxn_x8p4vsx4_x8_sme", kai_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme(),
@@ -182,6 +216,41 @@ std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_kxn_qsi8cxp4vsx4
             MatMulSlot::RHS_T_QSCALE_MUL_LHS_QSCALE_DIV_DST_QSCALE});
 }
 
+namespace {
+std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_qsi4(bool nxk) {
+    MatMulPackRhsOperandSlots slots{};
+    slots.bias_n = MatMulSlot::ACC_BIAS_N_QDATA;
+    slots.k_sum_scale_global = MatMulSlot::LHS_QZP_NEG;
+    slots.scale_n = MatMulSlot::RHS_T_QSCALE;
+    slots.scale_global = MatMulSlot::LHS_QSCALE_DIV_DST_QSCALE;
+    const Poly<Format> format = make_poly<Block2dRowFormat>(
+        8 * get_sme_vector_scale(), 4, 32, false, DataType::I4, std::array{DataType::I32}, std::array{DataType::FP32});
+    const std::vector refs{
+        MatMulSlot::ACC_BIAS_N_QDATA_MINUS_LHS_QZP_MUL_RHS_T_QDATA_ROW_SUM, MatMulSlot::RHS_T_QDATA,
+        MatMulSlot::RHS_T_QSCALE_MUL_LHS_QSCALE_DIV_DST_QSCALE};
+    if (nxk) {
+        return std::make_unique<MatMulPackRhsUkerApiTWrapper>(
+            "matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme",
+            kai_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme(), make_poly<PlainFormat>(DataType::I4),
+            make_poly<PlainFormat>(DataType::I32), format, MatMulUkerApiBiasDeliveryStage::PACK_RHS, slots, refs,
+            MatMulSlot::RHS_T_QDATA);
+    }
+    return std::make_unique<MatMulPackRhsUkerApiWrapper>(
+        "matmul_pack_rhs_kxn_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme",
+        kai_matmul_pack_rhs_kxn_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme(), make_poly<PlainFormat>(DataType::I4),
+        make_poly<PlainFormat>(DataType::I32), format, MatMulUkerApiBiasDeliveryStage::PACK_RHS, MatMulSlot::RHS_QDATA,
+        slots, refs);
+}
+}  // namespace
+
+std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_kxn_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme() {
+    return create_matmul_pack_rhs_qsi4(false);
+}
+
+std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme() {
+    return create_matmul_pack_rhs_qsi4(true);
+}
+
 bool is_shape_suitable_rhs_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa(
     [[maybe_unused]] size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
     if (shape_n == 0 || shape_k == 0) {
@@ -192,6 +261,12 @@ bool is_shape_suitable_rhs_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa(
     const size_t rhs_n_step = kai_get_n_step_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon(nr);
 
     return portion_non_empty(shape_n, shape_k, rhs_n_step, shape_k, portion);
+}
+
+bool is_shape_suitable_rhs_qsi4cxp8vsx4sf32bi32(
+    [[maybe_unused]] size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
+    return is_shape_suitable_rhs_uker_api(
+        shape_n, shape_k, portion, kai_matmul_pack_rhs_kxn_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme());
 }
 
 bool is_shape_suitable_rhs_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa(
@@ -233,6 +308,12 @@ bool is_shape_suitable_rhs_kxn_x16p16vsx2bx16_x16_x16_sve(
     return is_shape_suitable_rhs_uker_api(shape_n, shape_k, portion, kai_rhs_pack_kxn_x16p16vsx2bx16_x16_x16_sve());
 }
 
+bool is_shape_suitable_rhs_kxn_x16p4vsx2bx16_x16_x16_sme(
+    [[maybe_unused]] size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
+    return is_shape_suitable_rhs_uker_api(
+        shape_n, shape_k, portion, kai_matmul_pack_rhs_kxn_x16p4vsx2bx16_x16_x16_sme());
+}
+
 bool is_shape_suitable_rhs_kxn_x32p4vsx1bx32_x32_x32_sme(
     [[maybe_unused]] size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
     return is_shape_suitable_rhs_uker_api(
@@ -248,6 +329,16 @@ bool is_shape_suitable_rhs_nxk_x32p4vsx1bx32_x32_x32_sme(
 bool is_shape_suitable_rhs_nxk_x8p4vsx4_x8_sme(
     [[maybe_unused]] size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
     return is_shape_suitable_rhs_uker_api(shape_n, shape_k, portion, kai_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme());
+}
+
+bool is_shape_suitable_rhs_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme(
+    [[maybe_unused]] size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
+    if (shape_k % qai4c32k256_format_config.superblock_length != 0) {
+        return false;
+    }
+
+    return is_shape_suitable_rhs_uker_api(
+        shape_n, shape_k, portion, kai_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme());
 }
 
 bool is_shape_suitable_rhs_kxn_x8p4vsx4_x8_sme(

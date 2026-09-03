@@ -29,15 +29,18 @@ enum class MatMulSlot : size_t {
     //   * QDATA, QSCALE, QZP contain the quantized data and quantization parameters
     //     calculated from the source floating-point data.
 
-    LHS_DATA,                   ///< LHS data.
-    LHS_CVT_DATA,               ///< LHS data after conversion.
-    LHS_QDATA,                  ///< LHS data after quantization.
-    LHS_QSCALE,                 ///< LHS quantization scale.
-    LHS_QSCALE_DIV_DST_QSCALE,  ///< LHS quantization scale divided by DST quantization scale.
-    LHS_QZP,                    ///< LHS quantization zero-point.
-    LHS_QZP_NEG,                ///< Negative LHS quantization zero-point.
-    LHS_PACKED,                 ///< Packed LHS.
-    LHS_PACKED_IMP,             ///< Packed LHS from micro-kernel.
+    LHS_DATA,                      ///< LHS data.
+    LHS_CVT_DATA,                  ///< LHS data after conversion.
+    LHS_QDATA,                     ///< LHS data after quantization.
+    LHS_QDATA_SUM,                 ///< Per-block sum of quantized LHS data.
+    LHS_QSCALE,                    ///< LHS quantization scale.
+    LHS_QSCALE_CVT,                ///< Converted LHS quantization scale.
+    LHS_QSCALE_MUL_LHS_QDATA_SUM,  ///< Scaled per-block sum of quantized LHS data.
+    LHS_QSCALE_DIV_DST_QSCALE,     ///< LHS quantization scale divided by DST quantization scale.
+    LHS_QZP,                       ///< LHS quantization zero-point.
+    LHS_QZP_NEG,                   ///< Negative LHS quantization zero-point.
+    LHS_PACKED,                    ///< Packed LHS.
+    LHS_PACKED_IMP,                ///< Packed LHS from micro-kernel.
 
     RHS_DATA,        ///< RHS data.
     RHS_CVT_DATA,    ///< RHS data after conversion.

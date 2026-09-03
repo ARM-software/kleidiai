@@ -26,17 +26,18 @@ std::string_view MatMulPackLhsFpWrapper::name() const {
 }
 
 std::vector<MatMulSlot> MatMulPackLhsFpWrapper::run_inputs([[maybe_unused]] ConstTensorSet tensors) const {
-    return {MatMulSlot::LHS_DATA};
+    return {m_src_slot};
 }
 
 std::vector<MatMulSlot> MatMulPackLhsFpWrapper::ref_inputs([[maybe_unused]] ConstTensorSet tensors) const {
-    return {MatMulSlot::LHS_DATA};
+    return {m_reference_lhs_slot};
 }
 
 std::vector<size_t> MatMulPackLhsFpWrapper::steps(MatShape shape, ConstTensorSet tensors) const {
     KAI_TEST_ASSERT_MSG(shape.size() == 2, "Only M and K dimensions are expected.");
 
-    const auto& pack_args = tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
+    const auto& pack_args =
+        m_fixed_pack_args ? *m_fixed_pack_args : tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
 
     const size_t m_step = m_kernel.get_m_step(pack_args.mr);
     const size_t shape_k = shape.at(MatDim::C);
@@ -45,7 +46,7 @@ std::vector<size_t> MatMulPackLhsFpWrapper::steps(MatShape shape, ConstTensorSet
 }
 
 void MatMulPackLhsFpWrapper::populate_constant_info(TensorSet tensors) const {
-    Tensor& lhs_data = tensors.at(MatMulSlot::LHS_DATA);
+    Tensor& lhs_data = tensors.at(m_src_slot);
     Tensor& packed_lhs = tensors.at(MatMulSlot::LHS_PACKED_IMP);
 
     lhs_data.set_format(m_src_format);
@@ -70,10 +71,11 @@ void MatMulPackLhsFpWrapper::run(
     KAI_TEST_ASSERT_MSG(start_k == 0, "This micro-kernel API doesn't allow K splitting.");
     KAI_TEST_ASSERT_MSG(size_k == full_k, "This micro-kernel API doesn't allow K splitting.");
 
-    const Tensor& lhs_data = tensors.at(MatMulSlot::LHS_DATA);
+    const Tensor& lhs_data = tensors.at(m_src_slot);
     Tensor& packed_lhs = tensors.at(MatMulSlot::LHS_PACKED_IMP);
 
-    const auto& pack_args = tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
+    const auto& pack_args =
+        m_fixed_pack_args ? *m_fixed_pack_args : tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
 
     packed_lhs.set_shape({full_m, full_k}).allocate();
 
@@ -85,12 +87,12 @@ void MatMulPackLhsFpWrapper::run(
 
     const size_t packed_lhs_offset = m_dst_format->compute_offset(full_shape, tile_coords);
     const size_t imp_packed_lhs_offset =
-        m_kernel.get_lhs_packed_offset(start_m, full_k, pack_args.mr, pack_args.kr, pack_args.sr);
+        m_kernel.get_lhs_packed_offset(start_m, full_k, pack_args.bl, pack_args.mr, pack_args.kr, pack_args.sr);
     KAI_TEST_ASSERT(imp_packed_lhs_offset == packed_lhs_offset);
 
     const size_t packed_lhs_size = packed_lhs.data().size();
     const size_t imp_packed_lhs_size =
-        m_kernel.get_lhs_packed_size(full_m, full_k, pack_args.mr, pack_args.kr, pack_args.sr);
+        m_kernel.get_lhs_packed_size(full_m, full_k, pack_args.bl, pack_args.mr, pack_args.kr, pack_args.sr);
     KAI_TEST_ASSERT(imp_packed_lhs_size == packed_lhs_size);
 
     const Span<const std::byte> lhs_tile = lhs_data.data().subspan(lhs_offset);
@@ -98,13 +100,13 @@ void MatMulPackLhsFpWrapper::run(
 
     abi_check([&] {
         m_kernel.run(
-            size_m, size_k, pack_args.mr, pack_args.kr, pack_args.sr, 0,
-            reinterpret_cast<const float*>(lhs_tile.data()), lhs_stride, packed_lhs_tile.data());
+            size_m, size_k, pack_args.bl, pack_args.mr, pack_args.kr, pack_args.sr, 0, lhs_tile.data(), lhs_stride,
+            packed_lhs_tile.data());
     });
 }
 
 void MatMulPackLhsFpWrapper::compute_reference(MatShape shape, TensorSet tensors) const {
-    const Tensor& lhs_data = tensors.at(MatMulSlot::LHS_DATA);
+    const Tensor& lhs_data = tensors.at(m_reference_lhs_slot);
     Tensor& ref_packed_lhs = tensors.at(MatMulSlot::LHS_PACKED);
 
     ref_packed_lhs.set_shape(shape)

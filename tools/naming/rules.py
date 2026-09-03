@@ -113,6 +113,10 @@ def pack_order() -> Expr:
             description="Packing order of data is interleaved with nibble distance of 4",
         ),
         Doc("s16s0", description="Packing order of data is interleaved"),
+        Doc(
+            "s32s0",
+            description="Packing order of data is interleaved with nibble distance of 32",
+        ),
     )
 
 
@@ -135,6 +139,22 @@ def packing_layout() -> Expr:
 )
 def scale_type() -> Expr:
     return Seq("s", OperandType())
+
+
+@grammar.rule(
+    title="Superblock description",
+    description="Describes superblocks.",
+)
+def superblock_description() -> Expr:
+    return Seq(
+        "k",
+        Doc(
+            NaturalInt(),
+            description="Number of values in each K-dimension superblock",
+        ),
+        Optional(scale_type),
+        Optional(pack_order),
+    )
 
 
 @grammar.rule(
@@ -174,8 +194,13 @@ def buffer() -> Expr:
             description="If quantized, indicates quantization granularity",
         ),
         Doc(
-            Optional(pack_description),
-            description="If packed, indicates packing properties",
+            Optional(
+                OneOf(
+                    pack_description,
+                    superblock_description,
+                )
+            ),
+            description="Buffer can either be packed, superblocked, or neither",
         ),
     )
 
@@ -207,6 +232,9 @@ def matmul_fused_ops() -> Expr:
         "lhs_pack",
         "rhs_pack_kxn",
         "rhs_pack_nxk",
+        Seq(Optional("i"), "matmul_pack_lhs_mxk"),
+        Seq(Optional("i"), "matmul_pack_rhs_nxk"),
+        Seq(Optional("i"), "matmul_pack_rhs_kxn"),
     )
 
 
@@ -227,26 +255,39 @@ def dw_stride() -> Expr:
 
 
 @grammar.rule(
-    title="Primary instruction family",
-    description="Describes the predominant SIMD instruction family used by the implementation.",
+    title="Primary instruction or feature",
+    description=(
+        "Describes the primary instruction or feature that most distinguishes the "
+        "implementation from other implementations targeting the same SIMD engine."
+    ),
 )
-def instruction() -> Expr:
-    return OneOf("dot", "i8mm", "mla", "mmla", "mopa", "mop4a", "sdot")
-
-
-@grammar.rule(
-    title="Primary feature",
-    description="Describes the predominant `FEAT_<feature>` used by the implementation.",
-)
-def feature() -> Expr:
-    return OneOf("i8mm", "dotprod")
+def tech() -> Expr:
+    return OneOf(
+        Doc("dot", description="Dot product instruction family for SVE and SME"),
+        Doc(
+            "dotprod", description="8-bit integer dot product feature for Advanced SIMD"
+        ),
+        Doc(
+            "i8mm",
+            description="8-bit integer matrix multiplication feature for Advanced SIMD and SVE",
+        ),
+        Doc("mla", description="Multiply-accumulate instruction family"),
+        Doc("mmla", description="Matrix multiply-accumulate instruction family"),
+        Doc(
+            "mopa", description="Matrix outer product and accumulate instruction family"
+        ),
+        Doc(
+            "mop4_mopa",
+            description="Quarter-tile outer product and accumulate feature, using both `mop4a` and `mopa` instructions",
+        ),
+    )
 
 
 @grammar.rule(
     title="SIMD engine",
     description="Describes the SIMD engine targeted by the implementation.",
 )
-def tech() -> Expr:
+def engine() -> Expr:
     return OneOf("neon", "sve", "sve2", "sve2p1", "sme", "sme2", "sme2p1")
 
 
@@ -274,16 +315,16 @@ def dwconv_ukernel_name() -> Expr:
                 Seq("_", dwconv_output_block_size),
                 Seq(
                     "_",
-                    tech,
+                    engine,
                 ),
-                Optional(Seq("_", instruction)),
+                Optional(Seq("_", tech)),
             ),
             Seq(
                 "rhs_dwconv_pack",
                 OneOrMore(Seq("_", buffer)),
                 Seq(
                     "_",
-                    tech,
+                    engine,
                 ),
             ),
         ),
@@ -301,9 +342,11 @@ def matmul_ukernel_name() -> Expr:
         Doc(Seq("_", buffer), description="Destination buffer"),
         Doc(OneOrMore(Seq("_", buffer)), description="Input buffer(s)"),
         Doc(Optional(Seq("_", tile_size)), description="Tile size"),
-        Doc(Optional(Seq("_", tech)), description="SIMD engine"),
-        Doc(Optional(Seq("_", feature)), description="Primary feature"),
-        Doc(Optional(Seq("_", instruction)), description="Primary instruction"),
+        Doc(Seq("_", engine), description="SIMD engine"),
+        Doc(
+            Optional(Seq("_", tech)),
+            description="Micro-kernel accelerator",
+        ),
         Doc(Optional(Seq("_", uarch)), description="Target micro-architecture"),
     )
 

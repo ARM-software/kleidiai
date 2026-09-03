@@ -101,9 +101,9 @@ public:
         std::string_view name, kai_matmul_uker_api api, MatMulSlot lhs_input_slot, const Poly<Format>& lhs_format,
         const Poly<Format>& rhs_format, const Poly<Format>& dst_format, DataType acc_dtype,
         MatMulUkerClampConfig clamp_config, MatMulUkerApiBiasDeliveryStage bias_delivery_stage,
-        MatMulUkerOutputStageConfig output_stage_config = {}) :
+        MatMulUkerOutputStageConfig output_stage_config = {}, kai_matmul_uker_config uker_config = {}) :
         m_name(name),
-        m_uker_config(),
+        m_uker_config(uker_config),
         m_ukernel(api),
         m_lhs_input_slot(lhs_input_slot),
         m_lhs_format(lhs_format),

@@ -346,6 +346,39 @@ const MatMulKernel& get_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx8v
     return uker;
 }
 
+const MatMulKernel& get_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4sf32bi32_8vsx8vs_sme2p1_mop4_mopa() {
+    static const kai_matmul_uker_config config{};
+    static const kai_matmul_uker_api api =
+        kai_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4sf32bi32_8vsx8vs_sme2p1_mop4_mopa();
+
+    static MatMulKernel uker = get_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx8vs_sme2_mopa();
+
+    uker.matmul = [](size_t m, size_t n, size_t k, const void* lhs_packed, const void* rhs_packed, void* dst,
+                     size_t dst_stride_row, [[maybe_unused]] size_t dst_stride_col,
+                     const struct kai_matmul_requantize32_params* params) -> void {
+        const kai_matmul_uker_lhs_dim_args lhs_shape = {m, k};
+        const kai_matmul_uker_rhs_dim_args rhs_shape = {n, k};
+
+        kai_matmul_uker_args args{};
+
+        args.flags = KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP;
+        args.shape = {m, n, k};
+        args.operand.lhs.ptr = lhs_packed;
+        args.operand.lhs.stride = api.get_lhs_stride(&config, &lhs_shape);
+        args.operand.rhs.ptr = rhs_packed;
+        args.operand.rhs.stride = api.get_rhs_stride(&config, &rhs_shape);
+        args.operand.bias.scale_bias_global.ptr = &params->output_zero_point;
+        args.operand.dst.ptr = dst;
+        args.operand.dst.stride = {dst_stride_row};
+        args.activation.clamp.min_ptr = &params->min_value;
+        args.activation.clamp.max_ptr = &params->max_value;
+
+        api.run(&config, &args);
+    };
+
+    return uker;
+}
+
 const MatMulKernel& get_matmul_clamp_qai8_qai8_qsi8cxp4vsx4bi32sf32_1x32vs_sme2_dot() {
     static const kai_matmul_uker_config config{};
     static const kai_matmul_uker_api api = kai_matmul_clamp_qai8_qai8_qsi8cxp4vsx4bi32sf32_1x32vs_sme2_dot();
@@ -569,7 +602,7 @@ struct IndirectMatMulVariant {
 };
 
 const auto& get_gemm_variants() {
-    static std::array<MatMulVariant, 3> variants;
+    static std::array<MatMulVariant, 4> variants;
     static const kai_matmul_clamp_qai8_qai8p_qsi8cxpsb_ukernel& ukernel_sme2 =
         get_matmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa_interface();
     static const kai_matmul_clamp_qai8_qai8p_qsi8cxpsb_ukernel& ukernel_sme =
@@ -630,6 +663,11 @@ const auto& get_gemm_variants() {
     variants[2].lhs_pack = get_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme();
     variants[2].rhs_pack = get_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme();
     variants[2].matmul = get_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx8vs_sme2_mopa();
+
+    variants[3] = variants[2];
+    variants[3].name = "matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4sf32bi32_8vsx8vs_sme2p1_mop4_mopa";
+    variants[3].is_supported = cpu_has_sme_mop4;
+    variants[3].matmul = get_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4sf32bi32_8vsx8vs_sme2p1_mop4_mopa();
 
     return variants;
 }
@@ -1396,10 +1434,17 @@ static constexpr std::array shapes{
     MatMulShape{  3,   28, 25},
     MatMulShape{  3,  184,177},
     MatMulShape{  4,   16, 27},
+    MatMulShape{  4,  128,  4},
+    MatMulShape{  4,  129, 17},
+    MatMulShape{  4,  512, 17},
     MatMulShape{  5,  136, 23},
     MatMulShape{  6,   18, 31},
     MatMulShape{  6,   28,  1},
     MatMulShape{  6,   29, 24},
+    MatMulShape{  8,   96, 17},
+    MatMulShape{  8,  500, 17},
+    MatMulShape{  8,  512, 17},
+    MatMulShape{  9,  512, 17},
     MatMulShape{ 16,   16,  4},
     MatMulShape{ 20,   30, 40},
     MatMulShape{ 23,    1, 43},
@@ -1408,6 +1453,7 @@ static constexpr std::array shapes{
     MatMulShape{ 32,   32,  3},
     MatMulShape{ 32,   32,  4},
     MatMulShape{ 33,   29, 24},
+    MatMulShape{ 40, 512, 17},
     MatMulShape{ 64,   64,  3},
     MatMulShape{ 64,   64,  4},
     MatMulShape{ 96,   96,  3},

@@ -25,6 +25,26 @@ KNOWN_UKERNEL_PROBLEMS: dict[str, KnownIssue] = {}
 
 KNOWN_UKERNEL_PROBLEMS.update(
     _known_issues(
+        description="Uses the legacy naming scheme.",
+        issues=(
+            (
+                "kai_matmul_clamp_f16_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot",
+                "kai_matmul_clamp_f16_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_dot",
+            ),
+            (
+                "kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot",
+                "kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_dot",
+            ),
+            (
+                "kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot",
+                "kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_dot",
+            ),
+        ),
+    )
+)
+
+KNOWN_UKERNEL_PROBLEMS.update(
+    _known_issues(
         description=(
             "Includes the K/block-depth component in the matmul tile field. "
             "The tile field names only the output block shape (`m x n`); "
@@ -409,41 +429,6 @@ KNOWN_UKERNEL_PROBLEMS.update(
             (
                 "kai_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0",
                 "kai_rhs_pack_nxk_qsi4c32pnrx4sf16_qsu4c32",
-            ),
-        ),
-    )
-)
-
-KNOWN_UKERNEL_PROBLEMS.update(
-    _known_issues(
-        description=(
-            "Uses the generic `matmul_pack_*` API prefix instead of the "
-            "naming-rule pack operation."
-        ),
-        issues=(
-            (
-                "kai_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme",
-                "kai_lhs_pack_x32p4vsx1_x32_sme",
-            ),
-            (
-                "kai_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme",
-                "kai_lhs_pack_x8p4vsx4_x8_sme",
-            ),
-            (
-                "kai_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme",
-                "kai_rhs_pack_kxn_x32p4vsx1bx32_x32_x32_sme",
-            ),
-            (
-                "kai_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme",
-                "kai_rhs_pack_kxn_x8p4vsx4_x8_sme",
-            ),
-            (
-                "kai_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme",
-                "kai_rhs_pack_nxk_x32p4vsx1bx32_x32_x32_sme",
-            ),
-            (
-                "kai_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme",
-                "kai_rhs_pack_nxk_x8p4vsx4_x8_sme",
             ),
         ),
     )

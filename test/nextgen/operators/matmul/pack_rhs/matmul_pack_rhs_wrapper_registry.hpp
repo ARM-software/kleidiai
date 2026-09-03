@@ -23,6 +23,9 @@ namespace kai::test {
 /// Creates a wrapper for kai_rhs_pack_kxn_x16p16vsx2bx16_x16_x16_sve micro-kernel.
 [[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_rhs_pack_kxn_x16p16vsx2bx16_x16_x16_sve();
 
+/// Creates a wrapper for kai_matmul_pack_rhs_kxn_x16p4vsx2bx16_x16_x16_sme kernel.
+[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_kxn_x16p4vsx2bx16_x16_x16_sme();
+
 /// Creates a wrapper for kai_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme kernel.
 [[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme();
 
@@ -32,12 +35,26 @@ namespace kai::test {
 /// Creates a wrapper for kai_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme kernel.
 [[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme();
 
+/// Creates a wrapper for kai_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme micro-kernel.
+[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>>
+create_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme();
+
 /// Creates a wrapper for kai_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme kernel.
 [[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme();
 
 /// Creates a wrapper for kai_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme kernel.
 [[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>>
 create_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme();
+
+[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>>
+create_matmul_pack_rhs_kxn_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme();
+
+[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>>
+create_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme();
+
+/// Checks if the portion produces non-empty RHS packing tiles for the x16p4vsx2 KxN matmul operator.
+[[nodiscard]] bool is_shape_suitable_rhs_kxn_x16p4vsx2bx16_x16_x16_sme(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
 /// Checks if the portion produces non-empty RHS packing tiles for the x32p4vsx1 KxN matmul operator.
 [[nodiscard]] bool is_shape_suitable_rhs_kxn_x32p4vsx1bx32_x32_x32_sme(
@@ -51,12 +68,19 @@ create_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme();
 [[nodiscard]] bool is_shape_suitable_rhs_nxk_x8p4vsx4_x8_sme(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
+/// Checks if the portion produces non-empty RHS packing tiles for the qai4c32p16vsx4s1s0sf16 NxK matmul operator.
+[[nodiscard]] bool is_shape_suitable_rhs_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
+
 /// Checks if the portion produces non-empty RHS packing tiles for the x8p4vsx4 KxN matmul operator.
 [[nodiscard]] bool is_shape_suitable_rhs_kxn_x8p4vsx4_x8_sme(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
 /// Checks if the portion produces non-empty RHS packing tiles for the static quantized Int8 KxN operator.
 [[nodiscard]] bool is_shape_suitable_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
+
+[[nodiscard]] bool is_shape_suitable_rhs_qsi4cxp8vsx4sf32bi32(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
 /// Checks if the portion produces non-empty RHS packing tiles for the qai8dxp1vlx8/qsi4cxp4vlx8 matmul operator.
