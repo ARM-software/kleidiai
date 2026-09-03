@@ -500,17 +500,42 @@ TEST_P(MatMulTest_f32_qsi8d32p_qsi4c32p_EndToEnd, EndToEnd) {
     }
 }
 
-TEST(MatMulClampF32Qsi8d32pQsi4c32pLut, DefaultLutArgument) {
+TEST(MatMulClampF32Qsi8d32pQsi4c32pLut, OptionalLutArgument) {
     struct Variant {
         kai_matmul_uker_api (*factory)(void);
         bool (*supported)(void);
         bool sme2_order;
         bool gemv;
     };
-    const std::array<Variant, 1> variants = {{
+    const std::array<Variant, 2> variants = {{
         {kai_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s16s0sf16_1x16vs_sme2_dot, cpu_has_sme2, true, true},
+        {kai_matmul_clamp_f32_qsi8d32p4vsx4sf16_qsi4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa, cpu_has_sme2, true, false},
     }};
-    const std::array<int32_t, 16> qsi4_lut = {-8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7};
+    constexpr std::array<int32_t, 16> qsi4_lut = {-8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7};
+    constexpr std::array<int32_t, 16> zero_lut = {};
+    struct LutCase {
+        const char* name;
+        const int32_t* lut;
+        const int32_t* reference_lut;
+        bool uses_default_mapping;
+    };
+    const std::array<LutCase, 3> lut_cases = {{
+        {"null", nullptr, qsi4_lut.data(), true},
+        {"explicit_default", qsi4_lut.data(), qsi4_lut.data(), true},
+        {"explicit_zero", zero_lut.data(), zero_lut.data(), false},
+    }};
+    struct ClampCase {
+        const char* name;
+        bool enabled;
+        float min;
+        float max;
+    };
+    constexpr std::array<ClampCase, 4> clamp_cases = {{
+        {"disabled", false, -FLT_MAX, FLT_MAX},
+        {"both", true, -0.5F, 0.5F},
+        {"min_only", true, 0.0F, FLT_MAX},
+        {"max_only", true, -FLT_MAX, 0.0F},
+    }};
 
     size_t exercised = 0;
     for (const auto& variant : variants) {
@@ -574,18 +599,18 @@ TEST(MatMulClampF32Qsi8d32pQsi4c32pLut, DefaultLutArgument) {
                     reinterpret_cast<const uint8_t*>(rhs_src.data()), nullptr, packed_rhs.data(), 0, &pack_params);
             }
 
-            std::array<Buffer, 2> null_outputs;
-            for (const bool has_lut : {false, true}) {
-                SCOPED_TRACE(std::string("has_lut=") + (has_lut ? "true" : "false"));
-                const int32_t* lut = has_lut ? qsi4_lut.data() : nullptr;
+            std::array<Buffer, clamp_cases.size()> null_outputs;
+            for (const auto& lut_case : lut_cases) {
+                SCOPED_TRACE(std::string("lut=") + lut_case.name);
                 Buffer decoded_rhs(N * K * sizeof(int8_t));
                 for (size_t index = 0; index < N * K; ++index) {
                     const int32_t quantized = read_array<Int4>(rhs_quant.data(), index);
-                    write_array<int8_t>(decoded_rhs.data(), index, (int8_t)qsi4_lut[quantized + 8]);
+                    write_array<int8_t>(
+                        decoded_rhs.data(), index, static_cast<int8_t>(lut_case.reference_lut[quantized + 8]));
                 }
-                for (const bool enable_clamp : {false, true}) {
-                    constexpr float clamp_min = -0.5F;
-                    constexpr float clamp_max = 0.5F;
+                for (size_t clamp_index = 0; clamp_index < clamp_cases.size(); ++clamp_index) {
+                    const auto& clamp_case = clamp_cases[clamp_index];
+                    SCOPED_TRACE(std::string("clamp=") + clamp_case.name);
                     Buffer reference(M * N * sizeof(float));
                     for (size_t m = 0; m < M; ++m) {
                         for (size_t n = 0; n < N; ++n) {
@@ -605,26 +630,26 @@ TEST(MatMulClampF32Qsi8d32pQsi4c32pLut, DefaultLutArgument) {
                             }
                             write_array<float>(
                                 reference.data(), m * N + n,
-                                enable_clamp ? std::max(clamp_min, std::min(clamp_max, value)) : value);
+                                clamp_case.enabled ? std::max(clamp_case.min, std::min(clamp_case.max, value)) : value);
                         }
                     }
                     Buffer output(M * N * sizeof(float));
                     kai_matmul_uker_args args{};
-                    args.flags = enable_clamp ? KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP : 0;
-                    args.lut = lut;
+                    args.flags = clamp_case.enabled ? KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP : 0;
+                    args.lut = lut_case.lut;
                     args.shape = {.m = M, .n = N, .k = K};
                     args.operand.lhs = {.ptr = packed_lhs.data(), .stride = lhs_stride};
                     args.operand.rhs = {.ptr = packed_rhs.data(), .stride = rhs_stride};
                     args.operand.dst = {.ptr = output.data(), .stride = {.m = N * sizeof(float)}};
-                    args.activation.clamp = {.min_ptr = &clamp_min, .max_ptr = &clamp_max};
+                    args.activation.clamp = {.min_ptr = &clamp_case.min, .max_ptr = &clamp_case.max};
                     abi_check(api.run, &config, &args);
                     DefaultMismatchHandler handler(0, 0.02, 0, 0.05);
                     const Rect full_rect = MatrixPortion(0, 0, 1, 1).compute_portion(M, N, M, N);
                     ASSERT_TRUE(compare(output.data(), reference.data(), DataType::FP32, M, N, full_rect, handler));
-                    if (!has_lut) {
-                        null_outputs[enable_clamp] = std::move(output);
-                    } else {
-                        ASSERT_EQ(0, std::memcmp(null_outputs[enable_clamp].data(), output.data(), output.size()));
+                    if (lut_case.lut == nullptr) {
+                        null_outputs[clamp_index] = std::move(output);
+                    } else if (lut_case.uses_default_mapping) {
+                        ASSERT_EQ(0, std::memcmp(null_outputs[clamp_index].data(), output.data(), output.size()));
                     }
                 }
             }

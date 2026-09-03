@@ -10,8 +10,8 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
-- New SME2 FP16 x QSI4C32P MOPA matrix multiplication micro-kernel with optional 16-entry LUT decoding.
-- New SME2 QSI8D32P x QSI4C32P dot matrix-vector multiplication micro-kernel with optional 16-entry LUT decoding for blockwise 4-bit formats.
+- New SME2 micro-kernels
+  - Matrix multiplication micro-kernels with F32 output and optional LUT decoding: MxN for FP16 x QSI4C32P, and 1xN and MxN for QSI8D32P x QSI4C32P.
 
 ## v1.30.0
 
