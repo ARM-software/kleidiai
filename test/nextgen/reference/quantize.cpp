@@ -355,8 +355,8 @@ DynamicQuantizeLinearFn make_dynamic_symmetric_quantize_linear(
     if (params == std::make_tuple(DataType::FP32, DataType::U4, DataType::FP32, RoundMode::CURRENT)) {
         return dynamic_symmetric_quantize_linear<float, UInt4, float, RoundMode::CURRENT>;
     }
-    if (params == std::make_tuple(DataType::FP32, DataType::U2, DataType::FP32, RoundMode::CURRENT)) {
-        return dynamic_symmetric_quantize_linear<float, UInt2, float, RoundMode::CURRENT>;
+    if (params == std::make_tuple(DataType::FP32, DataType::I2, DataType::FP32, RoundMode::CURRENT)) {
+        return dynamic_symmetric_quantize_linear<float, Int2, float, RoundMode::CURRENT>;
     }
 
     if (params == std::make_tuple(DataType::FP32, DataType::I4, DataType::FP32, RoundMode::CURRENT)) {
@@ -399,8 +399,8 @@ DetermineQuantizationInfoFn make_determine_symmetric_quantization_info(
     if (params == std::make_tuple(DataType::FP32, DataType::U4, DataType::FP32)) {
         return determine_symmetric_quantization_info<float, UInt4, float>;
     }
-    if (params == std::make_tuple(DataType::FP32, DataType::U2, DataType::FP32)) {
-        return determine_symmetric_quantization_info<float, UInt2, float>;
+    if (params == std::make_tuple(DataType::FP32, DataType::I2, DataType::FP32)) {
+        return determine_symmetric_quantization_info<float, Int2, float>;
     }
 
     if (params == std::make_tuple(DataType::FP32, DataType::I8, DataType::FP32)) {
@@ -421,8 +421,8 @@ QuantizeLinearFn make_symmetric_quantize_linear(
     if (params == std::make_tuple(DataType::FP32, DataType::U4, DataType::FP32, RoundMode::CURRENT)) {
         return symmetric_quantize_linear<float, UInt4, float, RoundMode::CURRENT>;
     }
-    if (params == std::make_tuple(DataType::FP32, DataType::U2, DataType::FP32, RoundMode::CURRENT)) {
-        return symmetric_quantize_linear<float, UInt2, float, RoundMode::CURRENT>;
+    if (params == std::make_tuple(DataType::FP32, DataType::I2, DataType::FP32, RoundMode::CURRENT)) {
+        return symmetric_quantize_linear<float, Int2, float, RoundMode::CURRENT>;
     }
 
     if (params == std::make_tuple(DataType::FP32, DataType::I8, DataType::FP32, RoundMode::CURRENT)) {

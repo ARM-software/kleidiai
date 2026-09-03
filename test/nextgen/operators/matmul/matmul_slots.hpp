@@ -45,6 +45,7 @@ enum class MatMulSlot : size_t {
     RHS_DATA,        ///< RHS data.
     RHS_CVT_DATA,    ///< RHS data after conversion.
     RHS_QDATA,       ///< RHS data after quantization in non-transposed layout.
+    RHS_QDATA_SIGN,  ///< Non-transposed RHS data after quantization with opposite signedness.
     RHS_PACKED,      ///< Packed RHS.
     RHS_PACKED_IMP,  ///< Packed RHS from micro-kernel.
 

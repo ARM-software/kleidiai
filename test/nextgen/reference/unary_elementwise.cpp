@@ -91,6 +91,7 @@ UnaryElementwiseFn make_change_signedness(DataType dtype) {
         case DataType::I4:
             return unary_elementwise<ChangeSignednessOp<UInt4>>;
         case DataType::U2:
+        case DataType::I2:
             return unary_elementwise<ChangeSignednessOp<UInt2>>;
 
         default:

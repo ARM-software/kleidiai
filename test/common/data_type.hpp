@@ -46,6 +46,7 @@ enum class DataType : uint16_t {
     I32 = 0b1'1'0'0'0000'00100000,  ///< 32-bit signed integer.
     I8 = 0b1'1'0'0'0000'00001000,   ///< 8-bit signed integer.
     I4 = 0b1'1'0'0'0000'00000100,   ///< 4-bit signed integer.
+    I2 = 0b1'1'0'0'0000'00000010,   ///< 2-bit signed integer.
 
     U32 = 0b1'0'0'0'0000'00100000,  ///< 32-bit unsigned integer.
     U8 = 0b1'0'0'0'0000'00001000,   ///< 8-bit unsigned integer.

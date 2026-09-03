@@ -35,6 +35,8 @@ double read_array(DataType type, const void* array, size_t index) {
             return read_array<UInt2>(array, index);
         case DataType::I4:
             return read_array<Int4>(array, index);
+        case DataType::I2:
+            return read_array<Int2>(array, index);
         case DataType::QAI8:
         case DataType::QSI8:
             return read_array<int8_t>(array, index);
@@ -92,6 +94,10 @@ void write_array(DataType type, void* array, size_t index, double value) {
         }
         case DataType::I4: {
             write_array<Int4>(array, index, static_cast<Int4>(value));
+            return;
+        }
+        case DataType::I2: {
+            write_array<Int2>(array, index, static_cast<Int2>(value));
             return;
         }
         case DataType::QAI8:

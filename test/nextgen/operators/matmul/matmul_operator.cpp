@@ -591,7 +591,7 @@ Span<const MatMulOperator> get_available_matmul_operators() {
     operators[22].lhs_quant = std::make_unique<AsymmLinearQuantizer>(
         DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 0, 0);
     operators[22].rhs_quant =
-        std::make_unique<SymmLinearQuantizer>(DataType::U2, DataType::FP32, RoundMode::CURRENT, 1, 0);
+        std::make_unique<SymmLinearQuantizer>(DataType::I2, DataType::FP32, RoundMode::CURRENT, 1, 0);
     operators[22].bias_quant =
         std::make_unique<SymmLinearQuantizer>(DataType::I32, DataType::FP32, RoundMode::CURRENT, 1, 1);
     operators[22].dst_quant = std::make_unique<AsymmLinearQuantizer>(
@@ -616,7 +616,7 @@ Span<const MatMulOperator> get_available_matmul_operators() {
     operators[23].lhs_quant = std::make_unique<AsymmLinearQuantizer>(
         DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 0, 0);
     operators[23].rhs_quant =
-        std::make_unique<SymmLinearQuantizer>(DataType::U2, DataType::FP32, RoundMode::CURRENT, 1, 0);
+        std::make_unique<SymmLinearQuantizer>(DataType::I2, DataType::FP32, RoundMode::CURRENT, 1, 0);
     operators[23].bias_quant =
         std::make_unique<SymmLinearQuantizer>(DataType::I32, DataType::FP32, RoundMode::CURRENT, 1, 1);
     operators[23].dst_quant = std::make_unique<AsymmLinearQuantizer>(
@@ -641,7 +641,7 @@ Span<const MatMulOperator> get_available_matmul_operators() {
     operators[24].lhs_quant = std::make_unique<AsymmLinearQuantizer>(
         DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 0, 0);
     operators[24].rhs_quant =
-        std::make_unique<SymmLinearQuantizer>(DataType::U2, DataType::FP32, RoundMode::CURRENT, 1, 0);
+        std::make_unique<SymmLinearQuantizer>(DataType::I2, DataType::FP32, RoundMode::CURRENT, 1, 0);
     operators[24].bias_quant =
         std::make_unique<SymmLinearQuantizer>(DataType::I32, DataType::FP32, RoundMode::CURRENT, 1, 1);
     operators[24].dst_quant = std::make_unique<AsymmLinearQuantizer>(
@@ -666,7 +666,7 @@ Span<const MatMulOperator> get_available_matmul_operators() {
     operators[25].lhs_quant = std::make_unique<AsymmLinearQuantizer>(
         DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 0, 0);
     operators[25].rhs_quant =
-        std::make_unique<SymmLinearQuantizer>(DataType::U2, DataType::FP32, RoundMode::CURRENT, 1, 0);
+        std::make_unique<SymmLinearQuantizer>(DataType::I2, DataType::FP32, RoundMode::CURRENT, 1, 0);
     operators[25].bias_quant =
         std::make_unique<SymmLinearQuantizer>(DataType::I32, DataType::FP32, RoundMode::CURRENT, 1, 1);
     operators[25].dst_quant = std::make_unique<AsymmLinearQuantizer>(

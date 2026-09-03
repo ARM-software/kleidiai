@@ -78,7 +78,7 @@ ReduceFn make_reduce_add(DataType src_dtype, DataType dst_dtype) {
     if (dtypes == std::make_tuple(DataType::I4, DataType::I32)) {
         return reduce<AddOp<Int4, int32_t>>;
     }
-    if (dtypes == std::make_tuple(DataType::QSI2, DataType::I32)) {
+    if (dtypes == std::make_tuple(DataType::I2, DataType::I32)) {
         return reduce<AddOp<Int2, int32_t>>;
     }
 

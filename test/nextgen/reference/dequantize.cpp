@@ -71,8 +71,8 @@ DequantizeLinearFn make_dequantize_linear(
     if (dtypes == std::make_tuple(DataType::FP32, DataType::U4, DataType::FP32, DataType::UNKNOWN)) {
         return dequantize_linear<float, UInt4, float, void>;
     }
-    if (dtypes == std::make_tuple(DataType::FP32, DataType::U2, DataType::FP32, DataType::UNKNOWN)) {
-        return dequantize_linear<float, UInt2, float, void>;
+    if (dtypes == std::make_tuple(DataType::FP32, DataType::I2, DataType::FP32, DataType::UNKNOWN)) {
+        return dequantize_linear<float, Int2, float, void>;
     }
 
     if (dtypes == std::make_tuple(DataType::FP32, DataType::I4, DataType::FP32, DataType::UNKNOWN)) {

@@ -100,6 +100,7 @@ void MatMulTb::generate_test_data(Rng& rng) {
     compute_rhs_qdata(false);
     compute_rhs_t_qscale_mul_lhs_qscale_div_dst_qscale(false);
     compute_rhs_t_qdata_sign(false);
+    compute_rhs_qdata_sign(false);
     compute_rhs_t_qdata_sign_sum(false);
 
     quantize_bias(rng, false);
@@ -643,6 +644,28 @@ void MatMulTb::compute_rhs_qdata(bool required) {
         .set_data(std::move(data), id);
 }
 
+void MatMulTb::compute_rhs_qdata_sign(bool required) {
+    if (!required && !is_tensor_required(MatMulSlot::RHS_QDATA_SIGN)) {
+        return;
+    }
+
+    if (is_tensor_generated(MatMulSlot::RHS_QDATA_SIGN)) {
+        return;
+    }
+
+    compute_rhs_t_qdata_sign(true);
+
+    const Tensor& rhs_t_qdata_sign = get_tensor(MatMulSlot::RHS_T_QDATA_SIGN);
+    Tensor& rhs_qdata_sign = get_tensor(MatMulSlot::RHS_QDATA_SIGN);
+
+    Buffer data = transpose(rhs_t_qdata_sign.data_ptr(), rhs_t_qdata_sign.format()->dtype(), m_shape_n, m_shape_k);
+    const std::string id = "transpose(" + std::string(rhs_t_qdata_sign.id()) + ")";
+
+    rhs_qdata_sign.set_shape({m_shape_k, m_shape_n})
+        .set_format(make_poly<PlainFormat>(rhs_t_qdata_sign.format()->dtype()))
+        .set_data(std::move(data), id);
+}
+
 void MatMulTb::compute_lhs_qzp_neg(bool required) {
     if (!required && !is_tensor_required(MatMulSlot::LHS_QZP_NEG)) {
         return;
@@ -790,11 +813,6 @@ void MatMulTb::compute_acc_bias_n_qdata_minus_lhs_qzp_mul_rhs_t_qdata_row_sum(Rn
     const Tensor& acc_bias_n_qdata = get_tensor(MatMulSlot::ACC_BIAS_N_QDATA);
     const Tensor& lhs_qzp = get_tensor(MatMulSlot::LHS_QZP);
     const Tensor& rhs_t_qdata = get_tensor(MatMulSlot::RHS_T_QDATA);
-    const Tensor* rhs_row_sum_data = &rhs_t_qdata;
-    if (rhs_t_qdata.format()->dtype() == DataType::U2) {
-        compute_rhs_t_qdata_sign(true);
-        rhs_row_sum_data = &get_tensor(MatMulSlot::RHS_T_QDATA_SIGN);
-    }
     Tensor& result = get_tensor(MatMulSlot::ACC_BIAS_N_QDATA_MINUS_LHS_QZP_MUL_RHS_T_QDATA_ROW_SUM);
 
     const DataType acc_bias_n_qdata_dt = acc_bias_n_qdata.format()->dtype();
@@ -803,8 +821,8 @@ void MatMulTb::compute_acc_bias_n_qdata_minus_lhs_qzp_mul_rhs_t_qdata_row_sum(Rn
     const DataType lhs_qzp_dt = lhs_qzp.format()->dtype();
     const Shape lhs_qzp_shape = lhs_qzp.shape();
 
-    const DataType rhs_t_qdata_dt = rhs_row_sum_data->format()->dtype();
-    const Shape rhs_t_qdata_shape = rhs_row_sum_data->shape();
+    const DataType rhs_t_qdata_dt = rhs_t_qdata.format()->dtype();
+    const Shape rhs_t_qdata_shape = rhs_t_qdata.shape();
 
     KAI_TEST_ASSERT(acc_bias_n_qdata_dt == lhs_qzp_dt);
 
@@ -818,8 +836,8 @@ void MatMulTb::compute_acc_bias_n_qdata_minus_lhs_qzp_mul_rhs_t_qdata_row_sum(Rn
     const BinaryElementwiseFn multiply_fn = make_multiply_2d(acc_bias_n_qdata_dt);
     const ReduceFn reduce_fn = make_reduce_add(rhs_t_qdata_dt, lhs_qzp_dt);
 
-    const Buffer row_sum = reduce_fn(0, rhs_t_qdata_shape, rhs_row_sum_data->data());
-    const std::string row_sum_id = "reduce_add(" + std::string(rhs_row_sum_data->id()) + ")";
+    const Buffer row_sum = reduce_fn(0, rhs_t_qdata_shape, rhs_t_qdata.data());
+    const std::string row_sum_id = "reduce_add(" + std::string(rhs_t_qdata.id()) + ")";
     const size_t row_sum_len = rhs_t_qdata_shape.at(0);
 
     const Buffer lhs_qzp_mul_row_sum =
@@ -858,14 +876,13 @@ void MatMulTb::compute_rhs_t_qdata_sign(bool required) {
         case DataType::I4:
             signed_dtype = DataType::I4;
             break;
-        case DataType::U2:
-            signed_dtype = DataType::QSI2;
+        case DataType::I2:
+            signed_dtype = DataType::U2;
             break;
         default:
             KAI_TEST_ERROR("Not supported.");
     }
 
-    // Store the signed interpretation with the signed dtype so reducers can use it directly.
     const Poly<Format> format(std::in_place_type<PlainFormat>, signed_dtype);
 
     const UnaryElementwiseFn fn = make_change_signedness(src_dtype);
