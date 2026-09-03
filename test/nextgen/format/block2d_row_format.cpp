@@ -146,9 +146,11 @@ Buffer Block2dRowFormat::pack(Shape shape, Span<const Span<const std::byte>> buf
 
     const size_t data_size = num_block_rows * layout.num_component_blocks * component_data_size;
     Buffer block_data_buffer(data_size, 0);
+    const std::optional<double> pad_value =
+        m_pad_right_same ? std::nullopt : std::optional<double>{m_pad_value.value_or(0)};
     const size_t packed_data_size = pack_data_fn(
-        m_block_height, m_block_width, layout.width_alignment, m_pad_right_same, m_pad_value, height, width,
-        block_data_buffer, data_buffer);
+        m_block_height, m_block_width, layout.width_alignment, pad_value, height, width, block_data_buffer,
+        data_buffer);
     KAI_TEST_ASSERT(packed_data_size == data_size);
     const Span<const std::byte> block_data = block_data_buffer;
 

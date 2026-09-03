@@ -870,20 +870,25 @@ void MatMulTb::compute_rhs_t_qdata_sign(bool required) {
 
     const Shape shape = rhs_t_qdata.shape();
     const DataType src_dtype = rhs_t_qdata.format()->dtype();
-    DataType signed_dtype = DataType::I4;
+    DataType dst_dtype = DataType::UNKNOWN;
     switch (src_dtype) {
         case DataType::U4:
+            dst_dtype = DataType::I4;
+            break;
         case DataType::I4:
-            signed_dtype = DataType::I4;
+            dst_dtype = DataType::U4;
+            break;
+        case DataType::U2:
+            dst_dtype = DataType::I2;
             break;
         case DataType::I2:
-            signed_dtype = DataType::U2;
+            dst_dtype = DataType::U2;
             break;
         default:
             KAI_TEST_ERROR("Not supported.");
     }
 
-    const Poly<Format> format(std::in_place_type<PlainFormat>, signed_dtype);
+    const Poly<Format> format(std::in_place_type<PlainFormat>, dst_dtype);
 
     const UnaryElementwiseFn fn = make_change_signedness(src_dtype);
     Buffer data = fn(shape, rhs_t_qdata.data());
