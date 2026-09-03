@@ -181,7 +181,7 @@ struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8p8vsx4_qsi4cxp8vsx4sf32bi32
 /// @return The micro-kernel API.
 struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4sf32bi32_8vsx8vs_sme2p1_mop4_mopa(void);
 
-/// Statically quantized INT8 matrix-vector multiplication with packed INT2 RHS using SME2 DOT instruction.
+/// Statically quantized INT8 matrix-vector multiplication with packed UINT2 RHS using SME2 DOT instruction.
 ///
 /// Required CPU features:
 ///   * FEAT_SME2
@@ -202,7 +202,7 @@ struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4sf32bi32
 /// @return The micro-kernel API.
 struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8_qsu2cxp16vsx4sf32bi32_1x64vs_sme2_dot(void);
 
-/// Statically quantized INT8 matrix multiplication with packed INT2 RHS using SME2 MOPA instruction.
+/// Statically quantized INT8 matrix multiplication with packed UINT2 RHS using SME2 MOPA instruction.
 ///
 /// Required CPU features:
 ///   * FEAT_SME2
