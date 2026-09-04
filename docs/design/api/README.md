@@ -57,7 +57,7 @@ The run argument structure is organized in multiple levels of structures, all of
 | `flags` | `uint64_t` | The bit flags that can be used to control the functionality of the micro-kernel. If no flag is used, **this field must be set to 0**. The possible flag values are provided in `kai_<uker>_args_flags` enum. |
 | `shape` | `kai_<uker>_shape_args` | The problem shape. |
 | `operands` | `kai_<uker>_operands_args` | The run-time information of each operand involved in the execution of the micro-kernel. |
-| `lut` | `const void*` | Optional micro-kernel-specific lookup table. Its representation, size, indexing, and behaviour when `NULL` are defined by each micro-kernel. Micro-kernels without LUT support ignore this field. |
+| `lut` | `kai_<uker>_lut_args` | Lookup table arguments. |
 
 #### Problem shape
 

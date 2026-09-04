@@ -508,11 +508,11 @@ TEST(MatMulClampF32Qsi8d32pQsi4c32pLut, OptionalLutArgument) {
         bool gemv;
     };
     const std::array<Variant, 2> variants = {{
-        {kai_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s16s0sf16_1x16vs_sme2_dot, cpu_has_sme2, true, true},
+        {kai_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_1x16vs_sme2_dot, cpu_has_sme2, true, true},
         {kai_matmul_clamp_f32_qsi8d32p4vsx4sf16_qsi4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa, cpu_has_sme2, true, false},
     }};
-    constexpr std::array<int32_t, 16> qsi4_lut = {-8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7};
-    constexpr std::array<int32_t, 16> zero_lut = {};
+    alignas(16) constexpr std::array<int32_t, 16> qsi4_lut = {-8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7};
+    alignas(16) constexpr std::array<int32_t, 16> zero_lut = {};
     struct LutCase {
         const char* name;
         const int32_t* lut;
@@ -636,7 +636,7 @@ TEST(MatMulClampF32Qsi8d32pQsi4c32pLut, OptionalLutArgument) {
                     Buffer output(M * N * sizeof(float));
                     kai_matmul_uker_args args{};
                     args.flags = clamp_case.enabled ? KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP : 0;
-                    args.lut = lut_case.lut;
+                    args.lut.ptr = lut_case.lut;
                     args.shape = {.m = M, .n = N, .k = K};
                     args.operand.lhs = {.ptr = packed_lhs.data(), .stride = lhs_stride};
                     args.operand.rhs = {.ptr = packed_rhs.data(), .stride = rhs_stride};

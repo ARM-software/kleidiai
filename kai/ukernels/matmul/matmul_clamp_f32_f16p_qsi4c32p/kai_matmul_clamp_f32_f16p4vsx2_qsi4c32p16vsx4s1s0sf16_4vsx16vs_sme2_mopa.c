@@ -18,6 +18,12 @@
 #include "kai/ukernels/matmul/kai_matmul.h"
 #include "kai/ukernels/matmul/kai_matmul_types.h"
 
+#if defined(_MSC_VER)
+#define KAI_ALIGNED_AS(N) __declspec(align(N))
+#else
+#define KAI_ALIGNED_AS(N) __attribute__((aligned(N)))
+#endif
+
 typedef struct {
     float* dst;
     const void* lhs_packed;
@@ -56,6 +62,7 @@ static size_t kai_get_mr_matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s1s0sf16_4vsx1
 static size_t kai_get_nr_matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa(void);
 
 // Look-up table used for int4-to-fp16 conversion.
+KAI_ALIGNED_AS(16)
 static const uint32_t default_lut[16] = {
     0x0000c800, 0x0000c700, 0x0000c600, 0x0000c500, 0x0000c400, 0x0000c200, 0x0000c000, 0x0000bc00,
     0x00000000, 0x00003c00, 0x00004000, 0x00004200, 0x00004400, 0x00004500, 0x00004600, 0x00004700,
@@ -108,54 +115,6 @@ static size_t kai_get_mr_matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s1s0sf16_4vsx1
 
 static size_t kai_get_nr_matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa(void) {
     return kai_nr * kai_get_sme_vscale();
-}
-
-static void run_internal_matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa(
-    size_t m,                         //
-    size_t n,                         //
-    size_t k,                         //
-    size_t bl,                        //
-    const void* restrict lhs_packed,  //
-    const void* restrict rhs_packed,  //
-    float* restrict dst,              // NOLINT(readability-non-const-parameter)
-    size_t dst_stride_row,            //
-    size_t dst_stride_col,            //
-    float scalar_min,                 //
-    float scalar_max,                 //
-    const uint32_t* lut_arg) {
-    KAI_ASSUME(dst_stride_col == sizeof(float));
-    KAI_ASSUME(bl != 0);
-    KAI_ASSUME((bl % kai_bl) == 0);
-
-    if (m == 0 || n == 0) {
-        return;
-    }
-
-    const size_t num_blocks = kai_get_num_blocks_per_row(k, bl);
-    const size_t nr = kai_get_nr_matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa();
-    const size_t rhs_packed_stride = kai_get_rhs_packed_stride(k, bl);
-    const uint16_t* rhs_scales = (const uint16_t*)((const uint8_t*)rhs_packed + rhs_packed_stride -
-                                                   (nr * num_blocks) * kai_num_bytes_multiplier_rhs);
-
-    KernelArgs ka = {
-        .dst = dst,
-        .lhs_packed = lhs_packed,
-        .rhs_packed = rhs_packed,
-        .rhs_scales = rhs_scales,
-        .dst_stride_row = dst_stride_row,
-        .lhs_packed_stride = kai_get_lhs_packed_stride(k, bl),
-        .rhs_packed_stride = rhs_packed_stride,
-        .m = m,
-        .n = n,
-        .k = k,
-        .bl = bl,
-        .lut = lut_arg != NULL ? lut_arg : default_lut,
-        .scalar_min = scalar_min,
-        .scalar_max = scalar_max,
-    };
-
-    kai_commit_za();
-    kai_kernel_matmul_clamp_f32_f16p1vlx2_qsi4c32p4vlx2_1vlx4vl_sme2_mopa(&ka);
 }
 
 static struct kai_matmul_uker_dim_args get_step(const struct kai_matmul_uker_config* config) {
@@ -213,19 +172,52 @@ static size_t get_dst_size(
 }
 
 static void run(const struct kai_matmul_uker_config* config, const struct kai_matmul_uker_args* args) {
+    KAI_ASSUME(config != NULL);
+    KAI_ASSUME(args != NULL);
     KAI_ASSUME(config->format.bl != 0);
+    KAI_ASSUME((config->format.bl % kai_bl) == 0);
+    KAI_ASSUME(args->shape.k != 0);
     KAI_ASSUME(args->operand.lhs.ptr != NULL);
     KAI_ASSUME(args->operand.rhs.ptr != NULL);
     KAI_ASSUME(args->operand.dst.ptr != NULL);
+    KAI_ASSUME(args->lut.ptr == NULL || ((uintptr_t)args->lut.ptr % 16) == 0);
     KAI_ASSUME((args->flags & ~((uint64_t)KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP)) == 0);
     const bool clamp = (args->flags & KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP) != 0;
     KAI_ASSUME(!clamp || args->activation.clamp.min_ptr != NULL);
     KAI_ASSUME(!clamp || args->activation.clamp.max_ptr != NULL);
     const float min = clamp ? *(const float*)args->activation.clamp.min_ptr : -FLT_MAX;
     const float max = clamp ? *(const float*)args->activation.clamp.max_ptr : FLT_MAX;
-    run_internal_matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa(
-        args->shape.m, args->shape.n, args->shape.k, config->format.bl, args->operand.lhs.ptr, args->operand.rhs.ptr,
-        (float*)args->operand.dst.ptr, args->operand.dst.stride.m, sizeof(float), min, max, (const uint32_t*)args->lut);
+
+    if (args->shape.m == 0 || args->shape.n == 0) {
+        return;
+    }
+
+    const size_t bl = config->format.bl;
+    const size_t num_blocks = kai_get_num_blocks_per_row(args->shape.k, bl);
+    const size_t nr = kai_get_nr_matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa();
+    const size_t rhs_packed_stride = kai_get_rhs_packed_stride(args->shape.k, bl);
+    const uint16_t* rhs_scales = (const uint16_t*)((const uint8_t*)args->operand.rhs.ptr + rhs_packed_stride -
+                                                   (nr * num_blocks) * kai_num_bytes_multiplier_rhs);
+
+    KernelArgs kernel_args = {
+        .dst = (float*)args->operand.dst.ptr,
+        .lhs_packed = args->operand.lhs.ptr,
+        .rhs_packed = args->operand.rhs.ptr,
+        .rhs_scales = rhs_scales,
+        .dst_stride_row = args->operand.dst.stride.m,
+        .lhs_packed_stride = kai_get_lhs_packed_stride(args->shape.k, bl),
+        .rhs_packed_stride = rhs_packed_stride,
+        .m = args->shape.m,
+        .n = args->shape.n,
+        .k = args->shape.k,
+        .bl = bl,
+        .lut = args->lut.ptr != NULL ? (const uint32_t*)args->lut.ptr : default_lut,
+        .scalar_min = min,
+        .scalar_max = max,
+    };
+
+    kai_commit_za();
+    kai_kernel_matmul_clamp_f32_f16p1vlx2_qsi4c32p4vlx2_1vlx4vl_sme2_mopa(&kernel_args);
 }
 
 struct kai_matmul_uker_api kai_matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa(void) {

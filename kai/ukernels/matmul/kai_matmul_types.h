@@ -181,6 +181,13 @@ struct kai_matmul_uker_activation_args {
     struct kai_matmul_uker_clamp_args clamp;  ///< Output clamping function.
 };
 
+//// Lookup table parameter types ////
+
+/// Lookup table arguments for matrix multiplication micro-kernel.
+struct kai_matmul_uker_lut_args {
+    const void* ptr;  ///< Lookup table buffer.
+};
+
 //// Operand and high level argument types ////
 
 /// Operands for matrix multiplication micro-kernel.
@@ -198,12 +205,7 @@ struct kai_matmul_uker_args {
     struct kai_matmul_uker_dim_args shape;              ///< Problem shape.
     struct kai_matmul_uker_operand_args operand;        ///< Operands.
     struct kai_matmul_uker_activation_args activation;  ///< Fused activation function.
-
-    /// Optional micro-kernel-specific lookup table.
-    ///
-    /// Representation, size, indexing, and behaviour when NULL are defined by
-    /// each micro-kernel. Micro-kernels without lookup table support ignore it.
-    const void* lut;
+    struct kai_matmul_uker_lut_args lut;                ///< Lookup table arguments.
 };
 
 /// Matrix multiplication micro-kernel run flags.

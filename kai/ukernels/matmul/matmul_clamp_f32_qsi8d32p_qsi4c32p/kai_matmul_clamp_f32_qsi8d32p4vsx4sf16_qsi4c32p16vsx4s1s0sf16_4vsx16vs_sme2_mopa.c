@@ -17,6 +17,12 @@
 #include "kai/ukernels/matmul/kai_matmul.h"
 #include "kai/ukernels/matmul/kai_matmul_types.h"
 
+#if defined(_MSC_VER)
+#define KAI_ALIGNED_AS(N) __declspec(align(N))
+#else
+#define KAI_ALIGNED_AS(N) __attribute__((aligned(N)))
+#endif
+
 typedef struct {
     size_t lhs_packed_stride;    // 0x00
     size_t rhs_packed_stride;    // 0x08
@@ -49,7 +55,7 @@ static const size_t kai_recip_num_bytes_qvalue_rhs = 2;
 static const size_t kai_num_bytes_multiplier_rhs = 2;
 static const size_t kai_bl = 32;
 
-static const int32_t default_lut[16] = {-8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7};
+KAI_ALIGNED_AS(16) static const int32_t default_lut[16] = {-8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7};
 
 static size_t get_mr(void) {
     return kai_mr * kai_get_sme_vscale();
@@ -149,6 +155,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
     KAI_ASSUME(args->operand.lhs.ptr != NULL);
     KAI_ASSUME(args->operand.rhs.ptr != NULL);
     KAI_ASSUME(args->operand.dst.ptr != NULL);
+    KAI_ASSUME(args->lut.ptr == NULL || ((uintptr_t)args->lut.ptr % 16) == 0);
     KAI_ASSUME((args->flags & ~((uint64_t)KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP)) == 0);
     const bool clamp = (args->flags & KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP) != 0;
     KAI_ASSUME(!clamp || args->activation.clamp.min_ptr != NULL);
@@ -186,7 +193,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
                                         nr * num_blocks * kai_num_bytes_multiplier_rhs),
         .dst = (float*)args->operand.dst.ptr,
         .dst_stride_row = args->operand.dst.stride.m,
-        .lut = args->lut != NULL ? (const int32_t*)args->lut : default_lut,
+        .lut = args->lut.ptr != NULL ? (const int32_t*)args->lut.ptr : default_lut,
     };
 
     kai_commit_za();

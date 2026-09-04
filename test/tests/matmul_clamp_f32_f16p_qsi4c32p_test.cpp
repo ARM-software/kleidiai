@@ -375,11 +375,11 @@ TEST(MatMulClampF32F16pQsi4c32pLut, OptionalLutArgument) {
         GTEST_SKIP() << "SME2 and FP16 are not supported";
     }
 
-    constexpr std::array<uint32_t, 16> qsi4_lut = {
+    alignas(16) constexpr std::array<uint32_t, 16> qsi4_lut = {
         0x0000c800, 0x0000c700, 0x0000c600, 0x0000c500, 0x0000c400, 0x0000c200, 0x0000c000, 0x0000bc00,
         0x00000000, 0x00003c00, 0x00004000, 0x00004200, 0x00004400, 0x00004500, 0x00004600, 0x00004700,
     };
-    constexpr std::array<uint32_t, 16> zero_lut = {};
+    alignas(16) constexpr std::array<uint32_t, 16> zero_lut = {};
     struct LutCase {
         const char* name;
         const uint32_t* lut;
@@ -453,7 +453,7 @@ TEST(MatMulClampF32F16pQsi4c32pLut, OptionalLutArgument) {
                 Buffer output(api.get_dst_size(&config, &dst_shape, &dst_stride));
                 kai_matmul_uker_args args{};
                 args.flags = enable_clamp ? KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP : 0;
-                args.lut = lut_case.lut;
+                args.lut.ptr = lut_case.lut;
                 args.shape = {.m = M, .n = N, .k = K};
                 args.operand.lhs = {.ptr = packed_lhs.data(), .stride = lhs_stride};
                 args.operand.rhs = {.ptr = packed_rhs.data(), .stride = rhs_stride};
