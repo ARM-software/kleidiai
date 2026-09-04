@@ -56,12 +56,16 @@ const char* to_cstring(DataType dt) {
             return "I8";
         case DataType::I4:
             return "I4";
+        case DataType::I2:
+            return "I2";
         case DataType::U32:
             return "U32";
         case DataType::U8:
             return "U8";
         case DataType::U4:
             return "U4";
+        case DataType::U2:
+            return "U2";
         case DataType::QAI8:
             return "QAI8";
         case DataType::QSI8:
@@ -101,12 +105,16 @@ std::string data_type_uid(DataType dt) {
             return "i8";
         case DataType::I4:
             return "i4";
+        case DataType::I2:
+            return "i2";
         case DataType::U32:
             return "u32";
         case DataType::U8:
             return "u8";
         case DataType::U4:
             return "u4";
+        case DataType::U2:
+            return "u2";
         case DataType::QAI8:
             return "qai8";
         case DataType::QSI8:

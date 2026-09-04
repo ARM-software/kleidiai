@@ -7,6 +7,7 @@
 #pragma once
 
 #include <cstddef>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -76,9 +77,11 @@ public:
     /// @param[in] pre_dtypes The data type of each prefix per-row component.
     /// @param[in] post_dtypes The data type of each postfix per-row component.
     /// @param[in] block_length Number of K values sharing the per-row components. A value of 0 means the full row.
+    /// @param[in] pad_value Value used for padding, or no value to pad with 0.
     Block2dRowFormat(
         size_t block_height, size_t block_width, size_t width_align, bool pad_right_same, DataType dtype,
-        Span<const DataType> pre_dtypes, Span<const DataType> post_dtypes, size_t block_length = 0) :
+        Span<const DataType> pre_dtypes, Span<const DataType> post_dtypes, size_t block_length = 0,
+        std::optional<double> pad_value = std::nullopt) :
         m_block_height(block_height),
         m_block_width(block_width),
         m_width_align(width_align),
@@ -86,11 +89,13 @@ public:
         m_dtype(dtype),
         m_pre_dtypes(pre_dtypes.begin(), pre_dtypes.end()),
         m_post_dtypes(post_dtypes.begin(), post_dtypes.end()),
-        m_block_length(block_length) {
+        m_block_length(block_length),
+        m_pad_value(pad_value) {
         KAI_TEST_ASSERT(width_align % block_width == 0);
         KAI_TEST_ASSERT(block_height * block_width * data_type_size_in_bits(dtype) % 8 == 0);
         KAI_TEST_ASSERT(block_length == 0 || block_length % block_width == 0);
         KAI_TEST_ASSERT(block_length == 0 || !pre_dtypes.empty() || !post_dtypes.empty());
+        KAI_TEST_ASSERT(!pad_right_same || !pad_value.has_value());
 
         for (const DataType pre_dtype : pre_dtypes) {
             KAI_TEST_ASSERT(data_type_size_in_bits(pre_dtype) % 8 == 0);
@@ -121,6 +126,7 @@ private:
     std::vector<DataType> m_pre_dtypes;
     std::vector<DataType> m_post_dtypes;
     size_t m_block_length;
+    std::optional<double> m_pad_value;
 };
 
 }  // namespace kai::test

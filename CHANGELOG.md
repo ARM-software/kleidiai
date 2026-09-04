@@ -14,6 +14,7 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
   - SME2 FP16 elastic GEMM/GEMV kernels with corresponding packing kernels.
   - SME2.1 INT8 8vsx8vs MOPA matmul micro-kernel with a 2vsx32vs MOP4A fast path for eligible output regions whose height is half the accumulator vector length (2vs).
   - SME2 QAI4C32K256 GEMM/GEMV micro-kernels along with corresponding packing kernels.
+  - SME2 GEMM/GEMV micro-kernels with QAI8 LHS, QSU2CXP RHS and QAI8 output along with RHS packing kernel
 - Fixes
   - Corrected the documented indirection-table size and bounds assertions for SME LHS imatmul packing micro-kernels.
 
