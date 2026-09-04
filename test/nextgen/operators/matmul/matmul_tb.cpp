@@ -100,7 +100,7 @@ void MatMulTb::generate_test_data(Rng& rng) {
     compute_rhs_qdata(false);
     compute_rhs_t_qscale_mul_lhs_qscale_div_dst_qscale(false);
     compute_rhs_t_qdata_sign(false);
-    compute_rhs_qdata_sign(false);
+    compute_rhs_t_qdata_sign_t(false);
     compute_rhs_t_qdata_sign_sum(false);
 
     quantize_bias(rng, false);
@@ -644,24 +644,24 @@ void MatMulTb::compute_rhs_qdata(bool required) {
         .set_data(std::move(data), id);
 }
 
-void MatMulTb::compute_rhs_qdata_sign(bool required) {
-    if (!required && !is_tensor_required(MatMulSlot::RHS_QDATA_SIGN)) {
+void MatMulTb::compute_rhs_t_qdata_sign_t(bool required) {
+    if (!required && !is_tensor_required(MatMulSlot::RHS_T_QDATA_SIGN_T)) {
         return;
     }
 
-    if (is_tensor_generated(MatMulSlot::RHS_QDATA_SIGN)) {
+    if (is_tensor_generated(MatMulSlot::RHS_T_QDATA_SIGN_T)) {
         return;
     }
 
     compute_rhs_t_qdata_sign(true);
 
     const Tensor& rhs_t_qdata_sign = get_tensor(MatMulSlot::RHS_T_QDATA_SIGN);
-    Tensor& rhs_qdata_sign = get_tensor(MatMulSlot::RHS_QDATA_SIGN);
+    Tensor& rhs_t_qdata_sign_t = get_tensor(MatMulSlot::RHS_T_QDATA_SIGN_T);
 
     Buffer data = transpose(rhs_t_qdata_sign.data_ptr(), rhs_t_qdata_sign.format()->dtype(), m_shape_n, m_shape_k);
     const std::string id = "transpose(" + std::string(rhs_t_qdata_sign.id()) + ")";
 
-    rhs_qdata_sign.set_shape({m_shape_k, m_shape_n})
+    rhs_t_qdata_sign_t.set_shape({m_shape_k, m_shape_n})
         .set_format(make_poly<PlainFormat>(rhs_t_qdata_sign.format()->dtype()))
         .set_data(std::move(data), id);
 }
@@ -873,13 +873,8 @@ void MatMulTb::compute_rhs_t_qdata_sign(bool required) {
     DataType dst_dtype = DataType::UNKNOWN;
     switch (src_dtype) {
         case DataType::U4:
-            dst_dtype = DataType::I4;
-            break;
         case DataType::I4:
-            dst_dtype = DataType::U4;
-            break;
-        case DataType::U2:
-            dst_dtype = DataType::I2;
+            dst_dtype = DataType::I4;
             break;
         case DataType::I2:
             dst_dtype = DataType::U2;

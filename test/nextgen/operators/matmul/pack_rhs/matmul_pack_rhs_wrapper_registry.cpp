@@ -265,7 +265,7 @@ std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_qsu2(bool nxk) {
         "matmul_pack_rhs_kxn_qsu2cxp16vsx4sf32bi32_qsu2cx_f32_i32_sme",
         kai_matmul_pack_rhs_kxn_qsu2cxp16vsx4sf32bi32_qsu2cx_f32_i32_sme(), make_poly<PlainFormat>(DataType::U2),
         make_poly<PlainFormat>(DataType::I32), format, MatMulUkerApiBiasDeliveryStage::PACK_RHS,
-        MatMulSlot::RHS_QDATA_SIGN, slots, refs);
+        MatMulSlot::RHS_T_QDATA_SIGN_T, slots, refs);
 }
 }  // namespace
 

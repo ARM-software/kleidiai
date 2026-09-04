@@ -54,6 +54,7 @@ create_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme();
 
 [[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>>
 create_matmul_pack_rhs_kxn_qsu2cxp16vsx4sf32bi32_qsu2cx_f32_i32_sme();
+
 [[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>>
 create_matmul_pack_rhs_nxk_qsu2cxp16vsx4sf32bi32_qsu2cx_f32_i32_sme();
 
@@ -87,6 +88,7 @@ create_matmul_pack_rhs_nxk_qsu2cxp16vsx4sf32bi32_qsu2cx_f32_i32_sme();
 
 [[nodiscard]] bool is_shape_suitable_rhs_qsi4cxp8vsx4sf32bi32(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
+
 [[nodiscard]] bool is_shape_suitable_rhs_qsu2cxp16vsx4sf32bi32(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 

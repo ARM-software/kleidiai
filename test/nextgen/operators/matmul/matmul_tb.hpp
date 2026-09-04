@@ -101,10 +101,10 @@ private:
     void quantize_rhs_t(bool required);           ///< Quantizes the RHS data.
     void quantize_bias(Rng& rng, bool required);  ///< Quantizes the bias data.
 
-    void compute_rhs_qdata(bool required);       ///< Computes the non-transposed quantized RHS data.
-    void compute_rhs_qdata_sign(bool required);  ///< Computes non-transposed RHS data with opposite signedness.
-    void compute_lhs_qdata_sum(bool required);   ///< Computes the per-block quantized LHS data sum.
-    void compute_lhs_qscale_cvt(bool required);  ///< Converts the LHS quantization scale.
+    void compute_rhs_qdata(bool required);           ///< Computes the non-transposed quantized RHS data.
+    void compute_rhs_t_qdata_sign_t(bool required);  ///< Computes transposed RHS_T_QDATA_SIGN.
+    void compute_lhs_qdata_sum(bool required);       ///< Computes the per-block quantized LHS data sum.
+    void compute_lhs_qscale_cvt(bool required);      ///< Converts the LHS quantization scale.
     void compute_lhs_qscale_mul_lhs_qdata_sum(
         bool required);                                     ///< Computes the scaled per-block quantized LHS data sum.
     void compute_lhs_qzp_neg(bool required);                ///< Computes the negative LHS quantization zero-point.

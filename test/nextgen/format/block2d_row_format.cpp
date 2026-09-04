@@ -394,7 +394,7 @@ std::string Block2dRowFormat::uid() const {
     std::string uid = "block2d_row";
     uid += "_" + std::to_string(m_block_height) + "x" + std::to_string(m_block_width);
     uid += "_wa" + std::to_string(m_width_align);
-    uid += m_pad_right_same ? "_same" : m_pad_value.has_value() ? "_value" + std::to_string(*m_pad_value) : "_zero";
+    uid += m_pad_right_same ? "_same" : "_value" + std::to_string(m_pad_value.value_or(0));
     if (m_block_length != 0) {
         uid += "_bl" + std::to_string(m_block_length);
     }
