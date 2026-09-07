@@ -43,7 +43,7 @@ typedef struct {
     const int32_t* lut;          // 0x78
 } KernelArgs;
 
-void kai_kernel_matmul_clamp_f32_qsi8d32p4vsx4sf16_qsi4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa(KernelArgs* args_ptr);
+void kai_kernel_matmul_clamp_f32_qsi8d32p4vsx4sf16_qsi4c32p16vsx4s1s0sf16_i32_4vsx16vs_sme2_mopa(KernelArgs* args_ptr);
 
 static const size_t kai_m_step = 4;   // Multiple of vector scale
 static const size_t kai_n_step = 16;  // Multiple of vector scale
@@ -155,7 +155,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
     KAI_ASSUME(args->operand.lhs.ptr != NULL);
     KAI_ASSUME(args->operand.rhs.ptr != NULL);
     KAI_ASSUME(args->operand.dst.ptr != NULL);
-    KAI_ASSUME(args->lut.ptr == NULL || ((uintptr_t)args->lut.ptr % 16) == 0);
+    KAI_ASSUME(args->operand.lut.ptr == NULL || ((uintptr_t)args->operand.lut.ptr % 16) == 0);
     KAI_ASSUME((args->flags & ~((uint64_t)KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP)) == 0);
     const bool clamp = (args->flags & KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP) != 0;
     KAI_ASSUME(!clamp || args->activation.clamp.min_ptr != NULL);
@@ -193,14 +193,14 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
                                         nr * num_blocks * kai_num_bytes_multiplier_rhs),
         .dst = (float*)args->operand.dst.ptr,
         .dst_stride_row = args->operand.dst.stride.m,
-        .lut = args->lut.ptr != NULL ? (const int32_t*)args->lut.ptr : default_lut,
+        .lut = args->operand.lut.ptr != NULL ? (const int32_t*)args->operand.lut.ptr : default_lut,
     };
 
     kai_commit_za();
-    kai_kernel_matmul_clamp_f32_qsi8d32p4vsx4sf16_qsi4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa(&kernel_args);
+    kai_kernel_matmul_clamp_f32_qsi8d32p4vsx4sf16_qsi4c32p16vsx4s1s0sf16_i32_4vsx16vs_sme2_mopa(&kernel_args);
 }
 
-struct kai_matmul_uker_api kai_matmul_clamp_f32_qsi8d32p4vsx4sf16_qsi4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa(void) {
+struct kai_matmul_uker_api kai_matmul_clamp_f32_qsi8d32p4vsx4sf16_qsi4c32p16vsx4s1s0sf16_i32_4vsx16vs_sme2_mopa(void) {
     return (struct kai_matmul_uker_api){
         .run = run,
         .get_step = get_step,

@@ -197,6 +197,7 @@ struct kai_matmul_uker_operand_args {
     struct kai_matmul_uker_rhs_args rhs;      ///< RHS buffer.
     struct kai_matmul_uker_bias_args bias;    ///< Bias parameters
     struct kai_matmul_uker_scale_args scale;  ///< Scale parameters
+    struct kai_matmul_uker_lut_args lut;      ///< Lookup table arguments.
 };
 
 /// Matrix multiplication micro-kernel run arguments.
@@ -205,7 +206,6 @@ struct kai_matmul_uker_args {
     struct kai_matmul_uker_dim_args shape;              ///< Problem shape.
     struct kai_matmul_uker_operand_args operand;        ///< Operands.
     struct kai_matmul_uker_activation_args activation;  ///< Fused activation function.
-    struct kai_matmul_uker_lut_args lut;                ///< Lookup table arguments.
 };
 
 /// Matrix multiplication micro-kernel run flags.
