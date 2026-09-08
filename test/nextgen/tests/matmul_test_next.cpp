@@ -34,6 +34,7 @@ namespace {
 struct MatMulDistribution {
     Rng m_rng{seed_stream("MatMulNext::setup")()};
     std::uniform_int_distribution<size_t> m_shape_dist{1, 150};
+    std::uniform_int_distribution<size_t> m_shape_k_dist{1, 512};
     std::uniform_real_distribution<float> m_probability_dist{0.0F, 1.0F};
     std::uniform_real_distribution<float> m_dist_70_to_100{0.7F, 1.0F};
     std::uniform_real_distribution<float> m_dist_10_to_70{0.1F, 0.7F};
@@ -355,14 +356,14 @@ MatMulFixtureParams pick_fixture(
     size_t shape_n = 0;
     size_t shape_k = 0;
 
-    static constexpr uint32_t max_attempts = 10'000;
+    static constexpr uint32_t max_attempts = 500'000;
     uint32_t attempts = 0;
     while (true) {
         KAI_TEST_ASSERT_MSG(attempts <= max_attempts, "Unable to find matching shape after _many_ tries");
         ++attempts;
         shape_m = dist_ctx.m_shape_dist(dist_ctx.m_rng);
         shape_n = dist_ctx.m_shape_dist(dist_ctx.m_rng);
-        shape_k = dist_ctx.m_shape_dist(dist_ctx.m_rng);
+        shape_k = dist_ctx.m_shape_k_dist(dist_ctx.m_rng);
 
         if (op.is_shape_suitable(shape_m, shape_n, shape_k, portion)) {
             break;

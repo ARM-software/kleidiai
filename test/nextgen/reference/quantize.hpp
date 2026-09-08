@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -31,6 +31,15 @@ namespace kai::test {
 using DynamicQuantizeLinearFn = std::tuple<Buffer, Buffer, Buffer> (*)(
     size_t height, size_t width, size_t block_height, size_t block_width, Span<const std::byte> fp_data);
 
+/// Determines quantization information for per-block linear quantization.
+using DetermineQuantizationInfoFn = std::tuple<Buffer, Buffer> (*)(
+    size_t height, size_t width, size_t block_height, size_t block_width, Span<const std::byte> fp_data);
+
+/// Quantizes data using pre-computed per-block linear quantization information.
+using QuantizeLinearFn = Buffer (*)(
+    size_t height, size_t width, size_t block_height, size_t block_width, Span<const std::byte> fp_data,
+    Span<const std::byte> qscale, Span<const std::byte> qzp);
+
 /// Creates a dynamic quantization function using per-block linear asymmetric quantization.
 ///
 /// @param[in] fp_dtype The data type of dequantized data.
@@ -45,6 +54,12 @@ using DynamicQuantizeLinearFn = std::tuple<Buffer, Buffer, Buffer> (*)(
     DataType fp_dtype, DataType qdata_dtype, DataType qscale_dtype, DataType qzp_dtype, RoundMode qdata_round_mode,
     RoundMode qzp_round_mode);
 
+[[nodiscard]] DetermineQuantizationInfoFn make_determine_asymmetric_quantization_info(
+    DataType fp_dtype, DataType qdata_dtype, DataType qscale_dtype, DataType qzp_dtype, RoundMode qzp_round_mode);
+
+[[nodiscard]] QuantizeLinearFn make_asymmetric_quantize_linear(
+    DataType fp_dtype, DataType qdata_dtype, DataType qscale_dtype, DataType qzp_dtype, RoundMode qdata_round_mode);
+
 /// Creates a dynamic quantization function using per-block linear symmetric quantization.
 ///
 /// @param[in] fp_dtype The data type of dequantized data.
@@ -54,6 +69,12 @@ using DynamicQuantizeLinearFn = std::tuple<Buffer, Buffer, Buffer> (*)(
 ///
 /// @return The function pointer.
 [[nodiscard]] DynamicQuantizeLinearFn make_dynamic_symmetric_quantize_linear(
+    DataType fp_dtype, DataType qdata_dtype, DataType qscale_dtype, RoundMode qdata_round_mode);
+
+[[nodiscard]] DetermineQuantizationInfoFn make_determine_symmetric_quantization_info(
+    DataType fp_dtype, DataType qdata_dtype, DataType qscale_dtype);
+
+[[nodiscard]] QuantizeLinearFn make_symmetric_quantize_linear(
     DataType fp_dtype, DataType qdata_dtype, DataType qscale_dtype, RoundMode qdata_round_mode);
 
 }  // namespace kai::test

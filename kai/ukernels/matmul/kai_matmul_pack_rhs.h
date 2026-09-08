@@ -54,6 +54,27 @@ struct kai_matmul_pack_rhs_uker_api kai_rhs_pack_kxn_x16p16vsx2bx16_x16_x16_sve(
 /// @return The micro-kernel API.
 struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme(void);
 
+/// Non-transposed RHS packing micro-kernel for 16-bit data with per-N bias.
+///
+/// Required CPU features:
+///   * FEAT_SME
+///
+/// Configuration parameters: none.
+///
+/// Operands:
+///   * rhs_packed - The packed RHS matrix.
+///     * RHS matrix: 16-bit data in 4vsx2 blocked layout.
+///     * Per-n bias vector: 16-bit data.
+///   * rhs - The RHS matrix.
+///     * RHS matrix: 16-bit data in KxN layout.
+///   * bias_n - The per-N bias vector.
+///     * Per-N bias vector: 16-bit data.
+///
+/// Supported flags: none.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_kxn_x16p4vsx2bx16_x16_x16_sme(void);
+
 /// Transposed RHS packing micro-kernel for 32-bit data with per-N bias.
 ///
 /// Required CPU features:
@@ -140,6 +161,134 @@ struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme(void
 ///
 /// @return The micro-kernel API.
 struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme(void);
+
+/// Non-transposed RHS packing micro-kernel for static quantized signed INT4 data.
+///
+/// Required CPU features:
+///   * FEAT_SME
+///
+/// Required operands:
+///   * rhs_packed - INT32 bias, INT4 RHS in 8vsx4 blocked format, and FP32 scale.
+///   * rhs - INT4 data in plain format, non-transposed.
+///   * bias_n - Per-N INT32 bias.
+///   * k_sum_scale_global - LHS zero point as an INT32 scalar.
+///   * scale_n - Per-N FP32 scale.
+///   * scale_global - FP32 scale multiplier.
+///
+/// Supported flags: none.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_kxn_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme(void);
+
+/// Non-transposed RHS packing micro-kernel for static quantized unsigned INT4 data.
+///
+/// Required CPU features:
+///   * FEAT_SME
+///
+/// Required operands:
+///   * rhs_packed - INT32 bias, INT4 RHS in 8vsx4 blocked format, and FP32 scale.
+///   * rhs - INT4 data in plain format, non-transposed.
+///   * bias_n - Per-N INT32 bias.
+///   * k_sum_scale_global - LHS zero point as an INT32 scalar.
+///   * scale_n - Per-N FP32 scale.
+///   * scale_global - FP32 scale multiplier.
+///
+/// Supported flags: none.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_kxn_qsi4cxp8vsx4sf32bi32_qsu4cx_f32_i32_sme(void);
+
+/// Transposed RHS packing micro-kernel for static quantized signed INT4 data.
+///
+/// Required CPU features:
+///   * FEAT_SME
+///
+/// Required operands:
+///   * rhs_packed - INT32 bias, INT4 RHS in 8vsx4 blocked format, and FP32 scale.
+///   * rhs - INT4 data in plain format, transposed.
+///   * bias_n - Per-N INT32 bias.
+///   * k_sum_scale_global - LHS zero point as an INT32 scalar.
+///   * scale_n - Per-N FP32 scale.
+///   * scale_global - FP32 scale multiplier.
+///
+/// Supported flags: none.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme(void);
+
+/// Transposed RHS packing micro-kernel for static quantized unsigned INT4 data.
+///
+/// Required CPU features:
+///   * FEAT_SME
+///
+/// Required operands:
+///   * rhs_packed - INT32 bias, INT4 RHS in 8vsx4 blocked format, and FP32 scale.
+///   * rhs - INT4 data in plain format, transposed.
+///   * bias_n - Per-N INT32 bias.
+///   * k_sum_scale_global - LHS zero point as an INT32 scalar.
+///   * scale_n - Per-N FP32 scale.
+///   * scale_global - FP32 scale multiplier.
+///
+/// Supported flags: none.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsu4cx_f32_i32_sme(void);
+
+/// Transposed RHS packing micro-kernel for static quantized int4 data with block-wise quantization and super block meta
+/// data.
+///
+/// Required CPU features:
+///   * FEAT_SME
+///
+/// Configuration parameters: none.
+///
+/// Operands:
+///   * rhs_packed - The packed RHS matrix.
+///     * RHS matrix: qai4c32p16vsx4s1s0sf16 data with 16vsx4-ordered per-block FP16 scale and offset metadata.
+///   * rhs - The RHS matrix.
+///     * RHS matrix: qai4c32k256sf16s32s0 4-bit data in NxK layout, stored as 256-value super-blocks. K must be a
+///     multiple of 256
+///
+/// Supported flags: none.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme(void);
+
+/// Non-transposed RHS packing micro-kernel for static quantized UINT2 data.
+///
+/// Required CPU features:
+///   * FEAT_SME
+///
+/// Required operands:
+///   * rhs_packed - INT32 bias, UINT2 RHS in 16vsx4 blocked format, and FP32 scale.
+///   * rhs - UINT2 data in plain format, non-transposed, with zero point 2.
+///   * bias_n - Per-N INT32 bias.
+///   * k_sum_scale_global - Negative LHS zero point as an INT32 scalar.
+///   * scale_n - Per-N FP32 scale.
+///   * scale_global - FP32 scale multiplier.
+///
+/// Supported flags: none.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_kxn_qsu2cxp16vsx4sf32bi32_qsu2cx_f32_i32_sme(void);
+
+/// Transposed RHS packing micro-kernel for static quantized UINT2 data.
+///
+/// Required CPU features:
+///   * FEAT_SME
+///
+/// Required operands:
+///   * rhs_packed - INT32 bias, UINT2 RHS in 16vsx4 blocked format, and FP32 scale.
+///   * rhs - UINT2 data in plain format, transposed, with zero point 2.
+///   * bias_n - Per-N INT32 bias.
+///   * k_sum_scale_global - Negative LHS zero point as an INT32 scalar.
+///   * scale_n - Per-N FP32 scale.
+///   * scale_global - FP32 scale multiplier.
+///
+/// Supported flags: none.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_nxk_qsu2cxp16vsx4sf32bi32_qsu2cx_f32_i32_sme(void);
 
 #ifdef __cplusplus
 }  // extern "C"

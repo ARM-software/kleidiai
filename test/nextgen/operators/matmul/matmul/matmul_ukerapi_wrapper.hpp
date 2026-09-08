@@ -82,6 +82,15 @@ using MatMulUkerStageParameterLayoutSet = FlagSet<MatMulUkerStageParameterLayout
 struct MatMulUkerOutputStageConfig {
     MatMulUkerStageParameterLayoutSet acc_scale;   ///< Accumulator scaling parameter layouts.
     MatMulUkerStageParameterLayoutSet scale_bias;  ///< Scaled accumulator bias parameter layouts.
+
+    MatMulSlot acc_scale_global_slot = MatMulSlot::ACC_SCALE_GLOBAL_DATA;
+    MatMulSlot acc_scale_m_slot = MatMulSlot::ACC_SCALE_M_DATA;
+    MatMulSlot acc_scale_n_slot = MatMulSlot::ACC_SCALE_N_DATA;
+    MatMulSlot scale_bias_global_slot = MatMulSlot::SCALE_BIAS_GLOBAL_DATA;
+    MatMulSlot scale_bias_m_slot = MatMulSlot::SCALE_BIAS_M_DATA;
+    MatMulSlot scale_bias_n_slot = MatMulSlot::SCALE_BIAS_N_DATA;
+
+    std::vector<MatMulSlot> extra_ref_inputs;  ///< Extra tensors needed only for reference generation.
 };
 
 /// Wrapper for uker-api matrix multiplication micro-kernel.
@@ -92,9 +101,9 @@ public:
         std::string_view name, kai_matmul_uker_api api, MatMulSlot lhs_input_slot, const Poly<Format>& lhs_format,
         const Poly<Format>& rhs_format, const Poly<Format>& dst_format, DataType acc_dtype,
         MatMulUkerClampConfig clamp_config, MatMulUkerApiBiasDeliveryStage bias_delivery_stage,
-        MatMulUkerOutputStageConfig output_stage_config = {}) :
+        MatMulUkerOutputStageConfig output_stage_config = {}, kai_matmul_uker_config uker_config = {}) :
         m_name(name),
-        m_uker_config(),
+        m_uker_config(uker_config),
         m_ukernel(api),
         m_lhs_input_slot(lhs_input_slot),
         m_lhs_format(lhs_format),

@@ -35,11 +35,25 @@ using BinaryElementwiseFn = Buffer (*)(
 /// @return The function pointer.
 [[nodiscard]] BinaryElementwiseFn make_add_2d(DataType dtype);
 
+/// Creates a subtraction operator for the specified data type.
+///
+/// @param[in] dtype The data type.
+///
+/// @return The function pointer.
+[[nodiscard]] BinaryElementwiseFn make_subtract_2d(DataType dtype);
+
 /// Creates a multiply operator for the specified data type.
 ///
 /// @param[in] dtype The data type.
 ///
 /// @return The function pointer.
 [[nodiscard]] BinaryElementwiseFn make_multiply_2d(DataType dtype);
+
+/// Creates a division operator for the specified data type.
+///
+/// @param[in] dtype The data type.
+///
+/// @return The function pointer.
+[[nodiscard]] BinaryElementwiseFn make_divide_2d(DataType dtype);
 
 }  // namespace kai::test

@@ -7,6 +7,8 @@
 #pragma once
 
 #include <string_view>
+#include <utility>
+#include <vector>
 
 #include "kai/ukernels/matmul/kai_matmul_pack_rhs_types.h"
 #include "test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_ukerapi_common.hpp"
@@ -20,10 +22,12 @@ public:
     MatMulPackRhsUkerApiWrapper(
         std::string_view name, kai_matmul_pack_rhs_uker_api api, const Poly<Format>& src_data_format,
         const Poly<Format>& src_bias_format, const Poly<Format>& dst_format,
-        MatMulUkerApiBiasDeliveryStage bias_delivery_stage) :
+        MatMulUkerApiBiasDeliveryStage bias_delivery_stage, MatMulSlot run_rhs_slot = MatMulSlot::RHS_DATA,
+        MatMulPackRhsOperandSlots operand_slots = {},
+        std::vector<MatMulSlot> reference_component_slots = {MatMulSlot::RHS_T_DATA}) :
         MatMulPackRhsUkerApiCommon(
-            name, MatMulSlot::RHS_DATA, RhsLayout::KxN, api, src_data_format, src_bias_format, dst_format,
-            bias_delivery_stage) {
+            name, run_rhs_slot, RhsLayout::KxN, api, src_data_format, src_bias_format, dst_format, bias_delivery_stage,
+            operand_slots, std::move(reference_component_slots)) {
     }
 };
 

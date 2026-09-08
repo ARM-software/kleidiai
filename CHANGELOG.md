@@ -10,11 +10,33 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+## v1.31.0
+
+- New micro-kernels
+  - SME2 FP16 elastic GEMM/GEMV kernels with corresponding packing kernels.
+  - SME2.1 INT8 8vsx8vs MOPA matmul micro-kernel with a 2vsx32vs MOP4A fast path for eligible output regions whose height is half the accumulator vector length (2vs).
+  - SME2 QAI4C32K256 GEMM/GEMV micro-kernels along with corresponding packing kernels.
+  - SME2 GEMM/GEMV micro-kernels with QAI8 LHS, QSU2CXP RHS and QAI8 output along with RHS packing kernel
+- Fixes
+  - Corrected the documented indirection-table size and bounds assertions for SME LHS imatmul packing micro-kernels.
+
+## v1.30.0
+
+- New SME2 micro-kernels
+  - Matrix multiplication (MxN) micro-kernel of QAI8 LHS and QSI4CXP RHS with QAI8 output.
+  - Matrix multiplication (1xN) micro-kernel of QAI8 LHS and QSI4CXP RHS with QAI8 output.
+
 ## v1.29.0
 
 - New SME2 micro-kernels
   - Matrix Multiplication (1xN) Micro-Kernel of QAI8DXP LHS and QSI4CXP RHS with F16 output.
 - Improve performance of SME2 F32 elastic GEMM micro-kernels.
+- Added MSVC support for NEON Dotprod and I8MM matmul micro-kernels:
+  - kai_matmul_clamp_f32_qai8dxp4x8_qsi4cxp4x4_16x4x32_neon_dotprod
+  - kai_matmul_clamp_f32_qai8dxp4x8_qsi4cxp8x8_8x8x32_neon_i8mm
+  - kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4x4_1x4_neon_dotprod
+  - kai_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm
+- Fixed MSVC build by preprocessing `.S` assembly files via `cl.exe` prior to `armasm64` assembly (omitting incompatible C compiler flags like `/arch`).
 
 ## v1.28.0
 

@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -50,6 +50,7 @@ void kai_run_lhs_imatmul_pack_x16p2vlx2_x16p_sme(
     KAI_ASSUME(lhs_packed != NULL);
 
     const size_t m_step = kai_get_mr_lhs_imatmul_pack_x16p2vlx2_x16p_sme();
+    const size_t table_size = kai_roundup(m, m_step) * k_chunk_count;
     const size_t width = k_chunk_length;
 
     KAI_ASSERT(m_step <= MAX_M_STEP);
@@ -65,16 +66,17 @@ void kai_run_lhs_imatmul_pack_x16p2vlx2_x16p_sme(
             void* out = out_base;
             out_base += m_step * kai_roundup(k_chunk_length, KR) * sizeof(uint16_t);
             for (size_t y = 0; y < height; y += 1) {
-                KAI_ASSERT(i_k_chunk + (i_m + y) * k_chunk_count < m * k_chunk_count);
-                in[y] = *(lhs_ptrs + i_m * k_chunk_count + i_k_chunk * m_step + y);
+                const size_t lhs_ptr_idx = i_m * k_chunk_count + i_k_chunk * m_step + y;
+                KAI_ASSERT(lhs_ptr_idx < table_size);
+                in[y] = lhs_ptrs[lhs_ptr_idx];
                 if (in[y] != pad_ptr) {
                     uintptr_t in_ptr = (uintptr_t)in[y] + lhs_ptr_offset;
                     in[y] = (const uint8_t*)in_ptr;  // NOLINT(performance-no-int-to-ptr)
                 }
             }
 
-            kai_kernel_lhs_imatmul_pack_x16p2vlx2_x16p_sme(
-                height, width, in, out);  // NOLINT(bugprone-multi-level-implicit-pointer-conversion)
+            // NOLINTNEXTLINE(bugprone-multi-level-implicit-pointer-conversion)
+            kai_kernel_lhs_imatmul_pack_x16p2vlx2_x16p_sme(height, width, in, out);
         }
     }
 }

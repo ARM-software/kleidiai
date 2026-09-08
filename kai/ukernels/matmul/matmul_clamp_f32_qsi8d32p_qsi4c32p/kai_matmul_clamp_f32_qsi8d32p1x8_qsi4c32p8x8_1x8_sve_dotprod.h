@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -114,6 +114,10 @@ size_t kai_get_dst_size_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p8x8_1x8_sve_dotprod
 /// Note: Please refer to the get functions for m_step and n_step for the exact values.
 ///
 /// Features used: dotprod
+///
+/// @note This micro-kernel requires an SVE vector length of exactly 256 bits
+/// (32 bytes). Callers must verify that `kai_get_sve_vector_length_u8() == 32`
+/// before calling this function. Calling it with any other vector length is unsupported.
 ///
 /// @param[in]  m              The number of output rows written. It must be 1.
 /// @param[in]  n              The number of output columns written.

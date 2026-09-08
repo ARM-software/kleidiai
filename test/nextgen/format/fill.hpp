@@ -15,6 +15,7 @@
 #include "test/common/assert.hpp"
 #include "test/common/data_type.hpp"
 #include "test/common/memory.hpp"
+#include "test/common/numeric_limits.hpp"
 #include "test/common/range.hpp"
 #include "test/common/span.hpp"
 #include "test/nextgen/common/random.hpp"
@@ -51,6 +52,29 @@ inline Range<double> integer_range_for_dtype(DataType dtype) {
 
     return is_signed ? Range<double>{static_cast<double>(min_signed), static_cast<double>(max_signed)}
                      : Range<double>{0.0, static_cast<double>(max_unsigned)};
+}
+
+/// Computes the finite representable range for the provided data type.
+///
+/// @param[in] dtype The data type.
+///
+/// @return The lowest and highest finite values representable by the data type.
+inline Range<double> finite_range_for_dtype(DataType dtype) {
+    if (data_type_is_integral(dtype)) {
+        return integer_range_for_dtype(dtype);
+    }
+
+    switch (dtype) {
+        case DataType::FP32:
+            return {numeric_lowest<float>, numeric_highest<float>};
+        case DataType::FP16:
+            return {static_cast<float>(numeric_lowest<Float16>), static_cast<float>(numeric_highest<Float16>)};
+        case DataType::BF16:
+            return {static_cast<float>(numeric_lowest<BFloat16<>>), static_cast<float>(numeric_highest<BFloat16<>>)};
+        default:
+            KAI_TEST_ERROR("Unsupported data type for finite range.");
+            return {};
+    }
 }
 
 /// Fill an output buffer with random integer values from the requested range using the provided seed.

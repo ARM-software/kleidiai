@@ -47,6 +47,7 @@ add_library(kleidiai_test_framework
 
     test/nextgen/common/test_config.cpp
     test/nextgen/common/test_registry.cpp
+    test/nextgen/harness/tensor_cache.cpp
     test/nextgen/reference/unary_elementwise.cpp
     test/nextgen/reference/binary_elementwise.cpp
     test/nextgen/reference/reduce.cpp
@@ -57,10 +58,14 @@ add_library(kleidiai_test_framework
     test/nextgen/reference/print.cpp
     test/nextgen/reference/pack.cpp
     test/nextgen/reference/compare.cpp
-    test/nextgen/format/plain_format.cpp
+    test/nextgen/reference/cast.cpp
     test/nextgen/format/block2d_row_format.cpp
+    test/nextgen/format/flattened_blockwise_packed_format.cpp
+    test/nextgen/format/plain_format.cpp
+    test/nextgen/format/two_level_blockwise_format.cpp
     test/nextgen/quantization/asymm_linear_quantizer.cpp
     test/nextgen/quantization/symm_linear_quantizer.cpp
+    test/nextgen/quantization/two_level_asym_block_quantizer.cpp
     test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_wrapper_registry.cpp
     test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_dq_wrapper.cpp
     test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_fp_wrapper.cpp
@@ -109,6 +114,8 @@ if(MSVC)
         test/tests/matmul_clamp_f32_qsi8d32p_qai4c32p_test.cpp
         test/tests/matmul_clamp_bf16_qai8dxp_qsi4cxp_test.cpp
         test/tests/matmul_clamp_qai8dxp_qsi4c32p_test.cpp
+        test/tests/matmul_clamp_f32_qai8dxp_qsi4cxp_test.cpp
+        test/tests/matmul_clamp_f32_qai8dxp_qsi8cxp_test.cpp
     )
 else()
     set(KLEIDIAI_FILES_TESTS

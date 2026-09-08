@@ -12,6 +12,7 @@
 #include "test/common/assert.hpp"
 #include "test/common/data_type.hpp"
 #include "test/common/float16.hpp"
+#include "test/common/int2.hpp"
 #include "test/common/int4.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/round.hpp"
@@ -22,8 +23,8 @@ namespace {
 
 template <typename T>
 size_t pack_block2d(
-    size_t block_height, size_t block_width, size_t width_align, bool pad_right_same, size_t height, size_t width,
-    Span<std::byte> packed_data, Span<const std::byte> data) {
+    size_t block_height, size_t block_width, size_t width_align, std::optional<double> pad_value, size_t height,
+    size_t width, Span<std::byte> packed_data, Span<const std::byte> data) {
     KAI_TEST_ASSERT(width_align % block_width == 0);
 
     const size_t num_block_rows = round_up_division(height, block_height);
@@ -40,7 +41,7 @@ size_t pack_block2d(
                     const size_t row = block_row * block_height + elem_row;
                     size_t col = block_col * block_width + elem_col;
 
-                    if (pad_right_same && col >= width) {
+                    if (!pad_value.has_value() && col >= width) {
                         col = width - 1;
                     }
 
@@ -48,6 +49,8 @@ size_t pack_block2d(
                         const Span<const std::byte> src_row_data = data.subspan(row * src_row_size, src_row_size);
                         const T value = read_array<T>(src_row_data, col);
                         write_array<T>(packed_data, index, value);
+                    } else if (pad_value.has_value()) {
+                        write_array<T>(packed_data, index, static_cast<T>(*pad_value));
                     }
 
                     ++index;
@@ -79,6 +82,8 @@ PackBlock2dFn make_pack_block2d(DataType dtype) {
 
         case DataType::I4:
             return pack_block2d<Int4>;
+        case DataType::U2:
+            return pack_block2d<UInt2>;
 
         default:
             KAI_TEST_ERROR("Not supported.");
