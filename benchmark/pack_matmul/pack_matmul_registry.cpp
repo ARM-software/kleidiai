@@ -722,45 +722,67 @@ PackMatMulRegistryEntry RegisterPackMatMulBenchmarkEntry(const PackMatMulEntry& 
     };
 }
 
-inline const std::array<PackMatMulRegistryEntry, 30> pack_matmul_entries{
-    {
-        RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f16_bf16p8x4_bf16p12x4b_8x12_neon_mmla_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f32_bf16p1x4_bf16p12x4b_1x36_neon_dot_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f32_qai8dxp1x4_qsi4c32p4vlx4_1x4vl_sme2_dot_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(
-            kai_matmul_clamp_f32_qai8dxp1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(
-            kai_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(
-            kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_bf16_qai8dxp1x8_qsi4c32p4x8_1x4_neon_dotprod_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_bf16_qai8dxp4x8_qsi4c32p4x8_16x4_neon_i8mm_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_bf16_qai8dxp1x8_qsi4cxp8x8_1x8_neon_dotprod_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_bf16_qai8dxp4x8_qsi4cxp8x8_8x8_neon_i8mm_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(
-            kai_matmul_clamp_f16_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f16_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f16_qai8dxp1x4_qsi4cxp4x4_1x4_neon_dotprod_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f16_qai8dxp1x8_qsi4cxp4x8_1x4_neon_dotprod_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f16_qai8dxp4x4_qsi4cxp4x4_16x4_neon_dotprod_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f16_qai8dxp4x8_qsi4cxp4x8_16x4_neon_i8mm_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(
-            kai_matmul_clamp_f16_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f16_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f16_qai8dxp1x4_qsi8cxp4x4_1x4_neon_dotprod_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f16_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f16_qai8dxp4x4_qsi8cxp4x4_16x4_neon_dotprod_lhs_pack_entry),
-        RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f16_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm_lhs_pack_entry),
-    },
-};
+/// Returns the lazily registered pack matmul benchmarks.
+///
+/// @return Registered pack matmul benchmarks.
+const auto& get_pack_matmul_benchmarks() {
+    static const std::array<PackMatMulRegistryEntry, 30> pack_matmul_entries{
+        {
+            RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f16_bf16p8x4_bf16p12x4b_8x12_neon_mmla_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f32_bf16p1x4_bf16p12x4b_1x36_neon_dot_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(
+                kai_matmul_clamp_f32_qai8dxp1x4_qsi4c32p4vlx4_1x4vl_sme2_dot_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(
+                kai_matmul_clamp_f32_qai8dxp1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(
+                kai_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(
+                kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(
+                kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(
+                kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(
+                kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(
+                kai_matmul_clamp_bf16_qai8dxp1x8_qsi4c32p4x8_1x4_neon_dotprod_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(
+                kai_matmul_clamp_bf16_qai8dxp4x8_qsi4c32p4x8_16x4_neon_i8mm_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(
+                kai_matmul_clamp_bf16_qai8dxp1x8_qsi4cxp8x8_1x8_neon_dotprod_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_bf16_qai8dxp4x8_qsi4cxp8x8_8x8_neon_i8mm_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(
+                kai_matmul_clamp_f16_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(
+                kai_matmul_clamp_f16_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(
+                kai_matmul_clamp_f16_qai8dxp1x4_qsi4cxp4x4_1x4_neon_dotprod_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(
+                kai_matmul_clamp_f16_qai8dxp1x8_qsi4cxp4x8_1x4_neon_dotprod_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(
+                kai_matmul_clamp_f16_qai8dxp4x4_qsi4cxp4x4_16x4_neon_dotprod_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f16_qai8dxp4x8_qsi4cxp4x8_16x4_neon_i8mm_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(
+                kai_matmul_clamp_f16_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(
+                kai_matmul_clamp_f16_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(
+                kai_matmul_clamp_f16_qai8dxp1x4_qsi8cxp4x4_1x4_neon_dotprod_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(
+                kai_matmul_clamp_f16_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(
+                kai_matmul_clamp_f16_qai8dxp4x4_qsi8cxp4x4_16x4_neon_dotprod_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f16_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm_lhs_pack_entry),
+        },
+    };
+
+    return pack_matmul_entries;
+}
 
 void ConfigurePackMatMulBenchmark(const PackMatMulRegistryEntry& entry, const MatMulShape& shape, const size_t bl) {
     if (entry.entry->needs_block_size) {
@@ -779,7 +801,7 @@ void ConfigurePackMatMulBenchmark(const PackMatMulRegistryEntry& entry, const Ma
 }  // namespace
 
 void RegisterPackMatMulBenchmarks(const MatMulShape& shape, const size_t bl) {
-    for (const auto& entry : pack_matmul_entries) {
+    for (const auto& entry : get_pack_matmul_benchmarks()) {
         ConfigurePackMatMulBenchmark(entry, shape, bl);
     }
 }

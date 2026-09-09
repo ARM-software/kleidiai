@@ -100,6 +100,7 @@ void MatMulTb::generate_test_data(Rng& rng) {
     compute_rhs_qdata(false);
     compute_rhs_t_qscale_mul_lhs_qscale_div_dst_qscale(false);
     compute_rhs_t_qdata_sign(false);
+    compute_rhs_t_qdata_sign_t(false);
     compute_rhs_t_qdata_sign_sum(false);
 
     quantize_bias(rng, false);
@@ -643,6 +644,28 @@ void MatMulTb::compute_rhs_qdata(bool required) {
         .set_data(std::move(data), id);
 }
 
+void MatMulTb::compute_rhs_t_qdata_sign_t(bool required) {
+    if (!required && !is_tensor_required(MatMulSlot::RHS_T_QDATA_SIGN_T)) {
+        return;
+    }
+
+    if (is_tensor_generated(MatMulSlot::RHS_T_QDATA_SIGN_T)) {
+        return;
+    }
+
+    compute_rhs_t_qdata_sign(true);
+
+    const Tensor& rhs_t_qdata_sign = get_tensor(MatMulSlot::RHS_T_QDATA_SIGN);
+    Tensor& rhs_t_qdata_sign_t = get_tensor(MatMulSlot::RHS_T_QDATA_SIGN_T);
+
+    Buffer data = transpose(rhs_t_qdata_sign.data_ptr(), rhs_t_qdata_sign.format()->dtype(), m_shape_n, m_shape_k);
+    const std::string id = "transpose(" + std::string(rhs_t_qdata_sign.id()) + ")";
+
+    rhs_t_qdata_sign_t.set_shape({m_shape_k, m_shape_n})
+        .set_format(make_poly<PlainFormat>(rhs_t_qdata_sign.format()->dtype()))
+        .set_data(std::move(data), id);
+}
+
 void MatMulTb::compute_lhs_qzp_neg(bool required) {
     if (!required && !is_tensor_required(MatMulSlot::LHS_QZP_NEG)) {
         return;
@@ -847,23 +870,26 @@ void MatMulTb::compute_rhs_t_qdata_sign(bool required) {
 
     const Shape shape = rhs_t_qdata.shape();
     const DataType src_dtype = rhs_t_qdata.format()->dtype();
-    DataType signed_dtype = DataType::I4;
+    DataType dst_dtype = DataType::UNKNOWN;
     switch (src_dtype) {
         case DataType::U4:
         case DataType::I4:
-            signed_dtype = DataType::I4;
+            dst_dtype = DataType::I4;
+            break;
+        case DataType::I2:
+            dst_dtype = DataType::U2;
             break;
         default:
             KAI_TEST_ERROR("Not supported.");
     }
 
-    // Store the signed interpretation with the signed dtype so reducers can use it directly.
-    const Poly<Format> format(std::in_place_type<PlainFormat>, signed_dtype);
+    const Poly<Format> format(std::in_place_type<PlainFormat>, dst_dtype);
 
     const UnaryElementwiseFn fn = make_change_signedness(src_dtype);
     Buffer data = fn(shape, rhs_t_qdata.data());
 
-    rhs_t_qdata_sign.set_shape(shape).set_format(format).set_data(std::move(data));
+    rhs_t_qdata_sign.set_shape(shape).set_format(format).set_data(
+        std::move(data), "change_signedness(" + std::string(rhs_t_qdata.id()) + ")");
 }
 
 void MatMulTb::compute_rhs_t_qdata_sign_sum(bool required) {

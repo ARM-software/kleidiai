@@ -52,6 +52,7 @@ enum class MatMulSlot : size_t {
     RHS_T_CVT_DATA,        ///< Transposed RHS data after conversion.
     RHS_T_QDATA,           ///< Transposed RHS data after quantization.
     RHS_T_QDATA_SIGN,      ///< Transposed RHS data after quantization with opposite signedness.
+    RHS_T_QDATA_SIGN_T,    ///< Transposed RHS_T_QDATA_SIGN.
     RHS_T_QDATA_SIGN_SUM,  ///< Row sum of transposed RHS after quantization with opposite signedness.
     RHS_T_QSCALE,          ///< Transposed RHS quantization scale.
     RHS_T_QSCALE_MUL_LHS_QSCALE_DIV_DST_QSCALE,  ///< Static Int8 RHS packed scale component.
