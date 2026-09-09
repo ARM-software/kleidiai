@@ -38,7 +38,7 @@ typedef struct {
     float scalar_max;
 } KernelArgs;
 
-void kai_kernel_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i32_1x16vs_sme2_dot(const KernelArgs* args);
+void kai_kernel_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i8p_1x16vs_sme2_dot(const KernelArgs* args);
 
 // Compute args
 static const size_t kai_m_step = 1;
@@ -57,8 +57,8 @@ static const size_t kai_num_bytes_multiplier_rhs = 2;
 // Extra args
 static const size_t kai_bl = 32;
 
-static size_t kai_get_mr_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i32_1x16vs_sme2_dot(void);
-static size_t kai_get_nr_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i32_1x16vs_sme2_dot(void);
+static size_t kai_get_mr_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i8p_1x16vs_sme2_dot(void);
+static size_t kai_get_nr_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i8p_1x16vs_sme2_dot(void);
 
 // Look-up table used for int4->int8 convert
 KAI_ALIGNED_AS(16) static const int32_t default_lut[16] = {-8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7};
@@ -83,7 +83,7 @@ inline static size_t kai_get_num_blocks_per_row(size_t k, size_t bl) {
 }
 
 inline static size_t kai_get_lhs_packed_stride(size_t k, size_t bl) {
-    const size_t mr = kai_get_mr_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i32_1x16vs_sme2_dot();
+    const size_t mr = kai_get_mr_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i8p_1x16vs_sme2_dot();
     return mr * kai_get_num_blocks_per_row(k, bl) * kai_get_num_bytes_per_block_lhs(bl);
 }
 
@@ -94,34 +94,34 @@ inline static size_t kai_get_rhs_packed_stride(size_t k, size_t bl) {
 
     const size_t num_blocks_per_row = kai_get_num_blocks_per_row(k, bl);
     const size_t num_bytes_per_block = kai_get_num_bytes_per_block_rhs(bl);
-    const size_t nr = kai_get_nr_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i32_1x16vs_sme2_dot();
+    const size_t nr = kai_get_nr_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i8p_1x16vs_sme2_dot();
 
     size_t rhs_packed_stride = nr * (num_bytes_per_block * num_blocks_per_row);
 
     return rhs_packed_stride;
 }
 
-static size_t kai_get_m_step_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i32_1x16vs_sme2_dot(void) {
+static size_t kai_get_m_step_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i8p_1x16vs_sme2_dot(void) {
     return kai_m_step;
 }
 
-static size_t kai_get_n_step_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i32_1x16vs_sme2_dot(void) {
+static size_t kai_get_n_step_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i8p_1x16vs_sme2_dot(void) {
     return kai_n_step * kai_get_sme_vscale();
 }
 
-static size_t kai_get_mr_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i32_1x16vs_sme2_dot(void) {
+static size_t kai_get_mr_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i8p_1x16vs_sme2_dot(void) {
     return kai_mr;
 }
 
-static size_t kai_get_nr_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i32_1x16vs_sme2_dot(void) {
+static size_t kai_get_nr_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i8p_1x16vs_sme2_dot(void) {
     return kai_nr * kai_get_sme_vscale();
 }
 
 static struct kai_matmul_uker_dim_args get_step(const struct kai_matmul_uker_config* config) {
     KAI_UNUSED(config);
     return (struct kai_matmul_uker_dim_args){
-        .m = kai_get_m_step_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i32_1x16vs_sme2_dot(),
-        .n = kai_get_n_step_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i32_1x16vs_sme2_dot(),
+        .m = kai_get_m_step_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i8p_1x16vs_sme2_dot(),
+        .n = kai_get_n_step_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i8p_1x16vs_sme2_dot(),
         .k = 0};
 }
 static struct kai_matmul_uker_lhs_stride_args get_lhs_stride(
@@ -133,7 +133,7 @@ static size_t get_lhs_offset(
     const struct kai_matmul_uker_lhs_stride_args* stride) {
     KAI_UNUSED(config);
     KAI_ASSUME(index->k == 0);
-    return index->m / kai_get_mr_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i32_1x16vs_sme2_dot() *
+    return index->m / kai_get_mr_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i8p_1x16vs_sme2_dot() *
         stride->m;
 }
 static struct kai_matmul_uker_rhs_stride_args get_rhs_stride(
@@ -145,7 +145,7 @@ static size_t get_rhs_offset(
     const struct kai_matmul_uker_rhs_stride_args* stride) {
     KAI_UNUSED(config);
     KAI_ASSUME(index->k == 0);
-    return index->n / kai_get_nr_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i32_1x16vs_sme2_dot() *
+    return index->n / kai_get_nr_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i8p_1x16vs_sme2_dot() *
         stride->n;
 }
 static struct kai_matmul_uker_dst_stride_args get_dst_stride(
@@ -192,8 +192,8 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
     const size_t lhs_packed_stride = kai_get_lhs_packed_stride(args->shape.k, bl);
     const size_t rhs_packed_stride = kai_get_rhs_packed_stride(args->shape.k, bl);
     const size_t num_blocks = kai_get_num_blocks_per_row(args->shape.k, bl);
-    const size_t mr = kai_get_mr_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i32_1x16vs_sme2_dot();
-    const size_t nr = kai_get_nr_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i32_1x16vs_sme2_dot();
+    const size_t mr = kai_get_mr_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i8p_1x16vs_sme2_dot();
+    const size_t nr = kai_get_nr_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i8p_1x16vs_sme2_dot();
     const uint16_t* lhs_scales = (const uint16_t*)((const int8_t*)args->operand.lhs.ptr + lhs_packed_stride -
                                                    (mr * num_blocks) * kai_num_bytes_multiplier_lhs);
     const uint16_t* rhs_scales = (const uint16_t*)((const uint8_t*)args->operand.rhs.ptr + rhs_packed_stride -
@@ -215,9 +215,9 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
     };
 
     kai_commit_za();
-    kai_kernel_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i32_1x16vs_sme2_dot(&kernel_args);
+    kai_kernel_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i8p_1x16vs_sme2_dot(&kernel_args);
 }
-struct kai_matmul_uker_api kai_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i32_1x16vs_sme2_dot(void) {
+struct kai_matmul_uker_api kai_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1s0sf16_i8p_1x16vs_sme2_dot(void) {
     return (struct kai_matmul_uker_api){
         .run = run,
         .get_step = get_step,

@@ -390,7 +390,7 @@ TEST(MatMulClampF32F16pQsi4c32pLut, OptionalLutArgument) {
         {"explicit_default", qsi4_lut.data(), true},
         {"explicit_zero", zero_lut.data(), false},
     }};
-    const kai_matmul_uker_api api = kai_matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s1s0sf16_u32_4vsx16vs_sme2_mopa();
+    const kai_matmul_uker_api api = kai_matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s1s0sf16_f16p_4vsx16vs_sme2_mopa();
 
     for (const size_t block_length : {32, 64, 128, 256}) {
         SCOPED_TRACE("block_length=" + std::to_string(block_length));

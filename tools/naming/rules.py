@@ -122,14 +122,15 @@ def pack_order() -> Expr:
 
 @grammar.rule(
     title="Packing layout",
-    description="Describes the dimensions used when data is packed into a buffer.",
+    description="Describes a packed buffer and its optional layout dimensions.",
 )
 def packing_layout() -> Expr:
     return Seq(
         "p",
-        Doc(size, description="Width component of a packed buffer layout"),
-        "x",
-        Doc(size, description="Height component of a packed buffer layout"),
+        Doc(
+            Optional(Seq(size, "x", size)),
+            description="Width and height of packed buffer layout",
+        ),
     )
 
 
