@@ -1,5 +1,6 @@
 //
 // SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -50,7 +51,7 @@ const MatMulBiasModeSet acc_bias_per_m_per_n_scale_bias_per_n{
 }  // namespace
 
 Span<const MatMulOperator> get_available_matmul_operators() {
-    static std::array<MatMulOperator, 12> operators;
+    static std::array<MatMulOperator, 15> operators;
 
     // matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa
     operators[0].name = "matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa";
@@ -330,6 +331,87 @@ Span<const MatMulOperator> get_available_matmul_operators() {
     operators[11].pack_lhs = std::nullopt;
     operators[11].pack_rhs = create_matmul_rhs_pack_kxn_x16p16vsx2bx16_x16_x16_sve();
     operators[11].matmul = create_matmul_clamp_f16_f16_f16p16vsx2bf16_6x16vs_sve2p1_dot();
+
+    // matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod
+    operators[12].name = "matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod";
+
+    operators[12].is_cpu_supported = cpu_check<cpu_has_sve_vl256, cpu_has_dotprod>;
+    operators[12].is_shape_suitable = all_true<                       //
+        is_shape_suitable_lhs_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod,  //
+        is_shape_suitable_rhs_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod>;
+
+    operators[12].supported_bias_mode_sets = {no_bias, acc_bias_per_n};
+    operators[12].clamp_mode = MatMulClampMode::REQUIRED;
+
+    operators[12].lhs_quant = std::make_unique<AsymmLinearQuantizer>(
+        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 1, 0);
+    operators[12].rhs_quant =
+        std::make_unique<SymmLinearQuantizer>(DataType::I8, DataType::FP32, RoundMode::CURRENT, 1, 0);
+    operators[12].bias_quant = std::nullopt;
+
+    operators[12].lhs_dtype = DataType::FP32;
+    operators[12].rhs_dtype = DataType::FP32;
+    operators[12].bias_dtype = DataType::FP32;
+    operators[12].acc_dtype = DataType::FP32;
+    operators[12].dst_dtype = DataType::FP32;
+
+    operators[12].pack_lhs = create_matmul_lhs_quant_pack_qai8dxp1x4_f32();
+    operators[12].pack_rhs = create_matmul_rhs_pack_nxk_qsi8cxp8x4_qsi8cx_neon();
+    operators[12].matmul = create_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod();
+
+    // matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod
+    operators[13].name = "matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod";
+
+    operators[13].is_cpu_supported = cpu_check<cpu_has_sve_vl256, cpu_has_dotprod>;
+    operators[13].is_shape_suitable = all_true<                       //
+        is_shape_suitable_lhs_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod,  //
+        is_shape_suitable_rhs_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod>;
+
+    operators[13].supported_bias_mode_sets = {no_bias, acc_bias_per_n};
+    operators[13].clamp_mode = MatMulClampMode::REQUIRED;
+
+    operators[13].lhs_quant = std::make_unique<AsymmLinearQuantizer>(
+        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 1, 0);
+    operators[13].rhs_quant =
+        std::make_unique<SymmLinearQuantizer>(DataType::I8, DataType::FP32, RoundMode::CURRENT, 1, 0);
+    operators[13].bias_quant = std::nullopt;
+
+    operators[13].lhs_dtype = DataType::FP32;
+    operators[13].rhs_dtype = DataType::FP32;
+    operators[13].bias_dtype = DataType::FP32;
+    operators[13].acc_dtype = DataType::FP32;
+    operators[13].dst_dtype = DataType::FP32;
+
+    operators[13].pack_lhs = create_matmul_lhs_quant_pack_qai8dxp1x8_f32();
+    operators[13].pack_rhs = create_matmul_rhs_pack_nxk_qsi8cxp8x8_qsi8cx_neon();
+    operators[13].matmul = create_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod();
+
+    // matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod
+    operators[14].name = "matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod";
+
+    operators[14].is_cpu_supported = cpu_check<cpu_has_sve_vl256, cpu_has_dotprod>;
+    operators[14].is_shape_suitable = all_true<                         //
+        is_shape_suitable_lhs_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod,  //
+        is_shape_suitable_rhs_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod>;
+
+    operators[14].supported_bias_mode_sets = {no_bias, acc_bias_per_n};
+    operators[14].clamp_mode = MatMulClampMode::REQUIRED;
+
+    operators[14].lhs_quant = std::make_unique<AsymmLinearQuantizer>(
+        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 1, 0);
+    operators[14].rhs_quant =
+        std::make_unique<SymmLinearQuantizer>(DataType::I8, DataType::FP32, RoundMode::CURRENT, 1, 0);
+    operators[14].bias_quant = std::nullopt;
+
+    operators[14].lhs_dtype = DataType::FP32;
+    operators[14].rhs_dtype = DataType::FP32;
+    operators[14].bias_dtype = DataType::FP32;
+    operators[14].acc_dtype = DataType::FP32;
+    operators[14].dst_dtype = DataType::FP32;
+
+    operators[14].pack_lhs = create_matmul_lhs_quant_pack_qai8dxp1x4_f32();
+    operators[14].pack_rhs = create_matmul_rhs_pack_nxk_qsi8cxp32x4_qsi8cx_neon();
+    operators[14].matmul = create_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod();
 
     return operators;
 }

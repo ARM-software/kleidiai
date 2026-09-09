@@ -1,5 +1,6 @@
 //
 // SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -16,6 +17,7 @@
 
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme_dot.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4x4_1x4_neon_dotprod.h"
@@ -139,7 +141,7 @@ F32Qai8Qsi8CacheData ReferenceGenerator<F32Qai8Qsi8CacheDataId, F32Qai8Qsi8Cache
     return out;
 }
 
-static const std::array<UkernelVariant<kai_matmul_clamp_f32_qai8dxp_qsi8cxp_ukernel>, 11>
+static const std::array<UkernelVariant<kai_matmul_clamp_f32_qai8dxp_qsi8cxp_ukernel>, 12>
     variants_kai_matmul_clamp_f32_qai8dxp_qsi8cxp = {{
         {UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod),
          "kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod", cpu_has_dotprod},
@@ -150,11 +152,12 @@ static const std::array<UkernelVariant<kai_matmul_clamp_f32_qai8dxp_qsi8cxp_uker
         {UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm),
          "kai_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm", cpu_has_i8mm},
         {UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod),
-         "kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod",
-         (cpu_check<cpu_has_sve_vl256, cpu_has_sve2, cpu_has_dotprod>)},
+         "kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod", (cpu_check<cpu_has_sve_vl256, cpu_has_dotprod>)},
+        {UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod),
+         "kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod",
+         (cpu_check<cpu_has_sve_vl256, cpu_has_dotprod>)},
         {UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod),
-         "kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod",
-         (cpu_check<cpu_has_sve_vl256, cpu_has_sve2, cpu_has_dotprod>)},
+         "kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod", (cpu_check<cpu_has_sve_vl256, cpu_has_dotprod>)},
         {UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp4x8_qsi8cxp8x8_16x8_sve_i8mm),
          "kai_matmul_clamp_f32_qai8dxp4x8_qsi8cxp8x8_16x8_sve_i8mm",
          (cpu_check<cpu_has_sve_vl256, cpu_has_sve2, cpu_has_i8mm>)},

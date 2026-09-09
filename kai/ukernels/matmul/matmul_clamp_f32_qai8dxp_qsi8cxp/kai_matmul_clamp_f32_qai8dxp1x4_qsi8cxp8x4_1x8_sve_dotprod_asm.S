@@ -1,5 +1,6 @@
 //
 // SPDX-FileCopyrightText: Copyright 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -101,7 +102,7 @@ KAI_ASM_LABEL(label_3)  // Sub block loop
     ld1w { z19.s }, p1/Z, [x24, #2, MUL VL]
     KAI_ASM_INST(0x8540c752)  // ld1rw { z18.s }, p1/Z, [x26]
     addvl x24, x24, #3
-    mla z23.s, z17.s, z0.s[0]
+    mla z23.s, p1/m,  z17.s, z0.s
     KAI_ASM_INST(0x8540c691)  // ld1rw { z17.s }, p1/Z, [x20]
     fmul z16.s, z16.s, z20.s
     scvtf z23.s, p1/m, z23.s

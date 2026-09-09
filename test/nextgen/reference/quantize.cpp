@@ -1,5 +1,6 @@
 //
 // SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -206,6 +207,10 @@ DynamicQuantizeLinearFn make_dynamic_symmetric_quantize_linear(
 
     if (params == std::make_tuple(DataType::FP32, DataType::U4, DataType::FP32, RoundMode::CURRENT)) {
         return dynamic_symmetric_quantize_linear<float, UInt4, float, RoundMode::CURRENT>;
+    }
+
+    if (params == std::make_tuple(DataType::FP32, DataType::I8, DataType::FP32, RoundMode::CURRENT)) {
+        return dynamic_symmetric_quantize_linear<float, int8_t, float, RoundMode::CURRENT>;
     }
 
     KAI_TEST_ERROR("Not implemented.");

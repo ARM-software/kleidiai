@@ -1,5 +1,6 @@
 #
 # SPDX-FileCopyrightText: Copyright 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -67,6 +68,7 @@ add_library(kleidiai_test_framework
     test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_ukerapi_wrapper.cpp
     test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_wrapper_registry.cpp
     test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_quant_wrapper.cpp
+    test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_quant_i8_wrapper.cpp
     test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_fp_nt_wrapper.cpp
     test/nextgen/operators/matmul/matmul/matmul_wrapper_registry.cpp
     test/nextgen/operators/matmul/matmul/matmul_dq_wrapper.cpp

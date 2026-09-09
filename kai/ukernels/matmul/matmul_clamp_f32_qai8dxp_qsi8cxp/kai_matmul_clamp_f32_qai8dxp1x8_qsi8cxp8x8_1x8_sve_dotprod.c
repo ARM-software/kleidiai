@@ -1,10 +1,11 @@
 //
 // SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
 //
 // SPDX-License-Identifier: Apache-2.0
 //
-#if (!defined(__aarch64__) || !defined(__ARM_FEATURE_SVE2)) && !defined(_M_ARM64)
-#error "This file must be compiled for AArch64, FEAT_SVE2."
+#if (!defined(__aarch64__) || !defined(__ARM_FEATURE_SVE)) && !defined(_M_ARM64)
+#error "This file must be compiled for AArch64, FEAT_SVE."
 #elif !defined(__ARM_FEATURE_DOTPROD) && !defined(_M_ARM64)
 #error "Dotprod extension required to compile this micro-kernel."
 #else  // Architectural features check.
@@ -139,6 +140,7 @@ void kai_run_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod(
     size_t dst_stride_col,            //
     float scalar_min,                 //
     float scalar_max) {
+    KAI_ASSUME(k > 0);
     KAI_ASSUME(dst_stride_col == sizeof(float));
     KAI_ASSERT_MSG(
         kai_get_sve_vector_length_u8() == 32, "Currently, this micro-kernel only supports 256-bit vector lengths.");

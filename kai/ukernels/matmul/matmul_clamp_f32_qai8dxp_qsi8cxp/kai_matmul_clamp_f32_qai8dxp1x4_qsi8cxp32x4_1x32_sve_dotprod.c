@@ -10,7 +10,7 @@
 #error "Dotprod extension required to compile this micro-kernel."
 #else  // Architectural features check.
 
-#include "kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod.h"
+#include "kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -28,14 +28,14 @@ typedef struct {
     size_t num_blocks;
 } KernelArgs;
 
-void kai_kernel_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod(KernelArgs* args_ptr);
+void kai_kernel_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod(KernelArgs* args_ptr);
 
 // Compute args
 static const size_t kai_m_step = 1;
-static const size_t kai_n_step = 8;
+static const size_t kai_n_step = 32;
 // Packing args
 static const size_t kai_mr = 1;
-static const size_t kai_nr = 8;
+static const size_t kai_nr = 32;
 static const size_t kai_kr = 4;
 static const size_t kai_sr = 1;
 // LHS format args (num. bytes per value, multiplier, zero_point (if asymmetric))
@@ -81,43 +81,43 @@ inline static size_t kai_get_rhs_packed_stride(size_t k) {
     return rhs_packed_stride;
 }
 
-size_t kai_get_m_step_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod(void) {
+size_t kai_get_m_step_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod(void) {
     return kai_m_step;
 }
 
-size_t kai_get_n_step_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod(void) {
+size_t kai_get_n_step_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod(void) {
     return kai_n_step;
 }
 
-size_t kai_get_mr_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod(void) {
+size_t kai_get_mr_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod(void) {
     return kai_mr;
 }
 
-size_t kai_get_nr_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod(void) {
+size_t kai_get_nr_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod(void) {
     return kai_nr;
 }
 
-size_t kai_get_kr_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod(void) {
+size_t kai_get_kr_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod(void) {
     return kai_kr;
 }
 
-size_t kai_get_sr_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod(void) {
+size_t kai_get_sr_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod(void) {
     return kai_sr;
 }
 
-size_t kai_get_lhs_packed_offset_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod(size_t m_idx, size_t k) {
+size_t kai_get_lhs_packed_offset_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod(size_t m_idx, size_t k) {
     KAI_ASSUME((m_idx % kai_m_step) == 0);
 
     return (m_idx / kai_mr) * kai_get_lhs_packed_stride(k);
 }
 
-size_t kai_get_rhs_packed_offset_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod(size_t n_idx, size_t k) {
+size_t kai_get_rhs_packed_offset_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod(size_t n_idx, size_t k) {
     KAI_ASSUME((n_idx % kai_n_step) == 0);
 
     return (n_idx / kai_nr) * kai_get_rhs_packed_stride(k);
 }
 
-size_t kai_get_dst_offset_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod(
+size_t kai_get_dst_offset_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod(
     size_t m_idx, size_t n_idx, size_t dst_stride) {
     KAI_ASSUME((m_idx % kai_m_step) == 0);
     KAI_ASSUME((n_idx % kai_n_step) == 0);
@@ -125,11 +125,11 @@ size_t kai_get_dst_offset_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod
     return (n_idx * kai_num_bytes_dst_value) + m_idx * dst_stride;
 }
 
-size_t kai_get_dst_size_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod(size_t m, size_t n) {
+size_t kai_get_dst_size_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod(size_t m, size_t n) {
     return m * n * kai_num_bytes_dst_value;
 }
 
-void kai_run_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod(
+void kai_run_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod(
     size_t m,                         //
     size_t n,                         //
     size_t k,                         //
@@ -162,7 +162,7 @@ void kai_run_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod(
     args.n = n;
     args.num_blocks = num_blocks;
 
-    kai_kernel_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod(&args);
+    kai_kernel_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod(&args);
 }
 
 #endif  // Architectural features check.

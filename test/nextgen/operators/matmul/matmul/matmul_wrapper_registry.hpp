@@ -1,5 +1,6 @@
 //
 // SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -12,6 +13,18 @@
 #include "test/nextgen/operators/matmul/matmul_dims.hpp"
 
 namespace kai::test {
+
+/// Creates a wrapper for matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod kernel.
+[[nodiscard]] std::unique_ptr<KernelWrapper<MatMulShape>>
+create_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod();
+
+/// Creates a wrapper for matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod kernel.
+[[nodiscard]] std::unique_ptr<KernelWrapper<MatMulShape>>
+create_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod();
+
+/// Creates a wrapper for matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod kernel.
+[[nodiscard]] std::unique_ptr<KernelWrapper<MatMulShape>>
+create_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod();
 
 /// Creates a wrapper for matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa kernel.
 [[nodiscard]] std::unique_ptr<KernelWrapper<MatMulShape>>
