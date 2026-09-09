@@ -105,37 +105,44 @@ inline constexpr DwConvTraits kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme
     kai_get_dst_offset_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
     kai_get_src_offset_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla);
 
-inline std::array<DwConvBenchmarkCase, 2> dwconv_benchmarks{{
-    {
-        ::benchmark::RegisterBenchmark(
-            "kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla", kai_benchmark_dwconv,
-            RunnerFactory{[](const DwConvTraits& tr, DataType sdt, DataType ddt) {
-                return std::make_unique<DwConvPackedFloatRunner>(
-                    kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla_iface, tr, sdt, ddt);
-            }},
-            kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla_traits, DataType::FP32, DataType::FP32,
-            kai_dwconv_packed_fp32_rhs_cfg, test::cpu_has_sme2),
-        &kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla_traits,
-    },
-    {
-        ::benchmark::RegisterBenchmark(
-            "kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla", kai_benchmark_dwconv,
-            RunnerFactory{[](const DwConvTraits& tr, DataType sdt, DataType ddt) {
-                return std::make_unique<DwConvPackedDepthfirstFloatRunner>(
-                    kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla_iface, tr, sdt, ddt);
-            }},
-            kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla_traits, DataType::FP16, DataType::FP16,
-            kai_dwconv_packed_fp16_rhs_cfg, test::cpu_has_sme2),
-        &kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla_traits,
-    },
-}};
+/// Returns the lazily registered dwconv benchmarks.
+///
+/// @return Registered dwconv benchmarks.
+const auto& get_dwconv_benchmarks() {
+    static const std::array<DwConvBenchmarkCase, 2> dwconv_benchmarks{{
+        {
+            ::benchmark::RegisterBenchmark(
+                "kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla", kai_benchmark_dwconv,
+                RunnerFactory{[](const DwConvTraits& tr, DataType sdt, DataType ddt) {
+                    return std::make_unique<DwConvPackedFloatRunner>(
+                        kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla_iface, tr, sdt, ddt);
+                }},
+                kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla_traits, DataType::FP32, DataType::FP32,
+                kai_dwconv_packed_fp32_rhs_cfg, test::cpu_has_sme2),
+            &kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla_traits,
+        },
+        {
+            ::benchmark::RegisterBenchmark(
+                "kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla", kai_benchmark_dwconv,
+                RunnerFactory{[](const DwConvTraits& tr, DataType sdt, DataType ddt) {
+                    return std::make_unique<DwConvPackedDepthfirstFloatRunner>(
+                        kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla_iface, tr, sdt, ddt);
+                }},
+                kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla_traits, DataType::FP16, DataType::FP16,
+                kai_dwconv_packed_fp16_rhs_cfg, test::cpu_has_sme2),
+            &kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla_traits,
+        },
+    }};
+
+    return dwconv_benchmarks;
+}
 
 void RegisterDwConvBenchmarks(const DwConvShape& shape) {
     if (!supports_unit_stride_and_dilation(shape)) {
         return;
     }
 
-    for (auto& entry : dwconv_benchmarks) {
+    for (const auto& entry : get_dwconv_benchmarks()) {
         const size_t filter_height = entry.traits->get_filter_height();
         const size_t filter_width = entry.traits->get_filter_width();
 
@@ -175,7 +182,8 @@ void RegisterDwConvBenchmarks(const DwConvShape& shape) {
 }
 
 std::optional<DwConvOutputShape> InferDwConvOutputDims(const DwConvShape& shape) {
-    if (dwconv_benchmarks.empty()) {
+    const auto& benchmarks = get_dwconv_benchmarks();
+    if (benchmarks.empty()) {
         return std::nullopt;
     }
 
@@ -183,7 +191,7 @@ std::optional<DwConvOutputShape> InferDwConvOutputDims(const DwConvShape& shape)
         return std::nullopt;
     }
 
-    const DwConvTraits* traits = dwconv_benchmarks.front().traits;
+    const DwConvTraits* traits = benchmarks.front().traits;
     const size_t filter_height = traits->get_filter_height();
     const size_t filter_width = traits->get_filter_width();
 

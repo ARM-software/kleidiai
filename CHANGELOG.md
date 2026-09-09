@@ -10,6 +10,9 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+- Fixes
+  - Scoped user-provided benchmark filters to the selected benchmark mode.
+
 ## v1.31.0
 
 - New micro-kernels
