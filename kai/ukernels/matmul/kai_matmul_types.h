@@ -181,6 +181,13 @@ struct kai_matmul_uker_activation_args {
     struct kai_matmul_uker_clamp_args clamp;  ///< Output clamping function.
 };
 
+//// Lookup table parameter types ////
+
+/// Lookup table arguments for matrix multiplication micro-kernel.
+struct kai_matmul_uker_lut_args {
+    const void* ptr;  ///< Lookup table buffer.
+};
+
 //// Operand and high level argument types ////
 
 /// Operands for matrix multiplication micro-kernel.
@@ -190,12 +197,12 @@ struct kai_matmul_uker_operand_args {
     struct kai_matmul_uker_rhs_args rhs;      ///< RHS buffer.
     struct kai_matmul_uker_bias_args bias;    ///< Bias parameters
     struct kai_matmul_uker_scale_args scale;  ///< Scale parameters
+    struct kai_matmul_uker_lut_args lut;      ///< Lookup table arguments.
 };
 
 /// Matrix multiplication micro-kernel run arguments.
 struct kai_matmul_uker_args {
-    uint64_t flags;  ///< Control flags.
-
+    uint64_t flags;                                     ///< Control flags.
     struct kai_matmul_uker_dim_args shape;              ///< Problem shape.
     struct kai_matmul_uker_operand_args operand;        ///< Operands.
     struct kai_matmul_uker_activation_args activation;  ///< Fused activation function.
