@@ -10,13 +10,14 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+- New micro-kernels
+  - SME2 matrix multiplication micro-kernels with F32 output and optional LUT decoding: MxN for FP16 x QSI4C32P, and 1xN and MxN for QSI8D32P x QSI4C32P.
 - Fixes
   - Scoped user-provided benchmark filters to the selected benchmark mode.
 
 ## v1.31.0
 
 - New micro-kernels
-  - SME2 matrix multiplication micro-kernels with F32 output and optional LUT decoding: MxN for FP16 x QSI4C32P, and 1xN and MxN for QSI8D32P x QSI4C32P.
   - SME2 FP16 elastic GEMM/GEMV kernels with corresponding packing kernels.
   - SME2.1 INT8 8vsx8vs MOPA matmul micro-kernel with a 2vsx32vs MOP4A fast path for eligible output regions whose height is half the accumulator vector length (2vs).
   - SME2 QAI4C32K256 GEMM/GEMV micro-kernels along with corresponding packing kernels.
