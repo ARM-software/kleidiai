@@ -15,6 +15,7 @@
 #include <utility>
 
 #include "test/common/assert.hpp"
+#include "test/common/bfloat16.hpp"
 #include "test/common/buffer.hpp"
 #include "test/common/data_type.hpp"
 #include "test/common/int2.hpp"
@@ -119,7 +120,7 @@ template <typename FpData, typename QData, typename QScale, typename QZp, RoundM
                 get_scale_zero_point_from_range<FpData, QData, QZp, QZP_ROUND_MODE>(min_value, max_value);
             KAI_UNUSED(inv_qscale_value);
 
-            write_array<QScale>(qscale, block_idx, qscale_value);
+            write_array<QScale>(qscale, block_idx, static_cast<QScale>(qscale_value));
             write_array<QZp>(qzp, block_idx, qzp_value);
         }
     }
@@ -199,7 +200,7 @@ template <
             const auto [qscale_value, inv_qscale_value, qzp_value] =
                 get_scale_zero_point_from_range<FpData, QData, QZp, QZP_ROUND_MODE>(min_value, max_value);
 
-            write_array<QScale>(qscale, block_idx, qscale_value);
+            write_array<QScale>(qscale, block_idx, static_cast<QScale>(qscale_value));
             write_array<QZp>(qzp, block_idx, qzp_value);
 
             // Quantizes the data.
@@ -247,7 +248,7 @@ template <typename FpData, typename QData, typename QScale>
             // Computes the quantization information.
             const auto [qscale_value, inv_qscale_value] = get_scale_from_max_abs<FpData, QData>(max_abs);
             KAI_UNUSED(inv_qscale_value);
-            write_array<QScale>(qscale, block_idx, qscale_value);
+            write_array<QScale>(qscale, block_idx, static_cast<QScale>(qscale_value));
         }
     }
 
@@ -315,7 +316,7 @@ template <typename FpData, typename QData, typename QScale, RoundMode QDATA_ROUN
             }
 
             const auto [qscale_value, inv_qscale_value] = get_scale_from_max_abs<FpData, QData>(max_abs);
-            write_array<QScale>(qscale, block_idx, qscale_value);
+            write_array<QScale>(qscale, block_idx, static_cast<QScale>(qscale_value));
 
             for (size_t row = 0; row < size_row; ++row) {
                 for (size_t col = 0; col < size_col; ++col) {
@@ -358,6 +359,10 @@ DynamicQuantizeLinearFn make_dynamic_symmetric_quantize_linear(
 
     if (params == std::make_tuple(DataType::FP32, DataType::I2, DataType::FP32, RoundMode::CURRENT)) {
         return dynamic_symmetric_quantize_linear<float, Int2, float, RoundMode::CURRENT>;
+    }
+
+    if (params == std::make_tuple(DataType::FP32, DataType::U4, DataType::BF16, RoundMode::CURRENT)) {
+        return dynamic_symmetric_quantize_linear<float, UInt4, BFloat16<false>, RoundMode::CURRENT>;
     }
 
     if (params == std::make_tuple(DataType::FP32, DataType::I4, DataType::FP32, RoundMode::CURRENT)) {

@@ -24,10 +24,11 @@ public:
         const Poly<Format>& src_bias_format, const Poly<Format>& dst_format,
         MatMulUkerApiBiasDeliveryStage bias_delivery_stage, MatMulSlot run_rhs_slot = MatMulSlot::RHS_DATA,
         MatMulPackRhsOperandSlots operand_slots = {},
-        std::vector<MatMulSlot> reference_component_slots = {MatMulSlot::RHS_T_DATA}) :
+        std::vector<MatMulSlot> reference_component_slots = {MatMulSlot::RHS_T_DATA},
+        kai_matmul_pack_rhs_uker_format_config format = {}) :
         MatMulPackRhsUkerApiCommon(
             name, run_rhs_slot, RhsLayout::KxN, api, src_data_format, src_bias_format, dst_format, bias_delivery_stage,
-            operand_slots, std::move(reference_component_slots)) {
+            operand_slots, std::move(reference_component_slots), format) {
     }
 };
 

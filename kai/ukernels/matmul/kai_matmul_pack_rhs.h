@@ -290,6 +290,48 @@ struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_kxn_qsu2cxp16vsx4sf32bi3
 /// @return The micro-kernel API.
 struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_nxk_qsu2cxp16vsx4sf32bi32_qsu2cx_f32_i32_sme(void);
 
+/// Transposed RHS packing micro-kernel for statically-blockwise quantized unsigned INT4 data (fixed RHS zero point
+/// 8, fixed LHS zero point 1, BF16 block scales).
+///
+/// Required CPU features:
+///   * FEAT_SME
+///
+/// Configuration parameters:
+///   * bl - The block length, in number of K values per block. Must be a multiple of 32.
+///
+/// Required operands:
+///   * rhs_packed - Per-block INT4 RHS in s4s0 nrx4 blocked format, per-block BF16 scale, per-N FP32 row sum, and
+///     per-N FP32 bias.
+///   * rhs - INT4 data in plain format, transposed (N x K, two values packed per byte).
+///   * bias_n - Per-N FP32 bias.
+///   * scale_n - Per-block, per-N BF16 scale.
+///
+/// Supported flags: none.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_nxk_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme(void);
+
+/// Non-transposed RHS packing micro-kernel for statically-blockwise quantized unsigned INT4 data (fixed RHS zero
+/// point 8, fixed LHS zero point 1, BF16 block scales).
+///
+/// Required CPU features:
+///   * FEAT_SME
+///
+/// Configuration parameters:
+///   * bl - The block length, in number of K values per block. Must be a multiple of 32.
+///
+/// Required operands:
+///   * rhs_packed - Per-block INT4 RHS in s4s0 nrx4 blocked format, per-block BF16 scale, per-N FP32 row sum, and
+///     per-N FP32 bias.
+///   * rhs - INT4 data in plain format, non-transposed (K x N, two values packed per byte).
+///   * bias_n - Per-N FP32 bias.
+///   * scale_n - Per-block, per-N BF16 scale.
+///
+/// Supported flags: none.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_kxn_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme(void);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

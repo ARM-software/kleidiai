@@ -18,6 +18,7 @@
 
 #include "test/common/assert.hpp"
 #include "test/common/matrix_portion.hpp"
+#include "test/common/round.hpp"
 #include "test/common/seed.hpp"
 #include "test/common/span.hpp"
 #include "test/nextgen/common/random.hpp"
@@ -364,6 +365,10 @@ MatMulFixtureParams pick_fixture(
         shape_m = dist_ctx.m_shape_dist(dist_ctx.m_rng);
         shape_n = dist_ctx.m_shape_dist(dist_ctx.m_rng);
         shape_k = dist_ctx.m_shape_k_dist(dist_ctx.m_rng);
+
+        if (op.k_alignment > 1) {
+            shape_k = round_up_multiple(shape_k, op.k_alignment);
+        }
 
         if (op.is_shape_suitable(shape_m, shape_n, shape_k, portion)) {
             break;

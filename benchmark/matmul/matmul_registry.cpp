@@ -408,6 +408,18 @@ inline constexpr MatMulBlockwiseDynamicQuantInterface
         .run_matmul = kai_run_matmul_clamp_f32_qai8dxp1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa,
     };
 
+inline constexpr MatMulUkernelApiInterface kai_matmul_clamp_f32_qai8dxp1x4_qsi4c32p16vsx4_1x16vs_sme_dot_interface{
+    .get_config = [] { return kai_matmul_uker_config{}; },
+    .get_api = kai_matmul_clamp_f32_qai8dxp1x4_qsi4c32p16vsx4_1x16vs_sme_dot,
+    .flags = KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP,
+};
+
+inline constexpr MatMulUkernelApiInterface kai_matmul_clamp_f32_qai8dxp4vsx4_qsi4c32p16vsx4_4vsx16vs_sme_mopa_interface{
+    .get_config = [] { return kai_matmul_uker_config{}; },
+    .get_api = kai_matmul_clamp_f32_qai8dxp4vsx4_qsi4c32p16vsx4_4vsx16vs_sme_mopa,
+    .flags = KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP,
+};
+
 // matmul_clamp_f32_qai8dxp_qsi4cxp
 inline constexpr MatMulFloatInterface kai_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa_interface{
     .run_matmul = kai_run_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa,
@@ -1026,6 +1038,16 @@ const auto& get_matmul_benchmarks() {
             kai_benchmark_matmul<MatMulBlockwiseDynamicQuantInterface>,
             kai_matmul_clamp_f32_qai8dxp1vlx4_qsi4c32p4vlx4_1vlx4vl_sme2_mopa_interface, DataType::FP32, MatMulOp::GEMM,
             test::cpu_has_sme2),
+        RegisterBenchmark(
+            "kai_matmul_clamp_f32_qai8dxp1x4_qsi4c32p16vsx4_1x16vs_sme_dot",
+            kai_benchmark_matmul<MatMulUkernelApiInterface>,
+            kai_matmul_clamp_f32_qai8dxp1x4_qsi4c32p16vsx4_1x16vs_sme_dot_interface, DataType::FP32, MatMulOp::GEMV,
+            test::cpu_has_sme),
+        RegisterBenchmark(
+            "kai_matmul_clamp_f32_qai8dxp4vsx4_qsi4c32p16vsx4_4vsx16vs_sme_mopa",
+            kai_benchmark_matmul<MatMulUkernelApiInterface>,
+            kai_matmul_clamp_f32_qai8dxp4vsx4_qsi4c32p16vsx4_4vsx16vs_sme_mopa_interface, DataType::FP32,
+            MatMulOp::GEMM, test::cpu_has_sme),
 
         // matmul_clamp_f32_qai8dxp_qsi4cxp
         RegisterBenchmark(

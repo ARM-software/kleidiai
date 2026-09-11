@@ -26,6 +26,9 @@ namespace kai::test {
 /// Creates a wrapper for kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon micro-kernel.
 [[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon();
 
+/// Creates a wrapper for kai_lhs_quant_pack_qai8dxp_f32 micro-kernel (qai8dxp4vsx4 tile shape).
+[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_lhs_quant_pack_qai8dxp4vsx4_f32();
+
 /// Creates a wrapper for kai_lhs_pack_f32p2vlx1_f32_sme micro-kernel.
 [[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_lhs_pack_f32p2vlx1_f32_sme();
 
@@ -77,6 +80,15 @@ namespace kai::test {
 
 /// Checks if the portion produces non-empty LHS packing tiles for the f32p2vlx1 matmul operator.
 [[nodiscard]] bool is_shape_suitable_lhs_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
+
+/// Checks if the portion produces non-empty LHS packing tiles for the qai8dxp1x4/qsi4c32p16vsx4 dot matmul operator.
+[[nodiscard]] bool is_shape_suitable_lhs_qai8dxp1x4_qsi4c32p16vsx4_1x16vs_sme_dot(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
+
+/// Checks if the portion produces non-empty LHS packing tiles for the qai8dxp4vsx4/qsi4c32p16vsx4 mopa matmul
+/// operator.
+[[nodiscard]] bool is_shape_suitable_lhs_qai8dxp4vsx4_qsi4c32p16vsx4_4vsx16vs_sme_mopa(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
 }  // namespace kai::test

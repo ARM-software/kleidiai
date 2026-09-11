@@ -220,6 +220,7 @@ inline void MatMulRunner<MatMulUkernelApiInterface>::run(const void* lhs, const 
 
     const auto api = matmul_interface_.get_api();
     auto config = matmul_interface_.get_config();
+    config.format.bl = bl_;
 
     const ClampArgs clamp_args{-FLT_MAX, FLT_MAX};
     const bool has_clamp = (matmul_interface_.flags & KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP) != 0;

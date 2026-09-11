@@ -6,6 +6,8 @@
 
 #include "test/nextgen/operators/matmul/matmul/matmul_wrapper_registry.hpp"
 
+#include <stdio.h>
+
 #include <algorithm>
 #include <array>
 #include <cstdint>
@@ -20,9 +22,9 @@
 #include "test/common/sme.hpp"
 #include "test/common/sve.hpp"
 #include "test/nextgen/format/block2d_row_format.hpp"
+#include "test/nextgen/format/block_group_row_format.hpp"
 #include "test/nextgen/format/flattened_blockwise_packed_format.hpp"
 #include "test/nextgen/format/plain_format.hpp"
-#include "test/nextgen/format/two_level_blockwise_format.hpp"
 #include "test/nextgen/functions/round.hpp"
 #include "test/nextgen/harness/kernel_wrapper.hpp"
 #include "test/nextgen/operators/matmul/matmul/matmul_dq_wrapper.hpp"
@@ -397,6 +399,45 @@ create_matmul_clamp_qai8_qai8p8vsx4_qsu2cxp16vsx4sf32bi32_8vsx16vs_sme2_mopa() {
 
 std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_qai8_qai8_qsu2cxp16vsx4sf32bi32_1x64vs_sme2_dot() {
     return create_matmul_clamp_qai8_qsu2(false);
+}
+
+std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f32_qai8dxp1x4_qsi4c32p16vsx4_1x16vs_sme_dot() {
+    static constexpr std::array<DataType, 0> no_block_dtypes{};
+    static constexpr std::array<DataType, 0> no_row_dtypes{};
+    static constexpr std::array block_post_dtypes{DataType::BF16};
+    static constexpr std::array row_post_dtypes{DataType::FP32, DataType::FP32};
+
+    return std::make_unique<MatMulUkerApiWrapper>(
+        "matmul_clamp_f32_qai8dxp1x4_qsi4c32p16vsx4_1x16vs_sme_dot",
+        kai_matmul_clamp_f32_qai8dxp1x4_qsi4c32p16vsx4_1x16vs_sme_dot(), MatMulSlot::LHS_PACKED,
+        make_poly<Block2dRowFormat>(
+            1, 4, 32, true, DataType::I8, std::array<DataType, 0>{}, std::array{DataType::I32, DataType::FP32}),
+        make_poly<BlockGroupRowFormat>(
+            16 * get_sme_vector_scale(), 32, 32, true, DataType::I4, 4, 1, no_block_dtypes, block_post_dtypes,
+            no_row_dtypes, row_post_dtypes),
+        make_poly<PlainFormat>(DataType::FP32), DataType::FP32, MatMulUkerClampConfig::optional(DataType::FP32),
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS, MatMulUkerOutputStageConfig{}, kai_matmul_uker_config{{32}},
+        MatMulPackArgs{/*mr=*/1, /*nr=*/0, /*kr=*/4, /*sr=*/1, /*bl=*/0});
+}
+
+std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f32_qai8dxp4vsx4_qsi4c32p16vsx4_4vsx16vs_sme_mopa() {
+    static constexpr std::array<DataType, 0> no_block_dtypes{};
+    static constexpr std::array<DataType, 0> no_row_dtypes{};
+    static constexpr std::array block_post_dtypes{DataType::BF16};
+    static constexpr std::array row_post_dtypes{DataType::FP32, DataType::FP32};
+
+    return std::make_unique<MatMulUkerApiWrapper>(
+        "matmul_clamp_f32_qai8dxp4vsx4_qsi4c32p16vsx4_4vsx16vs_sme_mopa",
+        kai_matmul_clamp_f32_qai8dxp4vsx4_qsi4c32p16vsx4_4vsx16vs_sme_mopa(), MatMulSlot::LHS_PACKED,
+        make_poly<Block2dRowFormat>(
+            4 * get_sme_vector_scale(), 4, 32, true, DataType::I8, std::array<DataType, 0>{},
+            std::array{DataType::I32, DataType::FP32}),
+        make_poly<BlockGroupRowFormat>(
+            16 * get_sme_vector_scale(), 32, 32, true, DataType::I4, 4, 1, no_block_dtypes, block_post_dtypes,
+            no_row_dtypes, row_post_dtypes),
+        make_poly<PlainFormat>(DataType::FP32), DataType::FP32, MatMulUkerClampConfig::optional(DataType::FP32),
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS, MatMulUkerOutputStageConfig{}, kai_matmul_uker_config{{32}},
+        MatMulPackArgs{/*mr=*/4 * get_sme_vector_scale(), /*nr=*/0, /*kr=*/4, /*sr=*/1, /*bl=*/0});
 }
 
 }  // namespace kai::test

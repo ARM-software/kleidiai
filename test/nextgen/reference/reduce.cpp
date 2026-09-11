@@ -8,6 +8,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <numeric>
 #include <tuple>
 
 #include "test/common/assert.hpp"
@@ -28,19 +29,17 @@ template <typename Op>
     using Input = typename Op::InputType;
     using Output = typename Op::OutputType;
 
-    KAI_TEST_ASSERT(shape.size() > axis);
+    KAI_TEST_ASSERT_MSG(!shape.empty(), "Data must have at least one dimension.");
+    KAI_TEST_ASSERT_MSG(axis == shape.size() - 1, "Only reduction over the last dimension is supported.");
 
-    KAI_TEST_ASSERT_MSG(shape.size() == 2, "Only 2D data is supported.");
-    KAI_TEST_ASSERT_MSG(axis == 0, "Only row reduction is supported.");
-
-    const size_t height = shape.at(0);
-    const size_t width = shape.at(1);
+    const size_t width = shape.back();
+    const size_t num_rows = std::accumulate(shape.begin(), shape.end() - 1, size_t{1}, std::multiplies<>());
     const size_t src_row_size = round_up_division(width * size_in_bits<Input>, 8);
 
-    const size_t dst_size = round_up_division(height * size_in_bits<Output>, 8);
+    const size_t dst_size = round_up_division(num_rows * size_in_bits<Output>, 8);
     Buffer dst(dst_size, 0);
 
-    for (size_t row = 0; row < height; ++row) {
+    for (size_t row = 0; row < num_rows; ++row) {
         const Span<const std::byte> src_row_data = data.subspan(row * src_row_size, src_row_size);
 
         Output acc = Op::init();
@@ -84,6 +83,10 @@ ReduceFn make_reduce_add(DataType src_dtype, DataType dst_dtype) {
 
     if (dtypes == std::make_tuple(DataType::I8, DataType::I32)) {
         return reduce<AddOp<int8_t, int32_t>>;
+    }
+
+    if (dtypes == std::make_tuple(DataType::FP32, DataType::FP32)) {
+        return reduce<AddOp<float, float>>;
     }
 
     KAI_TEST_ERROR("Not implemented.");

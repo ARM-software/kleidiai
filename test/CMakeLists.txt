@@ -60,6 +60,7 @@ add_library(kleidiai_test_framework
     test/nextgen/reference/compare.cpp
     test/nextgen/reference/cast.cpp
     test/nextgen/format/block2d_row_format.cpp
+    test/nextgen/format/block_group_row_format.cpp
     test/nextgen/format/flattened_blockwise_packed_format.cpp
     test/nextgen/format/plain_format.cpp
     test/nextgen/format/two_level_blockwise_format.cpp

@@ -48,6 +48,11 @@ struct MatMulOperator {
     std::vector<MatMulBiasModeSet> supported_bias_mode_sets;
     MatMulClampMode clamp_mode;
 
+    /// Required alignment of the K dimension. Random shape generation snaps K to a multiple of
+    /// this value before checking `is_shape_suitable`, so that operators requiring block-aligned
+    /// K (e.g. block-quantized RHS formats) do not rely on pure rejection sampling to find one.
+    size_t k_alignment = 1;
+
     std::optional<std::unique_ptr<Quantizer>> lhs_quant;
     std::optional<std::unique_ptr<Quantizer>> rhs_quant;
     std::optional<std::unique_ptr<Quantizer>> bias_quant;

@@ -20,6 +20,7 @@
 #include "test/nextgen/harness/kernel_wrapper.hpp"
 #include "test/nextgen/operators/matmul/matmul_bias_mode.hpp"
 #include "test/nextgen/operators/matmul/matmul_dims.hpp"
+#include "test/nextgen/operators/matmul/matmul_pack_args.hpp"
 #include "test/nextgen/operators/matmul/matmul_slots.hpp"
 
 namespace kai::test {
@@ -101,7 +102,8 @@ public:
         std::string_view name, kai_matmul_uker_api api, MatMulSlot lhs_input_slot, const Poly<Format>& lhs_format,
         const Poly<Format>& rhs_format, const Poly<Format>& dst_format, DataType acc_dtype,
         MatMulUkerClampConfig clamp_config, MatMulUkerApiBiasDeliveryStage bias_delivery_stage,
-        MatMulUkerOutputStageConfig output_stage_config = {}, kai_matmul_uker_config uker_config = {}) :
+        MatMulUkerOutputStageConfig output_stage_config = {}, kai_matmul_uker_config uker_config = {},
+        std::optional<MatMulPackArgs> lhs_pack_args = std::nullopt) :
         m_name(name),
         m_uker_config(uker_config),
         m_ukernel(api),
@@ -112,7 +114,8 @@ public:
         m_acc_dtype(acc_dtype),
         m_clamp_config(clamp_config),
         m_bias_delivery_stage(bias_delivery_stage),
-        m_output_stage_config(output_stage_config) {
+        m_output_stage_config(output_stage_config),
+        m_lhs_pack_args(lhs_pack_args) {
     }
 
     [[nodiscard]] std::string_view name() const override;
@@ -136,6 +139,7 @@ private:
     MatMulUkerClampConfig m_clamp_config;                  ///< Clamp argument configuration.
     MatMulUkerApiBiasDeliveryStage m_bias_delivery_stage;  ///< Stage where bias is delivered to the micro-kernel.
     MatMulUkerOutputStageConfig m_output_stage_config;     ///< Output stage configuration.
+    std::optional<MatMulPackArgs> m_lhs_pack_args;         ///< Packing arguments for a legacy-API LHS packing kernel.
 };
 
 }  // namespace kai::test
