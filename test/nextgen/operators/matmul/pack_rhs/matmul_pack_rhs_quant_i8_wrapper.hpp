@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -15,6 +16,7 @@
 #include "test/nextgen/format/format.hpp"
 #include "test/nextgen/harness/kernel_wrapper.hpp"
 #include "test/nextgen/operators/matmul/matmul_dims.hpp"
+#include "test/nextgen/operators/matmul/matmul_pack_args.hpp"
 #include "test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_interface.hpp"
 
 namespace kai::test {
@@ -23,17 +25,27 @@ namespace kai::test {
 class MatMulPackRhsQuantI8Wrapper : public KernelWrapper<MatShape> {
 public:
     /// Creates a new wrapper.
+    ///
+    /// @param[in] name The kernel name.
+    /// @param[in] kernel The kernel interface.
+    /// @param[in] src_data_format The input data format.
+    /// @param[in] src_scale_format The input scale format.
+    /// @param[in] src_bias_format The input bias format.
+    /// @param[in] src_sum_format The row-sum format.
+    /// @param[in] dst_format The output data format.
+    /// @param[in] fixed_pack_args Fixed packing arguments, if they are not supplied by the matmul kernel.
     MatMulPackRhsQuantI8Wrapper(
         std::string_view name, const MatMulPackRhsQuantI8Interface& kernel, const Poly<Format>& src_data_format,
         const Poly<Format>& src_scale_format, const Poly<Format>& src_bias_format, const Poly<Format>& src_sum_format,
-        const Poly<Format>& dst_format) :
+        const Poly<Format>& dst_format, std::optional<MatMulPackArgs> fixed_pack_args = std::nullopt) :
         m_name(name),
         m_kernel(kernel),
         m_src_data_format(src_data_format),
         m_src_scale_format(src_scale_format),
         m_src_bias_format(src_bias_format),
         m_src_sum_format(src_sum_format),
-        m_dst_format(dst_format) {
+        m_dst_format(dst_format),
+        m_fixed_pack_args(fixed_pack_args) {
     }
 
     [[nodiscard]] std::string_view name() const override;
@@ -53,6 +65,7 @@ private:
     Poly<Format> m_src_bias_format;
     Poly<Format> m_src_sum_format;
     Poly<Format> m_dst_format;
+    std::optional<MatMulPackArgs> m_fixed_pack_args;
 };
 
 }  // namespace kai::test

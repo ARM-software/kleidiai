@@ -35,7 +35,8 @@ std::vector<MatMulSlot> MatMulPackLhsDqWrapper::ref_inputs([[maybe_unused]] Cons
 std::vector<size_t> MatMulPackLhsDqWrapper::steps(MatShape shape, ConstTensorSet tensors) const {
     KAI_TEST_ASSERT_MSG(shape.size() == 2, "Only M and K dimensions are expected.");
 
-    const auto& pack_args = tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
+    const auto& pack_args =
+        m_fixed_pack_args ? *m_fixed_pack_args : tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
 
     const size_t m_step = m_kernel.get_m_step(pack_args.mr);
     const size_t shape_k = shape.at(MatDim::C);
@@ -72,7 +73,8 @@ void MatMulPackLhsDqWrapper::run(
     const Tensor& lhs_data = tensors.at(MatMulSlot::LHS_DATA);
     Tensor& packed_lhs = tensors.at(MatMulSlot::LHS_PACKED_IMP);
 
-    const auto& pack_args = tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
+    const auto& pack_args =
+        m_fixed_pack_args ? *m_fixed_pack_args : tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
 
     packed_lhs.set_shape({full_m, full_k}).allocate();
 

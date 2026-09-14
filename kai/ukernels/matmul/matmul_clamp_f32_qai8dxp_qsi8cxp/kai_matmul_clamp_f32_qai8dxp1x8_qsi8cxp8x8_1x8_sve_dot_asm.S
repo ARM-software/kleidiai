@@ -36,13 +36,13 @@
     #define KAI_ASM_END
 #endif
 
-    KAI_ASM_CODE(matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod)
+    KAI_ASM_CODE(matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot)
     KAI_ASM_ALIGN
 
-    KAI_ASM_GLOBAL(kai_kernel_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod)
+    KAI_ASM_GLOBAL(kai_kernel_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot)
 
-KAI_ASM_FUNCTION_TYPE(kai_kernel_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod)
-KAI_ASM_FUNCTION_LABEL(kai_kernel_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod)
+KAI_ASM_FUNCTION_TYPE(kai_kernel_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot)
+KAI_ASM_FUNCTION_LABEL(kai_kernel_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot)
     stp x20, x21, [sp, -80]!
     stp x22, x23, [sp, 16]
     stp x24, x25, [sp, 32]
@@ -138,6 +138,6 @@ KAI_ASM_LABEL(label_5)  // Stores done
     ldr x28, [sp, 64]
     ldp x20, x21, [sp], 80
     ret
-    KAI_ASM_FUNCTION_END(kai_kernel_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod)
+    KAI_ASM_FUNCTION_END(kai_kernel_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot)
 
     KAI_ASM_END

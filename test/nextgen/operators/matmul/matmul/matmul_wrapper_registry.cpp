@@ -17,9 +17,6 @@
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod.h"
 #include "test/common/data_type.hpp"
 #include "test/common/sme.hpp"
 #include "test/common/sve.hpp"
@@ -39,85 +36,43 @@
 
 namespace kai::test {
 
-std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod() {
-    return std::make_unique<MatMulDqWrapper>(
-        "matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod",
-        MatMulDqInterface{
-            kai_get_m_step_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod,
-            kai_get_n_step_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod,
-            kai_get_mr_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod,
-            kai_get_nr_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod,
-            kai_get_kr_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod,
-            kai_get_sr_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod,
-            kai_get_lhs_packed_offset_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod,
-            kai_get_rhs_packed_offset_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod,
-            kai_get_dst_offset_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod,
-            kai_get_dst_size_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod,
-            kai_run_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod,
-        },
-        std::make_unique<AsymmLinearQuantizer>(
-            DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 1, 0),
-        std::make_unique<SymmLinearQuantizer>(DataType::I8, DataType::FP32, RoundMode::CURRENT, 1, 0),
+std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot() {
+    return std::make_unique<MatMulUkerApiWrapper>(
+        "matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot", kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot(),
+        MatMulSlot::LHS_PACKED,
         make_poly<Block2dRowFormat>(
             1, 4, 32, true, DataType::I8, std::array<DataType, 0>{}, std::array{DataType::I32, DataType::FP32}),
         make_poly<Block2dRowFormat>(
             8, 4, 32, false, DataType::I8, std::array<DataType, 0>{},
             std::array{DataType::I32, DataType::FP32, DataType::FP32}),
-        make_poly<PlainFormat>(DataType::FP32));
+        make_poly<PlainFormat>(DataType::FP32), DataType::FP32, MatMulUkerClampConfig::optional(DataType::FP32),
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS);
 }
 
-std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod() {
-    return std::make_unique<MatMulDqWrapper>(
-        "matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod",
-        MatMulDqInterface{
-            kai_get_m_step_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod,
-            kai_get_n_step_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod,
-            kai_get_mr_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod,
-            kai_get_nr_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod,
-            kai_get_kr_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod,
-            kai_get_sr_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod,
-            kai_get_lhs_packed_offset_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod,
-            kai_get_rhs_packed_offset_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod,
-            kai_get_dst_offset_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod,
-            kai_get_dst_size_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod,
-            kai_run_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod,
-        },
-        std::make_unique<AsymmLinearQuantizer>(
-            DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 1, 0),
-        std::make_unique<SymmLinearQuantizer>(DataType::I8, DataType::FP32, RoundMode::CURRENT, 1, 0),
+std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dot() {
+    return std::make_unique<MatMulUkerApiWrapper>(
+        "matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dot",
+        kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dot(), MatMulSlot::LHS_PACKED,
         make_poly<Block2dRowFormat>(
             1, 4, 32, true, DataType::I8, std::array<DataType, 0>{}, std::array{DataType::I32, DataType::FP32}),
         make_poly<Block2dRowFormat>(
             32, 4, 32, false, DataType::I8, std::array<DataType, 0>{},
             std::array{DataType::I32, DataType::FP32, DataType::FP32}),
-        make_poly<PlainFormat>(DataType::FP32));
+        make_poly<PlainFormat>(DataType::FP32), DataType::FP32, MatMulUkerClampConfig::optional(DataType::FP32),
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS);
 }
 
-std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod() {
-    return std::make_unique<MatMulDqWrapper>(
-        "matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod",
-        MatMulDqInterface{
-            kai_get_m_step_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod,
-            kai_get_n_step_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod,
-            kai_get_mr_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod,
-            kai_get_nr_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod,
-            kai_get_kr_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod,
-            kai_get_sr_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod,
-            kai_get_lhs_packed_offset_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod,
-            kai_get_rhs_packed_offset_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod,
-            kai_get_dst_offset_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod,
-            kai_get_dst_size_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod,
-            kai_run_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod,
-        },
-        std::make_unique<AsymmLinearQuantizer>(
-            DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 1, 0),
-        std::make_unique<SymmLinearQuantizer>(DataType::I8, DataType::FP32, RoundMode::CURRENT, 1, 0),
+std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot() {
+    return std::make_unique<MatMulUkerApiWrapper>(
+        "matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot", kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot(),
+        MatMulSlot::LHS_PACKED,
         make_poly<Block2dRowFormat>(
             1, 8, 32, true, DataType::I8, std::array<DataType, 0>{}, std::array{DataType::I32, DataType::FP32}),
         make_poly<Block2dRowFormat>(
             8, 8, 32, false, DataType::I8, std::array<DataType, 0>{},
             std::array{DataType::I32, DataType::FP32, DataType::FP32}),
-        make_poly<PlainFormat>(DataType::FP32));
+        make_poly<PlainFormat>(DataType::FP32), DataType::FP32, MatMulUkerClampConfig::optional(DataType::FP32),
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS);
 }
 
 std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f16_f16_f16p4vsx2bf16_1x32vs_sme2_dot() {

@@ -15,13 +15,11 @@
 #include <string_view>
 #include <vector>
 
+#include "kai/ukernels/matmul/kai_matmul.h"
 #include "kai/ukernels/matmul/kai_matmul_pack_rhs.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon.h"
@@ -34,6 +32,7 @@
 #include "test/nextgen/format/plain_format.hpp"
 #include "test/nextgen/format/two_level_blockwise_format.hpp"
 #include "test/nextgen/harness/kernel_wrapper.hpp"
+#include "test/nextgen/operators/matmul/matmul_pack_args.hpp"
 #include "test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_fp_nt_wrapper.hpp"
 #include "test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_interface.hpp"
 #include "test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_quant_i8_wrapper.hpp"
@@ -61,7 +60,8 @@ std::unique_ptr<KernelWrapper<MatShape>> create_matmul_rhs_pack_nxk_qsi8cxp_qsi8
         make_poly<PlainFormat>(DataType::FP32), make_poly<PlainFormat>(DataType::I32),
         make_poly<Block2dRowFormat>(
             block_height, block_width, 32, false, DataType::I8, std::array<DataType, 0>{},
-            std::array{DataType::I32, DataType::FP32, DataType::FP32}));
+            std::array{DataType::I32, DataType::FP32, DataType::FP32}),
+        MatMulPackArgs{0, block_height, block_width, 1, 0});
 }
 
 bool portion_non_empty(
@@ -324,37 +324,43 @@ std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_nxk_qsu2cxp16vsx
     return create_matmul_pack_rhs_qsu2(true);
 }
 
-bool is_shape_suitable_rhs_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod(
+bool is_shape_suitable_rhs_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot(
     [[maybe_unused]] size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
     if (shape_n == 0 || shape_k == 0) {
         return false;
     }
 
-    const size_t nr = kai_get_nr_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod();
+    const auto api = kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot();
+    const kai_matmul_uker_config config{};
+    const size_t nr = api.get_step(&config).n;
     const size_t rhs_n_step = kai_get_n_step_rhs_pack_nxk_qsi8cxp_qsi8cx_neon(nr);
 
     return portion_non_empty(shape_n, shape_k, rhs_n_step, shape_k, portion);
 }
 
-bool is_shape_suitable_rhs_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod(
+bool is_shape_suitable_rhs_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot(
     [[maybe_unused]] size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
     if (shape_n == 0 || shape_k == 0) {
         return false;
     }
 
-    const size_t nr = kai_get_nr_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod();
+    const auto api = kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot();
+    const kai_matmul_uker_config config{};
+    const size_t nr = api.get_step(&config).n;
     const size_t rhs_n_step = kai_get_n_step_rhs_pack_nxk_qsi8cxp_qsi8cx_neon(nr);
 
     return portion_non_empty(shape_n, shape_k, rhs_n_step, shape_k, portion);
 }
 
-bool is_shape_suitable_rhs_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod(
+bool is_shape_suitable_rhs_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dot(
     [[maybe_unused]] size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
     if (shape_n == 0 || shape_k == 0) {
         return false;
     }
 
-    const size_t nr = kai_get_nr_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod();
+    const auto api = kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dot();
+    const kai_matmul_uker_config config{};
+    const size_t nr = api.get_step(&config).n;
     const size_t rhs_n_step = kai_get_n_step_rhs_pack_nxk_qsi8cxp_qsi8cx_neon(nr);
 
     return portion_non_empty(shape_n, shape_k, rhs_n_step, shape_k, portion);

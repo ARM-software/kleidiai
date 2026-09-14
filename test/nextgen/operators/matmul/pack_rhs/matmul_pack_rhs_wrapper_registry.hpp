@@ -69,15 +69,15 @@ create_matmul_pack_rhs_kxn_qsu2cxp16vsx4sf32bi32_qsu2cx_f32_i32_sme();
 create_matmul_pack_rhs_nxk_qsu2cxp16vsx4sf32bi32_qsu2cx_f32_i32_sme();
 
 /// Checks if the portion produces non-empty RHS packing tiles for the qai8dxp1x4/qsi8cxp8x4 matmul operator.
-[[nodiscard]] bool is_shape_suitable_rhs_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod(
+[[nodiscard]] bool is_shape_suitable_rhs_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
 /// Checks if the portion produces non-empty RHS packing tiles for the qai8dxp1x4/qsi8cxp32x4 matmul operator.
-[[nodiscard]] bool is_shape_suitable_rhs_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod(
+[[nodiscard]] bool is_shape_suitable_rhs_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dot(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
 /// Checks if the portion produces non-empty RHS packing tiles for the qai8dxp1x8/qsi8cxp8x8 matmul operator.
-[[nodiscard]] bool is_shape_suitable_rhs_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod(
+[[nodiscard]] bool is_shape_suitable_rhs_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
 /// Checks if the portion produces non-empty RHS packing tiles for the x16p4vsx2 KxN matmul operator.

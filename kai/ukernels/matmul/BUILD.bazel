@@ -190,9 +190,6 @@ I8MM_KERNELS_ASM = [
 
 # buildifier: keep sorted
 SVE_DOTPROD_KERNELS_ASM = [
-    "matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod",
-    "matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod",
-    "matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod",
     "matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p8x4_1x8_sve_dotprod",
     "matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p8x8_1x8_sve_dotprod",
 ]
@@ -217,6 +214,9 @@ SVE_KERNELS_ASM = [
 
 # buildifier: keep sorted
 SVE_KERNELS_ASM_NOHDR = [
+    "matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dot",
+    "matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot",
+    "matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot",
     "pack/kai_rhs_pack_kxn_x16p16vsx2bx16_x16_x16_sve",
 ]
 
@@ -503,6 +503,10 @@ kai_c_library(
     name = "sve_impl_dotprod_asm",
     cpu_uarch = kai_cpu_sve() + kai_cpu_dotprod(),
     kernels_asm = SVE_DOTPROD_KERNELS_ASM,
+    textual_hdrs = [
+        "kai_matmul.h",
+        "kai_matmul_types.h",
+    ],
 )
 
 kai_c_library(
@@ -517,8 +521,10 @@ kai_c_library(
     kernels_asm = SVE_KERNELS_ASM,
     kernels_asm_nohdr = SVE_KERNELS_ASM_NOHDR,
     textual_hdrs = [
+        "kai_matmul.h",
         "kai_matmul_pack_rhs.h",
         "kai_matmul_pack_rhs_types.h",
+        "kai_matmul_types.h",
     ],
 )
 

@@ -43,15 +43,15 @@ namespace kai::test {
 [[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme();
 
 /// Checks if the portion produces non-empty LHS packing tiles for the qai8dxp1x4/qsi8cxp8x4 matmul operator.
-[[nodiscard]] bool is_shape_suitable_lhs_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dotprod(
+[[nodiscard]] bool is_shape_suitable_lhs_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
 /// Checks if the portion produces non-empty LHS packing tiles for the qai8dxp1x4/qsi8cxp32x4 matmul operator.
-[[nodiscard]] bool is_shape_suitable_lhs_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dotprod(
+[[nodiscard]] bool is_shape_suitable_lhs_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dot(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
 /// Checks if the portion produces non-empty LHS packing tiles for the qai8dxp1x8/qsi8cxp8x8 matmul operator.
-[[nodiscard]] bool is_shape_suitable_lhs_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dotprod(
+[[nodiscard]] bool is_shape_suitable_lhs_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
 /// Creates a wrapper for kai_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme with I8 quantized input.

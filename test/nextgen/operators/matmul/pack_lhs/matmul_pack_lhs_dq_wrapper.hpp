@@ -7,6 +7,7 @@
 #pragma once
 
 #include <cstddef>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -18,6 +19,7 @@
 #include "test/nextgen/harness/kernel_wrapper.hpp"
 #include "test/nextgen/harness/tensor.hpp"
 #include "test/nextgen/operators/matmul/matmul_dims.hpp"
+#include "test/nextgen/operators/matmul/matmul_pack_args.hpp"
 #include "test/nextgen/operators/matmul/matmul_slots.hpp"
 #include "test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_interface.hpp"
 
@@ -32,10 +34,15 @@ public:
     /// @param[in] kernel The kernel interface.
     /// @param[in] src_format The input data format.
     /// @param[in] dst_format The output data format.
+    /// @param[in] fixed_pack_args Fixed packing arguments, if they are not supplied by the matmul kernel.
     MatMulPackLhsDqWrapper(
         std::string_view name, const MatMulPackLhsDqInterface& kernel, Poly<Format>&& src_format,
-        Poly<Format>&& dst_format) :
-        m_name(name), m_kernel(kernel), m_src_format(std::move(src_format)), m_dst_format(std::move(dst_format)) {
+        Poly<Format>&& dst_format, std::optional<MatMulPackArgs> fixed_pack_args = std::nullopt) :
+        m_name(name),
+        m_kernel(kernel),
+        m_src_format(std::move(src_format)),
+        m_dst_format(std::move(dst_format)),
+        m_fixed_pack_args(fixed_pack_args) {
     }
 
     [[nodiscard]] std::string_view name() const override;
@@ -52,6 +59,7 @@ private:
     MatMulPackLhsDqInterface m_kernel;
     Poly<Format> m_src_format;
     Poly<Format> m_dst_format;
+    std::optional<MatMulPackArgs> m_fixed_pack_args;
 };
 
 }  // namespace kai::test

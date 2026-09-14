@@ -74,7 +74,8 @@ std::vector<MatMulSlot> MatMulPackRhsQuantI8Wrapper::ref_inputs(ConstTensorSet t
 std::vector<size_t> MatMulPackRhsQuantI8Wrapper::steps(MatShape shape, ConstTensorSet tensors) const {
     KAI_TEST_ASSERT_MSG(shape.size() == 2, "Only N and K dimensions are expected.");
 
-    const auto& pack_args = tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
+    const auto& pack_args =
+        m_fixed_pack_args ? *m_fixed_pack_args : tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
 
     const size_t n_step = m_kernel.get_n_step(pack_args.nr);
     const size_t shape_k = shape.at(MatDim::C);
@@ -124,7 +125,8 @@ void MatMulPackRhsQuantI8Wrapper::run(
     const Tensor& bias_data = tensors.at(bias_tensor_id.value_or(MatMulSlot::ACC_BIAS_N_DATA));
     Tensor& packed_rhs = tensors.at(MatMulSlot::RHS_PACKED_IMP);
 
-    const auto& pack_args = tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
+    const auto& pack_args =
+        m_fixed_pack_args ? *m_fixed_pack_args : tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
 
     packed_rhs.set_shape({full_n, full_k}).allocate();
 
