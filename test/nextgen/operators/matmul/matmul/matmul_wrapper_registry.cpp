@@ -1,5 +1,6 @@
 //
 // SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -36,6 +37,45 @@
 #include "test/nextgen/quantization/symm_linear_quantizer.hpp"
 
 namespace kai::test {
+
+std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot() {
+    return std::make_unique<MatMulUkerApiWrapper>(
+        "matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot", kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot(),
+        MatMulSlot::LHS_PACKED,
+        make_poly<Block2dRowFormat>(
+            1, 4, 32, true, DataType::I8, std::array<DataType, 0>{}, std::array{DataType::I32, DataType::FP32}),
+        make_poly<Block2dRowFormat>(
+            8, 4, 32, false, DataType::I8, std::array<DataType, 0>{},
+            std::array{DataType::I32, DataType::FP32, DataType::FP32}),
+        make_poly<PlainFormat>(DataType::FP32), DataType::FP32, MatMulUkerClampConfig::optional(DataType::FP32),
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS);
+}
+
+std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dot() {
+    return std::make_unique<MatMulUkerApiWrapper>(
+        "matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dot",
+        kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dot(), MatMulSlot::LHS_PACKED,
+        make_poly<Block2dRowFormat>(
+            1, 4, 32, true, DataType::I8, std::array<DataType, 0>{}, std::array{DataType::I32, DataType::FP32}),
+        make_poly<Block2dRowFormat>(
+            32, 4, 32, false, DataType::I8, std::array<DataType, 0>{},
+            std::array{DataType::I32, DataType::FP32, DataType::FP32}),
+        make_poly<PlainFormat>(DataType::FP32), DataType::FP32, MatMulUkerClampConfig::optional(DataType::FP32),
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS);
+}
+
+std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot() {
+    return std::make_unique<MatMulUkerApiWrapper>(
+        "matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot", kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot(),
+        MatMulSlot::LHS_PACKED,
+        make_poly<Block2dRowFormat>(
+            1, 8, 32, true, DataType::I8, std::array<DataType, 0>{}, std::array{DataType::I32, DataType::FP32}),
+        make_poly<Block2dRowFormat>(
+            8, 8, 32, false, DataType::I8, std::array<DataType, 0>{},
+            std::array{DataType::I32, DataType::FP32, DataType::FP32}),
+        make_poly<PlainFormat>(DataType::FP32), DataType::FP32, MatMulUkerClampConfig::optional(DataType::FP32),
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS);
+}
 
 std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f16_f16_f16p4vsx2bf16_1x32vs_sme2_dot() {
     return std::make_unique<MatMulUkerApiWrapper>(

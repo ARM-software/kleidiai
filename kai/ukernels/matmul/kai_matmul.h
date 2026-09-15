@@ -199,6 +199,63 @@ struct kai_matmul_uker_api kai_matmul_clamp_f32_f32_f32p4vsx1bf32_1x32vs_sme2_ml
 /// @return The micro-kernel API.
 struct kai_matmul_uker_api kai_matmul_clamp_f16_f16_f16p16vsx2bf16_6x16vs_sve2p1_dot(void);
 
+/// Dynamically quantized INT8 vector-matrix multiplication using SVE DOT instructions.
+///
+/// Required CPU features:
+///   * FEAT_SVE with a vector length of exactly 256 bits
+///
+/// Required operands:
+///   * dst
+///   * lhs - Packed QAI8DXP data with per-M zero point and scale.
+///   * rhs - Packed QSI8CXP data with per-N row sum, scale, and bias.
+///
+/// Optional arguments:
+///   * clamp - F32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
+///
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot(void);
+
+/// Dynamically quantized INT8 vector-matrix multiplication using SVE DOT instructions.
+///
+/// Required CPU features:
+///   * FEAT_SVE with a vector length of exactly 256 bits
+///
+/// Required operands:
+///   * dst
+///   * lhs - Packed QAI8DXP data with per-M zero point and scale.
+///   * rhs - Packed QSI8CXP data with per-N row sum, scale, and bias.
+///
+/// Optional arguments:
+///   * clamp - F32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
+///
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dot(void);
+
+/// Dynamically quantized INT8 vector-matrix multiplication using SVE DOT instructions.
+///
+/// Required CPU features:
+///   * FEAT_SVE with a vector length of exactly 256 bits
+///
+/// Required operands:
+///   * dst
+///   * lhs - Packed QAI8DXP data with per-M zero point and scale.
+///   * rhs - Packed QSI8CXP data with per-N row sum, scale, and bias.
+///
+/// Optional arguments:
+///   * clamp - F32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
+///
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot(void);
+
 /// Half-precision floating-point vector-matrix multiplication using SME2 DOT instruction.
 ///
 /// Required operands:

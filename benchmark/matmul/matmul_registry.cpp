@@ -1,5 +1,6 @@
 //
 // SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -482,12 +483,30 @@ inline constexpr MatMulFloatInterface kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vl
     .run_matmul = kai_run_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme_dot,
 };
 
+inline constexpr MatMulUkernelApiInterface kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dot_interface{
+    .get_config = [] { return kai_matmul_uker_config{}; },
+    .get_api = kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dot,
+    .flags = KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP,
+};
+
 inline constexpr MatMulFloatInterface kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4x4_1x4_neon_dotprod_interface{
     .run_matmul = kai_run_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4x4_1x4_neon_dotprod,
 };
 
+inline constexpr MatMulUkernelApiInterface kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot_interface{
+    .get_config = [] { return kai_matmul_uker_config{}; },
+    .get_api = kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot,
+    .flags = KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP,
+};
+
 inline constexpr MatMulFloatInterface kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod_interface{
     .run_matmul = kai_run_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod,
+};
+
+inline constexpr MatMulUkernelApiInterface kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot_interface{
+    .get_config = [] { return kai_matmul_uker_config{}; },
+    .get_api = kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot,
+    .flags = KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP,
 };
 
 inline constexpr MatMulFloatInterface kai_matmul_clamp_f32_qai8dxp4x4_qsi8cxp4x4_16x4_neon_dotprod_interface{
@@ -1120,13 +1139,25 @@ const auto& get_matmul_benchmarks() {
             kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme_dot_interface, DataType::FP32, MatMulOp::GEMV,
             test::cpu_has_sme),
         RegisterBenchmark(
+            "kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dot", kai_benchmark_matmul<MatMulUkernelApiInterface>,
+            kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dot_interface, DataType::FP32, MatMulOp::GEMV,
+            test::cpu_has_sve_vl256),
+        RegisterBenchmark(
             "kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4x4_1x4_neon_dotprod", kai_benchmark_matmul<MatMulFloatInterface>,
             kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4x4_1x4_neon_dotprod_interface, DataType::FP32, MatMulOp::GEMV,
             test::cpu_has_dotprod),
         RegisterBenchmark(
+            "kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot", kai_benchmark_matmul<MatMulUkernelApiInterface>,
+            kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot_interface, DataType::FP32, MatMulOp::GEMV,
+            test::cpu_has_sve_vl256),
+        RegisterBenchmark(
             "kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod", kai_benchmark_matmul<MatMulFloatInterface>,
             kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod_interface, DataType::FP32, MatMulOp::GEMV,
             test::cpu_has_dotprod),
+        RegisterBenchmark(
+            "kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot", kai_benchmark_matmul<MatMulUkernelApiInterface>,
+            kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot_interface, DataType::FP32, MatMulOp::GEMV,
+            test::cpu_has_sve_vl256),
         RegisterBenchmark(
             "kai_matmul_clamp_f32_qai8dxp4x4_qsi8cxp4x4_16x4_neon_dotprod", kai_benchmark_matmul<MatMulFloatInterface>,
             kai_matmul_clamp_f32_qai8dxp4x4_qsi8cxp4x4_16x4_neon_dotprod_interface, DataType::FP32, MatMulOp::GEMM,

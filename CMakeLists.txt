@@ -1,5 +1,6 @@
 #
 # SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -333,6 +334,12 @@ set(KLEIDIAI_FILES_SVE_ASM
     kai/ukernels/matmul/imatmul_clamp_f32_f32_f32p/kai_imatmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla_asm.S
     kai/ukernels/matmul/matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla.c
     kai/ukernels/matmul/matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p4vlx1b_6x4vl_sve_mla_asm.S
+    kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dot.c
+    kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dot_asm.S
+    kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot.c
+    kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot_asm.S
+    kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot.c
+    kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot_asm.S
     kai/ukernels/matmul/pack/kai_rhs_imatmul_pack_kxn_x32p4vlx1b_x32_x32_sve.c
     kai/ukernels/matmul/pack/kai_rhs_imatmul_pack_kxn_x32p4vlx1b_x32_x32_sve_asm.S
     kai/ukernels/matmul/pack/kai_rhs_pack_kxn_x16p16vsx2bx16_x16_x16_sve.c
