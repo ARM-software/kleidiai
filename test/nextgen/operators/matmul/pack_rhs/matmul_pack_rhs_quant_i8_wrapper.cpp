@@ -178,7 +178,7 @@ void MatMulPackRhsQuantI8Wrapper::compute_reference(MatShape shape, TensorSet te
     Tensor& ref_packed_rhs = tensors.at(MatMulSlot::RHS_PACKED);
 
     const ReduceFn reduce_fn = make_reduce_add(m_src_data_format->dtype(), m_src_sum_format->dtype());
-    const Buffer rhs_t_qdata_sum = reduce_fn(0, std::array{shape_n, shape_k}, rhs_t_qdata.data());
+    const Buffer rhs_t_qdata_sum = reduce_fn(1, std::array{shape_n, shape_k}, rhs_t_qdata.data());
 
     Buffer empty_bias;
     Span<const std::byte> bias_data_view;
