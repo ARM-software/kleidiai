@@ -97,6 +97,12 @@ workflow:
     # Interrupt old pipeline when new one pushed for MR
     on_new_commit: interruptible
   rules:
+    # Skip MR pipelines running in forks on gitlab.arm.com.
+    - if: >-
+        $CI_SERVER_HOST == "gitlab.arm.com" &&
+        $CI_PIPELINE_SOURCE == "merge_request_event" &&
+        $CI_PROJECT_PATH != "kleidi/kleidiai"
+      when: never
     # Avoid starting pipelines for draft merge requests.
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event' && $CI_MERGE_REQUEST_DRAFT == "true"
       when: never

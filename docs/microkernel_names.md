@@ -32,11 +32,15 @@ matmul micro-kernel.
 
 ### Packed Buffer Layouts
 
-Packed buffers include a `p<width>x<height>` layout in full micro-kernel names.
-For matmul-family names, the LHS packed width is normally the row blocking
-dimension (`MR`), and the RHS packed width is normally the column blocking
-dimension (`NR`). The packed height is the block depth (`BD`), which is derived
-from the `KR` and `SR` values used by the micro-kernel as `KR / SR`.
+Packed buffers use a `p` suffix. The suffix can include a
+`<width>x<height>` layout. A bare `p` indicates a packed representation whose
+precise layout is documented by the micro-kernel API. For example, an auxiliary
+lookup-table buffer can use a bare `p` when its interpreted data type is packed
+using a micro-kernel-specific layout. For matmul-family names, the LHS packed
+width is normally the row blocking dimension (`MR`), and the RHS packed width is
+normally the column blocking dimension (`NR`). The packed height is the block
+depth (`BD`), which is derived from the `KR` and `SR` values used by the
+micro-kernel as `KR / SR`.
 
 Packed buffers can also encode data order, packed scale type, and packed bias
 type. Scale values are encoded as `s<type>` and bias values as `b<type>`.
@@ -187,14 +191,13 @@ Describes the operand type used for scale values stored in a packed buffer.
 
 ### Packing layout
 
-Describes the dimensions used when data is packed into a buffer.
+Describes a packed buffer and its optional layout dimensions.
 
-**`packing_layout`** = `"p" size "x" size`
+**`packing_layout`** = `"p" [size "x" size]`
 
 where:
 
-- **`size`**: Width component of a packed buffer layout
-- **`size`**: Height component of a packed buffer layout
+- **`[size "x" size]`**: Width and height of packed buffer layout
 
 ### Packed data order
 
@@ -297,7 +300,7 @@ pack_description = packing_layout [pack_order] [scale_type] [bias_type]
 bias_type = "b" @operand_type
 superblock_description = "k" @natural_int [scale_type] [pack_order]
 scale_type = "s" @operand_type
-packing_layout = "p" size "x" size
+packing_layout = "p" [size "x" size]
 pack_order = "s1s0" | "s4s0" | "s16s0" | "s32s0"
 dwconv_output_block_size = @natural_int "x" (@natural_int | "c")
 tile_size = size "x" size

@@ -13,8 +13,8 @@ KleidiAI provides a single benchmarking binary that runs multiple variants via s
 - `kleidiai_benchmark imatmul` for indirect matrix multiplication (imatmul, chunked K)
 - `kleidiai_benchmark dwconv` for depthwise convolution (dwconv)
 
-The tool supports flexible argument parsing and Benchmark Framework options.
-If no operator is specified, `matmul` will be used by default.
+The tool supports flexible argument parsing and Benchmark Framework options. If no operator is specified, benchmark
+execution defaults to `matmul`, while `--benchmark_list_tests` lists benchmarks across every mode.
 
 ## Building
 
@@ -63,12 +63,6 @@ Run the matmul benchmark with matrix dimensions:
 
 ```
 ./kleidiai_benchmark matmul -m <M> -n <N> -k <K> [-b <BLOCK_SIZE>]
-```
-
-Use `--benchmark_filter` to run an individual matrix multiplication micro-kernel:
-
-```
-./kleidiai_benchmark matmul -m <M> -n <N> -k <K> --benchmark_filter=^<name>
 ```
 
 `-b` sets the block size for blockwise quantization and defaults to `32` if omitted.
@@ -164,7 +158,27 @@ kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla                123 ns   
 
 ### Filtering
 
-Benchmarks can be filtered using the --benchmark_filter option, which accepts a regex. For example, to only run the sme2 micro-kernels:
+`--benchmark_filter` accepts a regular expression and filters benchmarks registered for the selected mode. Filters can
+match fragments or use normal regular-expression anchors:
+
+```sh
+./kleidiai_benchmark <mode> <mode-options> --benchmark_filter='<name-regex>'
+./kleidiai_benchmark <mode> <mode-options> --benchmark_filter='^<micro-kernel-name>/'
+
+./kleidiai_benchmark matmul --benchmark_list_tests --benchmark_filter='sme2'
+./kleidiai_benchmark matmul --benchmark_list_tests --benchmark_filter='.*kai_matmul_clamp_f16_f16_f16p2vlx2b_1x8vl_sme_mla.*'
+./kleidiai_benchmark matmul --benchmark_list_tests --benchmark_filter='^kai_matmul_clamp_f16_f16_f16p2vlx2b_1x8vl_sme_mla/'
+```
+
+`all` selects every benchmark in the specified mode. A leading `-` excludes matches from that mode:
+
+```sh
+./kleidiai_benchmark matmul --benchmark_list_tests --benchmark_filter='all'
+./kleidiai_benchmark matmul --benchmark_list_tests --benchmark_filter='-sme2'
+./kleidiai_benchmark matmul --benchmark_list_tests --benchmark_filter='-(sme2|neon)'
+```
+
+For example, to only run the sme2 micro-kernels:
 (Note: The measurement results are placeholders)
 
 ```
@@ -184,20 +198,22 @@ kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla           123 ns        
 
 ### Listing Available Benchmarks
 
-To list all available benchmarks:
+Omit the mode to list benchmarks across every mode. A user filter then narrows the combined list:
 
-```
+```sh
 ./kleidiai_benchmark  --benchmark_list_tests
-
+./kleidiai_benchmark  --benchmark_list_tests --benchmark_filter='sme2'
 ```
 
-Specify the micro-kernel operator to list all the benchmarks of a certain type.
+Mode-less execution still defaults to matmul. Specify a mode to scope the list:
 
-```
+```sh
 ./kleidiai_benchmark matmul  --benchmark_list_tests
 ./kleidiai_benchmark pack_matmul --benchmark_list_tests
 ./kleidiai_benchmark imatmul --benchmark_list_tests
 ./kleidiai_benchmark dwconv  --benchmark_list_tests
+
+./kleidiai_benchmark matmul --benchmark_list_tests --benchmark_filter='sme2'
 ```
 
 ### Notes

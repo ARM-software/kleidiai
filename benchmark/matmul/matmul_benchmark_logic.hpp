@@ -77,24 +77,15 @@ void kai_benchmark_matmul(
         }
     }
 
-    // Create sufficiently large buffers
-    size_t lhs_size = m * k * sizeof(uint64_t);
-    size_t rhs_size = n * k * sizeof(uint64_t);
-    size_t dst_size = m * n * sizeof(uint32_t);
-
-    if (test::cpu_has_sme() || test::cpu_has_sme2()) {
-        lhs_size *= kai_get_sme_vector_length_u32();
-        rhs_size *= kai_get_sme_vector_length_u32();
-        dst_size *= kai_get_sme_vector_length_u32();
-    }
-
-    const Buffer lhs(lhs_size);
-    const Buffer rhs(rhs_size);
-    Buffer dst(dst_size);
-
     MatMulRunner matmul_runner(matmul_interface, dst_type);
     matmul_runner.set_mnk(m, n, k);
     matmul_runner.set_bl(bl);
+
+    const MatMulBufferSizes buffer_sizes = matmul_runner.get_buffer_sizes();
+    const Buffer lhs(buffer_sizes.lhs);
+    const Buffer rhs(buffer_sizes.rhs);
+    Buffer dst(buffer_sizes.dst);
+
     matmul_runner.prepare();
 
     const bool cycle_counter_available = cycle_counter_init();

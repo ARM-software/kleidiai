@@ -27,6 +27,9 @@ Buffer transpose(const void* data, DataType data_type, size_t height, size_t wid
     if (data_type == DataType::U2) {
         return transpose<UInt2>(data, height, width);
     }
+    if (data_type == DataType::U4) {
+        return transpose<UInt4>(data, height, width);
+    }
     KAI_ASSUME_ALWAYS(data_type_size_in_bits(data_type) % 8 == 0);
     const auto element_size = data_type_size_in_bits(data_type) / 8;
 
@@ -88,5 +91,6 @@ template Buffer transpose<float>(const void* src, size_t height, size_t width);
 template Buffer transpose<int8_t>(const void* src, size_t height, size_t width);
 template Buffer transpose<Int4>(const void* src, size_t height, size_t width);
 template Buffer transpose<UInt2>(const void* src, size_t height, size_t width);
+template Buffer transpose<UInt4>(const void* src, size_t height, size_t width);
 
 }  // namespace kai::test

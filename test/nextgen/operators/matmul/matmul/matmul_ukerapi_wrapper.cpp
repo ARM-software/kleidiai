@@ -108,8 +108,15 @@ std::vector<size_t> MatMulUkerApiWrapper::steps(MatMulShape shape, [[maybe_unuse
     return {step_m, step_n, step_k};
 }
 
-void MatMulUkerApiWrapper::populate_constant_info([[maybe_unused]] TensorSet tensors) const {
+void MatMulUkerApiWrapper::populate_constant_info(TensorSet tensors) const {
     // The new kernels don't have packing arguments anymore. The new API doesn't expose MR, NR, KR, SR.
+    // However, some kernel pairings still use a legacy-API LHS packing kernel that reads these arguments
+    // from the shared PACK_ARGS slot, so populate it here when required.
+    if (m_lhs_pack_args.has_value()) {
+        Tensor& pack_args_tensor = tensors.at(MatMulSlot::PACK_ARGS);
+        pack_args_tensor.set_shape({sizeof(MatMulPackArgs)}).allocate();
+        pack_args_tensor.value<MatMulPackArgs>() = m_lhs_pack_args.value();
+    }
 }
 
 void MatMulUkerApiWrapper::run(

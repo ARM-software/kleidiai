@@ -10,6 +10,7 @@
 #include <cstddef>
 
 #include "kai/kai_common.h"
+#include "kai/ukernels/matmul/kai_matmul_types.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp_f32.h"
 
 namespace kai::benchmark {
@@ -53,6 +54,51 @@ void run_pack_matmul_blockwise_dynamic_quant(
     RunMatMul(
         m, n, k, bl, lhs_packed, rhs_packed, static_cast<float*>(dst), dst_stride_row, dst_stride_col, -FLT_MAX,
         FLT_MAX);
+}
+
+template <auto RunPack, auto GetApi>
+void run_pack_matmul_uker_api(
+    size_t m, size_t n, size_t k, size_t bl, size_t mr, size_t kr, size_t sr, size_t m_idx_start, const void* lhs,
+    size_t lhs_stride_row, const void* rhs_packed, void* lhs_packed, void* dst, size_t dst_stride_row,
+    size_t dst_stride_col) {
+    KAI_UNUSED(dst_stride_col);
+
+    struct ClampArgs {
+        float min;
+        float max;
+    };
+
+    RunPack(m, k, mr, kr, sr, m_idx_start, lhs, lhs_stride_row, lhs_packed);
+
+    const auto api = GetApi();
+    kai_matmul_uker_config config{};
+    config.format.bl = bl;
+
+    const ClampArgs clamp_args{-FLT_MAX, FLT_MAX};
+
+    const kai_matmul_uker_lhs_dim_args lhs_shape{m, k};
+    const kai_matmul_uker_rhs_dim_args rhs_shape{n, k};
+
+    kai_matmul_uker_args args{};
+    args.flags = KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP;
+
+    args.shape.m = m;
+    args.shape.n = n;
+    args.shape.k = k;
+
+    args.operand.lhs.ptr = lhs_packed;
+    args.operand.lhs.stride = api.get_lhs_stride(&config, &lhs_shape);
+
+    args.operand.rhs.ptr = rhs_packed;
+    args.operand.rhs.stride = api.get_rhs_stride(&config, &rhs_shape);
+
+    args.operand.dst.ptr = dst;
+    args.operand.dst.stride.m = dst_stride_row;
+
+    args.activation.clamp.min_ptr = &clamp_args.min;
+    args.activation.clamp.max_ptr = &clamp_args.max;
+
+    api.run(&config, &args);
 }
 
 template <auto RunPack, auto RunMatMul>

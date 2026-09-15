@@ -346,7 +346,7 @@ static int run_matmul(
     }
 
     kai::benchmark::RegisterMatMulBenchmarks({m, n, k}, bl);
-    const std::string spec = user_filter_opt.has_value() ? *user_filter_opt : std::string("^kai_matmul");
+    const std::string spec = user_filter_opt.value_or("");
 
     ::benchmark::RunSpecifiedBenchmarks(nullptr, nullptr, spec);
     ::benchmark::Shutdown();
@@ -392,7 +392,7 @@ static int run_pack_matmul(int argc, char** argv, const std::optional<std::strin
     }
 
     kai::benchmark::RegisterPackMatMulBenchmarks({m, n, k}, bl);
-    const std::string spec = user_filter_opt.has_value() ? *user_filter_opt : std::string("kai_pack_matmul");
+    const std::string spec = user_filter_opt.value_or("");
 
     ::benchmark::RunSpecifiedBenchmarks(nullptr, nullptr, spec);
     ::benchmark::Shutdown();
@@ -439,8 +439,7 @@ static int run_imatmul(int argc, char** argv, const std::optional<std::string>& 
 
     kai::benchmark::RegisteriMatMulBenchmarks(m, n, k_chunk_count, k_chunk_length);
 
-    // Default filter if user didn’t supply one
-    std::string spec = user_filter_opt.has_value() ? *user_filter_opt : std::string("^kai_imatmul");
+    const std::string spec = user_filter_opt.value_or("");
 
     ::benchmark::RunSpecifiedBenchmarks(nullptr, nullptr, spec);
     ::benchmark::Shutdown();
@@ -496,7 +495,7 @@ static int run_dwconv(int argc, char** argv, const std::optional<std::string>& u
 
     kai::benchmark::RegisterDwConvBenchmarks(shape);
 
-    std::string spec = user_filter_opt.has_value() ? *user_filter_opt : std::string("^kai_dwconv");
+    std::string spec = user_filter_opt.value_or("");
     ::benchmark::RunSpecifiedBenchmarks(nullptr, nullptr, spec);
     ::benchmark::Shutdown();
     return 0;
@@ -554,6 +553,7 @@ int main(int argc, char** argv) {
 
     if (list_tests) {
         std::string spec;
+        // If no mode selected, list all benchmarks by default
         if (mode == Mode::COMPAT) {
             kai::benchmark::RegisterMatMulBenchmarks({1, 1, 1}, 32);
             kai::benchmark::RegisterPackMatMulBenchmarks({1, 1, 1}, 32);
@@ -562,16 +562,16 @@ int main(int argc, char** argv) {
             spec = user_filter_opt.value_or("");
         } else if (mode == Mode::MATMUL) {
             kai::benchmark::RegisterMatMulBenchmarks({1, 1, 1}, 32);
-            spec = user_filter_opt.has_value() ? *user_filter_opt : std::string("^kai_matmul");
+            spec = user_filter_opt.value_or("");
         } else if (mode == Mode::PACK_MATMUL) {
             kai::benchmark::RegisterPackMatMulBenchmarks({1, 1, 1}, 32);
-            spec = user_filter_opt.has_value() ? *user_filter_opt : std::string("kai_pack_matmul");
+            spec = user_filter_opt.value_or("");
         } else if (mode == Mode::IMATMUL) {
             kai::benchmark::RegisteriMatMulBenchmarks(1, 1, 1, 1);
-            spec = user_filter_opt.has_value() ? *user_filter_opt : std::string("^kai_imatmul");
+            spec = user_filter_opt.value_or("");
         } else if (mode == Mode::DWCONV) {
             kai::benchmark::RegisterDwConvBenchmarks({3, 3, 1});
-            spec = user_filter_opt.has_value() ? *user_filter_opt : std::string("^kai_dwconv");
+            spec = user_filter_opt.value_or("");
         }
         ::benchmark::SetBenchmarkFilter(spec);
         ::benchmark::RunSpecifiedBenchmarks(nullptr, nullptr, spec);

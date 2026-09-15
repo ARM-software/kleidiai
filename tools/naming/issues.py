@@ -129,10 +129,6 @@ KNOWN_UKERNEL_PROBLEMS.update(
                 "kai_rhs_pack_kxn_qsi4cxpnrx4_qsi4cx",
             ),
             (
-                "kai_rhs_pack_kxn_qsi8cxp_qsi8cx_neon",
-                "kai_rhs_pack_kxn_qsi8cxpnrx4_qsi8cx_neon",
-            ),
-            (
                 "kai_rhs_pack_nxk_qai4c32p_qau4c32s0s1_f32_f32_f32_neon",
                 "kai_rhs_pack_nxk_qai4c32pnrx4_qau4c32_f32_f32_f32_neon",
             ),
@@ -167,10 +163,6 @@ KNOWN_UKERNEL_PROBLEMS.update(
             (
                 "kai_rhs_pack_nxk_qsi4cxp_qs4cxs1s0",
                 "kai_rhs_pack_nxk_qsi4cxpnrx4_qsi4cx",
-            ),
-            (
-                "kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon",
-                "kai_rhs_pack_nxk_qsi8cxpnrx4_qsi8cx_neon",
             ),
         ),
     )

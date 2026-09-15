@@ -12,6 +12,7 @@
 #include <type_traits>
 
 #include "test/common/assert.hpp"
+#include "test/common/bfloat16.hpp"
 #include "test/common/buffer.hpp"
 #include "test/common/data_type.hpp"
 #include "test/common/int2.hpp"
@@ -85,6 +86,10 @@ DequantizeLinearFn make_dequantize_linear(
 
     if (dtypes == std::make_tuple(DataType::FP32, DataType::I32, DataType::FP32, DataType::UNKNOWN)) {
         return dequantize_linear<float, int32_t, float, void>;
+    }
+
+    if (dtypes == std::make_tuple(DataType::FP32, DataType::U4, DataType::BF16, DataType::UNKNOWN)) {
+        return dequantize_linear<float, UInt4, BFloat16<false>, void>;
     }
 
     KAI_TEST_ERROR("Not implemented.");

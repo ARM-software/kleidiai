@@ -119,6 +119,9 @@ private:
     void compute_rhs_t_qdata_sign(bool required);  ///< Computes the quantized RHS data with opposite signedness.
     void compute_rhs_t_qdata_sign_sum(
         bool required);  ///< Computes the row sum of quantized RHS data with opposite signedness.
+    void compute_rhs_t_qscale_rescaled(bool required);  ///< Computes the RHS quantization scale rescaled by `1/16`.
+    void compute_rhs_t_qdata_sign_sum_scaled(
+        bool required);  ///< Computes the block-scale-weighted row sum of RHS data.
 
     void compute_ref_acc_matmul_data(
         bool required);  ///< Computes matrix multiplication accumulator without pre or post processing.

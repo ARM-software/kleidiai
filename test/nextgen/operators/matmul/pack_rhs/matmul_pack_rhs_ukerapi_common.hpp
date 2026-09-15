@@ -38,6 +38,7 @@ struct MatMulPackRhsOperandSlots {
     std::optional<MatMulSlot> bias_n;
     std::optional<MatMulSlot> k_sum_scale_global;
     std::optional<MatMulSlot> scale_n;
+    std::optional<MatMulSlot> scale_nk;
     std::optional<MatMulSlot> scale_global;
 };
 
@@ -47,11 +48,12 @@ public:
         std::string_view name, MatMulSlot run_rhs_slot, RhsLayout layout, kai_matmul_pack_rhs_uker_api api,
         const Poly<Format>& src_data_format, const Poly<Format>&, const Poly<Format>& dst_format,
         MatMulUkerApiBiasDeliveryStage, MatMulPackRhsOperandSlots operand_slots = {},
-        std::vector<MatMulSlot> reference_component_slots = {MatMulSlot::RHS_T_DATA}) :
+        std::vector<MatMulSlot> reference_component_slots = {MatMulSlot::RHS_T_DATA},
+        kai_matmul_pack_rhs_uker_format_config format = {}) :
         m_name(name),
         m_run_rhs_slot(run_rhs_slot),
         m_layout(layout),
-        m_uker_config(),
+        m_uker_config{format},
         m_api(api),
         m_src_data_format(src_data_format),
         m_dst_format(dst_format),
@@ -75,6 +77,9 @@ public:
         }
         if (m_operand_slots.scale_n.has_value()) {
             inputs.emplace_back(m_operand_slots.scale_n.value());
+        }
+        if (m_operand_slots.scale_nk.has_value()) {
+            inputs.emplace_back(m_operand_slots.scale_nk.value());
         }
         if (m_operand_slots.scale_global.has_value()) {
             inputs.emplace_back(m_operand_slots.scale_global.value());
@@ -181,8 +186,26 @@ public:
         }
         if (m_operand_slots.scale_n.has_value()) {
             const Tensor& scale_n = tensors.at(m_operand_slots.scale_n.value());
-            const size_t scale_offset = scale_n.format()->compute_offset({full_n}, {start_n});
+            // scale_n is 2D (N rows x num_qblocks_per_row columns), unlike bias_n above, so the offset must be
+            // computed against its real shape/coords rather than a fabricated 1D {full_n}/{start_n} pair, which
+            // would silently drop the per-row block-count stride.
+            const size_t scale_offset = scale_n.format()->compute_offset(scale_n.shape(), {start_n, 0});
             args.operand.scale_n.ptr = scale_n.data().subspan(scale_offset).data();
+        }
+        if (m_operand_slots.scale_nk.has_value()) {
+            // scale_nk is a genuine 2D (N, K-block) buffer, so its offset/stride are computed through the
+            // kernel's own get_scale_nk_stride/get_scale_nk_offset, the same way rhs/rhs_packed strides are
+            // computed above, rather than being inferred from the tensor's shape.
+            const kai_matmul_pack_rhs_uker_scale_nk_dim_args imp_scale_nk_shape = {full_n, full_k};
+            const kai_matmul_pack_rhs_uker_scale_nk_dim_args imp_scale_nk_index = {start_n, start_k};
+            const kai_matmul_pack_rhs_uker_scale_nk_stride_args imp_scale_nk_stride =
+                m_api.get_scale_nk_stride(&m_uker_config, &imp_scale_nk_shape);
+            const size_t scale_nk_offset =
+                m_api.get_scale_nk_offset(&m_uker_config, &imp_scale_nk_index, &imp_scale_nk_stride);
+
+            const Tensor& scale_nk = tensors.at(m_operand_slots.scale_nk.value());
+            args.operand.scale_nk.ptr = scale_nk.data().subspan(scale_nk_offset).data();
+            args.operand.scale_nk.stride = imp_scale_nk_stride;
         }
         if (m_operand_slots.scale_global.has_value()) {
             args.operand.scale_global.ptr = tensors.at(m_operand_slots.scale_global.value()).data().data();
