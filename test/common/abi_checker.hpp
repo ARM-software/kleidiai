@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -16,7 +16,7 @@
 
 namespace kai::test {
 
-#if defined(__ARM_FEATURE_SME) && !_MSC_VER
+#if defined(__aarch64__) && !defined(_MSC_VER)
 
 /// Checker for FP ABI compliance
 template <typename Func, typename... Args>
@@ -111,13 +111,17 @@ inline auto abi_check_fp(Func&& func, Args&&... args)
         "20:\n\t"
         : [first_mismatch] "+r"(first_mismatch)
         : [canary] "r"(&canary)
-        : "cc", "x9", "x10");
+        : "cc", "x9", "x10", "d8", "d9", "d10", "d11", "d12", "d13", "d14", "d15");
 
-    KAI_ASSERT_MSG(first_mismatch == canary, "FP register corruption detected");
+    KAI_ASSERT_ALWAYS_MSG(first_mismatch == canary, "FP register corruption detected");
     if constexpr (!std::is_void_v<ResultType>) {
         return *result;
     }
 }
+
+#endif  // defined(__aarch64__) && !defined(_MSC_VER)
+
+#if defined(__ARM_FEATURE_SME) && !defined(_MSC_VER)
 
 /// Checker for SME ABI compliance
 template <typename Func, typename... Args>
@@ -187,15 +191,19 @@ __arm_new("za") __arm_locally_streaming inline auto abi_check_za(Func&& func, Ar
           "x12",  // Row index
           "z16",  // Canary vector
           "z17",  // Current ZA row
-          "p0");
-    KAI_ASSERT_MSG(first_mismatch == canary, "ZA register corruption detected");
+          "p0",
+          "p1",  // Row mismatch predicate
+          "za");
+    KAI_ASSERT_ALWAYS_MSG(first_mismatch == canary, "ZA register corruption detected");
 
     if constexpr (!std::is_void_v<ResultType>) {
         return *result;
     }
 }
 
-/// Wrapper for checking ABI compliance
+#endif  // defined(__ARM_FEATURE_SME) && !defined(_MSC_VER)
+
+/// Wrapper for checking ABI register preservation where supported
 template <typename Func, typename... Args>
 inline auto abi_check(Func&& func, Args&&... args)
     -> decltype(std::invoke(std::forward<Func>(func), std::forward<Args>(args)...)) {
@@ -204,39 +212,27 @@ inline auto abi_check(Func&& func, Args&&... args)
 
     std::optional<StorageType> result;
 
-    if constexpr (std::is_void_v<ResultType>) {
-        abi_check_za<Func>(std::forward<Func>(func), std::forward<Args>(args)...);
-    } else {
-        result = abi_check_za<Func>(std::forward<Func>(func), std::forward<Args>(args)...);
-    }
-
-    if constexpr (!std::is_void_v<ResultType>) {
-        return *result;
-    }
-}
-
+    auto invoke_with_abi_check = [&]() -> decltype(auto) {
+#if defined(__ARM_FEATURE_SME) && !defined(_MSC_VER)
+        // Wrapper checks both FP and ZA register ABI compliance
+        return abi_check_za(std::forward<Func>(func), std::forward<Args>(args)...);
+#elif defined(__aarch64__) && !defined(_MSC_VER)
+        // Wrapper checks FP register ABI compliance
+        return abi_check_fp(std::forward<Func>(func), std::forward<Args>(args)...);
 #else
-
-/// Call wrapped function, without any checking
-template <typename Func, typename... Args>
-inline auto abi_check(Func&& func, Args&&... args)
-    -> decltype(std::invoke(std::forward<Func>(func), std::forward<Args>(args)...)) {
-    using ResultType = std::invoke_result_t<Func, Args...>;
-    using StorageType = std::conditional_t<std::is_void_v<ResultType>, int, ResultType>;
-
-    std::optional<StorageType> result;
+        return std::invoke(std::forward<Func>(func), std::forward<Args>(args)...);
+#endif
+    };
 
     if constexpr (std::is_void_v<ResultType>) {
-        std::invoke(std::forward<Func>(func), std::forward<Args>(args)...);
+        invoke_with_abi_check();
     } else {
-        result = std::invoke(std::forward<Func>(func), std::forward<Args>(args)...);
+        result = invoke_with_abi_check();
     }
 
     if constexpr (!std::is_void_v<ResultType>) {
         return *result;
     }
 }
-
-#endif
 
 }  // namespace kai::test

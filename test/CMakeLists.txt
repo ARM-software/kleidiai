@@ -24,6 +24,7 @@ add_library(kleidiai_test_framework
     test/common/matmul_test_common.cpp
     test/common/matrix_portion.cpp
     test/common/memory.cpp
+    test/common/negative_abi_check.S
     test/common/printer.cpp
     test/common/rect.cpp
     test/common/round.cpp
@@ -122,6 +123,7 @@ if(MSVC)
     )
 else()
     set(KLEIDIAI_FILES_TESTS
+        test/tests/abi_checker_test.cpp
         test/tests/bfloat16_test.cpp
         test/tests/buffer_test.cpp
         test/tests/clamp_hard_test.cpp
