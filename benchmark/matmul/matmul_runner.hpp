@@ -7,9 +7,11 @@
 #ifndef KLEIDIAI_BENCHMARK_MATMUL_MATMUL_RUNNER_HPP
 #define KLEIDIAI_BENCHMARK_MATMUL_MATMUL_RUNNER_HPP
 
+#include <algorithm>
 #include <cfloat>
 #include <cstddef>
 #include <cstdint>
+#include <test/common/cpu_info.hpp>
 #include <test/common/data_type.hpp>
 #include <vector>
 
@@ -20,6 +22,13 @@
 namespace kai::benchmark {
 
 using DataType = test::DataType;
+
+/// Sizes in bytes of the buffers used by a matrix multiplication micro-kernel.
+struct MatMulBufferSizes {
+    size_t lhs;
+    size_t rhs;
+    size_t dst;
+};
 
 /// Runner for the matrix multiplication micro-kernel.
 ///
@@ -70,7 +79,37 @@ public:
     /// Prepares auxiliary data required by the matrix multiplication micro-kernel.
     void prepare();
 
+    /// Gets the sizes in bytes of the buffers required by the matrix multiplication micro-kernel.
+    MatMulBufferSizes get_buffer_sizes() const;
+
 private:
+    /// Gets interface-specific minimum buffer sizes in bytes.
+    size_t vector_length() const {
+        size_t length = 1;
+        if (test::cpu_has_sme() || test::cpu_has_sme2()) {
+            length = kai_get_sme_vector_length_u32();
+        }
+        if (test::cpu_has_sve()) {
+            length = std::max(length, static_cast<size_t>(kai_get_sve_vector_length_u32()));
+        }
+        return length;
+    }
+
+    MatMulBufferSizes get_alignment_based_heuristic(size_t m, size_t n, size_t k) const {
+        constexpr size_t input_bytes_per_element = sizeof(uint64_t);
+        constexpr size_t dst_bytes_per_element = sizeof(uint32_t);
+
+        const size_t m_padded = kai_roundup(m_, m * vector_length());
+        const size_t n_padded = kai_roundup(n_, n * vector_length());
+        const size_t k_padded = kai_roundup(k_, k);
+
+        return {
+            m_padded * k_padded * input_bytes_per_element,
+            n_padded * k_padded * input_bytes_per_element,
+            m_ * n_ * dst_bytes_per_element,
+        };
+    }
+
     MatMulInterface matmul_interface_ = {};
 
     DataType dst_type_ = DataType::FP32;
@@ -90,6 +129,48 @@ private:
     std::vector<std::byte> acc_scale_global_;
     std::vector<std::byte> scale_bias_global_;
 };
+
+/// Gets buffer sizes using the default heuristics.
+template <typename MatMulInterface>
+MatMulBufferSizes MatMulRunner<MatMulInterface>::get_buffer_sizes() const {
+    MatMulBufferSizes sizes = {
+        m_ * k_ * sizeof(uint64_t) * vector_length(),
+        n_ * k_ * sizeof(uint64_t) * vector_length(),
+        m_ * n_ * sizeof(uint32_t) * vector_length(),
+    };
+
+    return sizes;
+}
+
+/// Gets buffer sizes using dimension-padding heuristics for the base interface.
+template <>
+inline MatMulBufferSizes MatMulRunner<MatMulBaseInterface>::get_buffer_sizes() const {
+    return get_alignment_based_heuristic(8, 24, 32);
+}
+
+/// Gets buffer sizes using dimension-padding heuristics for the strided LHS interface.
+template <>
+inline MatMulBufferSizes MatMulRunner<MatMulStridedLhsInterface>::get_buffer_sizes() const {
+    return get_alignment_based_heuristic(1, 32, 4);
+}
+
+/// Gets buffer sizes using dimension-padding heuristics for the floating-point destination interface.
+template <>
+inline MatMulBufferSizes MatMulRunner<MatMulFloatInterface>::get_buffer_sizes() const {
+    return get_alignment_based_heuristic(4, 8, 32);
+}
+
+/// Gets buffer sizes using dimension-padding heuristics for the static quantization interface.
+template <>
+inline MatMulBufferSizes MatMulRunner<MatMulStaticQuantInterface>::get_buffer_sizes() const {
+    return get_alignment_based_heuristic(2, 2, 4);
+}
+
+/// Gets buffer sizes using dimension-padding heuristics for the look-up-table interface.
+template <>
+inline MatMulBufferSizes MatMulRunner<MatMulBlockwiseDynamicQuantLutInterface>::get_buffer_sizes() const {
+    return get_alignment_based_heuristic(4, 4, 32);
+}
 
 /// Prepares auxiliary data required by the matrix multiplication micro-kernel.
 template <typename MatMulInterface>
@@ -272,6 +353,40 @@ inline void MatMulRunner<MatMulUkernelApiInterface>::run(const void* lhs, const 
     }
 
     api.run(&config, &args);
+}
+
+/// Gets buffer extents padded to processing-step boundaries for the ukernel API interface.
+template <>
+inline MatMulBufferSizes MatMulRunner<MatMulUkernelApiInterface>::get_buffer_sizes() const {
+    const auto api = matmul_interface_.get_api();
+    auto config = matmul_interface_.get_config();
+    config.format.bl = bl_;
+
+    const kai_matmul_uker_dim_args step = api.get_step(&config);
+    KAI_ASSUME(step.m > 0);
+    KAI_ASSUME(step.n > 0);
+
+    const kai_matmul_uker_lhs_dim_args lhs_shape = {m_, k_};
+    const kai_matmul_uker_rhs_dim_args rhs_shape = {n_, k_};
+    const kai_matmul_uker_dst_dim_args dst_shape = {m_, n_};
+
+    const kai_matmul_uker_lhs_stride_args lhs_stride = api.get_lhs_stride(&config, &lhs_shape);
+    const kai_matmul_uker_rhs_stride_args rhs_stride = api.get_rhs_stride(&config, &rhs_shape);
+    const kai_matmul_uker_dst_stride_args dst_stride = {dst_stride_row_};
+
+    // A processing step can span multiple packing blocks. Offset queries account for this
+    // without treating a packed-block stride as a per-row or per-column stride.
+    const kai_matmul_uker_lhs_dim_args lhs_end = {kai_roundup(m_, step.m), 0};
+    const kai_matmul_uker_rhs_dim_args rhs_end = {kai_roundup(n_, step.n), 0};
+
+    // Single-row steps use one stride per row. Some GEMV offset helpers require m == 0.
+    const size_t lhs_size = step.m == 1 ? m_ * lhs_stride.m : api.get_lhs_offset(&config, &lhs_end, &lhs_stride);
+
+    return {
+        lhs_size,
+        api.get_rhs_offset(&config, &rhs_end, &rhs_stride),
+        api.get_dst_size(&config, &dst_shape, &dst_stride),
+    };
 }
 
 /// Prepares auxiliary data required by the ukernel API interface.
