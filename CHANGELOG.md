@@ -1,5 +1,6 @@
 <!--
     SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+    SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
 
     SPDX-License-Identifier: Apache-2.0
 -->
@@ -10,6 +11,8 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+- Optimizations:
+  - Improve GEMV performance of `kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot` by processing four RHS column blocks per iteration with four accumulators per block.
 - New SVE micro-kernels:
   - Matrix multiplication (1xN) for QAI8DXP LHS and QSI8CXP RHS with F32 output, optimized for a 256-bit vector length.
 - New SVE2 micro-kernels:
