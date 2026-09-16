@@ -8,14 +8,16 @@ default_install_hook_types: [ pre-commit, pre-push ]
 fail_fast: false
 repos:
   - repo: https://github.com/fsfe/reuse-tool
-    rev: v5.0.2
+    # v5.0.2
+    rev: 920b64419e8e15e2e60818d3d473f8a110b97e87
     hooks:
       - id: reuse-lint-file
         stages: [ pre-commit ]
         name: "REUSE Compliant Copyright and License"
         args: [ "--no-multiprocessing", "lint-file" ]
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    # v4.5.0
+    rev: c4a0b883114b00d8d76b479c820ce7950211c99b
     hooks:
       - id: check-added-large-files
         args: [ '--maxkb=200', '--enforce-all' ]
@@ -36,7 +38,8 @@ repos:
         exclude: ^LICENSES/
 
   - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
-    rev: 2.7.3
+    # 2.7.3
+    rev: 2b74735540f79457a50369e5c17a2c35d52c3298
     hooks:
       - id: editorconfig-checker
         alias: ec
@@ -56,27 +59,31 @@ repos:
         files: ^experimental/ops/
         args: [--filter=-whitespace/indent]
   - repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.17
+    # 0.7.17
+    rev: 6c1288142f351100fb24babd44aedd20e1599e99
     hooks:
       - id: mdformat
         stages: [ pre-commit ]
         name: Markdown Formatter
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v17.0.6
+    # v17.0.6
+    rev: 05241dc3def184dba136e62d54ff57f1c8a497a9
     hooks:
       - id: clang-format
         stages: [ pre-commit ]
         name: "C/C++: clang-format Formatter"
         exclude: '^experimental/ops/'
   - repo: https://github.com/asottile/reorder-python-imports
-    rev: v3.12.0
+    # v3.12.0
+    rev: ae11ccbd838e90f7e2a16abbed9276e6a41cafbb
     hooks:
       - id: reorder-python-imports
         stages: [ pre-commit ]
         name: "Python: Reorder Imports"
         exclude: '^experimental/ops/'
   - repo: https://github.com/psf/black
-    rev: 24.2.0
+    # 24.2.0
+    rev: 6fdf8a4af28071ed1d079c01122b34c5d587207a
     hooks:
       - id: black
         stages: [ pre-commit ]
@@ -91,7 +98,8 @@ repos:
         name: "Bazel: Buildifier (lint)"
         stages: [ pre-commit ]
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.10.0.1
+    # v0.10.0.1
+    rev: a23f6b85d0fdd5bb9d564e2579e678033debbdff
     hooks:
       - id: shellcheck
         stages: [ pre-commit ]
