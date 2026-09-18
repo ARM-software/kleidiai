@@ -1,6 +1,7 @@
 #
 # SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 # SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
+# SPDX-FileCopyrightText: Copyright 2026 Meta Platforms, Inc. and affiliates.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -267,7 +268,9 @@ SME_KERNELS_ASM_NOHDR = [
     "pack/kai_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme",
     "pack/kai_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme",
     "pack/kai_matmul_pack_rhs_kxn_x16p4vsx2bx16_x16_x16_sme",
+    "pack/kai_matmul_pack_rhs_kxn_x16p8vsx2bx32_x16_x32_sme",
     "pack/kai_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme",
+    "pack/kai_matmul_pack_rhs_nxk_x16p8vsx2bx32_x16_x32_sme",
     "pack/kai_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme",
 ]
 

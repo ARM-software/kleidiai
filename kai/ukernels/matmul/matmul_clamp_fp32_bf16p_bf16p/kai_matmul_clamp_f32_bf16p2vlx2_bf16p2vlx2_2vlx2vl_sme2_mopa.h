@@ -1,5 +1,6 @@
 //
 // SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2026 Meta Platforms, Inc. and affiliates.
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -14,8 +15,11 @@ extern "C" {
 
 /// Micro-kernel dependencies
 ///
-/// -# kai_lhs_pack_bf16p2vlx2_f32_sme or kai_lhs_pack_bf16p2vlx2_f32_sme2 to pack the LHS matrix.
-/// -# kai_rhs_pack_kxn_bf16p2vlx2b_f32_x32_sme to pack the RHS matrix.
+/// -# kai_lhs_pack_bf16p2vlx2_f32_sme or kai_lhs_pack_bf16p2vlx2_f32_sme2 to pack an FP32 LHS matrix.
+/// -# kai_rhs_pack_kxn_bf16p2vlx2b_f32_x32_sme to pack an FP32 RHS matrix with FP32 bias.
+/// -# kai_lhs_pack_x16p2vlx2_x16_sme to pack a BF16 LHS matrix.
+/// -# kai_matmul_pack_rhs_kxn_x16p8vsx2bx32_x16_x32_sme to pack a KxN BF16 RHS matrix with FP32 bias.
+/// -# kai_matmul_pack_rhs_nxk_x16p8vsx2bx32_x16_x32_sme to pack an NxK BF16 RHS matrix with FP32 bias.
 
 /// Gets m step value.
 ///

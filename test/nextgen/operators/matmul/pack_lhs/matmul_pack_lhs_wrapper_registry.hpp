@@ -1,6 +1,7 @@
 //
 // SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 // SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
+// SPDX-FileCopyrightText: Copyright 2026 Meta Platforms, Inc. and affiliates.
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -9,6 +10,7 @@
 
 #include <memory>
 
+#include "test/common/data_type.hpp"
 #include "test/common/matrix_portion.hpp"
 #include "test/nextgen/harness/kernel_wrapper.hpp"
 #include "test/nextgen/operators/matmul/matmul_dims.hpp"
@@ -35,6 +37,13 @@ namespace kai::test {
 
 /// Creates a wrapper for kai_lhs_pack_f32p2vlx1_f32_sme micro-kernel.
 [[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_lhs_pack_f32p2vlx1_f32_sme();
+
+/// Creates a wrapper for kai_lhs_pack_x16p2vlx2_x16_sme micro-kernel.
+///
+/// @param[in] data_type The input and packed data type. Must be 16 bits.
+///
+/// @return The micro-kernel wrapper.
+[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_lhs_pack_x16p2vlx2_x16_sme(DataType data_type);
 
 /// Creates a wrapper for kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme.
 [[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme();
@@ -76,6 +85,10 @@ namespace kai::test {
 
 /// Checks if the portion produces non-empty LHS packing tiles for the x16p4vsx2 matmul operator.
 [[nodiscard]] bool is_shape_suitable_lhs_x16p4vsx2_x16_sme(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
+
+/// Checks if the portion produces non-empty LHS packing tiles for the x16p2vlx2 matmul operator.
+[[nodiscard]] bool is_shape_suitable_lhs_x16p2vlx2_x16_sme(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
 /// Checks if the portion produces non-empty LHS packing tiles for the x8p4vsx4 matmul operator.

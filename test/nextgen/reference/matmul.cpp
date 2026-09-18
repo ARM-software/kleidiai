@@ -1,5 +1,6 @@
 //
 // SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2026 Meta Platforms, Inc. and affiliates.
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -12,6 +13,7 @@
 #include <type_traits>
 
 #include "test/common/assert.hpp"
+#include "test/common/bfloat16.hpp"
 #include "test/common/buffer.hpp"
 #include "test/common/data_type.hpp"
 #include "test/common/float16.hpp"
@@ -67,6 +69,7 @@ struct TypedData {
 
 using FP32 = TypedData<DataType::FP32, float>;
 using FP16 = TypedData<DataType::FP16, Float16>;
+using BF16 = TypedData<DataType::BF16, BFloat16<>>;
 using U8 = TypedData<DataType::U8, uint8_t>;
 using I32 = TypedData<DataType::I32, int32_t>;
 
@@ -87,6 +90,7 @@ MatMulFn make_matmul_nt_t(DataType lhs_dtype, DataType rhs_dtype, DataType acc_d
     static constexpr std::array entries = {
         make_entry<FP32, FP32, FP32>(),
         make_entry<FP16, FP16, FP32>(),
+        make_entry<BF16, BF16, FP32>(),
         make_entry<U8, U8, I32>(),
     };
 

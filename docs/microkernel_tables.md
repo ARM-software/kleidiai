@@ -1,5 +1,6 @@
 <!--
     SPDX-FileCopyrightText: Copyright 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+    SPDX-FileCopyrightText: Copyright 2026 Meta Platforms, Inc. and affiliates.
 
     SPDX-License-Identifier: Apache-2.0
 -->
@@ -58,7 +59,7 @@ Micro-kernel categories:
 | f16 | - | i8 | i4 | blockwise per dimension symmetric | blockwise asymmetric | 8x4 | Advanced SIMD | dotprod | - | `kai_matmul_clamp_f16_qsi8d32p4x4_qai4c32p4x4_8x4_neon_dotprod` | LHS: [`kai_lhs_quant_pack_qsi8d32pscalef32_f16_neon`](#pack-kai-lhs-quant-pack-qsi8d32pscalef32-f16-neon)<br>RHS: [`kai_rhs_pack_nxk_qai4c32p_qau4c32s0s1_f32_f32_f32_neon`](#pack-kai-rhs-pack-nxk-qai4c32p-qau4c32s0s1-f32-f32-f32-neon) |
 | f16 | - | i8 | i4 | blockwise per dimension symmetric | blockwise asymmetric | 8x4 | Advanced SIMD | i8mm | - | `kai_matmul_clamp_f16_qsi8d32p4x8_qai4c32p4x8_8x4_neon_i8mm` | LHS: [`kai_lhs_quant_pack_qsi8d32pscalef32_f16_neon`](#pack-kai-lhs-quant-pack-qsi8d32pscalef32-f16-neon)<br>RHS: [`kai_rhs_pack_nxk_qai4c32p_qau4c32s0s1_f32_f32_f32_neon`](#pack-kai-rhs-pack-nxk-qai4c32p-qau4c32s0s1-f32-f32-f32-neon) |
 | f32 | - | bf16 | bf16 | - | - | 1x36 | Advanced SIMD | dot | - | `kai_matmul_clamp_f32_bf16p1x4_bf16p12x4b_1x36_neon_dot` | LHS: [`kai_lhs_quant_pack_bf16p1x4_f32_neon`](#pack-kai-lhs-quant-pack-bf16p1x4-f32-neon)<br>RHS: [`kai_rhs_quant_pack_kxn_bf16p12x4biasf32_f32_neon`](#pack-kai-rhs-quant-pack-kxn-bf16p12x4biasf32-f32-neon) |
-| f32 | - | bf16 | bf16 | - | - | 2vlx2vl | SME2 | mopa | - | `kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa` | LHS: [`kai_lhs_pack_bf16p2vlx2_f32_sme`](#pack-kai-lhs-pack-bf16p2vlx2-f32-sme), [`kai_lhs_pack_bf16p2vlx2_f32_sme2`](#pack-kai-lhs-pack-bf16p2vlx2-f32-sme2)<br>RHS: [`kai_rhs_pack_kxn_bf16p2vlx2b_f32_x32_sme`](#pack-kai-rhs-pack-kxn-bf16p2vlx2b-f32-x32-sme) |
+| f32 | - | bf16 | bf16 | - | - | 2vlx2vl | SME2 | mopa | - | `kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa` | LHS: [`kai_lhs_pack_bf16p2vlx2_f32_sme`](#pack-kai-lhs-pack-bf16p2vlx2-f32-sme), [`kai_lhs_pack_bf16p2vlx2_f32_sme2`](#pack-kai-lhs-pack-bf16p2vlx2-f32-sme2), [`kai_lhs_pack_x16p2vlx2_x16_sme`](#pack-kai-lhs-pack-x16p2vlx2-x16-sme)<br>RHS: [`kai_rhs_pack_kxn_bf16p2vlx2b_f32_x32_sme`](#pack-kai-rhs-pack-kxn-bf16p2vlx2b-f32-x32-sme), [`kai_matmul_pack_rhs_kxn_x16p8vsx2bx32_x16_x32_sme`](#pack-kai-matmul-pack-rhs-kxn-x16p8vsx2bx32-x16-x32-sme), [`kai_matmul_pack_rhs_nxk_x16p8vsx2bx32_x16_x32_sme`](#pack-kai-matmul-pack-rhs-nxk-x16p8vsx2bx32-x16-x32-sme) |
 | f32 | - | bf16 | bf16 | - | - | 2vlx2vl | SME | mopa | - | `kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme_mopa` | LHS: [`kai_lhs_pack_bf16p2vlx2_f32_sme`](#pack-kai-lhs-pack-bf16p2vlx2-f32-sme)<br>RHS: [`kai_rhs_pack_kxn_bf16p2vlx2b_f32_x32_sme`](#pack-kai-rhs-pack-kxn-bf16p2vlx2b-f32-x32-sme) |
 | f32 | - | bf16 | bf16 | - | - | 8x12 | Advanced SIMD | mmla | - | `kai_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla` | - |
 | f32 | - | f16 | i4 | - | blockwise asymmetric | 4vsx16vs | SME2 | mopa |- | `kai_matmul_clamp_f32_f16p4vsx2_qai4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa` | LHS: [`kai_lhs_pack_f16pmrx2_f32_neon`](#pack-kai-lhs-pack-f16pmrx2-f32-neon) <br>RHS: [`kai_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme`](#pack-kai-matmul-pack-rhs-nxk-qai4c32p16vsx4s1s0sf16-qai4c32k256sf16s32s0-sme) |
@@ -252,7 +253,9 @@ Micro-kernel categories:
 | x16 | - | x16 | - | - | - | - | SME | <a id="pack-kai-lhs-imatmul-pack-x16p2vlx2-x16p-sme"></a>`kai_lhs_imatmul_pack_x16p2vlx2_x16p_sme` |
 | x16 | - | x16 | - | x16 | - | - | SME | <a id="pack-kai-rhs-imatmul-pack-kxn-x16p2vlx2b-x16-x16-sme"></a>`kai_rhs_imatmul_pack_kxn_x16p2vlx2b_x16_x16_sme` |
 | x16 | - | x16 | - | x16 | - | - | SME | <a id="pack-kai-rhs-pack-kxn-x16p2vlx2b-x16-x16-sme"></a>`kai_rhs_pack_kxn_x16p2vlx2b_x16_x16_sme` |
+| x16 | - | x16 | - | x32 | - | - | SME | <a id="pack-kai-matmul-pack-rhs-kxn-x16p8vsx2bx32-x16-x32-sme"></a>`kai_matmul_pack_rhs_kxn_x16p8vsx2bx32_x16_x32_sme` |
 | x16 | - | x16 | - | x16 | - | - | SME | <a id="pack-kai-rhs-pack-nxk-x16p2vlx2b-x16-x16-sme"></a>`kai_rhs_pack_nxk_x16p2vlx2b_x16_x16_sme` |
+| x16 | - | x16 | - | x32 | - | - | SME | <a id="pack-kai-matmul-pack-rhs-nxk-x16p8vsx2bx32-x16-x32-sme"></a>`kai_matmul_pack_rhs_nxk_x16p8vsx2bx32_x16_x32_sme` |
 | x16 | - | x16 | - | x16 | - | - | SVE | <a id="pack-kai-rhs-pack-kxn-x16p16vsx2bx16-x16-x16-sve"></a>`kai_rhs_pack_kxn_x16p16vsx2bx16_x16_x16_sve` |
 | x16 | - | x16 | - | x16 | - | - | Advanced SIMD | <a id="pack-kai-rhs-pack-kxn-x16p32x1b-x16-x16-neon"></a>`kai_rhs_pack_kxn_x16p32x1b_x16_x16_neon` |
 | x16 | - | x16 | - | x16 | - | - | Advanced SIMD | <a id="pack-kai-rhs-pack-nxk-x16p32x1bx16-x16-x16-neon"></a>`kai_rhs_pack_nxk_x16p32x1bx16_x16_x16_neon` |

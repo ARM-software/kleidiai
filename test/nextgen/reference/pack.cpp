@@ -1,5 +1,6 @@
 //
 // SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2026 Meta Platforms, Inc. and affiliates.
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -11,6 +12,7 @@
 #include <cstdint>
 
 #include "test/common/assert.hpp"
+#include "test/common/bfloat16.hpp"
 #include "test/common/data_type.hpp"
 #include "test/common/float16.hpp"
 #include "test/common/int2.hpp"
@@ -141,6 +143,9 @@ PackBlock2dFn make_pack_block2d(DataType dtype) {
 
         case DataType::FP16:
             return pack_block2d<Float16>;
+
+        case DataType::BF16:
+            return pack_block2d<BFloat16<>>;
 
         case DataType::I8:
             return pack_block2d<int8_t>;

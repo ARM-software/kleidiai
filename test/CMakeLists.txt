@@ -1,6 +1,7 @@
 #
 # SPDX-FileCopyrightText: Copyright 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 # SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
+# SPDX-FileCopyrightText: Copyright 2026 Meta Platforms, Inc. and affiliates.
 #
 # SPDX-License-Identifier: Apache-2.0
 #

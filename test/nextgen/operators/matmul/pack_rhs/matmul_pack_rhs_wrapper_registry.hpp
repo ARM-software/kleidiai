@@ -1,6 +1,7 @@
 //
 // SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 // SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
+// SPDX-FileCopyrightText: Copyright 2026 Meta Platforms, Inc. and affiliates.
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -29,6 +30,14 @@ namespace kai::test {
 
 /// Creates a wrapper for kai_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme kernel.
 [[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme();
+
+/// Creates a wrapper for kai_matmul_pack_rhs_kxn_x16p8vsx2bx32_x16_x32_sme micro-kernel.
+/// Uses BF16 input and packed data with FP32 bias.
+[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_kxn_bf16p8vsx2bf32_bf16_f32_sme();
+
+/// Creates a wrapper for kai_matmul_pack_rhs_nxk_x16p8vsx2bx32_x16_x32_sme micro-kernel.
+/// Uses BF16 input and packed data with FP32 bias.
+[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_nxk_bf16p8vsx2bf32_bf16_f32_sme();
 
 /// Creates a wrapper for kai_rhs_pack_kxn_x16p16vsx2bx16_x16_x16_sve micro-kernel.
 [[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_rhs_pack_kxn_x16p16vsx2bx16_x16_x16_sve();
@@ -144,6 +153,14 @@ create_matmul_rhs_pack_nxk_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme();
 
 /// Checks if the portion produces non-empty RHS packing tiles for the f32p2vlx1 matmul operator.
 [[nodiscard]] bool is_shape_suitable_rhs_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
+
+/// Checks if the portion produces non-empty RHS packing tiles for the x16p8vsx2bx32 KxN matmul operator.
+[[nodiscard]] bool is_shape_suitable_rhs_kxn_x16p8vsx2bx32_x16_x32_sme(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
+
+/// Checks if the portion produces non-empty RHS packing tiles for the x16p8vsx2bx32 NxK matmul operator.
+[[nodiscard]] bool is_shape_suitable_rhs_nxk_x16p8vsx2bx32_x16_x32_sme(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
 /// Checks if the portion produces non-empty RHS packing tiles for the x16p16vsx2bx16 KxN matmul operator.

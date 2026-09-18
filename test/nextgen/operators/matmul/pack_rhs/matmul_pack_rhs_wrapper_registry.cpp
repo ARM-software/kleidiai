@@ -1,6 +1,7 @@
 //
 // SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 // SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
+// SPDX-FileCopyrightText: Copyright 2026 Meta Platforms, Inc. and affiliates.
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -141,6 +142,34 @@ std::unique_ptr<KernelWrapper<MatShape>> create_matmul_rhs_pack_kxn_f32p2vlx1bia
         make_poly<Block2dRowFormat>(
             2 * get_sme_vector_length<float>(), 1, 1, false, DataType::FP32, std::array{DataType::FP32},
             std::array<DataType, 0>{}));
+}
+
+std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_kxn_bf16p8vsx2bf32_bf16_f32_sme() {
+    MatMulPackRhsOperandSlots operand_slots{};
+    operand_slots.bias_n = MatMulSlot::ACC_BIAS_N_DATA;
+
+    return std::make_unique<MatMulPackRhsUkerApiWrapper>(
+        "matmul_pack_rhs_kxn_bf16p8vsx2bf32_bf16_f32_sme", kai_matmul_pack_rhs_kxn_x16p8vsx2bx32_x16_x32_sme(),
+        make_poly<PlainFormat>(DataType::BF16), make_poly<PlainFormat>(DataType::FP32),
+        make_poly<Block2dRowFormat>(
+            8 * get_sme_vector_scale(), 2, 2, false, DataType::BF16, std::array{DataType::FP32},
+            std::array<DataType, 0>{}),
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS, MatMulSlot::RHS_DATA, operand_slots,
+        std::vector{MatMulSlot::ACC_BIAS_N_DATA, MatMulSlot::RHS_T_DATA});
+}
+
+std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_nxk_bf16p8vsx2bf32_bf16_f32_sme() {
+    MatMulPackRhsOperandSlots operand_slots{};
+    operand_slots.bias_n = MatMulSlot::ACC_BIAS_N_DATA;
+
+    return std::make_unique<MatMulPackRhsUkerApiTWrapper>(
+        "matmul_pack_rhs_nxk_bf16p8vsx2bf32_bf16_f32_sme", kai_matmul_pack_rhs_nxk_x16p8vsx2bx32_x16_x32_sme(),
+        make_poly<PlainFormat>(DataType::BF16), make_poly<PlainFormat>(DataType::FP32),
+        make_poly<Block2dRowFormat>(
+            8 * get_sme_vector_scale(), 2, 2, false, DataType::BF16, std::array{DataType::FP32},
+            std::array<DataType, 0>{}),
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS, operand_slots,
+        std::vector{MatMulSlot::ACC_BIAS_N_DATA, MatMulSlot::RHS_T_DATA});
 }
 
 std::unique_ptr<KernelWrapper<MatShape>> create_matmul_rhs_pack_kxn_x16p16vsx2bx16_x16_x16_sve() {
@@ -477,6 +506,18 @@ bool is_shape_suitable_rhs_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa(
 
     const size_t rhs_n_step = kai_get_n_step_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme();
     return portion_non_empty(shape_n, shape_k, rhs_n_step, shape_k, portion);
+}
+
+bool is_shape_suitable_rhs_kxn_x16p8vsx2bx32_x16_x32_sme(
+    [[maybe_unused]] size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
+    return is_shape_suitable_rhs_uker_api(
+        shape_n, shape_k, portion, kai_matmul_pack_rhs_kxn_x16p8vsx2bx32_x16_x32_sme());
+}
+
+bool is_shape_suitable_rhs_nxk_x16p8vsx2bx32_x16_x32_sme(
+    [[maybe_unused]] size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
+    return is_shape_suitable_rhs_uker_api(
+        shape_n, shape_k, portion, kai_matmul_pack_rhs_nxk_x16p8vsx2bx32_x16_x32_sme());
 }
 
 bool is_shape_suitable_rhs_kxn_x16p16vsx2bx16_x16_x16_sve(
