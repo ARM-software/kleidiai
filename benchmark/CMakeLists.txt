@@ -16,22 +16,40 @@ set(BENCHMARK_ENABLE_GTEST_TESTS "OFF")
 
 include(FetchGBench)
 
-# Single benchmark binary combining matmul, pack_matmul, imatmul and dwconv
+# Single benchmark binary combining all suites
 add_executable(kleidiai_benchmark
-    benchmark/main.cpp
+    benchmark/dwconv/dwconv_main.cpp
     benchmark/dwconv/dwconv_registry.cpp
-    benchmark/matmul/matmul_registry.cpp
-    benchmark/pack_matmul/pack_matmul_registry.cpp
+    benchmark/imatmul/imatmul_main.cpp
     benchmark/imatmul/imatmul_registry.cpp
+    benchmark/imatmul_pack_lhs/imatmul_pack_lhs_main.cpp
+    benchmark/imatmul_pack_lhs/imatmul_pack_lhs_registry.cpp
+    benchmark/main.cpp
+    benchmark/matmul/matmul_main.cpp
+    benchmark/matmul/matmul_registry.cpp
+    benchmark/matmul_pack_lhs/matmul_pack_lhs_main.cpp
+    benchmark/matmul_pack_lhs/matmul_pack_lhs_registry.cpp
+    benchmark/pack_matmul/pack_matmul_main.cpp
+    benchmark/pack_matmul/pack_matmul_registry.cpp
+    test/common/bfloat16_asm.S
+    test/common/buffer.cpp
     test/common/cpu_info.cpp
     test/common/data_type.cpp
+    test/common/float16_asm.S
+    test/common/int2.cpp
+    test/common/int4.cpp
+    test/common/memory.cpp
 )
 
+set_source_files_properties(benchmark/imatmul/imatmul_registry.cpp
+    PROPERTIES COMPILE_OPTIONS "-fno-tree-vectorize;-fno-tree-slp-vectorize;-march=armv8-a+sve+sve2${KLEIDIAI_INTERNAL_EXTRA_ARCH}")
+set_source_files_properties(benchmark/imatmul_pack_lhs/imatmul_pack_lhs_registry.cpp
+    PROPERTIES COMPILE_OPTIONS "-fno-tree-vectorize;-fno-tree-slp-vectorize;-march=armv8-a+sve+sve2${KLEIDIAI_INTERNAL_EXTRA_ARCH}")
 set_source_files_properties(benchmark/matmul/matmul_registry.cpp
     PROPERTIES COMPILE_OPTIONS "-fno-tree-vectorize;-fno-tree-slp-vectorize;-march=armv8-a+sve+sve2${KLEIDIAI_INTERNAL_EXTRA_ARCH}")
-set_source_files_properties(benchmark/pack_matmul/pack_matmul_registry.cpp
+set_source_files_properties(benchmark/matmul_pack_lhs/matmul_pack_lhs_registry.cpp
     PROPERTIES COMPILE_OPTIONS "-fno-tree-vectorize;-fno-tree-slp-vectorize;-march=armv8-a+sve+sve2${KLEIDIAI_INTERNAL_EXTRA_ARCH}")
-set_source_files_properties(benchmark/imatmul/imatmul_registry.cpp
+set_source_files_properties(benchmark/pack_matmul/pack_matmul_registry.cpp
     PROPERTIES COMPILE_OPTIONS "-fno-tree-vectorize;-fno-tree-slp-vectorize;-march=armv8-a+sve+sve2${KLEIDIAI_INTERNAL_EXTRA_ARCH}")
 
 target_link_libraries(kleidiai_benchmark

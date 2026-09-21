@@ -10,7 +10,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
-#include <type_traits>
 #include <vector>
 
 #include "benchmark/cycle_counter.hpp"
@@ -67,19 +66,14 @@ void kai_benchmark_matmul(
         return;
     }
 
-    if constexpr (
-        std::is_same_v<MatMulInterface, MatMulBlockwiseDynamicQuantInterface> ||
-        std::is_same_v<MatMulInterface, MatMulBlockwiseDynamicQuantGenericDstInterface> ||
-        std::is_same_v<MatMulInterface, MatMulBlockwiseDynamicQuantLutInterface>) {
-        if (k % bl != 0) {
-            state.SkipWithMessage("K must be a multiple of block size");
-            return;
-        }
-    }
-
     MatMulRunner matmul_runner(matmul_interface, dst_type);
     matmul_runner.set_mnk(m, n, k);
     matmul_runner.set_bl(bl);
+
+    if (!matmul_runner.is_valid()) {
+        state.SkipWithMessage("Invalid configuration");
+        return;
+    }
 
     const MatMulBufferSizes buffer_sizes = matmul_runner.get_buffer_sizes();
     const Buffer lhs(buffer_sizes.lhs);

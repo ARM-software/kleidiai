@@ -44,7 +44,7 @@ public:
     /// @param dst_type Output type of the micro-kernel. Required for the micro-kernel to make certain assumptions
     /// internally about the stride of the data.
     MatMulRunner(const MatMulInterface& matmul_interface, const DataType dst_type) :
-        matmul_interface_(matmul_interface), dst_type_(dst_type) {
+        m_matmul_interface(matmul_interface), m_dst_type(dst_type) {
     }
 
     /// Sets the M, N and K dimensions to describe the operand and result matrices.
@@ -53,20 +53,20 @@ public:
     /// @param n Columns in a non-transposed RHS and DST matrix.
     /// @param k Columns in a non-transposed LHS matrix, and rows in a non-transposed RHS matrix.
     void set_mnk(const size_t m, const size_t n, const size_t k) {
-        m_ = m;
-        n_ = n;
-        k_ = k;
+        m_m = m;
+        m_n = n;
+        m_k = k;
 
-        lhs_stride_ = k_ * data_type_size_in_bits(dst_type_) / 8;
-        dst_stride_row_ = n_ * data_type_size_in_bits(dst_type_) / 8;
-        dst_stride_col_ = data_type_size_in_bits(dst_type_) / 8;
+        m_lhs_stride = m_k * data_type_size_in_bits(m_dst_type) / 8;
+        m_dst_stride_row = m_n * data_type_size_in_bits(m_dst_type) / 8;
+        m_dst_stride_col = data_type_size_in_bits(m_dst_type) / 8;
     }
 
     /// Sets the block size to use.
     ///
     /// @param bl Block size. Used for micro-kernels with dynamic blockwise quantization.
     void set_bl(const size_t bl) {
-        bl_ = bl;
+        m_bl = bl;
     }
 
     /// Runs the matrix multiplication micro-kernel.
@@ -81,6 +81,9 @@ public:
 
     /// Gets the sizes in bytes of the buffers required by the matrix multiplication micro-kernel.
     MatMulBufferSizes get_buffer_sizes() const;
+
+    /// Returns whether the configured dimensions are supported by the matrix multiplication micro-kernel.
+    bool is_valid() const;
 
 private:
     /// Gets interface-specific minimum buffer sizes in bytes.
@@ -99,44 +102,70 @@ private:
         constexpr size_t input_bytes_per_element = sizeof(uint64_t);
         constexpr size_t dst_bytes_per_element = sizeof(uint32_t);
 
-        const size_t m_padded = kai_roundup(m_, m * vector_length());
-        const size_t n_padded = kai_roundup(n_, n * vector_length());
-        const size_t k_padded = kai_roundup(k_, k);
+        const size_t m_padded = kai_roundup(m_m, m * vector_length());
+        const size_t n_padded = kai_roundup(m_n, n * vector_length());
+        const size_t k_padded = kai_roundup(m_k, k);
 
         return {
             m_padded * k_padded * input_bytes_per_element,
             n_padded * k_padded * input_bytes_per_element,
-            m_ * n_ * dst_bytes_per_element,
+            m_m * m_n * dst_bytes_per_element,
         };
     }
 
-    MatMulInterface matmul_interface_ = {};
+    MatMulInterface m_matmul_interface = {};
 
-    DataType dst_type_ = DataType::FP32;
+    DataType m_dst_type = DataType::FP32;
 
-    size_t m_ = 1;
-    size_t n_ = 1;
-    size_t k_ = 1;
-    size_t bl_ = 32;
+    size_t m_m = 1;
+    size_t m_n = 1;
+    size_t m_k = 1;
+    size_t m_bl = 32;
 
-    size_t lhs_stride_ = 1;
-    size_t dst_stride_row_ = 1;
-    size_t dst_stride_col_ = 1;
+    size_t m_lhs_stride = 1;
+    size_t m_dst_stride_row = 1;
+    size_t m_dst_stride_col = 1;
 
-    std::vector<std::byte> acc_bias_m_;
-    std::vector<std::byte> acc_bias_n_;
-    std::vector<std::byte> scale_bias_n_;
-    std::vector<std::byte> acc_scale_global_;
-    std::vector<std::byte> scale_bias_global_;
+    std::vector<std::byte> m_acc_bias_m;
+    std::vector<std::byte> m_acc_bias_n;
+    std::vector<std::byte> m_scale_bias_n;
+    std::vector<std::byte> m_acc_scale_global;
+    std::vector<std::byte> m_scale_bias_global;
 };
+
+/// Returns whether the configured dimensions are supported by the matrix multiplication micro-kernel.
+template <typename MatMulInterface>
+bool MatMulRunner<MatMulInterface>::is_valid() const {
+    return true;
+}
+
+/// Returns whether the configured dimensions are supported by a blockwise matrix multiplication micro-kernel.
+template <>
+inline bool MatMulRunner<MatMulBlockwiseDynamicQuantInterface>::is_valid() const {
+    return m_bl != 0 && m_k % m_bl == 0;
+}
+
+/// Returns whether the configured dimensions are supported by a blockwise matrix multiplication micro-kernel with a
+/// generic destination buffer.
+template <>
+inline bool MatMulRunner<MatMulBlockwiseDynamicQuantGenericDstInterface>::is_valid() const {
+    return m_bl != 0 && m_k % m_bl == 0;
+}
+
+/// Returns whether the configured dimensions are supported by a blockwise matrix multiplication micro-kernel with a
+/// look-up table.
+template <>
+inline bool MatMulRunner<MatMulBlockwiseDynamicQuantLutInterface>::is_valid() const {
+    return m_bl != 0 && m_k % m_bl == 0;
+}
 
 /// Gets buffer sizes using the default heuristics.
 template <typename MatMulInterface>
 MatMulBufferSizes MatMulRunner<MatMulInterface>::get_buffer_sizes() const {
     MatMulBufferSizes sizes = {
-        m_ * k_ * sizeof(uint64_t) * vector_length(),
-        n_ * k_ * sizeof(uint64_t) * vector_length(),
-        m_ * n_ * sizeof(uint32_t) * vector_length(),
+        m_m * m_k * sizeof(uint64_t) * vector_length(),
+        m_n * m_k * sizeof(uint64_t) * vector_length(),
+        m_m * m_n * sizeof(uint32_t) * vector_length(),
     };
 
     return sizes;
@@ -185,11 +214,11 @@ void MatMulRunner<MatMulInterface>::prepare() {
 /// @param dst Destination buffer to write to.
 template <typename MatMulInterface>
 void MatMulRunner<MatMulInterface>::run(const void* lhs, const void* rhs, void* dst) {
-    matmul_interface_.run_matmul(
-        m_, n_, k_,                        //
-        lhs, rhs, dst,                     //
-        dst_stride_row_, dst_stride_col_,  //
-        -FLT_MAX, FLT_MAX                  //
+    m_matmul_interface.run_matmul(
+        m_m, m_n, m_k,                       //
+        lhs, rhs, dst,                       //
+        m_dst_stride_row, m_dst_stride_col,  //
+        -FLT_MAX, FLT_MAX                    //
     );
 }
 
@@ -200,11 +229,11 @@ void MatMulRunner<MatMulInterface>::run(const void* lhs, const void* rhs, void* 
 /// @param dst Destination buffer to write to.
 template <>
 inline void MatMulRunner<MatMulStridedLhsInterface>::run(const void* lhs, const void* rhs, void* dst) {
-    matmul_interface_.run_matmul(
-        m_, n_, k_,                        //
-        lhs, lhs_stride_, rhs, dst,        //
-        dst_stride_row_, dst_stride_col_,  //
-        -FLT_MAX, FLT_MAX                  //
+    m_matmul_interface.run_matmul(
+        m_m, m_n, m_k,                       //
+        lhs, m_lhs_stride, rhs, dst,         //
+        m_dst_stride_row, m_dst_stride_col,  //
+        -FLT_MAX, FLT_MAX                    //
     );
 }
 
@@ -215,10 +244,10 @@ inline void MatMulRunner<MatMulStridedLhsInterface>::run(const void* lhs, const 
 /// @param dst Destination buffer to write to.
 template <>
 inline void MatMulRunner<MatMulFloatInterface>::run(const void* lhs, const void* rhs, void* dst) {
-    matmul_interface_.run_matmul(
-        m_, n_, k_,                          //
+    m_matmul_interface.run_matmul(
+        m_m, m_n, m_k,                       //
         lhs, rhs, static_cast<float*>(dst),  //
-        dst_stride_row_, dst_stride_col_,    //
+        m_dst_stride_row, m_dst_stride_col,  //
         -FLT_MAX, FLT_MAX                    //
     );
 }
@@ -231,11 +260,11 @@ inline void MatMulRunner<MatMulFloatInterface>::run(const void* lhs, const void*
 template <>
 inline void MatMulRunner<MatMulStaticQuantInterface>::run(const void* lhs, const void* rhs, void* dst) {
     constexpr kai_matmul_requantize32_params params = {INT8_MIN, INT8_MAX, 0};
-    matmul_interface_.run_matmul(
-        m_, n_, k_,                        //
-        lhs, rhs, dst,                     //
-        dst_stride_row_, dst_stride_col_,  //
-        &params                            //
+    m_matmul_interface.run_matmul(
+        m_m, m_n, m_k,                       //
+        lhs, rhs, dst,                       //
+        m_dst_stride_row, m_dst_stride_col,  //
+        &params                              //
     );
 }
 
@@ -248,11 +277,11 @@ inline void MatMulRunner<MatMulStaticQuantInterface>::run(const void* lhs, const
 template <>
 inline void MatMulRunner<MatMulBlockwiseDynamicQuantGenericDstInterface>::run(
     const void* lhs, const void* rhs, void* dst) {
-    matmul_interface_.run_matmul(
-        m_, n_, k_, bl_,                   //
-        lhs, rhs, dst,                     //
-        dst_stride_row_, dst_stride_col_,  //
-        -FLT_MAX, FLT_MAX                  //
+    m_matmul_interface.run_matmul(
+        m_m, m_n, m_k, m_bl,                 //
+        lhs, rhs, dst,                       //
+        m_dst_stride_row, m_dst_stride_col,  //
+        -FLT_MAX, FLT_MAX                    //
     );
 }
 
@@ -263,10 +292,10 @@ inline void MatMulRunner<MatMulBlockwiseDynamicQuantGenericDstInterface>::run(
 /// @param dst Destination buffer to write to.
 template <>
 inline void MatMulRunner<MatMulBlockwiseDynamicQuantInterface>::run(const void* lhs, const void* rhs, void* dst) {
-    matmul_interface_.run_matmul(
-        m_, n_, k_, bl_,                     //
+    m_matmul_interface.run_matmul(
+        m_m, m_n, m_k, m_bl,                 //
         lhs, rhs, static_cast<float*>(dst),  //
-        dst_stride_row_, dst_stride_col_,    //
+        m_dst_stride_row, m_dst_stride_col,  //
         -FLT_MAX, FLT_MAX                    //
     );
 }
@@ -279,10 +308,10 @@ inline void MatMulRunner<MatMulBlockwiseDynamicQuantInterface>::run(const void* 
 /// @param dst Destination buffer to write to.
 template <>
 inline void MatMulRunner<MatMulBlockwiseDynamicQuantLutInterface>::run(const void* lhs, const void* rhs, void* dst) {
-    matmul_interface_.run_matmul(
-        m_, n_, k_,                          //
+    m_matmul_interface.run_matmul(
+        m_m, m_n, m_k,                       //
         lhs, rhs, static_cast<float*>(dst),  //
-        dst_stride_row_, dst_stride_col_,    //
+        m_dst_stride_row, m_dst_stride_col,  //
         -FLT_MAX, FLT_MAX,                   //
         nullptr);
 }
@@ -299,24 +328,24 @@ inline void MatMulRunner<MatMulUkernelApiInterface>::run(const void* lhs, const 
         float max;
     };
 
-    const auto api = matmul_interface_.get_api();
-    auto config = matmul_interface_.get_config();
-    config.format.bl = bl_;
+    const auto api = m_matmul_interface.get_api();
+    auto config = m_matmul_interface.get_config();
+    config.format.bl = m_bl;
 
     const ClampArgs clamp_args{-FLT_MAX, FLT_MAX};
-    const bool has_clamp = (matmul_interface_.flags & KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP) != 0;
+    const bool has_clamp = (m_matmul_interface.flags & KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP) != 0;
 
-    const kai_matmul_uker_lhs_dim_args lhs_shape = {m_, k_};
-    const kai_matmul_uker_rhs_dim_args rhs_shape = {n_, k_};
+    const kai_matmul_uker_lhs_dim_args lhs_shape = {m_m, m_k};
+    const kai_matmul_uker_rhs_dim_args rhs_shape = {m_n, m_k};
 
     kai_matmul_uker_args args = {};
-    args.flags = matmul_interface_.flags;
+    args.flags = m_matmul_interface.flags;
 
-    config.format.bl = bl_;
+    config.format.bl = m_bl;
 
-    args.shape.m = m_;
-    args.shape.n = n_;
-    args.shape.k = k_;
+    args.shape.m = m_m;
+    args.shape.n = m_n;
+    args.shape.k = m_k;
 
     args.operand.lhs.ptr = lhs;
     args.operand.lhs.stride = api.get_lhs_stride(&config, &lhs_shape);
@@ -325,31 +354,31 @@ inline void MatMulRunner<MatMulUkernelApiInterface>::run(const void* lhs, const 
     args.operand.rhs.stride = api.get_rhs_stride(&config, &rhs_shape);
 
     args.operand.dst.ptr = dst;
-    args.operand.dst.stride.m = dst_stride_row_;
+    args.operand.dst.stride.m = m_dst_stride_row;
 
     if (has_clamp) {
         args.activation.clamp.min_ptr = &clamp_args.min;
         args.activation.clamp.max_ptr = &clamp_args.max;
     }
 
-    if ((matmul_interface_.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_ACC_BIAS_M) != 0) {
-        args.operand.bias.acc_bias_m.ptr = acc_bias_m_.data();
+    if ((m_matmul_interface.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_ACC_BIAS_M) != 0) {
+        args.operand.bias.acc_bias_m.ptr = m_acc_bias_m.data();
     }
 
-    if ((matmul_interface_.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_ACC_BIAS_N) != 0) {
-        args.operand.bias.acc_bias_n.ptr = acc_bias_n_.data();
+    if ((m_matmul_interface.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_ACC_BIAS_N) != 0) {
+        args.operand.bias.acc_bias_n.ptr = m_acc_bias_n.data();
     }
 
-    if ((matmul_interface_.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_SCALE_BIAS_N) != 0) {
-        args.operand.bias.scale_bias_n.ptr = scale_bias_n_.data();
+    if ((m_matmul_interface.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_SCALE_BIAS_N) != 0) {
+        args.operand.bias.scale_bias_n.ptr = m_scale_bias_n.data();
     }
 
-    if ((matmul_interface_.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_ACC_SCALE_GLOBAL) != 0) {
-        args.operand.scale.acc_scale_global.ptr = acc_scale_global_.data();
+    if ((m_matmul_interface.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_ACC_SCALE_GLOBAL) != 0) {
+        args.operand.scale.acc_scale_global.ptr = m_acc_scale_global.data();
     }
 
-    if ((matmul_interface_.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_SCALE_BIAS_GLOBAL) != 0) {
-        args.operand.bias.scale_bias_global.ptr = scale_bias_global_.data();
+    if ((m_matmul_interface.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_SCALE_BIAS_GLOBAL) != 0) {
+        args.operand.bias.scale_bias_global.ptr = m_scale_bias_global.data();
     }
 
     api.run(&config, &args);
@@ -358,29 +387,29 @@ inline void MatMulRunner<MatMulUkernelApiInterface>::run(const void* lhs, const 
 /// Gets buffer extents padded to processing-step boundaries for the ukernel API interface.
 template <>
 inline MatMulBufferSizes MatMulRunner<MatMulUkernelApiInterface>::get_buffer_sizes() const {
-    const auto api = matmul_interface_.get_api();
-    auto config = matmul_interface_.get_config();
-    config.format.bl = bl_;
+    const auto api = m_matmul_interface.get_api();
+    auto config = m_matmul_interface.get_config();
+    config.format.bl = m_bl;
 
     const kai_matmul_uker_dim_args step = api.get_step(&config);
     KAI_ASSUME(step.m > 0);
     KAI_ASSUME(step.n > 0);
 
-    const kai_matmul_uker_lhs_dim_args lhs_shape = {m_, k_};
-    const kai_matmul_uker_rhs_dim_args rhs_shape = {n_, k_};
-    const kai_matmul_uker_dst_dim_args dst_shape = {m_, n_};
+    const kai_matmul_uker_lhs_dim_args lhs_shape = {m_m, m_k};
+    const kai_matmul_uker_rhs_dim_args rhs_shape = {m_n, m_k};
+    const kai_matmul_uker_dst_dim_args dst_shape = {m_m, m_n};
 
     const kai_matmul_uker_lhs_stride_args lhs_stride = api.get_lhs_stride(&config, &lhs_shape);
     const kai_matmul_uker_rhs_stride_args rhs_stride = api.get_rhs_stride(&config, &rhs_shape);
-    const kai_matmul_uker_dst_stride_args dst_stride = {dst_stride_row_};
+    const kai_matmul_uker_dst_stride_args dst_stride = {m_dst_stride_row};
 
     // A processing step can span multiple packing blocks. Offset queries account for this
     // without treating a packed-block stride as a per-row or per-column stride.
-    const kai_matmul_uker_lhs_dim_args lhs_end = {kai_roundup(m_, step.m), 0};
-    const kai_matmul_uker_rhs_dim_args rhs_end = {kai_roundup(n_, step.n), 0};
+    const kai_matmul_uker_lhs_dim_args lhs_end = {kai_roundup(m_m, step.m), 0};
+    const kai_matmul_uker_rhs_dim_args rhs_end = {kai_roundup(m_n, step.n), 0};
 
     // Single-row steps use one stride per row. Some GEMV offset helpers require m == 0.
-    const size_t lhs_size = step.m == 1 ? m_ * lhs_stride.m : api.get_lhs_offset(&config, &lhs_end, &lhs_stride);
+    const size_t lhs_size = step.m == 1 ? m_m * lhs_stride.m : api.get_lhs_offset(&config, &lhs_end, &lhs_stride);
 
     return {
         lhs_size,
@@ -392,40 +421,40 @@ inline MatMulBufferSizes MatMulRunner<MatMulUkernelApiInterface>::get_buffer_siz
 /// Prepares auxiliary data required by the ukernel API interface.
 template <>
 inline void MatMulRunner<MatMulUkernelApiInterface>::prepare() {
-    acc_bias_m_.clear();
-    acc_bias_n_.clear();
-    scale_bias_n_.clear();
-    acc_scale_global_.clear();
-    scale_bias_global_.clear();
+    m_acc_bias_m.clear();
+    m_acc_bias_n.clear();
+    m_scale_bias_n.clear();
+    m_acc_scale_global.clear();
+    m_scale_bias_global.clear();
 
     // Allocate row bias for accumulation stage
-    if ((matmul_interface_.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_ACC_BIAS_M) != 0) {
-        KAI_ASSUME(matmul_interface_.acc_bias_elem_size != 0);
-        acc_bias_m_.resize(m_ * matmul_interface_.acc_bias_elem_size);
+    if ((m_matmul_interface.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_ACC_BIAS_M) != 0) {
+        KAI_ASSUME(m_matmul_interface.acc_bias_elem_size != 0);
+        m_acc_bias_m.resize(m_m * m_matmul_interface.acc_bias_elem_size);
     }
 
     // Allocate column bias for accumulation stage
-    if ((matmul_interface_.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_ACC_BIAS_N) != 0) {
-        KAI_ASSUME(matmul_interface_.acc_bias_elem_size != 0);
-        acc_bias_n_.resize(n_ * matmul_interface_.acc_bias_elem_size);
+    if ((m_matmul_interface.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_ACC_BIAS_N) != 0) {
+        KAI_ASSUME(m_matmul_interface.acc_bias_elem_size != 0);
+        m_acc_bias_n.resize(m_n * m_matmul_interface.acc_bias_elem_size);
     }
 
     // Allocate global scale for the accumulation stage
-    if ((matmul_interface_.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_ACC_SCALE_GLOBAL) != 0) {
-        KAI_ASSUME(matmul_interface_.acc_scale_elem_size != 0);
-        acc_scale_global_.resize(matmul_interface_.acc_scale_elem_size);
+    if ((m_matmul_interface.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_ACC_SCALE_GLOBAL) != 0) {
+        KAI_ASSUME(m_matmul_interface.acc_scale_elem_size != 0);
+        m_acc_scale_global.resize(m_matmul_interface.acc_scale_elem_size);
     }
 
     // Allocate column bias for the scaled accumulation stage
-    if ((matmul_interface_.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_SCALE_BIAS_N) != 0) {
-        KAI_ASSUME(matmul_interface_.scale_bias_elem_size != 0);
-        scale_bias_n_.resize(n_ * matmul_interface_.scale_bias_elem_size);
+    if ((m_matmul_interface.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_SCALE_BIAS_N) != 0) {
+        KAI_ASSUME(m_matmul_interface.scale_bias_elem_size != 0);
+        m_scale_bias_n.resize(m_n * m_matmul_interface.scale_bias_elem_size);
     }
 
     // Allocate global bias for the scaled accumulation stage
-    if ((matmul_interface_.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_SCALE_BIAS_GLOBAL) != 0) {
-        KAI_ASSUME(matmul_interface_.scale_bias_elem_size != 0);
-        scale_bias_global_.resize(matmul_interface_.scale_bias_elem_size);
+    if ((m_matmul_interface.args_flags & KAI_BENCHMARK_MATMUL_UKER_ARGS_SCALE_BIAS_GLOBAL) != 0) {
+        KAI_ASSUME(m_matmul_interface.scale_bias_elem_size != 0);
+        m_scale_bias_global.resize(m_matmul_interface.scale_bias_elem_size);
     }
 }
 

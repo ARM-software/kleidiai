@@ -7,7 +7,6 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <charconv>
 #include <cstddef>
 #include <cstdlib>
 #include <iostream>
@@ -22,6 +21,7 @@
 #include "test/nextgen/common/expected.hpp"
 #include "test/nextgen/common/test_config.hpp"
 #include "test/nextgen/common/test_registry.hpp"
+#include "test/nextgen/common/text_utils.hpp"
 
 namespace {
 
@@ -42,16 +42,7 @@ std::optional<size_t> value_to_num_shapes(const std::string& value) {
         return 100;
     }
 
-    size_t parsed{};
-    const char* begin = value.data();
-    const char* end = begin + value.size();
-
-    auto [ptr, ec] = std::from_chars(begin, end, parsed);
-
-    if (ec != std::errc() || ptr != end || parsed == 0) {
-        return std::nullopt;
-    }
-    return parsed;
+    return kai::test::parse_num<size_t>(value);
 }
 
 enum class TestSizeParseErr {
@@ -98,7 +89,7 @@ Expected<size_t, TestSizeParseErr> parse_test_size(int& argc, char** argv) {
     }
 
     auto parsed = value_to_num_shapes(raw_value);
-    if (!parsed) {
+    if (!parsed || *parsed == 0) {
         std::cerr << "Error: invalid --test_size value '" << raw_value << "'.\n";
         std::cerr << "Usage: --test_size <small|large|positive integer>\n";
         return TestSizeParseErr::InvalidValue;
