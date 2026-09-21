@@ -22,6 +22,7 @@
 #include "benchmark/imatmul/imatmul_registry.hpp"
 #include "benchmark/matmul/matmul_registry.hpp"
 #include "benchmark/pack_matmul/pack_matmul_registry.hpp"
+#include "benchmark/softmax/softmax_registry.hpp"
 #include "kai/kai_common.h"
 
 #ifdef __GNUC__
@@ -97,10 +98,19 @@ void print_dwconv_usage(std::string_view name) {
     std::cerr << oss.str() << '\n';
 }
 
+void print_softmax_usage(std::string_view name) {
+    std::ostringstream oss;
+    oss << "Softmax usage:" << '\n';
+    oss << '\t' << name << " softmax -l <dim_0>" << '\n';
+    oss << "Options:" << '\n';
+    oss << "\t-l\tSize of dimension 0" << '\n';
+    std::cerr << oss.str() << '\n';
+}
+
 void print_global_usage(std::string_view name) {
     std::ostringstream oss;
     oss << "Usage:" << '\n';
-    oss << '\t' << name << " <matmul|pack_matmul|imatmul|dwconv> [<options>]" << '\n';
+    oss << '\t' << name << " <matmul|pack_matmul|imatmul|dwconv|softmax> [<options>]" << '\n';
     oss << "\nIf no operation is provided, defaults to: " << name << " matmul [options]" << '\n';
     oss << "\nBenchmark Framework options:" << '\n';
     oss << '\t' << name << " --help" << '\n';
@@ -110,11 +120,12 @@ void print_global_usage(std::string_view name) {
     print_pack_matmul_usage(name);
     print_imatmul_usage(name);
     print_dwconv_usage(name);
+    print_softmax_usage(name);
 }
 
-enum class DwConvValueKind { Positive, NonNegative };
+enum class SizeValueKind { Positive, NonNegative };
 
-bool parse_size_t_arg(const char* arg, const char* name, DwConvValueKind kind, size_t& out, std::string& error) {
+bool parse_size_t_arg(const char* arg, const char* name, SizeValueKind kind, size_t& out, std::string& error) {
     if (!arg) {
         error = "Missing value for "s + name;
         return false;
@@ -127,7 +138,7 @@ bool parse_size_t_arg(const char* arg, const char* name, DwConvValueKind kind, s
         error = "Invalid value for "s + name + ": " + arg;
         return false;
     }
-    if (kind == DwConvValueKind::Positive && parsed == 0) {
+    if (kind == SizeValueKind::Positive && parsed == 0) {
         error = "Value for "s + name + " must be greater than 0.";
         return false;
     }
@@ -148,7 +159,7 @@ std::string_view trim_view(std::string_view sv) {
 /// Parses a comma-separated list of `N` size_t values with optional whitespace.
 template <size_t N>
 bool parse_size_t_list(
-    const char* arg, const char* name, DwConvValueKind kind, std::array<size_t, N>& out, std::string& error) {
+    const char* arg, const char* name, SizeValueKind kind, std::array<size_t, N>& out, std::string& error) {
     if (!arg) {
         error = "Missing value for "s + name;
         return false;
@@ -223,35 +234,35 @@ std::optional<kai::benchmark::DwConvShape> parse_dwconv_cli(int argc, char** arg
     while ((opt = getopt_long(argc, argv, "", long_options, nullptr)) != -1) {
         switch (opt) {
             case OPT_CHANNELS:
-                if (!parse_size_t_arg(optarg, "--channels", DwConvValueKind::Positive, shape.num_channels, error)) {
+                if (!parse_size_t_arg(optarg, "--channels", SizeValueKind::Positive, shape.num_channels, error)) {
                     return std::nullopt;
                 }
                 channels_set = true;
                 break;
             case OPT_INPUT_HEIGHT:
-                if (!parse_size_t_arg(optarg, "--input_height", DwConvValueKind::Positive, shape.input_height, error)) {
+                if (!parse_size_t_arg(optarg, "--input_height", SizeValueKind::Positive, shape.input_height, error)) {
                     return std::nullopt;
                 }
                 input_height_set = true;
                 break;
             case OPT_INPUT_WIDTH:
-                if (!parse_size_t_arg(optarg, "--input_width", DwConvValueKind::Positive, shape.input_width, error)) {
+                if (!parse_size_t_arg(optarg, "--input_width", SizeValueKind::Positive, shape.input_width, error)) {
                     return std::nullopt;
                 }
                 input_width_set = true;
                 break;
             case OPT_STRIDE:
-                if (!parse_size_t_list(optarg, "--stride", DwConvValueKind::Positive, shape.stride, error)) {
+                if (!parse_size_t_list(optarg, "--stride", SizeValueKind::Positive, shape.stride, error)) {
                     return std::nullopt;
                 }
                 break;
             case OPT_PADDING:
-                if (!parse_size_t_list(optarg, "--padding", DwConvValueKind::NonNegative, shape.padding, error)) {
+                if (!parse_size_t_list(optarg, "--padding", SizeValueKind::NonNegative, shape.padding, error)) {
                     return std::nullopt;
                 }
                 break;
             case OPT_DILATION:
-                if (!parse_size_t_list(optarg, "--dilation", DwConvValueKind::Positive, shape.dilation, error)) {
+                if (!parse_size_t_list(optarg, "--dilation", SizeValueKind::Positive, shape.dilation, error)) {
                     return std::nullopt;
                 }
                 break;
@@ -502,6 +513,43 @@ static int run_dwconv(int argc, char** argv, const std::optional<std::string>& u
     return 0;
 }
 
+static int run_softmax(int argc, char** argv, const std::optional<std::string>& user_filter_opt) {
+    bool dim_0_set = false;
+    size_t dim_0 = 0;
+
+    optind = 1;
+    int opt;
+    while ((opt = getopt(argc, argv, "l:")) != -1) {
+        switch (opt) {
+            case 'l': {
+                std::string error;
+                if (!parse_size_t_arg(optarg, "-l", SizeValueKind::Positive, dim_0, error)) {
+                    std::cerr << error << '\n';
+                    print_softmax_usage(argv[0]);
+                    return EXIT_FAILURE;
+                }
+                dim_0_set = true;
+                break;
+            }
+            default:
+                print_softmax_usage(argv[0]);
+                return EXIT_FAILURE;
+        }
+    }
+
+    if (!dim_0_set) {
+        print_softmax_usage(argv[0]);
+        return EXIT_FAILURE;
+    }
+
+    kai::benchmark::RegisterSoftmaxBenchmarks(dim_0);
+    const std::string spec = user_filter_opt.has_value() ? *user_filter_opt : std::string("^kai_softmax");
+
+    ::benchmark::RunSpecifiedBenchmarks(nullptr, nullptr, spec);
+    ::benchmark::Shutdown();
+    return 0;
+}
+
 int main(int argc, char** argv) {
     // Detect user-provided filter BEFORE Initialize() consumes the benchmark framework flags
     const auto user_filter_opt = find_user_benchmark_filter(argc, argv);
@@ -519,13 +567,14 @@ int main(int argc, char** argv) {
 
     std::cerr << "KleidiAI version: v" << kai_get_version() << "\n";
 
-    // Determine subcommand (mode): matmul, pack_matmul, imatmul or dwconv.
-    enum class Mode : uint8_t { COMPAT, MATMUL, PACK_MATMUL, IMATMUL, DWCONV } mode = Mode::COMPAT;
+    // Determines subcommand (mode): matmul, pack_matmul, imatmul, dwconv or softmax.
+    enum class Mode : uint8_t { COMPAT, MATMUL, PACK_MATMUL, IMATMUL, DWCONV, SOFTMAX } mode = Mode::COMPAT;
 
     static constexpr std::string_view MATMUL = "matmul";
     static constexpr std::string_view PACK_MATMUL = "pack_matmul";
     static constexpr std::string_view IMATMUL = "imatmul";
     static constexpr std::string_view DWCONV = "dwconv";
+    static constexpr std::string_view SOFTMAX = "softmax";
 
     std::vector<std::string_view> args(argv, argv + argc);
 
@@ -550,6 +599,10 @@ int main(int argc, char** argv) {
         mode = Mode::DWCONV;
         argv += 1;
         argc -= 1;
+    } else if (argc >= 2 && args[1] == SOFTMAX) {
+        mode = Mode::SOFTMAX;
+        argv += 1;
+        argc -= 1;
     }
 
     if (list_tests) {
@@ -559,6 +612,7 @@ int main(int argc, char** argv) {
             kai::benchmark::RegisterPackMatMulBenchmarks({1, 1, 1}, 32);
             kai::benchmark::RegisteriMatMulBenchmarks(1, 1, 1, 1);
             kai::benchmark::RegisterDwConvBenchmarks({3, 3, 1});
+            kai::benchmark::RegisterSoftmaxBenchmarks(1);
             spec = user_filter_opt.value_or("");
         } else if (mode == Mode::MATMUL) {
             kai::benchmark::RegisterMatMulBenchmarks({1, 1, 1}, 32);
@@ -572,6 +626,9 @@ int main(int argc, char** argv) {
         } else if (mode == Mode::DWCONV) {
             kai::benchmark::RegisterDwConvBenchmarks({3, 3, 1});
             spec = user_filter_opt.has_value() ? *user_filter_opt : std::string("^kai_dwconv");
+        } else if (mode == Mode::SOFTMAX) {
+            kai::benchmark::RegisterSoftmaxBenchmarks(1);
+            spec = user_filter_opt.has_value() ? *user_filter_opt : std::string("^kai_softmax");
         }
         ::benchmark::SetBenchmarkFilter(spec);
         ::benchmark::RunSpecifiedBenchmarks(nullptr, nullptr, spec);
@@ -590,6 +647,8 @@ int main(int argc, char** argv) {
             return run_imatmul(argc, argv, user_filter_opt);
         case Mode::DWCONV:
             return run_dwconv(argc, argv, user_filter_opt);
+        case Mode::SOFTMAX:
+            return run_softmax(argc, argv, user_filter_opt);
         default:
             print_global_usage(argv[0]);
             return EXIT_FAILURE;

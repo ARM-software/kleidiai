@@ -1,0 +1,21 @@
+#
+# SPDX-FileCopyrightText: Copyright 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+load("//:kai_defs.bzl", "kai_c_library")
+
+package(default_visibility = ["//visibility:private"])
+
+kai_c_library(
+    name = "interface",
+    textual_hdrs = ["kai_softmax_types.h"],
+    visibility = ["//visibility:public"],
+)
+
+kai_c_library(
+    name = "softmax",
+    visibility = ["//visibility:public"],
+    deps = [":interface"],
+)

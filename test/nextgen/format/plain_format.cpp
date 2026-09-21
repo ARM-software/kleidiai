@@ -93,8 +93,7 @@ Buffer PlainFormat::pack(Shape shape, Span<const Span<const std::byte>> buffers)
 bool PlainFormat::compare(
     Shape shape, Span<const size_t> tile_coords, Shape tile_shape, Span<const std::byte> imp_buffer,
     Span<const std::byte> ref_buffer, MismatchHandler& handler) const {
-    KAI_TEST_ASSERT_MSG(shape.size() == 2, "Only 2D array is supported.");
-
+    KAI_TEST_ASSERT_MSG(shape.size() == 2, "Only 1D and 2D arrays are supported.");
     const CompareFn compare_fn = make_compare_plain_2d(m_dtype);
     const size_t num_checks = compare_fn(
         shape, tile_coords, tile_shape, imp_buffer, ref_buffer,

@@ -16,13 +16,14 @@ set(BENCHMARK_ENABLE_GTEST_TESTS "OFF")
 
 include(FetchGBench)
 
-# Single benchmark binary combining matmul, pack_matmul, imatmul and dwconv
+# Single benchmark binary combining all supported operators.
 add_executable(kleidiai_benchmark
     benchmark/main.cpp
     benchmark/dwconv/dwconv_registry.cpp
+    benchmark/imatmul/imatmul_registry.cpp
     benchmark/matmul/matmul_registry.cpp
     benchmark/pack_matmul/pack_matmul_registry.cpp
-    benchmark/imatmul/imatmul_registry.cpp
+    benchmark/softmax/softmax_registry.cpp
     test/common/cpu_info.cpp
     test/common/data_type.cpp
 )

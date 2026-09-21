@@ -12,6 +12,7 @@ KleidiAI provides a single benchmarking binary that runs multiple variants via s
 - `kleidiai_benchmark pack_matmul` for LHS packing followed by matrix multiplication
 - `kleidiai_benchmark imatmul` for indirect matrix multiplication (imatmul, chunked K)
 - `kleidiai_benchmark dwconv` for depthwise convolution (dwconv)
+- `kleidiai_benchmark softmax` for softmax activation
 
 The tool supports flexible argument parsing and Benchmark Framework options.
 If no operator is specified, `matmul` will be used by default.
@@ -53,6 +54,7 @@ Run matmul, pack_matmul, imatmul and dwconv with example dimensions:
 ./kleidiai_benchmark pack_matmul -m 32 -n 32 -k 32
 ./kleidiai_benchmark imatmul -m 32 -n 32 -c 4 -l 8
 ./kleidiai_benchmark dwconv  --input_height 32 --input_width 32 --channels 64 --padding 1,1,1,1
+./kleidiai_benchmark softmax -l 1024
 ```
 
 ### Matmul Benchmark
@@ -162,6 +164,20 @@ Benchmark                                                               Time    
 kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla                123 ns          123 ns      1234567
 ```
 
+### Softmax Benchmark
+
+Run the softmax benchmark with the size of dimension 0:
+
+```sh
+./kleidiai_benchmark softmax -l <dim_0>
+```
+
+Use `--benchmark_filter` to select Softmax micro-kernels:
+
+```sh
+./kleidiai_benchmark softmax -l 1024
+```
+
 ### Filtering
 
 Benchmarks can be filtered using the --benchmark_filter option, which accepts a regex. For example, to only run the sme2 micro-kernels:
@@ -172,6 +188,7 @@ Benchmarks can be filtered using the --benchmark_filter option, which accepts a 
 ./kleidiai_benchmark pack_matmul --benchmark_filter=sme2 -m 13 -n 17 -k 18
 ./kleidiai_benchmark imatmul --benchmark_filter=sme2 -m 13 -n 17 -c 1 -l 18
 ./kleidiai_benchmark dwconv  --benchmark_filter=sme2 --input_height 32 --input_width 32 --channels 64 --padding 1,1,1,1
+./kleidiai_benchmark softmax --benchmark_filter=softmax -l 1024
 Run on (8 X 1800 MHz CPU s)
 Load Average: 10.09, 10.13, 10.09
 -----------------------------------------------------------------------------------------------------
@@ -198,6 +215,7 @@ Specify the micro-kernel operator to list all the benchmarks of a certain type.
 ./kleidiai_benchmark pack_matmul --benchmark_list_tests
 ./kleidiai_benchmark imatmul --benchmark_list_tests
 ./kleidiai_benchmark dwconv  --benchmark_list_tests
+./kleidiai_benchmark softmax --benchmark_list_tests
 ```
 
 ### Notes

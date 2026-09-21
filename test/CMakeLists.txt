@@ -59,6 +59,7 @@ add_library(kleidiai_test_framework
     test/nextgen/reference/pack.cpp
     test/nextgen/reference/compare.cpp
     test/nextgen/reference/cast.cpp
+    test/nextgen/reference/softmax.cpp
     test/nextgen/format/plain_format.cpp
     test/nextgen/format/block2d_row_format.cpp
     test/nextgen/quantization/asymm_linear_quantizer.cpp
@@ -77,6 +78,9 @@ add_library(kleidiai_test_framework
     test/nextgen/operators/matmul/matmul_bias_mode.cpp
     test/nextgen/operators/matmul/matmul_operator.cpp
     test/nextgen/operators/matmul/matmul_tb.cpp
+    test/nextgen/operators/softmax/softmax_operator.cpp
+    test/nextgen/operators/softmax/softmax_tb.cpp
+    test/nextgen/operators/softmax/softmax_wrapper.cpp
 )
 
 target_compile_options(kleidiai_test_framework
@@ -140,6 +144,7 @@ else()
 
         test/nextgen/tests/matmul_test_next.cpp
         test/nextgen/tests/poly_test.cpp
+        test/nextgen/tests/softmax_test.cpp
     )
 
     set_source_files_properties(
