@@ -12,6 +12,7 @@
 #include <iterator>
 #include <random>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -33,7 +34,12 @@ namespace kai::test {
 namespace {
 
 struct MatMulDistribution {
-    Rng m_rng{seed_stream("MatMulNext::setup")()};
+    /// Seeds fixture generation using the operator name.
+    explicit MatMulDistribution(std::string_view operator_name) :
+        m_rng(seed_stream("MatMulNext::setup:" + std::string(operator_name))()) {
+    }
+
+    Rng m_rng;
     std::uniform_int_distribution<size_t> m_shape_dist{1, 150};
     std::uniform_int_distribution<size_t> m_shape_k_dist{1, 512};
     std::uniform_real_distribution<float> m_probability_dist{0.0F, 1.0F};
@@ -424,10 +430,7 @@ const auto matmul_tests_setup = TestRegistry::register_setup([]() {
     const size_t num_shapes_per_op = TestConfig::Get().num_shapes();
     const auto output_portions = make_output_portions();
 
-    /* NOTE: that `dist_cxt` must only be constructed once here, as
-     * it contains the per test suite seed stream */
     const Span<const MatMulOperator> available_operators = get_available_matmul_operators();
-    MatMulDistribution dist_ctx;
 
     for (const MatMulOperator& op : available_operators) {
         if (!op.is_cpu_supported()) {
@@ -435,6 +438,8 @@ const auto matmul_tests_setup = TestRegistry::register_setup([]() {
         }
 
         const std::string test_suite_name = "MatMulNext";
+        // Each operator has its own stream, independent of registration order.
+        MatMulDistribution dist_ctx(op.name);
         BiasSelector bias_selector(op);
 
         for (size_t shape_no = 0; shape_no < num_shapes_per_op; ++shape_no) {
