@@ -52,6 +52,16 @@ set_source_files_properties(benchmark/matmul_pack_lhs/matmul_pack_lhs_registry.c
 set_source_files_properties(benchmark/pack_matmul/pack_matmul_registry.cpp
     PROPERTIES COMPILE_OPTIONS "-fno-tree-vectorize;-fno-tree-slp-vectorize;-march=armv8-a+sve+sve2${KLEIDIAI_INTERNAL_EXTRA_ARCH}")
 
+if(MSVC)
+    set_source_files_properties(
+        test/common/bfloat16_asm.S
+        test/common/float16_asm.S
+        PROPERTIES LANGUAGE ASM_MARMASM)
+else()
+    set_source_files_properties(test/common/float16_asm.S PROPERTIES COMPILE_OPTIONS "-march=armv8.2-a+fp16${KLEIDIAI_INTERNAL_EXTRA_ARCH}")
+    set_source_files_properties(test/common/bfloat16_asm.S PROPERTIES COMPILE_OPTIONS "-march=armv8.2-a+fp16+bf16${KLEIDIAI_INTERNAL_EXTRA_ARCH}")
+endif()
+
 target_link_libraries(kleidiai_benchmark
     PRIVATE
         kleidiai
