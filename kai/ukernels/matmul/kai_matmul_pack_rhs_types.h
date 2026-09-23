@@ -117,6 +117,11 @@ struct kai_matmul_pack_rhs_uker_scale_global_args {
     const void* ptr;  ///< Per-matrix scale buffer.
 };
 
+/// Lookup table arguments for matrix multiplication RHS packing micro-kernel.
+struct kai_matmul_pack_rhs_uker_lut_args {
+    const void* ptr;  ///< Lookup table buffer.
+};
+
 /// Operands for matrix multiplication RHS packing micro-kernel.
 struct kai_matmul_pack_rhs_uker_operand_args {
     struct kai_matmul_pack_rhs_uker_rhs_args rhs;                                ///< RHS buffer.
@@ -126,6 +131,7 @@ struct kai_matmul_pack_rhs_uker_operand_args {
     struct kai_matmul_pack_rhs_uker_scale_n_args scale_n;                        ///< Per-N scale buffer.
     struct kai_matmul_pack_rhs_uker_scale_global_args scale_global;              ///< Per-matrix scale buffer.
     struct kai_matmul_pack_rhs_uker_scale_nk_args scale_nk;                      ///< Per-(N, K) scale buffer.
+    struct kai_matmul_pack_rhs_uker_lut_args lut;                                ///< Lookup table arguments.
 };
 
 /// Matrix multiplication RHS packing micro-kernel arguments.
