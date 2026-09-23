@@ -406,6 +406,55 @@ struct kai_matmul_uker_api kai_matmul_clamp_f32_f16p4vsx2_qai4c32p16vsx4s1s0sf16
 /// @return The micro-kernel API.
 struct kai_matmul_uker_api kai_matmul_clamp_f32_qsi8d32p1x4_qai4c32p16vsx4s1s0sf16_1x16vs_sme2_dot(void);
 
+/// Dynamically quantized INT8 matrix multiplication with packed 2-bit RHS using Advanced SIMD I8MM.
+///
+/// Required CPU features:
+///   * FEAT_I8MM
+///
+/// Configuration parameters: none.
+///
+/// Required operands:
+///   * dst - FP32 output matrix.
+///   * lhs - QAI8DXP data packed in 4x8 panels with per-M FP32 scale and I32 offset. K must be a multiple of 32.
+///   * rhs - QSU2CXP data packed in 4x8 panels with per-N FP32 scale, I32 reduction sum, and FP32 bias. K must be a
+///     multiple of 32.
+///
+/// Optional arguments:
+///   * operand.lut.ptr - Four-entry INT8 lookup table mapping packed 2-bit RHS codes to INT8 values.
+///     NULL selects the default QSU2 mapping.
+///   * clamp - FP32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP is set.
+///
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_f32_qai8dxp4x8_qsu2cxp4x8sf32bf32_i8p_4x4_neon_i8mm(void);
+
+/// Dynamically quantized INT8 vector-matrix multiplication with packed 2-bit RHS using Advanced SIMD I8MM.
+///
+/// Required CPU features:
+///   * FEAT_I8MM
+///
+/// Configuration parameters: none.
+///
+/// Required operands:
+///   * dst - FP32 output matrix.
+///   * lhs - QAI8DXP data packed in a 1x8 panel with per-M FP32 scale and I32 offset. M must be 1, and K must be a
+///     multiple of 32.
+///   * rhs - QSU2CXP data packed in 4x8 panels with per-N FP32 scale, I32 reduction sum, and FP32 bias. K must be a
+///     multiple of 32.
+///
+/// Optional arguments:
+///   * operand.lut.ptr - Four-entry INT8 lookup table mapping packed 2-bit RHS codes to INT8 values.
+///     NULL selects the default QSU2 mapping.
+///   * clamp - FP32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP is set.
+///
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_f32_qai8dxp1x8_qsu2cxp4x8sf32bf32_i8p_1x4_neon_i8mm(void);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

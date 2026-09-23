@@ -290,6 +290,29 @@ struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_kxn_qsu2cxp16vsx4sf32bi3
 /// @return The micro-kernel API.
 struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_nxk_qsu2cxp16vsx4sf32bi32_qsu2cx_f32_i32_sme(void);
 
+/// Transposed RHS packing micro-kernel for static quantized 2-bit data using Advanced SIMD.
+///
+/// Required CPU features:
+///   * FEAT_AdvSIMD
+///
+/// Configuration parameters: none.
+///
+/// Required operands:
+///   * rhs_packed - 2-bit RHS in 4x8 blocked format followed by per-N INT32 reduction sums, FP32 scales, and FP32
+///     biases.
+///   * rhs - 2-bit data in plain NxK format. K must be a multiple of 32.
+///   * bias_n - Per-N FP32 bias.
+///   * scale_n - Per-N FP32 scale.
+///
+/// Optional arguments:
+///   * operand.lut.ptr - Four-entry INT8 lookup table mapping packed 2-bit RHS codes to INT8 values.
+///     NULL selects the default QSU2 mapping.
+///
+/// Supported flags: none.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_nxk_qsu2cxp4x8sf32bf32_qsu2cx_f32_f32_i8p_neon(void);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

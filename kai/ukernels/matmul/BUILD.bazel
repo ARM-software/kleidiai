@@ -67,6 +67,7 @@ NEON_KERNELS_ASM = [
 # buildifier: keep sorted
 NEON_KERNELS_NOHDR = [
     "pack/kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon",
+    "pack/kai_matmul_pack_rhs_nxk_qsu2cxp4x8sf32bf32_qsu2cx_f32_f32_i8p_neon",
 ]
 
 # buildifier: keep sorted
@@ -185,6 +186,18 @@ I8MM_KERNELS_ASM = [
     "matmul_clamp_f32_qsi8d32p_qai4c32p/kai_matmul_clamp_f32_qsi8d32p4x8_qai4c32p4x8_8x4_neon_i8mm",
     "matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p4x8_qsi4c32p4x8_16x4_neon_i8mm",
     "matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p4x8_qsi4c32p4x8_8x4x32_neon_i8mm",
+]
+
+# buildifier: keep sorted
+I8MM_KERNELS_ASM_ONLY = [
+    "matmul_clamp_f32_qai8dxp_qsu2cxp/kai_matmul_clamp_f32_qai8dxp1x8_qsu2cxp4x8sf32bf32_i8p_1x4_neon_i8mm",
+    "matmul_clamp_f32_qai8dxp_qsu2cxp/kai_matmul_clamp_f32_qai8dxp4x8_qsu2cxp4x8sf32bf32_i8p_4x4_neon_i8mm",
+]
+
+# buildifier: keep sorted
+I8MM_KERNELS_NOHDR = [
+    "matmul_clamp_f32_qai8dxp_qsu2cxp/kai_matmul_clamp_f32_qai8dxp1x8_qsu2cxp4x8sf32bf32_i8p_1x4_neon_i8mm",
+    "matmul_clamp_f32_qai8dxp_qsu2cxp/kai_matmul_clamp_f32_qai8dxp4x8_qsu2cxp4x8sf32bf32_i8p_4x4_neon_i8mm",
 ]
 
 # buildifier: keep sorted
@@ -416,10 +429,7 @@ kai_c_library(
     cpu_uarch = kai_cpu_neon(),
     kernels = NEON_KERNELS,
     kernels_nohdr = NEON_KERNELS_NOHDR,
-    textual_hdrs = [
-        "kai_matmul_pack_lhs.h",
-        "kai_matmul_pack_lhs_types.h",
-    ],
+    deps = [":interface"],
 )
 
 kai_c_library(
@@ -492,12 +502,15 @@ kai_c_library(
     name = "i8mm_impl",
     cpu_uarch = kai_cpu_i8mm(),
     kernels = I8MM_KERNELS,
+    kernels_nohdr = I8MM_KERNELS_NOHDR,
+    deps = [":interface"],
 )
 
 kai_c_library(
     name = "i8mm_impl_asm",
     cpu_uarch = kai_cpu_i8mm(),
     kernels_asm = I8MM_KERNELS_ASM,
+    kernels_asm_only = I8MM_KERNELS_ASM_ONLY,
 )
 
 kai_c_library(
