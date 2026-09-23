@@ -77,11 +77,11 @@ const auto& get_qsi2cx_gemm_variants() noexcept {
         kai_matmul_clamp_f32_qai8dxp_qsu2cxp_ukernel, kai_qai8dxp_pack_functions, kai_qsu2cxp_pack_functions>;
     static const std::array<Variant, 2> variants = {{
         UKERNEL_MATMUL_PACK_VARIANT_NAME(
-            clamp_f32_qai8dxp1vlx4_qsu2cxp4vlx4_1vlx4vl_sme2_mopa__RHS_NxK__,
+            clamp_f32_qai8dxp1vlx4_qsu2cxp4vlx4_1vlx4vl_sme2_mopa__RHS_NxK,
             clamp_f32_qai8dxp1vlx4_qsu2cxp4vlx4_1vlx4vl_sme2_mopa, cpu_has_sme2, lhs_quant_pack_qai8dxp_f32,
             rhs_pack_nxk_qsu2cxp4vlx4_qsu2cx_neon, false),
         UKERNEL_MATMUL_PACK_VARIANT_NAME(
-            clamp_f32_qai8dxp4x4_qsu2cxp4x4bf32sf32_8x4_neon_dotprod__RHS_NxK__,
+            clamp_f32_qai8dxp4x4_qsu2cxp4x4bf32sf32_8x4_neon_dotprod__RHS_NxK,
             clamp_f32_qai8dxp4x4_qsu2cxp4x4bf32sf32_8x4_neon_dotprod, cpu_has_dotprod, lhs_quant_pack_qai8dxp_f32,
             rhs_pack_nxk_qsu2cxp4x4bf32sf32_qsu2cx_neon, false),
     }};
@@ -93,11 +93,10 @@ const auto& get_qsi2cx_gemv_variants() noexcept {
         kai_matmul_clamp_f32_qai8dxp_qsu2cxp_ukernel, kai_qai8dxp_pack_functions, kai_qsu2cxp_pack_functions>;
     static const std::array<Variant, 2> variants = {{
         UKERNEL_MATMUL_PACK_VARIANT_NAME(
-            clamp_f32_qai8dxp1x4_qsu2cxp4vlx4_1x4vl_sme2_dot__RHS_NxK__,
-            clamp_f32_qai8dxp1x4_qsu2cxp4vlx4_1x4vl_sme2_dot, cpu_has_sme2, lhs_quant_pack_qai8dxp_f32,
-            rhs_pack_nxk_qsu2cxp4vlx4_qsu2cx_neon, false),
+            clamp_f32_qai8dxp1x4_qsu2cxp4vlx4_1x4vl_sme2_dot__RHS_NxK, clamp_f32_qai8dxp1x4_qsu2cxp4vlx4_1x4vl_sme2_dot,
+            cpu_has_sme2, lhs_quant_pack_qai8dxp_f32, rhs_pack_nxk_qsu2cxp4vlx4_qsu2cx_neon, false),
         UKERNEL_MATMUL_PACK_VARIANT_NAME(
-            clamp_f32_qai8dxp1x4_qsu2cxp4x4bf32sf32_1x4_neon_dotprod__RHS_NxK__,
+            clamp_f32_qai8dxp1x4_qsu2cxp4x4bf32sf32_1x4_neon_dotprod__RHS_NxK,
             clamp_f32_qai8dxp1x4_qsu2cxp4x4bf32sf32_1x4_neon_dotprod, cpu_has_dotprod, lhs_quant_pack_qai8dxp_f32,
             rhs_pack_nxk_qsu2cxp4x4bf32sf32_qsu2cx_neon, false),
     }};
@@ -291,8 +290,8 @@ static std::string test_description(
     if (bias) {
         os << "__Bias";
     }
-    os << "__clamp_keep_ratio_"
-       << (clamp_keep_ratio.has_value() ? std::to_string(static_cast<int>(clamp_keep_ratio.value() * 100)) : "noclamp");
+    os << "__";
+    PrintToClamp(clamp_keep_ratio, &os);
     if (lut) {
         os << "__Lut";
     }

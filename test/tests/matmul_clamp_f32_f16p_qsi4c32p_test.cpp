@@ -106,9 +106,8 @@ using MatMulTestParams_f32_f16p_qsi4c32p = std::tuple<size_t, MatMulShape, Matri
     PrintTo(shape, os);
     *os << "__";
     PrintTo(portion, os);
-    *os << "__clamp_keep_ratio_"
-        << (clamp_keep_ratio.has_value() ? std::to_string(static_cast<int>(clamp_keep_ratio.value() * 100))
-                                         : "noclamp");
+    *os << "__";
+    PrintToClamp(clamp_keep_ratio, os);
     *os << "__Bias";
     *os << "__bl_" << bl;
 }

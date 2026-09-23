@@ -1224,6 +1224,11 @@ static std::string test_description(const MatMulQuantizedTestParams& param) {
     return sstream.str();
 };
 
+/// Prints the parameters of a quantized matrix multiplication test case.
+[[maybe_unused]] static void PrintTo(const MatMulQuantizedTestParams& param, std::ostream* os) {
+    *os << test_description(param);
+}
+
 [[maybe_unused]] static void PrintTo(const IndirectMatMulQuantizedTestParams& param, std::ostream* os) {
     const auto& [variant, shape, k_chunk_length, portion, clamp_keep_ratio, scale_ratio] = param;
 

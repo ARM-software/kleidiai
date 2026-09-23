@@ -162,9 +162,8 @@ using MatMulTestParams_f32_qsi8d32p_qsi4c32p =
     PrintTo(shape, os);
     *os << "__";
     PrintTo(portion, os);
-    *os << "__clamp_keep_ratio_"
-        << (clamp_keep_ratio.has_value() ? std::to_string(static_cast<int>(clamp_keep_ratio.value() * 100))
-                                         : "noclamp");
+    *os << "__";
+    PrintToClamp(clamp_keep_ratio, os);
     *os << (variable_bl ? "__VarBL" : "__FixedBL");
     *os << "__bl_" << bl;
 }
