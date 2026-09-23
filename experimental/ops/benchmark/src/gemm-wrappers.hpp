@@ -711,9 +711,9 @@ public:
         if (std::is_same<Tres, bfloat16>::value) {
             // BF16 result implies BF16 operands
             // Fast mode implies BF16 accumulation, otherwise it's FP32
-            res_mantissa_bits = 6;
+            res_mantissa_bits = 8;
             if (p->fast_mode) {
-                acc_mantissa_bits = 6;
+                acc_mantissa_bits = 8;
             } else {
                 acc_mantissa_bits = 24;
             }
@@ -766,6 +766,15 @@ public:
 
         lhs_res_bits = std::max(1, (res_operand_bits+1) / 2);
         rhs_res_bits = std::max(1, (res_operand_bits - lhs_res_bits));
+
+        // In FP32 fast mode, we might be constrained by what the input
+        // values can represent - clamp here if needed.
+        if (std::is_same<Tres, float>::value && p->fast_mode) {
+            lhs_acc_bits = std::min(lhs_acc_bits, 8);
+            lhs_res_bits = std::min(lhs_res_bits, 8);
+            rhs_acc_bits = std::min(rhs_acc_bits, 8);
+            rhs_res_bits = std::min(rhs_res_bits, 8);
+        }
 
 #ifndef SILENT
         printf("Generating test data: %d accumulator mantissa bits, %d result mantissa bits, %" PRId64 " total accumulations, %d accumulation bits\n", acc_mantissa_bits, res_mantissa_bits, acc_depth, accu_bits);
@@ -836,9 +845,11 @@ void test_dequantized(GemmProblem *p, int iterations, int nthreads, const char *
         A_q->read_dump(dump_in);
         B_q->read_dump(dump_in);
 
-        if(p->use_bias) {
+        if (p->use_bias) {
             bias_f = std::make_shared<Matrix <typename T_ref::result_type> >(1, p->output_channels, p->output_channels, 1, p->multis);
             bias_f->read_dump(dump_in);
+        } else if (p->accumulate) {
+            C_in->read_dump(dump_in);
         }
 
         C_fr->read_dump(dump_in);
@@ -963,8 +974,10 @@ void test_dequantized(GemmProblem *p, int iterations, int nthreads, const char *
 
         A_q->dump_out(fp);
         B_q->dump_out(fp);
-        if(p->use_bias) {
+        if (p->use_bias) {
             bias_f->dump_out(fp);
+        } else if (p->accumulate) {
+            C_in->dump_out(fp);
         }
         C_r->dump_out(fp);
 
@@ -1010,6 +1023,8 @@ void test_quantized(GemmProblem *p, int iterations, int nthreads, const char *ke
         if (p->use_bias) {
             bias_q = std::make_shared<Matrix <int32_t> >(1, p->output_channels, p->output_channels, 1, p->multis);
             bias_q->read_dump(dump_in);
+        } else if (p->accumulate) {
+            Cin_q->read_dump(dump_in);
         }
 
         C_qr->read_dump(dump_in);
@@ -1208,6 +1223,8 @@ void test_quantized(GemmProblem *p, int iterations, int nthreads, const char *ke
         B_q->dump_out(fp);
         if (p->use_bias) {
             bias_q->dump_out(fp);
+        } else if (p->accumulate) {
+            Cin_q->dump_out(fp);
         }
         C_q->dump_out(fp);
 
@@ -1273,6 +1290,8 @@ void test(GemmProblem *p, int iterations, int nthreads, const char *kernel_name,
         if (p->use_bias) {
             bias = std::make_shared<Matrix <typename T_test::result_type> >(1, p->output_channels, p->output_channels, 1, p->multis);
             bias->read_dump(dump_in);
+        } else if (p->accumulate) {
+            C->read_dump(dump_in);
         }
 
         C1->read_dump(dump_in);
@@ -1301,13 +1320,6 @@ void test(GemmProblem *p, int iterations, int nthreads, const char *kernel_name,
                 test_data.populate_bias(C);
                 C1->Copy(C);
             }
-        }
-
-        // FP32 fast mode means the operands can be cast to BF16 - mask them
-        // off here so the reference will match.
-        if (std::is_same<typename T_ref::operand_type, float>::value && p->fast_mode) {
-            A->template Mask<uint32_t>(0xffff0000);
-            B->template Mask<uint32_t>(0xffff0000);
         }
 
         T_ref kern_ref(A, B, C1, bias, p, true);
@@ -1357,6 +1369,8 @@ void test(GemmProblem *p, int iterations, int nthreads, const char *kernel_name,
         B->dump_out(fp);
         if (p->use_bias) {
             bias->dump_out(fp);
+        } else if (p->accumulate) {
+            C->dump_out(fp);
         }
         C2->dump_out(fp);
 

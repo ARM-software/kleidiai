@@ -123,16 +123,12 @@ static inline T get_random_number_or_NaN(void) {
 }
 
 template<typename T>
-inline T get_random_number_bits(int bits, bool pos_only=false) {
-    static GemmRandom gr;
+inline T get_random_number_bits(uint64_t raw_value, int bits, bool pos_only=false) {
+    int64_t value;
 
-    uint32_t raw_value = gr.get_int();
-    int32_t value;
-
-    // Assuming int is 32 bit
-    if (bits < 31) {
-        int sign = (raw_value >> 31) && (pos_only == false);
-        int masked = raw_value & ((1 << bits) - 1);
+    if (bits < 63) {
+        int sign = (raw_value >> 63) && (pos_only == false);
+        int masked = raw_value & ((1LL << bits) - 1);
 
         if (std::is_unsigned<T>::value) {
             sign=0;
@@ -140,7 +136,7 @@ inline T get_random_number_bits(int bits, bool pos_only=false) {
 
         value = (sign ? -1 : 1) * masked;
     } else {
-        value = (int32_t) raw_value;
+        value = *(reinterpret_cast<int64_t *>(&raw_value));
     }
 
     return (T)value;
@@ -459,6 +455,11 @@ public:
     int multi_stride=0;
     const bool is_clone=false; // clones don't own their data
 
+    // If this is populated with "RandomizeBits", store the parameters here for dumping purposes.
+    int rand_acc_bits=0;
+    int rand_res_bits=0;
+    uint32_t rand_seed=0;
+
     Matrix(Matrix &) = delete;
     Matrix operator=(Matrix &) = delete;
 
@@ -528,16 +529,30 @@ public:
     void dump_out(FILE *fp) {
         // Dump data size and matrix dimensions as a check.
         size_t data_size = sizeof(T);
+
+        // Bit 16 of data size used to indicate RandomizeBits data - we then
+        // just store the bit counts and the seed instead of the actual
+        // data.
+        if (rand_acc_bits > 0) {
+            data_size |= (1 << 16);
+        }
+
         fwrite(&data_size, sizeof(size_t), 1, fp);
         fwrite(&M, sizeof(M), 1, fp);
         fwrite(&N, sizeof(N), 1, fp);
         fwrite(&batches, sizeof(batches), 1, fp);
         fwrite(&multis, sizeof(multis), 1, fp);
 
-        for (int m=0; m<multis; m++) {
-            for (int b=0; b<batches; b++) {
-                for (int y=0; y<M; y++) {
-                    fwrite(data + m*multi_stride + b*batch_stride + y*stride, sizeof(T), N, fp);
+        if (rand_acc_bits > 0) {
+            fwrite(&rand_acc_bits, sizeof(rand_acc_bits), 1, fp);
+            fwrite(&rand_res_bits, sizeof(rand_res_bits), 1, fp);
+            fwrite(&rand_seed, sizeof(rand_seed), 1, fp);
+        } else {
+            for (int m=0; m<multis; m++) {
+                for (int b=0; b<batches; b++) {
+                    for (int y=0; y<M; y++) {
+                        fwrite(data + m*multi_stride + b*batch_stride + y*stride, sizeof(T), N, fp);
+                    }
                 }
             }
         }
@@ -547,6 +562,11 @@ public:
         size_t dump_size;
 
         fread(&dump_size, sizeof(size_t), 1, fp);
+
+        // Check for RandomizeBits mode, then clear it off so that size
+        // check below still works.
+        bool is_randomize_bits = dump_size & (1 << 16);
+        dump_size &= ~(1<<16);
 
         if (dump_size != sizeof(T)) {
             printf("read_dump(): Data size mismatch.\n");
@@ -565,27 +585,62 @@ public:
             }
         }
 
-        for (int m=0; m<multis; m++) {
-            for (int b=0; b<batches; b++) {
-                for (int y=0; y<M; y++) {
-                    fread(data + m*multi_stride + b*batch_stride + y*stride, sizeof(T), N, fp);
+        if (is_randomize_bits) {
+            fread(&rand_acc_bits, sizeof(rand_acc_bits), 1, fp);
+            fread(&rand_res_bits, sizeof(rand_res_bits), 1, fp);
+            fread(&rand_seed, sizeof(rand_seed), 1, fp);
+
+            RandomizeBits(rand_acc_bits, rand_res_bits, rand_seed);
+        } else {
+            for (int m=0; m<multis; m++) {
+                for (int b=0; b<batches; b++) {
+                    for (int y=0; y<M; y++) {
+                        fread(data + m*multi_stride + b*batch_stride + y*stride, sizeof(T), N, fp);
+                    }
                 }
             }
         }
     }
 
-    void RandomizeBits(int acc_bits, int res_bits=0, bool spam=false) {
+    void RandomizeBits(int acc_bits, int res_bits=0, uint32_t seed=0, bool spam=false) {
+        // For small integer types, avoid trying to generate more bits than
+        // they can store.
+        // This also avoids generating -128 values for signed 8-bit data
+        // which can cause errors with pre-dot product kernels.
+        if (std::is_same<T, uint8_t>::value) {
+            acc_bits = std::min(acc_bits, 8);
+            res_bits = std::min(res_bits, 8);
+        }
+
+        if (std::is_same<T, int8_t>::value) {
+            acc_bits = std::min(acc_bits, 7);
+            res_bits = std::min(res_bits, 7);
+        }
+
         if (res_bits == 0) {
             res_bits = acc_bits;
         }
+
+        if (seed == 0) {
+            seed = (uint32_t) random();
+        }
+
+        // Store parameters - if this Matrix is later dumped we will store
+        // these values only.
+        rand_res_bits=res_bits;
+        rand_acc_bits=acc_bits;
+        rand_seed=seed;
+
+        std::mt19937_64 rand_gen(seed);
 
         for(int m=0; m<multis; m++) {
             for(int b=0; b<batches; b++) {
                 for(int y=0; y<M; y++) {
                     for(int x=0; x<N; x++) {
-                        // Random number generation outsourced to function above to
-                        // allow it to be specialized for particular types.
-                        double res = get_random_number_bits<double>(acc_bits, std::is_unsigned<T>::value);
+                        // Generate random number ourselves and pass to
+                        // get_random_number_bits<>() to scale to the
+                        // correct range.
+                        double res = get_random_number_bits<double>(rand_gen(), acc_bits, std::is_unsigned<T>::value);
                         if (res_bits < acc_bits) {
                             int divisor = 1 << (acc_bits - res_bits + 1);
                             res = res / (double)divisor;
