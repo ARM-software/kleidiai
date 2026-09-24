@@ -203,6 +203,11 @@ inline constexpr MatMulPackLhsUkernelApiInterface kai_matmul_pack_lhs_mxk_x16p4v
     .get_api = kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme,
 };
 
+inline constexpr MatMulPackLhsUkernelApiInterface kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2_interface{
+    .get_config = [] { return kai_matmul_pack_lhs_uker_config{}; },
+    .get_api = kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2,
+};
+
 inline constexpr MatMulPackLhsUkernelApiInterface kai_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme_interface{
     .get_config = [] { return kai_matmul_pack_lhs_uker_config{}; },
     .get_api = kai_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme,
@@ -297,6 +302,10 @@ const auto& get_matmul_pack_lhs_benchmarks() {
             "kai_matmul_pack_lhs/kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme",
             kai_benchmark_matmul_pack_lhs<MatMulPackLhsUkernelApiInterface>,
             kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme_interface, DataType::FP16, test::cpu_has_sme),
+        RegisterBenchmark(
+            "kai_matmul_pack_lhs/kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2",
+            kai_benchmark_matmul_pack_lhs<MatMulPackLhsUkernelApiInterface>,
+            kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2_interface, DataType::FP16, test::cpu_has_sme2),
         RegisterBenchmark(
             "kai_matmul_pack_lhs/kai_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme",
             kai_benchmark_matmul_pack_lhs<MatMulPackLhsUkernelApiInterface>,

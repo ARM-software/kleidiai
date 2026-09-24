@@ -596,6 +596,8 @@ set(KLEIDIAI_FILES_SME2_ASM
     kai/ukernels/matmul/matmul_i32_u8p_u8p/kai_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa.c
     kai/ukernels/matmul/pack/kai_lhs_pack_bf16p2vlx2_f32_sme2.c
     kai/ukernels/matmul/pack/kai_lhs_pack_bf16p2vlx2_f32_sme2_asm.S
+    kai/ukernels/matmul/pack/kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2.c
+    kai/ukernels/matmul/pack/kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2_asm.S
 )
 
 set(KLEIDIAI_FILES_SME2P1_MOP4_ASM

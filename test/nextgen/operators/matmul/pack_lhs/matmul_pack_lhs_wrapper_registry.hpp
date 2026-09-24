@@ -48,6 +48,9 @@ namespace kai::test {
 /// Creates a wrapper for kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme.
 [[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme();
 
+/// Creates a wrapper for kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2.
+[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2();
+
 /// Creates a wrapper for kai_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme.
 [[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme();
 
@@ -89,6 +92,10 @@ namespace kai::test {
 
 /// Checks if the portion produces non-empty LHS packing tiles for the x16p2vlx2 matmul operator.
 [[nodiscard]] bool is_shape_suitable_lhs_x16p2vlx2_x16_sme(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
+
+/// Checks if the portion produces non-empty LHS packing tiles for the SME2 x16p4vsx2 packer.
+[[nodiscard]] bool is_shape_suitable_lhs_x16p4vsx2_x16_sme2(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
 /// Checks if the portion produces non-empty LHS packing tiles for the x8p4vsx4 matmul operator.

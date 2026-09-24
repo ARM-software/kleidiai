@@ -128,6 +128,32 @@ MatMulOperator create_operator_matmul_clamp_f16_f16p4vsx2_f16p4vsx2bf16_8vsx8vs_
     return op;
 }
 
+/// Creates an FP16 matmul operator using the SME2 x16p4vsx2 LHS packer.
+MatMulOperator create_operator_matmul_clamp_f16_f16p4vsx2_f16p4vsx2bf16_8vsx8vs_sme2_mopa_lhs_x16p4vsx2_x16_sme2() {
+    MatMulOperator op{};
+    op.name = "matmul_clamp_f16_f16p4vsx2_f16p4vsx2bf16_8vsx8vs_sme2_mopa_lhs_x16p4vsx2_x16_sme2";
+
+    op.is_cpu_supported = cpu_has_sme2;
+    op.is_shape_suitable = all_true<               //
+        is_shape_suitable_lhs_x16p4vsx2_x16_sme2,  //
+        is_shape_suitable_rhs_kxn_x16p4vsx2bx16_x16_x16_sme>;
+    op.supported_bias_mode_sets = {acc_bias_per_n};
+    op.clamp_mode = MatMulClampMode::OPTIONAL;
+    op.lhs_quant = std::nullopt;
+    op.rhs_quant = std::nullopt;
+    op.bias_quant = std::nullopt;
+    op.lhs_dtype = DataType::FP16;
+    op.rhs_dtype = DataType::FP16;
+    op.bias_dtype = DataType::FP16;
+    op.acc_dtype = DataType::FP32;
+    op.dst_dtype = DataType::FP16;
+
+    op.pack_lhs = create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2();
+    op.pack_rhs = create_matmul_pack_rhs_kxn_x16p4vsx2bx16_x16_x16_sme();
+    op.matmul = create_matmul_clamp_f16_f16p4vsx2_f16p4vsx2bf16_8vsx8vs_sme2_mopa();
+    return op;
+}
+
 /// Creates an operator for kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa - non-transposed RHS.
 MatMulOperator create_operator_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa_rhs_kxn() {
     MatMulOperator op{};
@@ -1022,6 +1048,7 @@ Span<const MatMulOperator> get_available_matmul_operators() {
         create_operator_matmul_clamp_f16_f16_f16p16vsx2bf16_6x16vs_sve2p1_dot(),
         create_operator_matmul_clamp_f16_f16_f16p4vsx2bf16_1x32vs_sme2_dot(),
         create_operator_matmul_clamp_f16_f16p4vsx2_f16p4vsx2bf16_8vsx8vs_sme2_mopa(),
+        create_operator_matmul_clamp_f16_f16p4vsx2_f16p4vsx2bf16_8vsx8vs_sme2_mopa_lhs_x16p4vsx2_x16_sme2(),
         create_operator_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa_rhs_kxn(),
         create_operator_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa_rhs_nxk(),
         create_operator_matmul_clamp_f32_f16p4vsx2_qai4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa(),

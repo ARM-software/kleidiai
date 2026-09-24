@@ -21,6 +21,7 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 - New SME micro-kernels:
   - SME packing micro-kernels for 16-bit RHS inputs and per-N 32-bit bias, including use with the BF16 SME2 MOPA matrix multiplication micro-kernel.
 - New SME2 micro-kernels:
+  - Added `kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2`, an optimized LHS packing micro-kernel for the x16p4vsx2 format.
   - Matrix multiplication micro-kernels with F32 output and optional LUT decoding: MxN for FP16 x QSI4C32P, and 1xN and MxN for QSI8D32P x QSI4C32P.
 - Fixes
   - Added BF16 support to the NextGen matmul, packing, comparison, and diagnostic references used by the BF16 SME2 tests.

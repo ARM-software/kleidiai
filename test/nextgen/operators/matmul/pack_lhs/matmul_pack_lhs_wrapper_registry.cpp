@@ -98,6 +98,15 @@ std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_lhs_mxk_x16p4vsx2_x1
             std::array<DataType, 0>{}));
 }
 
+std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2() {
+    return std::make_unique<MatMulPackLhsUkerApiWrapper>(
+        "create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2", kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2(),
+        make_poly<PlainFormat>(DataType::FP16),
+        make_poly<Block2dRowFormat>(
+            4 * get_sme_vector_scale(), 2, 2, false, DataType::FP16, std::array<DataType, 0>{},
+            std::array<DataType, 0>{}));
+}
+
 std::unique_ptr<KernelWrapper<MatShape>> create_matmul_lhs_pack_f16p4vsx2_f32_neon() {
     return std::make_unique<MatMulPackLhsFpWrapper>(
         "lhs_pack_f16p4vsx2_f32_neon",  // name
@@ -318,6 +327,11 @@ bool is_shape_suitable_lhs_x16p2vlx2_x16_sme(
 
     const size_t mr = 2 * get_sme_vector_length<float>();
     return portion_non_empty(shape_m, shape_k, kai_get_m_step_lhs_pack_x16p2vlx2_x16_sme(mr), shape_k, portion);
+}
+
+bool is_shape_suitable_lhs_x16p4vsx2_x16_sme2(
+    size_t shape_m, [[maybe_unused]] size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
+    return is_shape_suitable_lhs_uker_api(shape_m, shape_k, portion, kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2());
 }
 
 bool is_shape_suitable_lhs_f16p4vsx2_qai4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa(
