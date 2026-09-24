@@ -15,7 +15,7 @@
 
 - `kai/` – Common headers plus micro-kernel families grouped by operator (for
   example `ukernels/matmul`). Each family follows naming rules documented in
-  per-directory READMEs and implements the standard interfaces in
+  per-directory `README.md` and implements the standard interfaces in
   `ukernels/matmul/*.h`.
 - `test/` – GoogleTest unit suites covering micro-kernel correctness and API
   guarantees.
@@ -23,7 +23,7 @@
 - `examples/` – Minimal builds that exercise the library as an external
   dependency and serve as smoke tests.
 - `docs/` – Task-focused guides (packing/matmul intros, indirect matmul
-  walkthroughs, framework integration examples, external patches).
+  description, framework integration examples, external patches).
 - `docker/` - Contains containers used in CI.
 
 ## Build & Run
@@ -34,11 +34,20 @@ KleidiAI uses two build systems; CMake and Bazel.
   - Test with `build/kleidiai_test`
 - Bazel build and test `bazelisk test //test:kleidiai_test`
 
+## Testing
+
+There are two generations of test frameworks:
+
+- The `test/tests/` directory which has groups of specialized test. This test
+  framework is no longer extended with new kernels.
+- The `test/nextgen` directory has a generalized test flow. All new kernels
+  should be added to framework.
+
 ### CI/CD
 
 The testing pipeline is described in `.gitlab-ci.yml`, which does make use of
-container described in `docker/Dockerfile`. This utilizes FVP, which enables
-testing on different HW configurations.
+container described in `docker/Dockerfile`. This utilizes `FVP`, which enables
+testing on different hardware configurations.
 
 ## Working Notes for Agents
 
