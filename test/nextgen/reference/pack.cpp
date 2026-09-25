@@ -26,8 +26,8 @@ namespace {
 
 template <typename T>
 size_t pack_block2d(
-    size_t block_height, size_t block_width, size_t width_align, std::optional<double> pad_value, size_t height,
-    size_t width, Span<std::byte> packed_data, Span<const std::byte> data) {
+    size_t block_height, size_t block_width, size_t width_align, std::optional<double> pad_value, bool pad_bottom_first,
+    size_t height, size_t width, Span<std::byte> packed_data, Span<const std::byte> data) {
     KAI_TEST_ASSERT(width_align % block_width == 0);
 
     const size_t num_block_rows = round_up_division(height, block_height);
@@ -41,8 +41,12 @@ size_t pack_block2d(
         for (size_t block_col = 0; block_col < num_block_cols; ++block_col) {
             for (size_t elem_row = 0; elem_row < block_height; ++elem_row) {
                 for (size_t elem_col = 0; elem_col < block_width; ++elem_col) {
-                    const size_t row = block_row * block_height + elem_row;
+                    size_t row = block_row * block_height + elem_row;
                     size_t col = block_col * block_width + elem_col;
+
+                    if (pad_bottom_first && row >= height) {
+                        row = block_row * block_height;
+                    }
 
                     if (!pad_value.has_value() && col >= width) {
                         col = width - 1;

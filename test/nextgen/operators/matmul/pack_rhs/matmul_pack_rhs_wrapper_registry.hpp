@@ -174,4 +174,18 @@ create_matmul_rhs_pack_nxk_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme();
 [[nodiscard]] bool is_shape_suitable_rhs_nxk_qsi8cxp_qsi8cx_neon(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
+/// Creates a wrapper for kai_matmul_pack_rhs_kxn_x16p12x4bx32_x16_x32_neon micro-kernel.
+[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_kxn_bf16p12x4bf32_bf16_f32_neon();
+
+/// Creates a wrapper for kai_matmul_pack_rhs_nxk_x16p12x4bx32_x16_x32_neon micro-kernel.
+[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_nxk_bf16p12x4bf32_bf16_f32_neon();
+
+/// Checks if the portion produces non-empty RHS packing tiles for the x16p12x4bx32 KxN matmul operator.
+[[nodiscard]] bool is_shape_suitable_rhs_kxn_x16p12x4bx32_x16_x32_neon(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
+
+/// Checks if the portion produces non-empty RHS packing tiles for the x16p12x4bx32 NxK matmul operator.
+[[nodiscard]] bool is_shape_suitable_rhs_nxk_x16p12x4bx32_x16_x32_neon(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
+
 }  // namespace kai::test

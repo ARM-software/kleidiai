@@ -52,6 +52,7 @@ namespace kai::test {
 /// @param[in] width_align The input data is padded so that the width is multiple of this value
 ///                        before the data is packed. This value must be divisible by block width.
 /// @param[in] pad_value Value used for padding, or no value to repeat the last element for right padding.
+/// @param[in] pad_bottom_first Whether bottom padding repeats the first row of the final block.
 /// @param[in] height The data height.
 /// @param[in] width The data width.
 /// @param[out] packed_data The packed data buffer.
@@ -59,8 +60,8 @@ namespace kai::test {
 ///
 /// @return The size of packed data.
 using PackBlock2dFn = size_t (*)(
-    size_t block_height, size_t block_width, size_t width_align, std::optional<double> pad_value, size_t height,
-    size_t width, Span<std::byte> packed_data, Span<const std::byte> data);
+    size_t block_height, size_t block_width, size_t width_align, std::optional<double> pad_value, bool pad_bottom_first,
+    size_t height, size_t width, Span<std::byte> packed_data, Span<const std::byte> data);
 
 /// Gets the 2D block packing function for the specified data type.
 ///

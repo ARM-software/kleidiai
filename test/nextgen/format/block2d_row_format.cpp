@@ -149,8 +149,8 @@ Buffer Block2dRowFormat::pack(Shape shape, Span<const Span<const std::byte>> buf
     const std::optional<double> pad_value =
         m_pad_right_same ? std::nullopt : std::optional<double>{m_pad_value.value_or(0)};
     const size_t packed_data_size = pack_data_fn(
-        m_block_height, m_block_width, layout.width_alignment, pad_value, height, width, block_data_buffer,
-        data_buffer);
+        m_block_height, m_block_width, layout.width_alignment, pad_value, m_pad_bottom_first, height, width,
+        block_data_buffer, data_buffer);
     KAI_TEST_ASSERT(packed_data_size == data_size);
     const Span<const std::byte> block_data = block_data_buffer;
 
@@ -395,6 +395,9 @@ std::string Block2dRowFormat::uid() const {
     uid += "_" + std::to_string(m_block_height) + "x" + std::to_string(m_block_width);
     uid += "_wa" + std::to_string(m_width_align);
     uid += m_pad_right_same ? "_same" : "_value" + std::to_string(m_pad_value.value_or(0));
+    if (m_pad_bottom_first) {
+        uid += "_bottom_first";
+    }
     if (m_block_length != 0) {
         uid += "_bl" + std::to_string(m_block_length);
     }
@@ -421,15 +424,16 @@ std::string Block2dRowFormat::uid() const {
 bool Block2dRowFormat::operator==(const Format& other) const {
     const auto* rhs = dynamic_cast<const Block2dRowFormat*>(&other);
 
-    return rhs != nullptr &&                          //
-        m_block_height == rhs->m_block_height &&      //
-        m_block_width == rhs->m_block_width &&        //
-        m_width_align == rhs->m_width_align &&        //
-        m_pad_right_same == rhs->m_pad_right_same &&  //
-        m_pad_value == rhs->m_pad_value &&            //
-        m_dtype == rhs->m_dtype &&                    //
-        m_pre_dtypes == rhs->m_pre_dtypes &&          //
-        m_post_dtypes == rhs->m_post_dtypes &&        //
+    return rhs != nullptr &&                              //
+        m_block_height == rhs->m_block_height &&          //
+        m_block_width == rhs->m_block_width &&            //
+        m_width_align == rhs->m_width_align &&            //
+        m_pad_right_same == rhs->m_pad_right_same &&      //
+        m_pad_value == rhs->m_pad_value &&                //
+        m_pad_bottom_first == rhs->m_pad_bottom_first &&  //
+        m_dtype == rhs->m_dtype &&                        //
+        m_pre_dtypes == rhs->m_pre_dtypes &&              //
+        m_post_dtypes == rhs->m_post_dtypes &&            //
         m_block_length == rhs->m_block_length;
 }
 

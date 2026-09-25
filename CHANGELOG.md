@@ -14,6 +14,8 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 - Optimizations:
   - Improve GEMV performance of `kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot` by processing four RHS column blocks per iteration with four accumulators per block.
+- New Advanced SIMD micro-kernels:
+  - Advanced SIMD packing micro-kernels for 16-bit inputs and per-N 32-bit RHS bias, including use with the BF16 MMLA matrix multiplication micro-kernel.
 - New SVE micro-kernels:
   - Matrix multiplication (1xN) for QAI8DXP LHS and QSI8CXP RHS with F32 output, optimized for a 256-bit vector length.
   - Matrix multiplication (MxN) for QAI8DXP LHS and QSI8CXP RHS with F32 output, vector length agnostic.

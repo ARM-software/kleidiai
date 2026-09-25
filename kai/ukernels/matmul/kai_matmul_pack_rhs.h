@@ -13,6 +13,48 @@
 extern "C" {
 #endif
 
+/// Non-transposed RHS packing micro-kernel for 16-bit data with per-N 32-bit bias.
+///
+/// Required CPU features:
+///   * FEAT_AdvSIMD
+///
+/// Configuration parameters: none.
+///
+/// Operands:
+///   * rhs_packed - The packed RHS matrix.
+///     * RHS matrix: 16-bit data in 12x4 blocked layout.
+///     * Per-N bias vector: 32-bit data.
+///   * rhs - The RHS matrix.
+///     * RHS matrix: 16-bit data in KxN layout.
+///   * bias_n - The optional per-N bias vector.
+///     * Per-N bias vector: 32-bit data. A null pointer packs zero bias.
+///
+/// Supported flags: none.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_kxn_x16p12x4bx32_x16_x32_neon(void);
+
+/// Transposed RHS packing micro-kernel for 16-bit data with per-N 32-bit bias.
+///
+/// Required CPU features:
+///   * FEAT_AdvSIMD
+///
+/// Configuration parameters: none.
+///
+/// Operands:
+///   * rhs_packed - The packed RHS matrix.
+///     * RHS matrix: 16-bit data in 12x4 blocked layout.
+///     * Per-N bias vector: 32-bit data.
+///   * rhs - The RHS matrix.
+///     * RHS matrix: 16-bit data in NxK layout.
+///   * bias_n - The optional per-N bias vector.
+///     * Per-N bias vector: 32-bit data. A null pointer packs zero bias.
+///
+/// Supported flags: none.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_nxk_x16p12x4bx32_x16_x32_neon(void);
+
 /// Non-transposed RHS packing micro-kernel for 16-bit data with per-N bias.
 ///
 /// Required CPU features:

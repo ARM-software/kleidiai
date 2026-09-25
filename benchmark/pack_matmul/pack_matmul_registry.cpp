@@ -1,5 +1,6 @@
 //
 // SPDX-FileCopyrightText: Copyright 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2026 Meta Platforms, Inc. and affiliates.
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -29,6 +30,7 @@
 
 // Matrix multiplication micro-kernels with associated LHS packing micro-kernels.
 #include "kai/ukernels/matmul/kai_matmul.h"
+#include "kai/ukernels/matmul/kai_matmul_pack_lhs.h"
 #include "kai/ukernels/matmul/matmul_clamp_bf16_qai8dxp_qsi4c32p/kai_matmul_clamp_bf16_qai8dxp1x8_qsi4c32p4x8_1x4_neon_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_bf16_qai8dxp_qsi4c32p/kai_matmul_clamp_bf16_qai8dxp4x8_qsi4c32p4x8_16x4_neon_i8mm.h"
 #include "kai/ukernels/matmul/matmul_clamp_bf16_qai8dxp_qsi4cxp/kai_matmul_clamp_bf16_qai8dxp1x8_qsi4cxp8x8_1x8_neon_dotprod.h"
@@ -479,6 +481,118 @@ inline const PackMatMulEntry kai_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_
         kai_run_lhs_quant_pack_bf16p8x4_f32_neon, kai_run_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla>,
 };
 
+/// Adapts the unified LHS API offset query to the benchmark interface.
+///
+/// @param[in] m_idx Row index.
+/// @param[in] lhs_stride LHS row stride in bytes.
+///
+/// @return LHS offset in bytes.
+size_t get_lhs_offset_matmul_pack_lhs_mxk_x16p8x4_x16_neon(size_t m_idx, size_t lhs_stride) {
+    const kai_matmul_pack_lhs_uker_api api = kai_matmul_pack_lhs_mxk_x16p8x4_x16_neon();
+    const kai_matmul_pack_lhs_uker_config config = {};
+    const kai_matmul_pack_lhs_uker_lhs_dim_args index = {m_idx, 0};
+    const kai_matmul_pack_lhs_uker_lhs_stride_args stride = {lhs_stride};
+    return api.get_lhs_offset(&config, &index, &stride);
+}
+
+/// Adapts the unified packed LHS API offset query to the benchmark interface.
+///
+/// @param[in] m_idx Row index.
+/// @param[in] k Number of columns.
+/// @param[in] mr M block size.
+/// @param[in] kr K block size.
+/// @param[in] sr Number of K splits.
+///
+/// @return Packed LHS offset in bytes.
+size_t get_lhs_packed_offset_matmul_pack_lhs_mxk_x16p8x4_x16_neon(
+    size_t m_idx, size_t k, size_t mr, size_t kr, size_t sr) {
+    KAI_ASSUME(mr == 8);
+    KAI_ASSUME(kr == 4);
+    KAI_ASSUME(sr == 1);
+
+    const kai_matmul_pack_lhs_uker_api api = kai_matmul_pack_lhs_mxk_x16p8x4_x16_neon();
+    const kai_matmul_pack_lhs_uker_config config = {};
+    const kai_matmul_pack_lhs_uker_lhs_packed_dim_args shape = {m_idx, k};
+    const kai_matmul_pack_lhs_uker_lhs_packed_dim_args index = {m_idx, 0};
+    const kai_matmul_pack_lhs_uker_lhs_packed_stride_args stride = api.get_lhs_packed_stride(&config, &shape);
+    return api.get_lhs_packed_offset(&config, &index, &stride);
+}
+
+/// Adapts the unified packed LHS API size query to the benchmark interface.
+///
+/// @param[in] m Number of rows.
+/// @param[in] k Number of columns.
+/// @param[in] mr M block size.
+/// @param[in] kr K block size.
+/// @param[in] sr Number of K splits.
+///
+/// @return Packed LHS size in bytes.
+size_t get_lhs_packed_size_matmul_pack_lhs_mxk_x16p8x4_x16_neon(size_t m, size_t k, size_t mr, size_t kr, size_t sr) {
+    KAI_ASSUME(mr == 8);
+    KAI_ASSUME(kr == 4);
+    KAI_ASSUME(sr == 1);
+
+    const kai_matmul_pack_lhs_uker_api api = kai_matmul_pack_lhs_mxk_x16p8x4_x16_neon();
+    const kai_matmul_pack_lhs_uker_config config = {};
+    const kai_matmul_pack_lhs_uker_lhs_packed_dim_args shape = {m, k};
+    const kai_matmul_pack_lhs_uker_lhs_packed_stride_args stride = api.get_lhs_packed_stride(&config, &shape);
+    return api.get_lhs_packed_size(&config, &shape, &stride);
+}
+
+/// Runs the unified LHS packing API through the benchmark interface.
+///
+/// @param[in] m Number of rows.
+/// @param[in] k Number of columns.
+/// @param[in] mr M block size.
+/// @param[in] kr K block size.
+/// @param[in] sr Number of K splits.
+/// @param[in] m_idx_start Starting row index.
+/// @param[in] lhs LHS buffer.
+/// @param[in] lhs_stride LHS row stride in bytes.
+/// @param[out] lhs_packed Packed LHS buffer.
+void run_matmul_pack_lhs_mxk_x16p8x4_x16_neon(
+    size_t m, size_t k, size_t mr, size_t kr, size_t sr, size_t m_idx_start, const void* lhs, size_t lhs_stride,
+    void* lhs_packed) {
+    KAI_ASSUME(mr == 8);
+    KAI_ASSUME(kr == 4);
+    KAI_ASSUME(sr == 1);
+    KAI_ASSUME(m_idx_start == 0);
+
+    const kai_matmul_pack_lhs_uker_api api = kai_matmul_pack_lhs_mxk_x16p8x4_x16_neon();
+    const kai_matmul_pack_lhs_uker_config config = {};
+    const kai_matmul_pack_lhs_uker_lhs_packed_dim_args packed_shape = {m, k};
+
+    kai_matmul_pack_lhs_uker_args args = {};
+    args.shape = {m, k};
+    args.operand.lhs.ptr = lhs;
+    args.operand.lhs.stride.m = lhs_stride;
+    args.operand.lhs_packed.ptr = lhs_packed;
+    args.operand.lhs_packed.stride = api.get_lhs_packed_stride(&config, &packed_shape);
+
+    api.run(&config, &args);
+}
+
+inline const PackMatMulEntry kai_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla_raw_lhs_pack_entry{
+    .benchmark_name =
+        "kai_pack_matmul/kai_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla/"
+        "kai_matmul_pack_lhs_mxk_x16p8x4_x16_neon",
+    .matmul_name = "kai_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla",
+    .lhs_type = DataType::BF16,
+    .dst_type = DataType::FP32,
+    .matmul_op = PackMatMulOp::GEMM,
+    .needs_block_size = false,
+    .is_cpu_supported = test::cpu_has_bf16,
+    .get_mr = kai_get_mr_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla,
+    .get_kr = kai_get_kr_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla,
+    .get_sr = kai_get_sr_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla,
+    .get_lhs_offset = get_lhs_offset_matmul_pack_lhs_mxk_x16p8x4_x16_neon,
+    .get_lhs_packed_offset = get_lhs_packed_offset_matmul_pack_lhs_mxk_x16p8x4_x16_neon,
+    .get_lhs_packed_size = get_lhs_packed_size_matmul_pack_lhs_mxk_x16p8x4_x16_neon,
+    .get_matmul_lhs_packed_offset = kai_get_lhs_packed_offset_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla,
+    .run_pack_matmul = run_pack_matmul_base<
+        run_matmul_pack_lhs_mxk_x16p8x4_x16_neon, kai_run_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla>,
+};
+
 inline const PackMatMulEntry kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa_lhs_pack_entry{
     .benchmark_name =
         "kai_pack_matmul/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa/"
@@ -815,13 +929,15 @@ PackMatMulRegistryEntry RegisterPackMatMulBenchmarkEntry(const PackMatMulEntry& 
 ///
 /// @return Registered pack matmul benchmarks.
 const auto& get_pack_matmul_benchmarks() {
-    static const std::array<PackMatMulRegistryEntry, 32> pack_matmul_entries{
+    static const std::array<PackMatMulRegistryEntry, 33> pack_matmul_entries{
         {
             RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f16_bf16p8x4_bf16p12x4b_8x12_neon_mmla_lhs_pack_entry),
             RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa_lhs_pack_entry),
             RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa_lhs_pack_entry),
             RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f32_bf16p1x4_bf16p12x4b_1x36_neon_dot_lhs_pack_entry),
             RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla_lhs_pack_entry),
+            RegisterPackMatMulBenchmarkEntry(
+                kai_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla_raw_lhs_pack_entry),
             RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa_lhs_pack_entry),
             RegisterPackMatMulBenchmarkEntry(kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa_lhs_pack_entry),
             RegisterPackMatMulBenchmarkEntry(

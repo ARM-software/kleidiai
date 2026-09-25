@@ -135,4 +135,15 @@ namespace kai::test {
 [[nodiscard]] bool is_shape_suitable_lhs_qai8dxp4x8sf32_qsi8cxp4vsx8sf32bf32_16x4vs_sve_i8mm(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
+/// Creates a wrapper for kai_matmul_pack_lhs_mxk_x16p8x4_x16_neon micro-kernel.
+///
+/// @param[in] data_type The input and packed data type. Must be 16 bits.
+///
+/// @return The micro-kernel wrapper.
+[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_lhs_mxk_x16p8x4_x16_neon(DataType data_type);
+
+/// Checks if the portion produces non-empty LHS packing tiles for the x16p8x4 matmul operator.
+[[nodiscard]] bool is_shape_suitable_lhs_x16p8x4_x16_neon(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
+
 }  // namespace kai::test

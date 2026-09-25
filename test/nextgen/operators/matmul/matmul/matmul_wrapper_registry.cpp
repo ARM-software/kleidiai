@@ -16,6 +16,7 @@
 #include <memory>
 
 #include "kai/ukernels/matmul/kai_matmul.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_bf16p_bf16p/kai_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa.h"
@@ -520,6 +521,29 @@ std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f32_qai8dxp4vsx4
         make_poly<PlainFormat>(DataType::FP32), DataType::FP32, MatMulUkerClampConfig::optional(DataType::FP32),
         MatMulUkerApiBiasDeliveryStage::PACK_RHS, MatMulUkerOutputStageConfig{}, kai_matmul_uker_config{{32}},
         MatMulPackArgs{/*mr=*/4 * get_sme_vector_scale(), /*nr=*/0, /*kr=*/4, /*sr=*/1, /*bl=*/0});
+}
+
+std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla() {
+    return std::make_unique<MatMulFpWrapper>(
+        "matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla",
+        MatMulFpInterface{
+            kai_get_m_step_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla,
+            kai_get_n_step_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla,
+            kai_get_mr_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla,
+            kai_get_nr_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla,
+            kai_get_kr_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla,
+            kai_get_sr_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla,
+            kai_get_lhs_packed_offset_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla,
+            kai_get_rhs_packed_offset_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla,
+            kai_get_dst_offset_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla,
+            kai_get_dst_size_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla,
+            kai_run_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla,
+        },
+        make_poly<Block2dRowFormat>(
+            8, 4, 4, false, DataType::BF16, std::array<DataType, 0>{}, std::array<DataType, 0>{}),
+        make_poly<Block2dRowFormat>(
+            12, 4, 4, false, DataType::BF16, std::array{DataType::FP32}, std::array<DataType, 0>{}),
+        make_poly<PlainFormat>(DataType::FP32));
 }
 
 }  // namespace kai::test

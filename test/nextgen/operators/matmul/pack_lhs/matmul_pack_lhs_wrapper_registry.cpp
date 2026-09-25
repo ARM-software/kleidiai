@@ -443,4 +443,20 @@ bool is_shape_suitable_lhs_qai8dxp4x8sf32_qsi8cxp4vsx8sf32bf32_16x4vs_sve_i8mm(
     return portion_non_empty(shape_m, shape_k, lhs_m_step, shape_k, portion);
 }
 
+std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_lhs_mxk_x16p8x4_x16_neon(DataType data_type) {
+    KAI_ASSERT_ALWAYS(data_type_size_in_bits(data_type) == 16);
+
+    const auto data_type_name = data_type_uid(data_type);
+    return std::make_unique<MatMulPackLhsUkerApiWrapper>(
+        "matmul_pack_lhs_mxk_" + data_type_name + "p8x4_" + data_type_name + "_neon",
+        kai_matmul_pack_lhs_mxk_x16p8x4_x16_neon(), make_poly<PlainFormat>(data_type),
+        make_poly<Block2dRowFormat>(
+            8, 4, 4, false, data_type, std::array<DataType, 0>{}, std::array<DataType, 0>{}, 0, std::nullopt, true));
+}
+
+bool is_shape_suitable_lhs_x16p8x4_x16_neon(
+    size_t shape_m, [[maybe_unused]] size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
+    return is_shape_suitable_lhs_uker_api(shape_m, shape_k, portion, kai_matmul_pack_lhs_mxk_x16p8x4_x16_neon());
+}
+
 }  // namespace kai::test

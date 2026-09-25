@@ -1,5 +1,6 @@
 //
 // SPDX-FileCopyrightText: Copyright 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2026 Meta Platforms, Inc. and affiliates.
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -30,6 +31,24 @@ extern "C" {
 ///
 /// @return The micro-kernel API.
 struct kai_matmul_pack_lhs_uker_api kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon(void);
+
+/// Non-transposed LHS packing micro-kernel for 16-bit data.
+///
+/// Required CPU features:
+///   * FEAT_AdvSIMD
+///
+/// Configuration parameters: none.
+///
+/// Operands:
+///   * lhs_packed - The packed LHS matrix.
+///     * LHS matrix: 16-bit data in 8x4 blocked layout.
+///   * lhs - The LHS matrix.
+///     * LHS matrix: 16-bit data in MxK layout.
+///
+/// Supported flags: none.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_pack_lhs_uker_api kai_matmul_pack_lhs_mxk_x16p8x4_x16_neon(void);
 
 /// Non-transposed LHS packing micro-kernel for 8-bit data.
 ///

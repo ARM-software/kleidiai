@@ -78,10 +78,11 @@ public:
     /// @param[in] post_dtypes The data type of each postfix per-row component.
     /// @param[in] block_length Number of K values sharing the per-row components. A value of 0 means the full row.
     /// @param[in] pad_value Value used for padding, or no value to pad with 0.
+    /// @param[in] pad_bottom_first Whether bottom data padding repeats the first row of the final block.
     Block2dRowFormat(
         size_t block_height, size_t block_width, size_t width_align, bool pad_right_same, DataType dtype,
         Span<const DataType> pre_dtypes, Span<const DataType> post_dtypes, size_t block_length = 0,
-        std::optional<double> pad_value = std::nullopt) :
+        std::optional<double> pad_value = std::nullopt, bool pad_bottom_first = false) :
         m_block_height(block_height),
         m_block_width(block_width),
         m_width_align(width_align),
@@ -90,7 +91,8 @@ public:
         m_pre_dtypes(pre_dtypes.begin(), pre_dtypes.end()),
         m_post_dtypes(post_dtypes.begin(), post_dtypes.end()),
         m_block_length(block_length),
-        m_pad_value(pad_value) {
+        m_pad_value(pad_value),
+        m_pad_bottom_first(pad_bottom_first) {
         KAI_TEST_ASSERT(width_align % block_width == 0);
         KAI_TEST_ASSERT(block_height * block_width * data_type_size_in_bits(dtype) % 8 == 0);
         KAI_TEST_ASSERT(block_length == 0 || block_length % block_width == 0);
@@ -127,6 +129,7 @@ private:
     std::vector<DataType> m_post_dtypes;
     size_t m_block_length;
     std::optional<double> m_pad_value;
+    bool m_pad_bottom_first;
 };
 
 }  // namespace kai::test

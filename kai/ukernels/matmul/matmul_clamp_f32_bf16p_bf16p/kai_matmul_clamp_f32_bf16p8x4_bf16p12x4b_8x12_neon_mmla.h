@@ -1,5 +1,6 @@
 //
 // SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2026 Meta Platforms, Inc. and affiliates.
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -12,6 +13,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif  // __cplusplus
+
+/// Micro-kernel dependencies
+///
+/// -# kai_lhs_quant_pack_bf16p8x4_f32_neon to pack an FP32 LHS matrix.
+/// -# kai_rhs_quant_pack_kxn_bf16p12x4biasf32_f32_neon to pack an FP32 RHS matrix with FP32 bias.
+/// -# kai_matmul_pack_lhs_mxk_x16p8x4_x16_neon to pack a BF16 LHS matrix.
+/// -# kai_matmul_pack_rhs_kxn_x16p12x4bx32_x16_x32_neon to pack a KxN BF16 RHS matrix with FP32 bias.
+/// -# kai_matmul_pack_rhs_nxk_x16p12x4bx32_x16_x32_neon to pack an NxK BF16 RHS matrix with FP32 bias.
 
 /// --------------------------------------------------
 

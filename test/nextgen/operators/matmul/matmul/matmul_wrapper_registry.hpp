@@ -110,4 +110,7 @@ create_matmul_clamp_f32_qai8dxp1x4_qsi4c32p16vsx4_1x16vs_sme_dot();
 [[nodiscard]] std::unique_ptr<KernelWrapper<MatMulShape>>
 create_matmul_clamp_f32_qai8dxp4vsx4_qsi4c32p16vsx4_4vsx16vs_sme_mopa();
 
+/// Creates a wrapper for matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla micro-kernel.
+[[nodiscard]] std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla();
+
 }  // namespace kai::test

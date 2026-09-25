@@ -619,4 +619,44 @@ bool is_shape_suitable_rhs_nxk_qsi8cxp_qsi8cx_neon(
 
     return portion_non_empty(shape_n, shape_k, rhs_n_step, shape_k, portion);
 }
+
+std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_kxn_bf16p12x4bf32_bf16_f32_neon() {
+    MatMulPackRhsOperandSlots operand_slots{};
+    operand_slots.bias_n = MatMulSlot::ACC_BIAS_N_DATA;
+
+    return std::make_unique<MatMulPackRhsUkerApiWrapper>(
+        "matmul_pack_rhs_kxn_bf16p12x4bf32_bf16_f32_neon", kai_matmul_pack_rhs_kxn_x16p12x4bx32_x16_x32_neon(),
+        make_poly<PlainFormat>(DataType::BF16), make_poly<PlainFormat>(DataType::FP32),
+        make_poly<Block2dRowFormat>(
+            12, 4, 4, false, DataType::BF16, std::array{DataType::FP32}, std::array<DataType, 0>{}),
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS, MatMulSlot::RHS_DATA, operand_slots,
+        std::vector{MatMulSlot::ACC_BIAS_N_DATA, MatMulSlot::RHS_T_DATA});
+}
+
+std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_nxk_bf16p12x4bf32_bf16_f32_neon() {
+    MatMulPackRhsOperandSlots operand_slots{};
+    operand_slots.bias_n = MatMulSlot::ACC_BIAS_N_DATA;
+
+    return std::make_unique<MatMulPackRhsUkerApiTWrapper>(
+        "matmul_pack_rhs_nxk_bf16p12x4bf32_bf16_f32_neon", kai_matmul_pack_rhs_nxk_x16p12x4bx32_x16_x32_neon(),
+        make_poly<PlainFormat>(DataType::BF16), make_poly<PlainFormat>(DataType::FP32),
+        make_poly<Block2dRowFormat>(
+            12, 4, 4, false, DataType::BF16, std::array{DataType::FP32}, std::array<DataType, 0>{}, 0, std::nullopt,
+            true),
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS, operand_slots,
+        std::vector{MatMulSlot::ACC_BIAS_N_DATA, MatMulSlot::RHS_T_DATA});
+}
+
+bool is_shape_suitable_rhs_kxn_x16p12x4bx32_x16_x32_neon(
+    [[maybe_unused]] size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
+    return is_shape_suitable_rhs_uker_api(
+        shape_n, shape_k, portion, kai_matmul_pack_rhs_kxn_x16p12x4bx32_x16_x32_neon());
+}
+
+bool is_shape_suitable_rhs_nxk_x16p12x4bx32_x16_x32_neon(
+    [[maybe_unused]] size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
+    return is_shape_suitable_rhs_uker_api(
+        shape_n, shape_k, portion, kai_matmul_pack_rhs_nxk_x16p12x4bx32_x16_x32_neon());
+}
+
 }  // namespace kai::test
