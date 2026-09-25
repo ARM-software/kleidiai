@@ -1,5 +1,6 @@
 //
 // SPDX-FileCopyrightText: Copyright 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -514,6 +515,27 @@ struct kai_matmul_uker_api kai_matmul_clamp_f32_qai8dxp4vsx4_qsi4c32p16vsx4_4vsx
 ///
 /// @return The micro-kernel API.
 struct kai_matmul_uker_api kai_matmul_clamp_f32_qai8dxp1x4_qsi4c32p16vsx4_1x16vs_sme_dot(void);
+
+/// Matrix-matrix multiplication with dynamically quantized INT8 packed LHS and INT8 packed RHS packed inputs with FP32
+/// output using SVE MMLA.
+///
+/// Required CPU features:
+///   * FEAT_SVE
+///   * FEAT_I8MM
+///
+/// Required operands:
+///   * lhs - qai8dxp4x8 data packed with per-row I32 zeropoint, and FP32 scale.
+///   * rhs - qsi8cxp4vsx8 packed with per-column I32 sum,  F32 bias and FP32 scale.
+///   * dst - FP32 output matrix.
+///
+/// Optional arguments:
+///   * clamp - FP32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP is set.
+///
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_f32_qai8dxp4x8sf32_qsi8cxp4vsx8sf32bf32_16x4vs_sve_i8mm(void);
 
 #ifdef __cplusplus
 }  // extern "C"

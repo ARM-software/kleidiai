@@ -30,6 +30,7 @@
 #include "test/common/data_type.hpp"
 #include "test/common/matrix_portion.hpp"
 #include "test/common/sme.hpp"
+#include "test/common/sve.hpp"
 #include "test/nextgen/common/poly.hpp"
 #include "test/nextgen/format/block2d_row_format.hpp"
 #include "test/nextgen/format/plain_format.hpp"
@@ -243,6 +244,10 @@ std::unique_ptr<KernelWrapper<MatShape>> create_matmul_matmul_pack_lhs_mxk_qsi8d
 std::unique_ptr<KernelWrapper<MatShape>> create_matmul_lhs_quant_pack_qai8dxp4vsx4_f32() {
     return create_matmul_lhs_quant_pack_qai8dxp_f32("4vsx4", 4 * get_sme_vector_scale(), 4);
 }
+std::unique_ptr<KernelWrapper<MatShape>> create_matmul_lhs_quant_pack_qai8dxp4x8_f32() {
+    return create_matmul_lhs_quant_pack_qai8dxp_f32(
+        "4x8", 4, 8, MatMulPackArgs{4, get_sve_vector_scale() * 4, 8, 1, 0});
+}
 
 std::unique_ptr<KernelWrapper<MatShape>> create_matmul_lhs_pack_f32p2vlx1_f32_sme() {
     return std::make_unique<MatMulPackLhsFpWrapper>(
@@ -420,6 +425,19 @@ bool is_shape_suitable_lhs_qai8dxp4vsx4_qsi4c32p16vsx4_4vsx16vs_sme_mopa(
     }
 
     const size_t mr = 4 * get_sme_vector_scale();
+    const size_t lhs_m_step = kai_get_m_step_lhs_quant_pack_qai8dxp_f32(mr);
+
+    return portion_non_empty(shape_m, shape_k, lhs_m_step, shape_k, portion);
+}
+
+bool is_shape_suitable_lhs_qai8dxp4x8sf32_qsi8cxp4vsx8sf32bf32_16x4vs_sve_i8mm(
+
+    size_t shape_m, [[maybe_unused]] size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
+    if (shape_m == 0 || shape_k == 0) {
+        return false;
+    }
+
+    const size_t mr = 4;
     const size_t lhs_m_step = kai_get_m_step_lhs_quant_pack_qai8dxp_f32(mr);
 
     return portion_non_empty(shape_m, shape_k, lhs_m_step, shape_k, portion);

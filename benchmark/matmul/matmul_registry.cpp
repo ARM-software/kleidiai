@@ -690,6 +690,13 @@ inline constexpr MatMulUkernelApiInterface kai_matmul_i32_u8p4vsx4_u8p4vsx4_i32_
     .acc_bias_elem_size = sizeof(int32_t),
 };
 
+inline constexpr MatMulUkernelApiInterface
+    kai_matmul_clamp_f32_qai8dxp4x8sf32_qsi8cxp4vsx8sf32bf32_16x4vs_sve_i8mm_interface{
+        .get_config = [] { return kai_matmul_uker_config{}; },
+        .get_api = kai_matmul_clamp_f32_qai8dxp4x8sf32_qsi8cxp4vsx8sf32bf32_16x4vs_sve_i8mm,
+        .flags = KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP,
+    };
+
 // matmul_clamp_bf16_qai8dxp_qsi4c32p
 inline constexpr MatMulBlockwiseDynamicQuantGenericDstInterface
     kai_matmul_clamp_bf16_qai8dxp1x8_qsi4c32p4x8_1x4_neon_dotprod_interface{
@@ -1338,6 +1345,13 @@ const auto& get_matmul_benchmarks() {
             kai_benchmark_matmul<MatMulBlockwiseDynamicQuantGenericDstInterface>,
             kai_matmul_clamp_bf16_qai8dxp4x8_qsi4c32p4x8_16x4_neon_i8mm_interface, DataType::BF16, MatMulOp::GEMM,
             test::cpu_has_i8mm_and_bf16),
+
+        // matmul_clamp_f32_qai8dxp4x8sf32_qsi8cxp4vsx8sf32bf32
+        RegisterBenchmark(
+            "kai_matmul_clamp_f32_qai8dxp4x8sf32_qsi8cxp4vsx8sf32bf32_16x4vs_sve_i8mm",
+            kai_benchmark_matmul<MatMulUkernelApiInterface>,
+            kai_matmul_clamp_f32_qai8dxp4x8sf32_qsi8cxp4vsx8sf32bf32_16x4vs_sve_i8mm_interface, DataType::FP32,
+            MatMulOp::GEMM, test::cpu_has_svei8mm),
 
         // matmul_clamp_bf16_qai8dxp_qsi4cxp
         RegisterBenchmark(

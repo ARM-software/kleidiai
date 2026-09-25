@@ -1,5 +1,6 @@
 //
 // SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -881,6 +882,9 @@ void MatMulTb::compute_rhs_t_qdata_sign(bool required) {
             break;
         case DataType::I2:
             dst_dtype = DataType::U2;
+            break;
+        case DataType::I8:
+            dst_dtype = DataType::I8;
             break;
         default:
             KAI_TEST_ERROR("Not supported.");

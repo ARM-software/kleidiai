@@ -1,5 +1,6 @@
 //
 // SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -31,6 +32,9 @@ bool cpu_has_bf16();
 
 /// Returns a value indicating whether the current CPU supports FEAT_SVE.
 bool cpu_has_sve();
+
+/// Returns a value indicating whether the current CPU supports FEAT_SVE and FEAT_I8MM.
+bool cpu_has_svei8mm();
 
 /// Returns a value indicating whether the current CPU supports FEAT_SVE with 256-bit vector lengths.
 bool cpu_has_sve_vl256();

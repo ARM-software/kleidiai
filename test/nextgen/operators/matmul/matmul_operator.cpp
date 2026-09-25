@@ -1041,6 +1041,37 @@ MatMulOperator create_operator_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2
     return op;
 }
 
+/// creates an operator for matmul_clamp_f32_qai8dxp4x8sf32_qsi8cxp4vsx8sf32bf32_16x4vs_sve_i8mm
+MatMulOperator create_operator_matmul_clamp_f32_qai8dxp4x8sf32_qsi8cxp4vsx8sf32bf32_16x4vs_sve_i8mm() {
+    MatMulOperator op{};
+
+    op.name = "matmul_clamp_f32_qai8dxp4x8sf32_qsi8cxp4vsx8sf32bf32_16x4vs_sve_i8mm";
+
+    op.is_cpu_supported = cpu_has_svei8mm;
+    op.is_shape_suitable = all_true<
+        is_shape_suitable_lhs_qai8dxp4x8sf32_qsi8cxp4vsx8sf32bf32_16x4vs_sve_i8mm,
+        is_shape_suitable_rhs_nxk_qsi8cxp_qsi8cx_neon>;
+
+    op.supported_bias_mode_sets = {acc_bias_per_n};
+    op.clamp_mode = MatMulClampMode::REQUIRED;
+
+    op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
+        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 1, 0);
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(DataType::I8, DataType::FP32, RoundMode::CURRENT, 1, 0);
+    op.bias_quant = std::nullopt;
+
+    op.lhs_dtype = DataType::FP32;
+    op.rhs_dtype = DataType::FP32;
+    op.bias_dtype = DataType::FP32;
+    op.acc_dtype = DataType::FP32;
+    op.dst_dtype = DataType::FP32;
+
+    op.pack_lhs = create_matmul_lhs_quant_pack_qai8dxp4x8_f32();
+    op.pack_rhs = create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon();
+    op.matmul = create_matmul_clamp_f32_qai8dxp4x8sf32_qsi8cxp4vsx8sf32bf32_16x4vs_sve_i8mm();
+    return op;
+}
+
 }  // namespace
 
 Span<const MatMulOperator> get_available_matmul_operators() {
@@ -1081,6 +1112,7 @@ Span<const MatMulOperator> get_available_matmul_operators() {
         create_operator_matmul_clamp_t_f32_f32p4vsx1_f32p4vsx1b_8vsx8vs_elastic_sme2_mopa(),
         create_operator_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa(),
         create_operator_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa_rhs_nxk(),
+        create_operator_matmul_clamp_f32_qai8dxp4x8sf32_qsi8cxp4vsx8sf32bf32_16x4vs_sve_i8mm(),
     };
 
     return operators;

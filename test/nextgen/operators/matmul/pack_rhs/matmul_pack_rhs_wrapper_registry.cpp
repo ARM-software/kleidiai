@@ -22,6 +22,7 @@
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme.h"
+#include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_qsi8cxp_qsi8cx_neon.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon.h"
 #include "test/common/data_type.hpp"
@@ -95,6 +96,24 @@ Poly<Format> unused_bias_format() {
 }
 
 }  // namespace
+std::unique_ptr<KernelWrapper<MatShape>> create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon() {
+    return std::make_unique<MatMulPackRhsQuantI8Wrapper>(
+        "matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon",
+        MatMulPackRhsQuantI8Interface{
+            kai_get_n_step_rhs_pack_nxk_qsi8cxp_qsi8cx_neon,
+            kai_get_rhs_offset_rhs_pack_nxk_qsi8cxp_qsi8cx_neon,
+            kai_get_rhs_packed_stride_rhs_pack_nxk_qsi8cxp_qsi8cx_neon,
+            kai_get_rhs_packed_offset_rhs_pack_nxk_qsi8cxp_qsi8cx_neon,
+            kai_get_rhs_packed_size_rhs_pack_nxk_qsi8cxp_qsi8cx_neon,
+            kai_run_rhs_pack_nxk_qsi8cxp_qsi8cx_neon,
+        },
+        make_poly<PlainFormat>(DataType::I8), make_poly<PlainFormat>(DataType::FP32),
+        make_poly<PlainFormat>(DataType::FP32), make_poly<PlainFormat>(DataType::I32),
+        make_poly<Block2dRowFormat>(
+            get_sve_vector_scale() * 4, 8, 32, false, DataType::I8, std::array<DataType, 0>{},
+            std::array{DataType::I32, DataType::FP32, DataType::FP32}),
+        MatMulPackArgs{4, get_sve_vector_scale() * 4, 8, 1, 0});
+}
 
 std::unique_ptr<KernelWrapper<MatShape>> create_matmul_rhs_pack_nxk_qsi8cxp8x4_qsi8cx_neon() {
     return create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon("8x4", 8, 4);
@@ -589,4 +608,15 @@ bool is_shape_suitable_rhs_nxk_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme(
         shape_n, shape_k, portion, kai_matmul_pack_rhs_nxk_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme());
 }
 
+bool is_shape_suitable_rhs_nxk_qsi8cxp_qsi8cx_neon(
+    [[maybe_unused]] size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
+    if (shape_n == 0 || shape_k == 0) {
+        return false;
+    }
+
+    const size_t nr = get_sve_vector_scale() * 4;
+    const size_t rhs_n_step = kai_get_n_step_rhs_pack_nxk_qsi8cxp_qsi8cx_neon(nr);
+
+    return portion_non_empty(shape_n, shape_k, rhs_n_step, shape_k, portion);
+}
 }  // namespace kai::test

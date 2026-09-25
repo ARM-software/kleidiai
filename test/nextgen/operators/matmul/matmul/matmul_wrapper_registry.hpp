@@ -79,6 +79,10 @@ create_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4sf32bi32_8vsx8vs_sme2p1_mop4_mop
 [[nodiscard]] std::unique_ptr<KernelWrapper<MatMulShape>>
 create_matmul_clamp_f32_u8p4vsx4_u8p4vsx4_i32_i32_f32_f32_8vsx8vs_sme2_mopa();
 
+/// Creates a wrapper for matmul_clamp_f32_qai8dxp4x8sf32_qsi8cxp4vsx8sf32bf32_16x4vs_sve_i8mm kernel.
+[[nodiscard]] std::unique_ptr<KernelWrapper<MatMulShape>>
+create_matmul_clamp_f32_qai8dxp4x8sf32_qsi8cxp4vsx8sf32bf32_16x4vs_sve_i8mm();
+
 /// Creates a wrapper for matmul_clamp_f32_f32_f32p4vsx1b_1x32vs_sme2_mla kernel.
 [[nodiscard]] std::unique_ptr<KernelWrapper<MatMulShape>> create_matmul_clamp_f32_f32_f32p4vsx1bf32_1x32vs_sme2_mla();
 

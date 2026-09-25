@@ -1,5 +1,6 @@
 //
 // SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -46,6 +47,7 @@ enum class CpuFeature : size_t {
     FP16,         //
     BF16,         //
     SVE,          //
+    SVEI8MM,      //
     SVE2,         //
     SVE2P1,       //
     SME,          //
@@ -62,6 +64,7 @@ constexpr std::array<std::tuple<CpuFeature, std::string_view>, n_elements<CpuFea
     {CpuFeature::FP16, "FP16"},          //
     {CpuFeature::BF16, "BF16"},          //
     {CpuFeature::SVE, "SVE"},            //
+    {CpuFeature::SVEI8MM, "SVEI8MM"},    //
     {CpuFeature::SVE2, "SVE2"},          //
     {CpuFeature::SVE2P1, "SVE2P1"},      //
     {CpuFeature::SME, "SME"},            //
@@ -170,6 +173,9 @@ constexpr uint64_t HWCAP_ASIMDDP = 1UL << 20;
 #ifndef HWCAP_SVE
 constexpr uint64_t HWCAP_SVE = 1UL << 22;
 #endif
+#ifndef HWCAP2_SVEI8MM
+constexpr uint64_t HWCAP2_SVEI8MM = 1UL << 9;
+#endif
 #ifndef HWCAP2_SVE2
 constexpr uint64_t HWCAP2_SVE2 = 1UL << 1;
 #endif
@@ -202,6 +208,7 @@ const std::array<std::tuple<CpuFeature, uint64_t, uint64_t>, n_elements<CpuFeatu
     {CpuFeature::FP16, AT_HWCAP, HWCAP_FPHP | HWCAP_ASIMDHP},  //
     {CpuFeature::BF16, AT_HWCAP2, HWCAP2_BF16},                //
     {CpuFeature::SVE, AT_HWCAP, HWCAP_SVE},                    //
+    {CpuFeature::SVEI8MM, AT_HWCAP2, HWCAP2_SVEI8MM},          //
     {CpuFeature::SVE2, AT_HWCAP2, HWCAP2_SVE2},                //
     {CpuFeature::SVE2P1, AT_HWCAP2, HWCAP2_SVE2P1},            //
     {CpuFeature::SME, AT_HWCAP2, HWCAP2_SME},                  //
@@ -233,9 +240,10 @@ const std::array<std::tuple<CpuFeature, std::string_view>, n_elements<CpuFeature
     {CpuFeature::I8MM, "hw.optional.arm.FEAT_I8MM"},
     {CpuFeature::FP16, "hw.optional.arm.FEAT_FP16"},
     {CpuFeature::BF16, "hw.optional.arm.FEAT_BF16"},
-    {CpuFeature::SVE, ""},     // not supported
-    {CpuFeature::SVE2, ""},    // not supported
-    {CpuFeature::SVE2P1, ""},  // not supported
+    {CpuFeature::SVE, ""},      // not supported
+    {CpuFeature::SVEI8MM, ""},  // not supported
+    {CpuFeature::SVE2, ""},     // not supported
+    {CpuFeature::SVE2P1, ""},   // not supported
     {CpuFeature::SME, "hw.optional.arm.FEAT_SME"},
     {CpuFeature::SME2, "hw.optional.arm.FEAT_SME2"},
     {CpuFeature::SME2P1, "hw.optional.arm.FEAT_SME2p1"},
@@ -288,6 +296,7 @@ const std::array<std::tuple<CpuFeature, DWORD, const char*, uint64_t>, n_element
     {CpuFeature::FP16, 0, ID_AA64PFR0_EL1, 0x00000000000f0000ULL},
     {CpuFeature::BF16, 0, ID_AA64ISAR1_EL1, 0x0000f00000000000ULL},
     {CpuFeature::SVE, 46, nullptr, 0},
+    {CpuFeature::SVEI8MM, 0, nullptr, 0},
     {CpuFeature::SVE2, 47, nullptr, 0},
     {CpuFeature::SVE2P1, 0, nullptr, 0},
     {CpuFeature::SME, 0, nullptr, 0},
@@ -356,6 +365,7 @@ struct CpuInfo {
         has_fp16(get_cap_support(CpuFeature::FP16)),
         has_bf16(get_cap_support(CpuFeature::BF16)),
         has_sve(get_cap_support(CpuFeature::SVE)),
+        has_svei8mm(get_cap_support(CpuFeature::SVEI8MM)),
         has_sve2(get_cap_support(CpuFeature::SVE2)),
         has_sve2p1(get_cap_support(CpuFeature::SVE2P1)),
         has_sme(get_cap_support(CpuFeature::SME)),
@@ -376,6 +386,7 @@ struct CpuInfo {
     const bool has_fp16{};      ///< FP16 is supported.
     const bool has_bf16{};      ///< B16 is supported.
     const bool has_sve{};       ///< SVE is supported.
+    const bool has_svei8mm{};   ///< SVE I8MM is supported.
     const bool has_sve2{};      ///< SVE2 is supported.
     const bool has_sve2p1{};    ///< SVE2.1 is supported.
     const bool has_sme{};       ///< SME is supported.
@@ -417,6 +428,10 @@ bool cpu_has_bf16() {
 
 bool cpu_has_sve() {
     return CpuInfo::current().has_sve;
+}
+
+bool cpu_has_svei8mm() {
+    return CpuInfo::current().has_svei8mm;
 }
 
 bool cpu_has_sve_vl256() {
