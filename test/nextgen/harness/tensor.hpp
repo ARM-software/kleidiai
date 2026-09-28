@@ -21,7 +21,6 @@
 #include "test/nextgen/common/poly.hpp"
 #include "test/nextgen/common/shape.hpp"
 #include "test/nextgen/format/format.hpp"
-#include "test/nextgen/operators/matmul/matmul_slots.hpp"
 
 namespace kai::test {
 
@@ -210,7 +209,7 @@ private:
     std::string m_id;
 };
 
-/// Helper class for allowing MatMulSlot to be used as index.
+/// Helper class for allowing tensor slot enums to be used as index.
 class TensorSet : public Span<Tensor> {
 public:
     using Span<Tensor>::Span;
@@ -221,12 +220,13 @@ public:
     /// @param[in] slot The tensor slot.
     ///
     /// @return The tensor at the requested slot.
-    [[nodiscard]] constexpr Tensor& at(MatMulSlot slot) const {
+    template <typename SlotT>
+    [[nodiscard]] constexpr Tensor& at(SlotT slot) const {
         return Span<Tensor>::at(as_idx(slot));
     }
 };
 
-/// Helper class for allowing MatMulSlot to be used as index.
+/// Helper class for allowing tensor slot enums to be used as index.
 class ConstTensorSet : public Span<const Tensor> {
 public:
     using Span<const Tensor>::Span;
@@ -237,7 +237,8 @@ public:
     /// @param[in] slot The tensor slot.
     ///
     /// @return The tensor at the requested slot.
-    [[nodiscard]] constexpr const Tensor& at(MatMulSlot slot) const {
+    template <typename SlotT>
+    [[nodiscard]] constexpr const Tensor& at(SlotT slot) const {
         return Span<const Tensor>::at(as_idx(slot));
     }
 };

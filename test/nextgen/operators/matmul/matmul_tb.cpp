@@ -30,7 +30,6 @@
 #include "test/nextgen/format/fill.hpp"
 #include "test/nextgen/format/format.hpp"
 #include "test/nextgen/format/plain_format.hpp"
-#include "test/nextgen/harness/kernel_wrapper.hpp"
 #include "test/nextgen/harness/tensor_cache.hpp"
 #include "test/nextgen/operators/matmul/matmul_config.hpp"
 #include "test/nextgen/operators/matmul/matmul_dims.hpp"
@@ -72,11 +71,11 @@ void MatMulTb::generate_test_data(Rng& rng) {
         (*matmul)->populate_constant_info(m_tensors);
     }
 
-    if (const std::optional<MatPackKernelPtr>& pack_lhs = m_op->pack_lhs) {
+    if (const std::optional<MatMulPackKernelPtr>& pack_lhs = m_op->pack_lhs) {
         (*pack_lhs)->populate_constant_info(m_tensors);
     }
 
-    if (const std::optional<MatPackKernelPtr>& pack_rhs = m_op->pack_rhs) {
+    if (const std::optional<MatMulPackKernelPtr>& pack_rhs = m_op->pack_rhs) {
         (*pack_rhs)->populate_constant_info(m_tensors);
     }
 
@@ -1001,7 +1000,7 @@ void MatMulTb::compute_ref_packed_lhs() {
     }
 
     KAI_TEST_ASSERT_MSG(m_op->pack_lhs.has_value(), "LHS packing is not supported by this operator.");
-    const KernelWrapper<MatShape>& pack_lhs = *m_op->pack_lhs.value();
+    const MatMulPackKernel& pack_lhs = *m_op->pack_lhs.value();
 
     const std::array lhs_shape{m_shape_m, m_shape_k};
     pack_lhs.compute_reference(lhs_shape, m_tensors);
@@ -1013,7 +1012,7 @@ void MatMulTb::compute_ref_packed_rhs() {
     }
 
     KAI_TEST_ASSERT_MSG(m_op->pack_rhs.has_value(), "RHS packing is not supported by this operator.");
-    const KernelWrapper<MatShape>& pack_rhs = *m_op->pack_rhs.value();
+    const MatMulPackKernel& pack_rhs = *m_op->pack_rhs.value();
 
     const std::array rhs_t_shape{m_shape_n, m_shape_k};
     pack_rhs.compute_reference(rhs_t_shape, m_tensors);
@@ -1271,13 +1270,13 @@ void MatMulTb::compute_ref_matmul(Rng& rng) {
 }
 
 std::tuple<size_t, size_t> MatMulTb::lhs_packing_steps() const {
-    const KernelWrapper<MatShape>& pack_lhs = *m_op->pack_lhs.value();
+    const MatMulPackKernel& pack_lhs = *m_op->pack_lhs.value();
     const std::vector<size_t> steps = pack_lhs.steps({m_shape_m, m_shape_k}, m_tensors);
     return {steps.at(as_idx(MatDim::R)), steps.at(as_idx(MatDim::C))};
 }
 
 void MatMulTb::test_lhs_packing(size_t start_m, size_t start_k, size_t size_m, size_t size_k) {
-    const KernelWrapper<MatShape>& pack_lhs = *m_op->pack_lhs.value();
+    const MatMulPackKernel& pack_lhs = *m_op->pack_lhs.value();
 
     const std::array full_shape{m_shape_m, m_shape_k};
     const std::array tile_coords{start_m, start_k};
@@ -1296,13 +1295,13 @@ void MatMulTb::test_lhs_packing(size_t start_m, size_t start_k, size_t size_m, s
 }
 
 std::tuple<size_t, size_t> MatMulTb::rhs_packing_steps() const {
-    const KernelWrapper<MatShape>& pack_rhs = *m_op->pack_rhs.value();
+    const MatMulPackKernel& pack_rhs = *m_op->pack_rhs.value();
     const std::vector<size_t> steps = pack_rhs.steps({m_shape_n, m_shape_k}, m_tensors);
     return {steps.at(as_idx(MatDim::R)), steps.at(as_idx(MatDim::C))};
 }
 
 void MatMulTb::test_rhs_packing(size_t start_n, size_t start_k, size_t size_n, size_t size_k) {
-    const KernelWrapper<MatShape>& pack_rhs = *m_op->pack_rhs.value();
+    const MatMulPackKernel& pack_rhs = *m_op->pack_rhs.value();
 
     const std::array full_shape{m_shape_n, m_shape_k};
     const std::array tile_coords{start_n, start_k};
@@ -1321,13 +1320,13 @@ void MatMulTb::test_rhs_packing(size_t start_n, size_t start_k, size_t size_n, s
 }
 
 std::tuple<size_t, size_t> MatMulTb::matmul_steps() const {
-    const KernelWrapper<MatMulShape>& matmul = *m_op->matmul.value();
+    const MatMulKernel& matmul = *m_op->matmul.value();
     const std::vector<size_t> steps = matmul.steps({m_shape_m, m_shape_n, m_shape_k}, m_tensors);
     return {steps.at(as_idx(MatMulDim::M)), steps.at(as_idx(MatMulDim::N))};
 }
 
 void MatMulTb::test_matmul(size_t start_m, size_t start_n, size_t size_m, size_t size_n) {
-    const KernelWrapper<MatMulShape>& matmul = *m_op->matmul.value();
+    const MatMulKernel& matmul = *m_op->matmul.value();
 
     const std::array matmul_full_shape{m_shape_m, m_shape_n, m_shape_k};
     const std::array matmul_tile_coords{start_m, start_n, static_cast<size_t>(0)};

@@ -15,15 +15,11 @@
 #include "test/common/data_type.hpp"
 #include "test/common/matrix_portion.hpp"
 #include "test/common/span.hpp"
-#include "test/nextgen/harness/kernel_wrapper.hpp"
+#include "test/nextgen/operators/matmul/kernel_types.hpp"
 #include "test/nextgen/operators/matmul/matmul_bias_mode.hpp"
-#include "test/nextgen/operators/matmul/matmul_dims.hpp"
 #include "test/nextgen/quantization/quantizer.hpp"
 
 namespace kai::test {
-
-using MatMulKernelPtr = std::unique_ptr<KernelWrapper<MatMulShape>>;
-using MatPackKernelPtr = std::unique_ptr<KernelWrapper<MatShape>>;
 
 /// Matrix multiplication clamping support.
 enum class MatMulClampMode {
@@ -67,8 +63,8 @@ struct MatMulOperator {
     DataType dst_dtype;
     DataType ref_dtype = DataType::FP32;  ///< Data type used by the reference implementation.
 
-    std::optional<MatPackKernelPtr> pack_lhs;
-    std::optional<MatPackKernelPtr> pack_rhs;
+    std::optional<MatMulPackKernelPtr> pack_lhs;
+    std::optional<MatMulPackKernelPtr> pack_rhs;
     std::optional<MatMulKernelPtr> matmul;
 };
 

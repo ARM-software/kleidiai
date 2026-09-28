@@ -17,7 +17,7 @@
 #include "test/common/enum_utils.hpp"
 #include "test/nextgen/common/poly.hpp"
 #include "test/nextgen/format/format.hpp"
-#include "test/nextgen/harness/kernel_wrapper.hpp"
+#include "test/nextgen/operators/matmul/kernel_types.hpp"
 #include "test/nextgen/operators/matmul/matmul_bias_mode.hpp"
 #include "test/nextgen/operators/matmul/matmul_dims.hpp"
 #include "test/nextgen/operators/matmul/matmul_pack_args.hpp"
@@ -95,7 +95,7 @@ struct MatMulUkerOutputStageConfig {
 };
 
 /// Wrapper for uker-api matrix multiplication micro-kernel.
-class MatMulUkerApiWrapper : public KernelWrapper<MatMulShape> {
+class MatMulUkerApiWrapper : public MatMulKernel {
 public:
     /// Creates a new wrapper.
     MatMulUkerApiWrapper(

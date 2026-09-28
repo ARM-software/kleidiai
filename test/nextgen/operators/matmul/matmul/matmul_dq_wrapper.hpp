@@ -14,15 +14,16 @@
 #include "test/nextgen/common/poly.hpp"
 #include "test/nextgen/common/shape.hpp"
 #include "test/nextgen/format/format.hpp"
-#include "test/nextgen/harness/kernel_wrapper.hpp"
+#include "test/nextgen/operators/matmul/kernel_types.hpp"
 #include "test/nextgen/operators/matmul/matmul/matmul_interface.hpp"
 #include "test/nextgen/operators/matmul/matmul_dims.hpp"
+#include "test/nextgen/operators/matmul/matmul_slots.hpp"
 #include "test/nextgen/quantization/quantizer.hpp"
 
 namespace kai::test {
 
 /// Wrapper for matrix multiplication kernel with dynamic quantization.
-class MatMulDqWrapper : public KernelWrapper<MatMulShape> {
+class MatMulDqWrapper : public MatMulKernel {
 public:
     /// Creates a new wrapper.
     MatMulDqWrapper(

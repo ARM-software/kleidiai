@@ -17,15 +17,15 @@
 #include "test/common/span.hpp"
 #include "test/nextgen/common/poly.hpp"
 #include "test/nextgen/format/format.hpp"
-#include "test/nextgen/harness/kernel_wrapper.hpp"
 #include "test/nextgen/harness/tensor.hpp"
+#include "test/nextgen/operators/matmul/kernel_types.hpp"
 #include "test/nextgen/operators/matmul/matmul_dims.hpp"
 #include "test/nextgen/operators/matmul/matmul_slots.hpp"
 
 namespace kai::test {
 
 /// Wrapper for LHS packing micro-kernel.
-class MatMulPackLhsUkerApiWrapper final : public KernelWrapper<MatShape> {
+class MatMulPackLhsUkerApiWrapper final : public MatMulPackKernel {
 public:
     /// Creates a new wrapper.
     ///

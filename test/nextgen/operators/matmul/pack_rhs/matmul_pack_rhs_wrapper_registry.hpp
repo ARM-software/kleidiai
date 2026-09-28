@@ -12,78 +12,71 @@
 
 #include "test/common/matrix_portion.hpp"
 #include "test/nextgen/harness/kernel_wrapper.hpp"
+#include "test/nextgen/operators/matmul/kernel_types.hpp"
 #include "test/nextgen/operators/matmul/matmul_dims.hpp"
 
 namespace kai::test {
 
 /// Creates a wrapper for kai_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon kernel.
-[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_rhs_pack_nxk_qsi4cxp4vlx4s1s0_qsu4cxs1s0_neon();
+[[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4cxp4vlx4s1s0_qsu4cxs1s0_neon();
 
 /// Creates a wrapper for kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon kernel.
-[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_rhs_pack_nxk_qsi8cxp8x4_qsi8cx_neon();
+[[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp8x4_qsi8cx_neon();
 
 /// Creates a wrapper for kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon kernel.
-[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_rhs_pack_nxk_qsi8cxp32x4_qsi8cx_neon();
+[[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp32x4_qsi8cx_neon();
 
 /// Creates a wrapper for kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon kernel.
-[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_rhs_pack_nxk_qsi8cxp8x8_qsi8cx_neon();
+[[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp8x8_qsi8cx_neon();
 
 /// Creates a wrapper for kai_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme kernel.
-[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme();
+[[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme();
 
 /// Creates a wrapper for kai_matmul_pack_rhs_kxn_x16p8vsx2bx32_x16_x32_sme micro-kernel.
 /// Uses BF16 input and packed data with FP32 bias.
-[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_kxn_bf16p8vsx2bf32_bf16_f32_sme();
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_kxn_bf16p8vsx2bf32_bf16_f32_sme();
 
 /// Creates a wrapper for kai_matmul_pack_rhs_nxk_x16p8vsx2bx32_x16_x32_sme micro-kernel.
 /// Uses BF16 input and packed data with FP32 bias.
-[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_nxk_bf16p8vsx2bf32_bf16_f32_sme();
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_nxk_bf16p8vsx2bf32_bf16_f32_sme();
 
 /// Creates a wrapper for kai_rhs_pack_kxn_x16p16vsx2bx16_x16_x16_sve micro-kernel.
-[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_rhs_pack_kxn_x16p16vsx2bx16_x16_x16_sve();
+[[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_kxn_x16p16vsx2bx16_x16_x16_sve();
 
 /// Creates a wrapper for kai_matmul_pack_rhs_kxn_x16p4vsx2bx16_x16_x16_sme kernel.
-[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_kxn_x16p4vsx2bx16_x16_x16_sme();
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_kxn_x16p4vsx2bx16_x16_x16_sme();
 
 /// Creates a wrapper for kai_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme kernel.
-[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme();
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme();
 
 /// Creates a wrapper for kai_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme kernel.
-[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme();
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme();
 
 /// Creates a wrapper for kai_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme kernel.
-[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme();
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme();
 
 /// Creates a wrapper for kai_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme micro-kernel.
-[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>>
-create_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme();
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme();
 
 /// Creates a wrapper for kai_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme kernel.
-[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme();
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme();
 
 /// Creates a wrapper for kai_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme kernel.
-[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>>
-create_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme();
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme();
 
-[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>>
-create_matmul_pack_rhs_kxn_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme();
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_kxn_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme();
 
-[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>>
-create_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme();
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme();
 
-[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>>
-create_matmul_pack_rhs_kxn_qsu2cxp16vsx4sf32bi32_qsu2cx_f32_i32_sme();
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_kxn_qsu2cxp16vsx4sf32bi32_qsu2cx_f32_i32_sme();
 
-[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>>
-create_matmul_pack_rhs_nxk_qsu2cxp16vsx4sf32bi32_qsu2cx_f32_i32_sme();
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_nxk_qsu2cxp16vsx4sf32bi32_qsu2cx_f32_i32_sme();
 
 /// Creates a wrapper for kai_matmul_pack_rhs_kxn_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme kernel.
-[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>>
-create_matmul_rhs_pack_kxn_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme();
+[[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_kxn_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme();
 
 /// Creates a wrapper for kai_matmul_pack_rhs_nxk_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme kernel.
-[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>>
-create_matmul_rhs_pack_nxk_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme();
+[[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme();
 
 /// Checks if the portion produces non-empty RHS packing tiles for the qai8dxp1x4/qsi8cxp8x4 matmul operator.
 [[nodiscard]] bool is_shape_suitable_rhs_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot(
@@ -110,7 +103,7 @@ create_matmul_rhs_pack_nxk_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme();
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
 /// Creates a wrapper for kai_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon kernel.
-[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon();
+[[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon();
 
 /// Checks if the portion produces non-empty RHS packing tiles for the x32p4vsx1 KxN matmul operator.
 [[nodiscard]] bool is_shape_suitable_rhs_kxn_x32p4vsx1bx32_x32_x32_sme(
@@ -175,10 +168,10 @@ create_matmul_rhs_pack_nxk_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme();
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
 /// Creates a wrapper for kai_matmul_pack_rhs_kxn_x16p12x4bx32_x16_x32_neon micro-kernel.
-[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_kxn_bf16p12x4bf32_bf16_f32_neon();
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_kxn_bf16p12x4bf32_bf16_f32_neon();
 
 /// Creates a wrapper for kai_matmul_pack_rhs_nxk_x16p12x4bx32_x16_x32_neon micro-kernel.
-[[nodiscard]] std::unique_ptr<KernelWrapper<MatShape>> create_matmul_pack_rhs_nxk_bf16p12x4bf32_bf16_f32_neon();
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_nxk_bf16p12x4bf32_bf16_f32_neon();
 
 /// Checks if the portion produces non-empty RHS packing tiles for the x16p12x4bx32 KxN matmul operator.
 [[nodiscard]] bool is_shape_suitable_rhs_kxn_x16p12x4bx32_x16_x32_neon(

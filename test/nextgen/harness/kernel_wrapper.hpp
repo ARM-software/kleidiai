@@ -12,12 +12,11 @@
 
 #include "test/nextgen/common/shape.hpp"
 #include "test/nextgen/harness/tensor.hpp"
-#include "test/nextgen/operators/matmul/matmul_slots.hpp"
 
 namespace kai::test {
 
 /// Wrapper to provide unified API for all micro-kernels.
-template <typename ShapeT>
+template <typename ShapeT, typename SlotT>
 class KernelWrapper {
 public:
     KernelWrapper() = default;                                ///< Default constructor.
@@ -35,14 +34,14 @@ public:
     /// @param[in] tensors The data pool.
     ///
     /// @return The list of tensor IDs.
-    [[nodiscard]] virtual std::vector<MatMulSlot> run_inputs(ConstTensorSet tensors) const = 0;
+    [[nodiscard]] virtual std::vector<SlotT> run_inputs(ConstTensorSet tensors) const = 0;
 
     /// Gets the list of input tensors required to run the reference implementation.
     ///
     /// @param[in] tensors The data pool.
     ///
     /// @return The list of tensor IDs.
-    [[nodiscard]] virtual std::vector<MatMulSlot> ref_inputs(ConstTensorSet tensors) const = 0;
+    [[nodiscard]] virtual std::vector<SlotT> ref_inputs(ConstTensorSet tensors) const = 0;
 
     /// Gets the scheduling steps in each dimension.
     ///

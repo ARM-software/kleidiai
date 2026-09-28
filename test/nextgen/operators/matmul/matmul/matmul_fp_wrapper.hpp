@@ -11,15 +11,16 @@
 
 #include "test/nextgen/common/poly.hpp"
 #include "test/nextgen/format/format.hpp"
-#include "test/nextgen/harness/kernel_wrapper.hpp"
 #include "test/nextgen/harness/tensor.hpp"
+#include "test/nextgen/operators/matmul/kernel_types.hpp"
 #include "test/nextgen/operators/matmul/matmul/matmul_interface.hpp"
 #include "test/nextgen/operators/matmul/matmul_dims.hpp"
+#include "test/nextgen/operators/matmul/matmul_slots.hpp"
 
 namespace kai::test {
 
 /// Wrapper for floating-point matrix multiplication kernel.
-class MatMulFpWrapper : public KernelWrapper<MatMulShape> {
+class MatMulFpWrapper : public MatMulKernel {
 public:
     /// Creates a new wrapper.
     MatMulFpWrapper(

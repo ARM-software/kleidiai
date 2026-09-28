@@ -20,8 +20,8 @@
 #include "test/common/span.hpp"
 #include "test/nextgen/common/poly.hpp"
 #include "test/nextgen/format/format.hpp"
-#include "test/nextgen/harness/kernel_wrapper.hpp"
 #include "test/nextgen/harness/tensor.hpp"
+#include "test/nextgen/operators/matmul/kernel_types.hpp"
 #include "test/nextgen/operators/matmul/matmul_bias_mode.hpp"
 #include "test/nextgen/operators/matmul/matmul_config.hpp"
 #include "test/nextgen/operators/matmul/matmul_dims.hpp"
@@ -42,7 +42,7 @@ struct MatMulPackRhsOperandSlots {
     std::optional<MatMulSlot> scale_global;
 };
 
-class MatMulPackRhsUkerApiCommon : public KernelWrapper<MatShape> {
+class MatMulPackRhsUkerApiCommon : public MatMulPackKernel {
 public:
     MatMulPackRhsUkerApiCommon(
         std::string_view name, MatMulSlot run_rhs_slot, RhsLayout layout, kai_matmul_pack_rhs_uker_api api,
