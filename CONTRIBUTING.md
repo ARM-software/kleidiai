@@ -62,7 +62,7 @@ KleidiAI does not accept contributions that add support for:
 
 All contributions must:
 
-- Use one of the project licenses in the [LICENSES](./LICENSES/) sub-directory.
+- Be licensed under the Apache-2.0 license.
 - Include a Developer Certificate of Origin sign-off.
 - Preserve or add correct copyright and license metadata.
 - Follow the [Coding standard and convention](docs/coding_conventions.md).
@@ -137,13 +137,22 @@ Contributions are submitted as GitLab merge requests (MR). The process to submit
 1. Push the patch-set to your forked repository.
 1. Submit a MR on the official KleidiAI GitLab repository with a clear description.
 
-The description of a MR must contain:
+The MR title and description must comply with:
 
-- Prefix the first line with type of contribution: major, feat, fix, docs or chore
-- What changed.
-- Why the change is needed.
+- MR title has the format `type`: `description`.
+  `type` describes the type of contribution and must be one of: major, feat, fix, docs or chore.
+  `description` is brief one-line summary of the change.
+- MR description contains a summary of the change and must include a Signed-off-by line, as per DCO.
+
+Please keep the MR description short and concise as the MR title and description become
+the Git commit message once the MR is merged. Any additional information such as:
+
+- An in-depth explanation of why the change is needed.
 - How it was tested.
 - Any remaining limitations or follow-up work.
+- Performance figures.
+
+shall be provided as comments in the MR or in a separate GitLab issue.
 
 # Testing requirements
 
