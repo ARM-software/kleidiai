@@ -419,6 +419,7 @@ SME2_KERNELS_ASM = [
 kai_c_library(
     name = "interface",
     textual_hdrs = glob(["**/*_interface.h"]) + [
+        "kai_imatmul_pack_lhs_types.h",
         "kai_matmul.h",
         "kai_matmul_types.h",
         "kai_matmul_pack_lhs.h",

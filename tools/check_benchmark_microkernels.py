@@ -82,6 +82,7 @@ def gather_includes(
 def list_present(ukernels_dir: str, kernel_types: Set[str]) -> Set[str]:
     # REVISIT: Use this list to extract the list of micro-kernels using the new API.
     uker_apis = [
+        "matmul/kai_imatmul_pack_lhs",
         "matmul/kai_matmul",
         "matmul/kai_matmul_pack_lhs",
         "matmul/kai_matmul_pack_rhs",
