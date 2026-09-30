@@ -12,6 +12,7 @@
 #include <string_view>
 #include <tuple>
 #include <unordered_map>
+#include <utility>
 
 #include "kai/ukernels/matmul/imatmul_clamp_f16_f16p_f16p/kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2_2vlx2vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/imatmul_clamp_f16_f16p_f16p/kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa.h"
@@ -21,6 +22,7 @@
 #include "kai/ukernels/matmul/imatmul_clamp_f32_f32p_f32p/kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/imatmul_clamp_f32_f32p_f32p/kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa.h"
 #include "kai/ukernels/matmul/imatmul_clamp_f32_f32p_f32p/kai_imatmul_clamp_f32_f32p_f32p_interface.h"
+#include "kai/ukernels/matmul/pack/kai_imatmul_pack_rhs_nxk_x16p2vlx2bx16_x16_x16_sme.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_imatmul_pack_x16p2vlx2_x16p_sme.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_imatmul_pack_x32p2vlx1_x32p_sme.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_imatmul_pack_kxn_x16p2vlx2b_x16_x16_sme.h"
@@ -41,6 +43,7 @@
 #include "test/reference/fill.hpp"
 #include "test/reference/matmul.hpp"
 #include "test/reference/reorder.hpp"
+#include "test/reference/transpose.hpp"
 
 namespace kai::test {
 
@@ -75,6 +78,9 @@ struct RhsPackIndirectKernel {
         size_t n, size_t k_chunk_count, size_t k_chunk_length, size_t rhs_row_stride, const void* rhs, const void* bias,
         void* rhs_packed)>
         pack;
+
+    // Selects NxK input when present; otherwise the packer uses KxN input.
+    std::function<size_t(size_t n_idx, size_t rhs_stride_row)> get_rhs_offset_nxk;
 };
 
 /// Interface for indirect matmul kernel
@@ -213,7 +219,7 @@ const kai_imatmul_clamp_f32_f32_f32p_ukernel& get_imatmul_clamp_f32_f32_f32p4vlx
 
 /// Retreive the test list
 const auto& get_indirect_matmul_methods() {
-    static std::array<IndirectMatMul, 5> indirect_matmul_methods{};
+    static std::array<IndirectMatMul, 6> indirect_matmul_methods{};
     //
     // ----------------------------- SME -------------------------------------
     // F16 IMATMUL SME2 ///////////////////////////////////////////////////////
@@ -406,6 +412,44 @@ const auto& get_indirect_matmul_methods() {
     indirect_matmul_methods[4].imatmul.get_dst_size = ukernel_f32_sve.get_dst_size;
     indirect_matmul_methods[4].imatmul.imatmul_no_lhs_pack = ukernel_f32_sve.run_imatmul;
 
+    // F16 IMATMUL SME with NxK RHS packing.
+    indirect_matmul_methods[5].name = "imatmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa_rhs_nxk";
+    indirect_matmul_methods[5].is_supported = cpu_has_sme;
+    indirect_matmul_methods[5].pack_shape.m = 2 * get_sme_vector_length<int32_t>();
+    indirect_matmul_methods[5].pack_shape.n = 2 * get_sme_vector_length<int32_t>();
+    indirect_matmul_methods[5].pack_shape.k = sizeof(int32_t);
+    indirect_matmul_methods[5].format.lhs = DataFormat(DataType::FP16);
+    indirect_matmul_methods[5].format.rhs = DataFormat(DataType::FP16);
+    indirect_matmul_methods[5].format.bias = DataFormat(DataType::FP16);
+    indirect_matmul_methods[5].format.out = DataFormat(DataType::FP16);
+
+    // LHS
+    indirect_matmul_methods[5].lhs.get_m_step = kai_get_m_step_lhs_imatmul_pack_x16p2vlx2_x16p_sme;
+    indirect_matmul_methods[5].lhs.get_lhs_packed_offset =
+        kai_get_lhs_packed_offset_lhs_imatmul_pack_x16p2vlx2_x16p_sme;
+    indirect_matmul_methods[5].lhs.get_lhs_packed_size = kai_get_lhs_packed_size_lhs_imatmul_pack_x16p2vlx2_x16p_sme;
+    indirect_matmul_methods[5].lhs.pack = kai_run_lhs_imatmul_pack_x16p2vlx2_x16p_sme;
+
+    // RHS
+    indirect_matmul_methods[5].rhs.get_n_step = kai_get_n_step_imatmul_pack_rhs_nxk_x16p2vlx2bx16_x16_x16_sme;
+    indirect_matmul_methods[5].rhs.get_rhs_offset_nxk =
+        kai_get_rhs_offset_imatmul_pack_rhs_nxk_x16p2vlx2bx16_x16_x16_sme;
+    indirect_matmul_methods[5].rhs.get_bias_offset = kai_get_bias_offset_imatmul_pack_rhs_nxk_x16p2vlx2bx16_x16_x16_sme;
+    indirect_matmul_methods[5].rhs.get_rhs_packed_offset =
+        kai_get_rhs_packed_offset_imatmul_pack_rhs_nxk_x16p2vlx2bx16_x16_x16_sme;
+    indirect_matmul_methods[5].rhs.get_rhs_packed_size =
+        kai_get_rhs_packed_size_imatmul_pack_rhs_nxk_x16p2vlx2bx16_x16_x16_sme;
+    indirect_matmul_methods[5].rhs.pack = kai_run_imatmul_pack_rhs_nxk_x16p2vlx2bx16_x16_x16_sme;
+
+    // IMATMUL
+    indirect_matmul_methods[5].imatmul.get_m_step = ukernel_f16_sme.get_m_step;
+    indirect_matmul_methods[5].imatmul.get_n_step = ukernel_f16_sme.get_n_step;
+    indirect_matmul_methods[5].imatmul.get_lhs_packed_offset = ukernel_f16_sme.get_lhs_packed_offset;
+    indirect_matmul_methods[5].imatmul.get_rhs_packed_offset = ukernel_f16_sme.get_rhs_packed_offset;
+    indirect_matmul_methods[5].imatmul.get_dst_offset = ukernel_f16_sme.get_dst_offset;
+    indirect_matmul_methods[5].imatmul.get_dst_size = ukernel_f16_sme.get_dst_size;
+    indirect_matmul_methods[5].imatmul.imatmul = ukernel_f16_sme.run_imatmul;
+
     return indirect_matmul_methods;
 }
 
@@ -443,6 +487,7 @@ private:
 struct TestData {
     Buffer lhs;                    ///< LHS input matrix
     Buffer rhs;                    ///< RHS input matrix
+    Buffer rhs_t;                  ///< Transposed RHS input matrix
     Buffer bias;                   ///< Bias vector
     Buffer out;                    ///< Reference imatmul result
     Buffer indirection;            ///< LHS indirection buffer
@@ -483,6 +528,7 @@ private:
         // Generate random input data
         Buffer lhs = fill_matrix_random(shape.m, shape.k, format.lhs, feed());
         Buffer rhs = fill_matrix_random(shape.k, shape.n, format.rhs, feed());
+        Buffer rhs_t = transpose(rhs.data(), format.rhs.data_type(), shape.k, shape.n);
         Buffer bias = fill_matrix_random(1, shape.n, format.bias, feed());
 
         // Data types used
@@ -535,6 +581,7 @@ private:
         // Populate reference data
         TestData test_reference;
         test_reference.lhs = std::move(lhs);
+        test_reference.rhs_t = std::move(rhs_t);
         test_reference.rhs = std::move(rhs);
         test_reference.bias = std::move(bias);
         test_reference.padding = std::move(lhs_padding);
@@ -577,12 +624,25 @@ Buffer pack_rhs(
     const RhsPackIndirectKernel& kernel, const Rect& portion, const TestData& reference, size_t n,
     const KChunk& k_chunk, DataType type) {
     // Calculate size, and allocate buffer
-    const size_t row_stride = round_up_division(n * data_type_size_in_bits(type), 8);
     const size_t dst_size = kernel.get_rhs_packed_size(n, k_chunk.count, k_chunk.length);
     Buffer dst(dst_size);
 
+    // Selects the RHS input layout and calculates its offset.
+    const bool is_transposed = kernel.get_rhs_offset_nxk != nullptr;
+    size_t row_stride;
+    const std::byte* rhs;
+    if (is_transposed) {
+        const size_t row_length = k_chunk.count * k_chunk.length;
+        row_stride = round_up_division(row_length * data_type_size_in_bits(type), 8);
+        const size_t rhs_offset = kernel.get_rhs_offset_nxk(portion.start_col(), row_stride);
+        rhs = reference.rhs_t.data() + rhs_offset;
+    } else {
+        row_stride = round_up_division(n * data_type_size_in_bits(type), 8);
+        const size_t rhs_offset = kernel.get_rhs_offset(portion.start_col());
+        rhs = reference.rhs.data() + rhs_offset;
+    }
+
     // Calculate offsets
-    const size_t rhs_offset = kernel.get_rhs_offset(portion.start_col());
     const size_t bias_offset = kernel.get_bias_offset(portion.start_col());
     const size_t dst_offset = kernel.get_rhs_packed_offset(portion.start_col(), k_chunk.count, k_chunk.length);
 
@@ -590,7 +650,7 @@ Buffer pack_rhs(
     abi_check(
         kernel.pack,                                                 // Kernel
         portion.width(), k_chunk.count, k_chunk.length, row_stride,  // Dimensions
-        reference.rhs.data() + rhs_offset,                           // RHS input
+        rhs,                                                         // RHS input
         reference.bias.data() + bias_offset,                         // Bias
         dst.data() + dst_offset);                                    // Output
     return dst;

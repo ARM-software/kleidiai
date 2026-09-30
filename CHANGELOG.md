@@ -22,6 +22,7 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 - New SVE2 micro-kernels:
   - Matrix multiplication (MxN) for QAI8DXP LHS and QSI8CXP RHS with F32 output, optimized for a 256-bit vector length.
 - New SME micro-kernels:
+  - NxK RHS packing for FP16 indirect matrix multiplication: `kai_imatmul_pack_rhs_nxk_x16p2vlx2bx16_x16_x16_sme`, with per-chunk K padding and 16-bit bias.
   - SME packing micro-kernels for 16-bit RHS inputs and per-N 32-bit bias, including use with the BF16 SME2 MOPA matrix multiplication micro-kernel.
 - New SME2 micro-kernels:
   - Added `kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2`, an optimized LHS packing micro-kernel for the x16p4vsx2 format.
