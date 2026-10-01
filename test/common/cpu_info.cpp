@@ -296,7 +296,7 @@ const std::array<std::tuple<CpuFeature, DWORD, const char*, uint64_t>, n_element
     {CpuFeature::FP16, 0, ID_AA64PFR0_EL1, 0x00000000000f0000ULL},
     {CpuFeature::BF16, 0, ID_AA64ISAR1_EL1, 0x0000f00000000000ULL},
     {CpuFeature::SVE, 46, nullptr, 0},
-    {CpuFeature::SVEI8MM, 0, nullptr, 0},
+    {CpuFeature::SVEI8MM, 57, nullptr, 0},
     {CpuFeature::SVE2, 47, nullptr, 0},
     {CpuFeature::SVE2P1, 0, nullptr, 0},
     {CpuFeature::SME, 0, nullptr, 0},

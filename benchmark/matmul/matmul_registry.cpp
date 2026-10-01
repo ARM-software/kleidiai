@@ -399,6 +399,14 @@ inline constexpr MatMulBlockwiseDynamicQuantInterface
         .run_matmul = kai_run_matmul_clamp_f32_qai8dxp4x8_qsi4c32p8x8_4x8x32_neon_i8mm,
     };
 
+inline constexpr MatMulUkernelApiInterface
+    kai_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4c32p8x8s16s0sbf16bf32_8vsx8_sve_i8mm_interface{
+        .get_config = [] { return kai_matmul_uker_config{}; },
+        .get_api = kai_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4c32p8x8s16s0sbf16bf32_8vsx8_sve_i8mm,
+        .flags = KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP,
+        .bl_multiple = 32,
+    };
+
 inline constexpr MatMulBlockwiseDynamicQuantInterface
     kai_matmul_clamp_f32_qai8dxp1x4_qsi4c32p4vlx4_1x4vl_sme2_dot_interface{
         .run_matmul = kai_run_matmul_clamp_f32_qai8dxp1x4_qsi4c32p4vlx4_1x4vl_sme2_dot,
@@ -1000,6 +1008,11 @@ const auto& get_matmul_benchmarks() {
 
         // matmul_clamp_f32_qai8dxp_qsi4c32p
         RegisterBenchmark(
+            "kai_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4c32p8x8s16s0sbf16bf32_8vsx8_sve_i8mm",
+            kai_benchmark_matmul<MatMulUkernelApiInterface>,
+            kai_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4c32p8x8s16s0sbf16bf32_8vsx8_sve_i8mm_interface, DataType::FP32,
+            MatMulOp::GEMM, test::cpu_check<test::cpu_has_sve_vl256, test::cpu_has_svei8mm>),
+        RegisterBenchmark(
             "kai_matmul_clamp_f32_qai8dxp1x4_qsi4c32p4x4_1x4_neon_dotprod",
             kai_benchmark_matmul<MatMulBlockwiseDynamicQuantInterface>,
             kai_matmul_clamp_f32_qai8dxp1x4_qsi4c32p4x4_1x4_neon_dotprod_interface, DataType::FP32, MatMulOp::GEMV,
@@ -1253,7 +1266,7 @@ const auto& get_matmul_benchmarks() {
             "kai_matmul_clamp_f32_qsi8d32p4x8_qsi4c32p8x8_16x8_sve_i8mm",
             kai_benchmark_matmul<MatMulBlockwiseDynamicQuantInterface>,
             kai_matmul_clamp_f32_qsi8d32p4x8_qsi4c32p8x8_16x8_sve_i8mm_interface, DataType::FP32, MatMulOp::GEMM,
-            (test::cpu_check<test::cpu_has_sve_vl256, test::cpu_has_i8mm>)),
+            (test::cpu_check<test::cpu_has_sve_vl256, test::cpu_has_svei8mm>)),
 
         // matmul_clamp_fp32_bf16p_bf16p
         RegisterBenchmark(

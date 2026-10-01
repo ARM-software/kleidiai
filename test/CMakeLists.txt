@@ -75,6 +75,7 @@ add_library(kleidiai_test_framework
     test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_fp_wrapper.cpp
     test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_ukerapi_wrapper.cpp
     test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_wrapper_registry.cpp
+    test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_blockwise_quant_wrapper.cpp
     test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_quant_wrapper.cpp
     test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_quant_i8_wrapper.cpp
     test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_fp_nt_wrapper.cpp

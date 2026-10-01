@@ -17,6 +17,7 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 - New Advanced SIMD micro-kernels:
   - Advanced SIMD packing micro-kernels for 16-bit inputs and per-N 32-bit RHS bias, including use with the BF16 MMLA matrix multiplication micro-kernel.
 - New SVE micro-kernels:
+  - SVE matrix multiplication (MxN) for QAI8DXP LHS and QSI4C32P RHS with F32 output, requiring SVE I8MM support and exactly 256-bit SVE. Uses the scalable name `kai_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4c32p8x8s16s0sbf16bf32_8vsx8_sve_i8mm`; support for other vector lengths is not implemented.
   - Matrix multiplication (1xN) for QAI8DXP LHS and QSI8CXP RHS with F32 output, optimized for a 256-bit vector length.
   - Matrix multiplication (MxN) for QAI8DXP LHS and QSI8CXP RHS with F32 output, vector length agnostic.
 - New SVE2 micro-kernels:

@@ -537,6 +537,33 @@ struct kai_matmul_uker_api kai_matmul_clamp_f32_qai8dxp1x4_qsi4c32p16vsx4_1x16vs
 /// @return The micro-kernel API.
 struct kai_matmul_uker_api kai_matmul_clamp_f32_qai8dxp4x8sf32_qsi8cxp4vsx8sf32bf32_16x4vs_sve_i8mm(void);
 
+/// Dynamically quantized matrix multiplication with blockwise INT4 RHS using SVE I8MM instructions.
+///
+/// Required CPU features:
+///   * FEAT_SVE with a vector length of exactly 256 bits
+///   * SVE FEAT_I8MM instructions
+///
+/// The scalable name reserves support for other vector lengths. This implementation requires vscale = 2,
+/// with LHS panels of 4 rows and an output block of 16x8.
+///
+/// Required configuration parameters:
+///   * format.bl - RHS quantization block length. It must be a non-zero multiple of 32, and K must be a non-zero
+///     multiple of it.
+///
+/// Required operands:
+///   * dst
+///   * lhs - Packed QAI8DXP data with per-M zero point and scale.
+///   * rhs - Packed QSI4C32P data with BF16 per-block scales, F32 per-N row sums, and F32 per-N bias.
+///
+/// Optional arguments:
+///   * clamp - F32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
+///
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4c32p8x8s16s0sbf16bf32_8vsx8_sve_i8mm(void);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif
