@@ -214,6 +214,7 @@ inline static uint16_t kai_cast_f16_f32(float f32) {
 
 /// Divide a value, `a`, with a value `b` and round up the result
 inline static size_t kai_div_ceil(size_t a, size_t b) {
+    KAI_ASSUME(b != 0);
     return (a + b - 1) / b;
 }
 

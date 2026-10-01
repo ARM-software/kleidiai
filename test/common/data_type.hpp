@@ -11,6 +11,8 @@
 #include <functional>
 #include <string>
 
+#include "test/common/type_traits.hpp"
+
 namespace kai::test {
 
 /// Data type.
@@ -93,6 +95,25 @@ enum class DataType : uint16_t {
 ///
 /// @return The size in bits.
 [[nodiscard]] size_t data_type_size_in_bits(DataType dt);
+
+/// Gets the size in bytes of an array with the specified element width using checked math
+///
+/// @param[in] element_bits The size in bits of each element.
+/// @param[in] len The number of elements.
+///
+/// @return The size in bytes, rounded up for packed elements.
+[[nodiscard]] size_t array_size_in_bytes(size_t element_bits, size_t len);
+
+/// Gets the size in bytes of an array of type `T`, using its packed storage width.
+///
+/// @tparam T Element type.
+/// @param[in] len The number of elements.
+///
+/// @return The size in bytes, with the overflow checks of the element-width overload.
+template <typename T>
+[[nodiscard]] inline size_t array_size_in_bytes(size_t len) {
+    return array_size_in_bytes(size_in_bits<T>, len);
+}
 
 /// Gets the size in bytes of an array of the specified data type
 ///

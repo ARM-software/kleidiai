@@ -12,6 +12,7 @@
 
 #include "kai/kai_common.h"
 #include "test/common/assert.hpp"
+#include "test/common/safe_math.hpp"
 
 namespace kai::test {
 
@@ -87,8 +88,16 @@ size_t data_type_size_in_bits(DataType dt) {
     return bits(dt);
 }
 
+size_t array_size_in_bytes(size_t element_bits, size_t len) {
+    const auto bit_count = safe_mul(element_bits, len);
+    KAI_TEST_ASSERT(bit_count);
+    const auto size = safe_div_ceil(*bit_count, size_t{8});
+    KAI_TEST_ASSERT(size);
+    return *size;
+}
+
 size_t data_type_array_size_in_bytes(DataType dt, size_t len) {
-    return kai_div_ceil(bits(dt) * len, 8);
+    return array_size_in_bytes(bits(dt), len);
 }
 
 std::string data_type_uid(DataType dt) {
