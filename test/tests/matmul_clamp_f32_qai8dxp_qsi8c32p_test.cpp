@@ -8,26 +8,38 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <limits>
 #include <optional>
+#include <random>
 #include <string>
 #include <tuple>
 
 #include "kai/kai_common.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8c32p/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8c32p4vlx4_1vlx4vl_sme2_mopa.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8c32p/kai_matmul_clamp_f32_qai8dxp1x4_qsi8c32p4vlx4_1x4vl_sme2_dot.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8c32p/kai_matmul_clamp_f32_qai8dxp1x4_qsi8c32p8x4_1x8_sve_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8c32p/kai_matmul_clamp_f32_qai8dxp4x8_qsi8c32p8x8_16x8_sve_i8mm.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8c32p/kai_matmul_clamp_f32_qai8dxp_qsi8c32p_interface.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp_f32.h"
+#include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_qsi8c32p4vlx4_qsi8c32_f32_bf16_sme.h"
 #include "test/common/abi_checker.hpp"
 #include "test/common/bfloat16.hpp"
 #include "test/common/buffer.hpp"
+#include "test/common/cache.hpp"
 #include "test/common/compare.hpp"
 #include "test/common/cpu_info.hpp"
+#include "test/common/data_format.hpp"
+#include "test/common/data_type.hpp"
 #include "test/common/matmul_test_common.hpp"
 #include "test/common/matrix_portion.hpp"
 #include "test/common/memory.hpp"
+#include "test/common/rect.hpp"
+#include "test/common/seed.hpp"
+#include "test/common/sme.hpp"
 #include "test/common/test_suite.hpp"
 #include "test/reference/clamp.hpp"
 #include "test/reference/fill.hpp"
@@ -35,6 +47,54 @@
 #include "test/reference/quantize.hpp"
 
 namespace kai::test {
+
+using Qsi8c32RefKey = std::tuple<size_t, size_t, size_t, size_t, bool>;
+
+struct Qsi8c32RefData {
+    Buffer lhs;
+    Buffer rhs;
+    Buffer scales;
+    Buffer bias;
+    Buffer dst;
+};
+
+template <>
+Qsi8c32RefData ReferenceGenerator<Qsi8c32RefKey, Qsi8c32RefData>::generate_reference(const Qsi8c32RefKey& key) {
+    const auto [m, n, k, bl, has_bias] = key;
+    auto& feed = seed_stream(
+        "qsi8c32_legacy:" + std::to_string(m) + ":" + std::to_string(n) + ":" + std::to_string(k) + ":" +
+        std::to_string(bl) + ":" + (has_bias ? "1" : "0"));
+    Qsi8c32RefData data;
+    data.lhs = fill_matrix_random(m, k, DataFormat(DataType::FP32), feed());
+    std::mt19937 rng(feed());
+    std::uniform_int_distribution<int32_t> weights(-128, 127);
+    data.rhs = fill_matrix_raw<int8_t>(n, k, [&](size_t, size_t) { return static_cast<int8_t>(weights(rng)); });
+    // Includes both signed INT8 extremes in every input column.
+    for (size_t col = 0; col < n; ++col) {
+        write_array<int8_t>(data.rhs.data(), col * k, -128);
+        write_array<int8_t>(data.rhs.data(), col * k + 1, 127);
+    }
+    data.bias = fill_matrix_random(1, n, DataFormat(DataType::FP32), feed());
+    data.scales = Buffer(n * (k / bl) * sizeof(uint16_t));
+    Buffer scales_f32(n * (k / bl) * sizeof(float));
+    for (size_t i = 0; i < n * (k / bl); ++i) {
+        const BFloat16<false> scale(static_cast<float>((i + 1) % 13) * 0.03125F);
+        write_array<BFloat16<false>>(data.scales.data(), i, scale);
+        write_array<float>(scales_f32.data(), i, static_cast<float>(scale));
+    }
+    QuantizationInfo qinfo{};
+    qinfo.quant_width = k;
+    qinfo.dst_type = DataType::QAI8;
+    qinfo.scale_type = DataType::FP32;
+    qinfo.zero_point_type = DataType::I32;
+    const auto [lhs_quant, lhs_qparams] = quantize_dynamic(data.lhs.data(), DataType::FP32, m, k, qinfo);
+    data.dst = matmul_clamp_nt_t<int8_t, float, int32_t, int8_t, float, int32_t, float, int32_t, float>(
+        m, n, k, lhs_quant.data(), lhs_qparams.scales.data(), lhs_qparams.zero_points.data(), k, data.rhs.data(),
+        scales_f32.data(), nullptr, bl, has_bias ? data.bias.data() : nullptr, std::numeric_limits<float>::lowest(),
+        std::numeric_limits<float>::max());
+    return data;
+}
+
 namespace {
 
 constexpr size_t kBlockLength = 32;
@@ -43,22 +103,6 @@ constexpr size_t kNr = 8;
 enum class RhsLayout {
     Dotprod,
     I8mm,
-};
-
-struct kai_matmul_clamp_f32_qai8dxp_qsi8c32p_ukernel {
-    size_t (*get_m_step)(void);
-    size_t (*get_n_step)(void);
-    size_t (*get_mr)(void);
-    size_t (*get_nr)(void);
-    size_t (*get_kr)(void);
-    size_t (*get_sr)(void);
-    size_t (*get_lhs_packed_offset)(size_t m_idx, size_t k);
-    size_t (*get_rhs_packed_offset)(size_t n_idx, size_t k, size_t bl);
-    size_t (*get_dst_offset)(size_t m_idx, size_t n_idx, size_t dst_stride);
-    size_t (*get_dst_size)(size_t m, size_t n);
-    void (*run_matmul)(
-        size_t m, size_t n, size_t k, size_t bl, const void* lhs_packed, const void* rhs_packed, float* dst,
-        size_t dst_stride_row, size_t dst_stride_col, float scalar_min, float scalar_max);
 };
 
 struct UKernelVariant {
@@ -328,7 +372,7 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi8c32p, EndToEnd) {
         reinterpret_cast<const float*>(ref_lhs.data() + lhs_offset), lhs_stride,
         imp_packed_lhs.data() + lhs_packed_offset);
 
-    // Packs the RHS using a test-only reference implementation because there is no qsi8c32p RHS packing micro-kernel.
+    // Packs the RHS using a test-only reference implementation for these SVE layouts.
     const auto imp_packed_rhs =
         pack_rhs(variant_entry.rhs_layout, N, K, nr, bl, ref_rhs_quant, rhs_qoutputs.scales, ref_bias);
     const auto rhs_start_row = rect.start_col();
@@ -392,6 +436,302 @@ INSTANTIATE_TEST_SUITE_P(
 
         return test_description(name, shape, portion, true, clamp_keep_ratio) + "_bl" + std::to_string(bl);
     });
+
+/// Returns the GEMM variants.
+const auto& get_gemm_variants() {
+    static const std::array<kai_matmul_clamp_f32_qai8dxp_qsi8c32p_ukernel, 1> variants{{
+        UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp1vlx4_qsi8c32p4vlx4_1vlx4vl_sme2_mopa),
+    }};
+    return variants;
+}
+
+/// Returns the GEMV variants.
+const auto& get_gemv_variants() {
+    static const std::array<kai_matmul_clamp_f32_qai8dxp_qsi8c32p_ukernel, 1> variants{{
+        UKERNEL_MATMUL_VARIANT(clamp_f32_qai8dxp1x4_qsi8c32p4vlx4_1x4vl_sme2_dot),
+    }};
+    return variants;
+}
+
+// Variant index, GEMM selection, shape index, block length, bias, clamp, partial output, padded input strides.
+using Qsi8c32Params = std::tuple<size_t, bool, size_t, size_t, bool, bool, bool, bool>;
+
+class MatMulQsi8c32Test : public ::testing::TestWithParam<Qsi8c32Params> {
+protected:
+    void SetUp() override {
+        if (!cpu_has_sme2()) {
+            GTEST_SKIP() << "SME2 is required";
+        }
+    }
+};
+
+struct TestShape {
+    size_t m;
+    size_t n;
+    size_t k;
+};
+
+/// Returns GEMM shapes around the current streaming tile dimensions.
+TestShape get_gemm_shape(const kai_matmul_clamp_f32_qai8dxp_qsi8c32p_ukernel& ukernel, size_t index, size_t bl) {
+    const size_t mr = ukernel.get_mr();
+    const size_t nr = ukernel.get_nr();
+    // Covers single rows, full M/N tiles, and M/N tails after multiple tiles. K = bl
+    // exercises first-block initialization; K > bl also exercises accum_fallback.
+    // Every valid bl takes both the back edge and exit of the four-byte K loop.
+    const std::array shapes{
+
+        TestShape{1, 1, bl}, TestShape{1, nr + 1, 3 * bl}, TestShape{mr - 1, nr - 1, bl}, TestShape{mr, nr, 2 * bl},
+        TestShape{mr + 1, nr + 1, 3 * bl}, TestShape{2 * mr + 1, 2 * nr + 3, 4 * bl}, TestShape{3 * mr, 2 * nr, 2 * bl},
+        TestShape{2 * mr + 3, 4 * nr + 1, 5 * bl},
+        // Covers predicated loads/stores just below, at, and above each internal
+        // vector boundary in the four-vector N tile, with a full M tile plus tail.
+        TestShape{mr + 1, nr / 4 - 1, bl}, TestShape{mr + 1, nr / 4, bl}, TestShape{mr + 1, nr / 4 + 1, bl},
+        TestShape{mr + 1, nr / 2 - 1, 2 * bl}, TestShape{mr + 1, nr / 2, 2 * bl}, TestShape{mr + 1, nr / 2 + 1, 2 * bl},
+        TestShape{mr + 1, 3 * nr / 4 - 1, 3 * bl}, TestShape{mr + 1, 3 * nr / 4, 3 * bl},
+        TestShape{mr + 1, 3 * nr / 4 + 1, 3 * bl}};
+    return shapes.at(index);
+}
+
+/// Returns single-row GEMV shapes around streaming vector and panel boundaries.
+TestShape get_gemv_shape(const kai_matmul_clamp_f32_qai8dxp_qsi8c32p_ukernel& ukernel, size_t index, size_t bl) {
+    const size_t nr = ukernel.get_nr();
+    const std::array shapes{
+        TestShape{1, 1, bl},
+        TestShape{1, nr - 1, bl},
+        TestShape{1, nr, 2 * bl},
+        TestShape{1, nr + 1, 3 * bl},
+        TestShape{1, 2 * nr + 1, bl},
+        TestShape{1, 2 * nr + 3, 4 * bl},
+        TestShape{1, 2 * nr, 2 * bl},
+        TestShape{1, 4 * nr + 1, 5 * bl},
+        TestShape{1, nr / 4 - 1, bl},
+        TestShape{1, nr / 4, bl},
+        TestShape{1, nr / 4 + 1, bl},
+        TestShape{1, nr / 2 - 1, 2 * bl},
+        TestShape{1, nr / 2, 2 * bl},
+        TestShape{1, nr / 2 + 1, 2 * bl},
+        TestShape{1, 3 * nr / 4 - 1, 3 * bl},
+        TestShape{1, 3 * nr / 4, 3 * bl},
+        TestShape{1, 3 * nr / 4 + 1, 3 * bl}};
+    return shapes.at(index);
+}
+
+/// Transposes reference weights to K x N with optional padding, then packs an aligned N portion.
+Buffer pack_rhs(
+    const kai_matmul_clamp_f32_qai8dxp_qsi8c32p_ukernel& ukernel, const Qsi8c32RefData& data, const TestShape& shape,
+    size_t bl, bool has_bias, size_t n_start, bool padded) {
+    const size_t nr = ukernel.get_nr();
+    const size_t kr = ukernel.get_kr();
+    const size_t sr = ukernel.get_sr();
+    const size_t rhs_stride = shape.n + (padded ? 13 : 0);
+    const size_t scale_stride = (shape.k / bl) * sizeof(uint16_t) + (padded ? 6 : 0);
+    Buffer rhs(shape.k * rhs_stride, 0xA5);
+    Buffer scales(shape.n * scale_stride, 0xA5);
+    for (size_t col = 0; col < shape.n; ++col) {
+        for (size_t ki = 0; ki < shape.k; ++ki) {
+            rhs.data()[ki * rhs_stride + col] = data.rhs.data()[col * shape.k + ki];
+        }
+        std::memcpy(
+            scales.data() + col * scale_stride, data.scales.data() + col * (shape.k / bl) * sizeof(uint16_t),
+            (shape.k / bl) * sizeof(uint16_t));
+    }
+    Buffer packed(
+        kai_get_rhs_packed_size_rhs_pack_kxn_qsi8c32p4vlx4_qsi8c32_f32_bf16_sme(shape.n, shape.k, nr, kr, sr, bl),
+        0xA5);
+    const size_t offset =
+        kai_get_rhs_packed_offset_rhs_pack_kxn_qsi8c32p4vlx4_qsi8c32_f32_bf16_sme(n_start, shape.k, nr, kr, sr, bl);
+    EXPECT_EQ(kai_get_rhs_offset_rhs_pack_kxn_qsi8c32p4vlx4_qsi8c32_f32_bf16_sme(n_start, rhs_stride), n_start);
+    abi_check(
+        kai_run_rhs_pack_kxn_qsi8c32p4vlx4_qsi8c32_f32_bf16_sme, size_t{1}, shape.n - n_start, shape.k, nr, kr, sr, bl,
+        rhs.data() + kai_get_rhs_offset_rhs_pack_kxn_qsi8c32p4vlx4_qsi8c32_f32_bf16_sme(n_start, rhs_stride),
+        rhs_stride, has_bias ? data.bias.data() + n_start * sizeof(float) : nullptr,
+        scales.data() + n_start * scale_stride, scale_stride, packed.data() + offset, size_t{0}, nullptr);
+    return packed;
+}
+
+TEST_P(MatMulQsi8c32Test, RhsPack) {
+    const auto [variant, is_gemm, index, bl, has_bias, clamp, partial, padded] = GetParam();
+    const auto& ukernel = is_gemm ? get_gemm_variants().at(variant) : get_gemv_variants().at(variant);
+    KAI_UNUSED(clamp);
+    const auto shape = is_gemm ? get_gemm_shape(ukernel, index, bl) : get_gemv_shape(ukernel, index, bl);
+    const Qsi8c32RefKey key{shape.m, shape.n, shape.k, bl, has_bias};
+    const auto& data = getV<Qsi8c32RefKey, Qsi8c32RefData>(key);
+    const size_t nr = ukernel.get_nr();
+    const size_t n_start = partial && shape.n > nr ? nr : 0;
+    const auto packed = pack_rhs(ukernel, data, shape, bl, has_bias, n_start, padded);
+    const size_t stride =
+        kai_get_rhs_packed_stride_rhs_pack_kxn_qsi8c32p4vlx4_qsi8c32_f32_bf16_sme(shape.k, nr, 4, 1, bl);
+    ASSERT_EQ(kai_get_n_step_rhs_pack_kxn_qsi8c32p4vlx4_qsi8c32_f32_bf16_sme(nr), ukernel.get_n_step());
+    ASSERT_EQ(packed.size(), kai_roundup(shape.n, nr) / nr * stride);
+    for (size_t col = n_start; col < kai_roundup(shape.n, nr); ++col) {
+        const size_t src_col = std::min(col, shape.n - 1);
+        const size_t panel = (col / nr) * stride;
+        const size_t lane = col % nr;
+        ASSERT_EQ(panel, ukernel.get_rhs_packed_offset(col / nr * nr, shape.k, bl));
+        float sum = 0;
+        for (size_t ki = 0; ki < shape.k; ++ki) {
+            const size_t block = ki / bl;
+            const size_t pos =
+                panel + block * nr * (bl + sizeof(uint16_t)) + (ki % bl / 4) * nr * 4 + lane * 4 + ki % 4;
+            const int8_t value = read_array<int8_t>(data.rhs.data(), src_col * shape.k + ki);
+            ASSERT_EQ(read_array<int8_t>(packed.data(), pos), value);
+            sum += static_cast<float>(value) *
+                static_cast<float>(read_array<BFloat16<false>>(data.scales.data(), src_col * (shape.k / bl) + block));
+        }
+        for (size_t block = 0; block < shape.k / bl; ++block) {
+            const size_t pos = panel + block * nr * (bl + sizeof(uint16_t)) + nr * bl + lane * sizeof(uint16_t);
+            ASSERT_EQ(
+                read_array<uint16_t>(packed.data() + pos, 0),
+                read_array<uint16_t>(data.scales.data(), src_col * (shape.k / bl) + block));
+        }
+        const size_t sums = panel + (shape.k / bl) * nr * (bl + sizeof(uint16_t));
+        EXPECT_FLOAT_EQ(read_array<float>(packed.data() + sums, lane), sum);
+        EXPECT_EQ(
+            read_array<float>(packed.data() + sums + nr * sizeof(float), lane),
+            has_bias ? read_array<float>(data.bias.data(), src_col) : 0.0F);
+    }
+    const size_t prefix =
+        kai_get_rhs_packed_offset_rhs_pack_kxn_qsi8c32p4vlx4_qsi8c32_f32_bf16_sme(n_start, shape.k, nr, 4, 1, bl);
+    for (size_t i = 0; i < prefix; ++i) {
+        ASSERT_EQ(packed.data()[i], std::byte{0xA5});
+    }
+}
+
+TEST_P(MatMulQsi8c32Test, EndToEnd) {
+    const auto [variant, is_gemm, index, bl, has_bias, clamp, partial, padded] = GetParam();
+    const auto& ukernel = is_gemm ? get_gemm_variants().at(variant) : get_gemv_variants().at(variant);
+    const auto shape = is_gemm ? get_gemm_shape(ukernel, index, bl) : get_gemv_shape(ukernel, index, bl);
+    const Qsi8c32RefKey key{shape.m, shape.n, shape.k, bl, has_bias};
+    const auto& data = getV<Qsi8c32RefKey, Qsi8c32RefData>(key);
+    const size_t mr = ukernel.get_mr();
+    const size_t nr = ukernel.get_nr();
+    const size_t kr = ukernel.get_kr();
+    const size_t sr = ukernel.get_sr();
+    ASSERT_EQ(kr, 4U);
+    ASSERT_EQ(sr, 1U);
+    ASSERT_EQ(nr, 4 * get_sme_vector_length<float>());
+    ASSERT_EQ(
+        ukernel.get_lhs_packed_offset(mr, shape.k),
+        kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp_f32(mr, shape.k, mr, kr, sr));
+    ASSERT_EQ(ukernel.get_m_step(), kai_get_m_step_lhs_quant_pack_qai8dxp_f32(mr));
+    ASSERT_EQ(ukernel.get_dst_size(shape.m, shape.n), shape.m * shape.n * sizeof(float));
+    const size_t m_start = partial && shape.m > mr ? mr : 0;
+    const size_t n_start = partial && shape.n > nr ? nr : 0;
+    const size_t lhs_offset = ukernel.get_lhs_packed_offset(m_start, shape.k);
+    ASSERT_EQ(lhs_offset, kai_get_lhs_packed_offset_lhs_quant_pack_qai8dxp_f32(m_start, shape.k, mr, kr, sr));
+    Buffer lhs_packed(kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp_f32(shape.m, shape.k, mr, kr, sr));
+    abi_check(
+        kai_run_lhs_quant_pack_qai8dxp_f32, shape.m - m_start, shape.k, mr, kr, sr, m_start,
+        reinterpret_cast<const float*>(data.lhs.data()) + m_start * shape.k, shape.k * sizeof(float),
+        lhs_packed.data() + lhs_offset);
+    const auto rhs_packed = pack_rhs(ukernel, data, shape, bl, has_bias, n_start, padded);
+    const size_t rhs_offset = ukernel.get_rhs_packed_offset(n_start, shape.k, bl);
+    ASSERT_EQ(
+        rhs_offset,
+        kai_get_rhs_packed_offset_rhs_pack_kxn_qsi8c32p4vlx4_qsi8c32_f32_bf16_sme(n_start, shape.k, nr, kr, sr, bl));
+    const size_t dst_stride = (shape.n + 7) * sizeof(float);
+    const size_t dst_offset = ukernel.get_dst_offset(m_start, n_start, dst_stride);
+    ASSERT_EQ(dst_offset, m_start * dst_stride + n_start * sizeof(float));
+    Buffer dst(shape.m * dst_stride, 0xA5);
+    const float clamp_min = clamp ? -10.0F : std::numeric_limits<float>::lowest();
+    const float clamp_max = clamp ? 10.0F : std::numeric_limits<float>::max();
+    abi_check(
+        ukernel.run_matmul, shape.m - m_start, shape.n - n_start, shape.k, bl, lhs_packed.data() + lhs_offset,
+        rhs_packed.data() + rhs_offset, reinterpret_cast<float*>(dst.data() + dst_offset), dst_stride, sizeof(float),
+        clamp_min, clamp_max);
+    Buffer actual(shape.m * shape.n * sizeof(float));
+    Buffer expected(shape.m * shape.n * sizeof(float));
+    for (size_t row = 0; row < shape.m; ++row) {
+        for (size_t col = 0; col < shape.n + 7; ++col) {
+            const void* value = dst.data() + row * dst_stride + col * sizeof(float);
+            if (row < m_start || col < n_start || col >= shape.n) {
+                ASSERT_EQ(read_array<uint32_t>(value, 0), 0xA5A5A5A5U);
+            } else {
+                const float result = read_array<float>(value, 0);
+                ASSERT_GE(result, clamp_min);
+                ASSERT_LE(result, clamp_max);
+                write_array<float>(actual.data(), row * shape.n + col, result);
+                write_array<float>(
+                    expected.data(), row * shape.n + col,
+                    std::clamp(read_array<float>(data.dst.data(), row * shape.n + col), clamp_min, clamp_max));
+            }
+        }
+    }
+    DefaultMismatchHandler handler(0, 0.02, 0, 0.05);
+    ASSERT_TRUE(compare(
+        actual.data(), expected.data(), DataFormat(DataType::FP32), shape.m, shape.n,
+        Rect(m_start, n_start, shape.m - m_start, shape.n - n_start), handler));
+}
+
+class MatVecQsi8c32Test : public MatMulQsi8c32Test {};
+
+TEST_P(MatVecQsi8c32Test, SharedRhsWithGemm) {
+    const auto [variant, is_gemm, index, bl, has_bias, clamp, partial, padded] = GetParam();
+    ASSERT_FALSE(is_gemm);
+    const auto& gemv = get_gemv_variants().at(variant);
+    const auto& gemm = get_gemm_variants().front();
+    const auto shape = get_gemv_shape(gemv, index, bl);
+    ASSERT_EQ(shape.m, 1U);
+    ASSERT_EQ(gemv.get_mr(), 1U);
+    ASSERT_EQ(gemv.get_m_step(), 1U);
+    ASSERT_EQ(gemv.get_nr(), gemm.get_nr());
+    ASSERT_EQ(gemv.get_kr(), gemm.get_kr());
+    ASSERT_EQ(gemv.get_sr(), gemm.get_sr());
+    const Qsi8c32RefKey key{shape.m, shape.n, shape.k, bl, has_bias};
+    const auto& data = getV<Qsi8c32RefKey, Qsi8c32RefData>(key);
+    const size_t n_start = partial && shape.n > gemv.get_nr() ? gemv.get_nr() : 0;
+    const auto rhs_packed = pack_rhs(gemv, data, shape, bl, has_bias, n_start, padded);
+    const size_t rhs_offset = gemv.get_rhs_packed_offset(n_start, shape.k, bl);
+    ASSERT_EQ(rhs_offset, gemm.get_rhs_packed_offset(n_start, shape.k, bl));
+    const float clamp_min = clamp ? -10.0F : std::numeric_limits<float>::lowest();
+    const float clamp_max = clamp ? 10.0F : std::numeric_limits<float>::max();
+    std::array<Buffer, 2> results;
+    const std::array variants{gemm, gemv};
+    for (size_t i = 0; i < variants.size(); ++i) {
+        const auto& ukernel = variants[i];
+        const size_t mr = ukernel.get_mr();
+        const size_t kr = ukernel.get_kr();
+        const size_t sr = ukernel.get_sr();
+        // Partial cases also exercise a nonzero LHS packed panel offset.
+        const size_t m_start = partial ? mr : 0;
+        const size_t lhs_offset = ukernel.get_lhs_packed_offset(m_start, shape.k);
+        Buffer lhs_packed(kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp_f32(m_start + 1, shape.k, mr, kr, sr));
+        abi_check(
+            kai_run_lhs_quant_pack_qai8dxp_f32, size_t{1}, shape.k, mr, kr, sr, m_start,
+            reinterpret_cast<const float*>(data.lhs.data()), shape.k * sizeof(float), lhs_packed.data() + lhs_offset);
+        results[i] = Buffer((shape.n - n_start) * sizeof(float));
+        abi_check(
+            ukernel.run_matmul, size_t{1}, shape.n - n_start, shape.k, bl, lhs_packed.data() + lhs_offset,
+            rhs_packed.data() + rhs_offset, reinterpret_cast<float*>(results[i].data()), results[i].size(),
+            sizeof(float), clamp_min, clamp_max);
+    }
+    for (size_t col = 0; col < shape.n - n_start; ++col) {
+        const float gemm_value = read_array<float>(results[0].data(), col);
+        EXPECT_NEAR(
+            read_array<float>(results[1].data(), col), gemm_value, 0.0001F * std::max(1.0F, std::abs(gemm_value)));
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Sme2Gemm, MatMulQsi8c32Test,
+    testing::Combine(
+        testing::Range<size_t>(0, get_gemm_variants().size()), testing::Values(true), testing::Range<size_t>(0, 17),
+        testing::Values<size_t>(32, 64, 96, 128, 256), testing::Bool(), testing::Bool(), testing::Bool(),
+        testing::Bool()));
+
+INSTANTIATE_TEST_SUITE_P(
+    Sme2Gemv, MatMulQsi8c32Test,
+    testing::Combine(
+        testing::Range<size_t>(0, get_gemv_variants().size()), testing::Values(false), testing::Range<size_t>(0, 17),
+        testing::Values<size_t>(32, 64, 96, 128, 256), testing::Bool(), testing::Bool(), testing::Bool(),
+        testing::Bool()));
+
+INSTANTIATE_TEST_SUITE_P(
+    Sme2Gemv, MatVecQsi8c32Test,
+    testing::Combine(
+        testing::Range<size_t>(0, get_gemv_variants().size()), testing::Values(false), testing::Range<size_t>(0, 17),
+        testing::Values<size_t>(32, 64, 96, 128, 256), testing::Bool(), testing::Bool(), testing::Bool(),
+        testing::Bool()));
 
 }  // namespace
 }  // namespace kai::test
