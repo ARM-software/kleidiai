@@ -71,8 +71,8 @@ NEON_KERNELS_NOHDR = [
     "pack/kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon",
     "pack/kai_matmul_pack_lhs_mxk_x16p8x4_x16_neon",
     "pack/kai_matmul_pack_rhs_kxn_x16p12x4bx32_x16_x32_neon",
-    "pack/kai_matmul_pack_rhs_nxk_x16p12x4bx32_x16_x32_neon",
     "pack/kai_matmul_pack_rhs_nxk_qsu2cxp4x8sf32bf32_qsu2cx_f32_f32_i8p_neon",
+    "pack/kai_matmul_pack_rhs_nxk_x16p12x4bx32_x16_x32_neon",
 ]
 
 # buildifier: keep sorted
