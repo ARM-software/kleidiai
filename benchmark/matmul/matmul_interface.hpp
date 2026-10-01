@@ -114,6 +114,7 @@ struct MatMulUkernelApiInterface {
     size_t acc_bias_elem_size = 0;
     size_t acc_scale_elem_size = 0;
     size_t scale_bias_elem_size = 0;
+    size_t k_multiple = 1;
 };
 
 }  // namespace kai::benchmark

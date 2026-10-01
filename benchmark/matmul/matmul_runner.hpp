@@ -159,6 +159,12 @@ inline bool MatMulRunner<MatMulBlockwiseDynamicQuantLutInterface>::is_valid() co
     return m_bl != 0 && m_k % m_bl == 0;
 }
 
+/// Returns whether the configured dimensions are supported by a ukernel API interface.
+template <>
+inline bool MatMulRunner<MatMulUkernelApiInterface>::is_valid() const {
+    return m_k % m_matmul_interface.k_multiple == 0;
+}
+
 /// Gets buffer sizes using the default heuristics.
 template <typename MatMulInterface>
 MatMulBufferSizes MatMulRunner<MatMulInterface>::get_buffer_sizes() const {
