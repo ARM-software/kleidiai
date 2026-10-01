@@ -433,7 +433,8 @@ struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_kxn_qsi4c32p16vsx4s4s0_q
 ///
 /// Optional arguments:
 ///   * operand.lut.ptr - Four-entry INT8 lookup table mapping packed 2-bit RHS codes to INT8 values.
-///     NULL selects the default QSU2 mapping.
+///     NULL selects the default QSU2 mapping. The selected mapping must match the mapping supplied to the matrix
+///     multiplication micro-kernel consuming rhs_packed.
 ///
 /// Supported flags: none.
 ///

@@ -552,7 +552,8 @@ struct kai_matmul_uker_api kai_matmul_clamp_f32_qai8dxp4x8sf32_qsi8cxp4vsx8sf32b
 ///
 /// Optional arguments:
 ///   * operand.lut.ptr - Four-entry INT8 lookup table mapping packed 2-bit RHS codes to INT8 values.
-///     NULL selects the default QSU2 mapping.
+///     NULL selects the default QSU2 mapping. The selected mapping must match the mapping used when packing
+///     operand.rhs.
 ///   * clamp - FP32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP is set.
 ///
 /// Supported flags:
@@ -577,7 +578,8 @@ struct kai_matmul_uker_api kai_matmul_clamp_f32_qai8dxp4x8_qsu2cxp4x8sf32bf32_i8
 ///
 /// Optional arguments:
 ///   * operand.lut.ptr - Four-entry INT8 lookup table mapping packed 2-bit RHS codes to INT8 values.
-///     NULL selects the default QSU2 mapping.
+///     NULL selects the default QSU2 mapping. The selected mapping must match the mapping used when packing
+///     operand.rhs.
 ///   * clamp - FP32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP is set.
 ///
 /// Supported flags:
