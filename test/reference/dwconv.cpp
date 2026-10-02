@@ -10,8 +10,10 @@
 #include <ostream>
 
 #include "test/common/assert.hpp"
+#include "test/common/bfloat16.hpp"
 #include "test/common/data_type.hpp"
 #include "test/common/float16.hpp"
+#include "test/common/memory.hpp"
 #include "test/common/safe_math.hpp"
 
 namespace kai::test {
@@ -110,5 +112,29 @@ template Buffer depthwise_reference<Float16>(
     const size_t batches, const size_t in_height, const size_t in_width, const size_t channels,
     const size_t filter_height, const size_t filter_width, const void* feature_map, const void* weights,
     const void* bias, const Padding2D& pad);
+
+// Explicit template
+template Buffer depthwise_reference<BFloat16<>>(
+    const size_t batches, const size_t in_height, const size_t in_width, const size_t channels,
+    const size_t filter_height, const size_t filter_width, const void* feature_map, const void* weights,
+    const void* bias, const Padding2D& pad);
+
+Buffer depthwise_reference(
+    DataType dtype, size_t batches, size_t in_height, size_t in_width, size_t channels, size_t filter_height,
+    size_t filter_width, const void* feature_map, const void* weights, const void* bias, const Padding2D& pad) {
+    switch (dtype) {
+        case DataType::FP32:
+            return depthwise_reference<float>(
+                batches, in_height, in_width, channels, filter_height, filter_width, feature_map, weights, bias, pad);
+        case DataType::FP16:
+            return depthwise_reference<Float16>(
+                batches, in_height, in_width, channels, filter_height, filter_width, feature_map, weights, bias, pad);
+        case DataType::BF16:
+            return depthwise_reference<BFloat16<>>(
+                batches, in_height, in_width, channels, filter_height, filter_width, feature_map, weights, bias, pad);
+        default:
+            KAI_TEST_ERROR("Unsupported depthwise reference data type.");
+    }
+}
 
 }  // namespace kai::test

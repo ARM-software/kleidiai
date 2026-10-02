@@ -77,6 +77,22 @@ inline Range<double> finite_range_for_dtype(DataType dtype) {
     }
 }
 
+/// Gets the default asymmetric range restricted to the data type's finite values.
+///
+/// @param[in] dtype The data type.
+///
+/// @return The default range clipped to the data type's finite range.
+inline Range<double> default_asymmetric_range_for_dtype(DataType dtype) {
+    constexpr Range<double> default_asymmetric_range{-1.0, 2.0};
+    const Range<double> dtype_range = finite_range_for_dtype(dtype);
+    const Range<double> range{
+        std::max(default_asymmetric_range.min, dtype_range.min),
+        std::min(default_asymmetric_range.max, dtype_range.max),
+    };
+    KAI_TEST_ASSERT_MSG(range.is_valid(), "Default asymmetric range must overlap the data type range.");
+    return range;
+}
+
 /// Fill an output buffer with random integer values from the requested range using the provided seed.
 ///
 /// The requested range is clamped to the integer range representable by the

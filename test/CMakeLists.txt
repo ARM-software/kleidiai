@@ -70,6 +70,13 @@ add_library(kleidiai_test_framework
     test/nextgen/quantization/asymm_linear_quantizer.cpp
     test/nextgen/quantization/symm_linear_quantizer.cpp
     test/nextgen/quantization/two_level_asym_block_quantizer.cpp
+    test/nextgen/operators/dwconv/pack_rhs/dwconv_pack_rhs_wrapper_registry.cpp
+    test/nextgen/operators/dwconv/pack_rhs/dwconv_pack_rhs_fp_nt_wrapper.cpp
+    test/nextgen/operators/dwconv/dwconv/dwconv_wrapper_registry.cpp
+    test/nextgen/operators/dwconv/dwconv/dwconv_depthfirst_wrapper.cpp
+    test/nextgen/operators/dwconv/dwconv/dwconv_planar_wrapper.cpp
+    test/nextgen/operators/dwconv/dwconv_operator.cpp
+    test/nextgen/operators/dwconv/dwconv_tb.cpp
     test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_wrapper_registry.cpp
     test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_dq_wrapper.cpp
     test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_fp_wrapper.cpp
@@ -150,6 +157,7 @@ else()
         test/tests/matmul_test.cpp
         test/tests/safe_math_test.cpp
 
+        test/nextgen/tests/dwconv_test_next.cpp
         test/nextgen/tests/matmul_test_next.cpp
         test/nextgen/tests/poly_test.cpp
     )

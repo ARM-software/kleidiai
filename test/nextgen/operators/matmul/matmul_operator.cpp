@@ -14,6 +14,7 @@
 
 #include "test/common/cpu_info.hpp"
 #include "test/common/data_type.hpp"
+#include "test/common/predicate_utils.hpp"
 #include "test/common/span.hpp"
 #include "test/nextgen/functions/round.hpp"
 #include "test/nextgen/operators/matmul/matmul/matmul_wrapper_registry.hpp"
@@ -27,10 +28,6 @@
 namespace kai::test {
 
 namespace {
-
-/// Combine several functions, and return true of all return true
-template <auto... Functions>
-constexpr auto all_true = [](auto... args) -> bool { return (Functions(args...) && ...); };
 
 bool is_shape_suitable_lhs_vector(
     size_t shape_m, [[maybe_unused]] size_t shape_n, [[maybe_unused]] size_t shape_k,
