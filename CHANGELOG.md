@@ -12,6 +12,8 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+## v1.32.0
+
 - Optimizations:
   - Improve GEMV performance of `kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot` by processing four RHS column blocks per iteration with four accumulators per block.
 - New Advanced SIMD micro-kernels:
