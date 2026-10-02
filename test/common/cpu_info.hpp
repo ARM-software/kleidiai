@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "test/common/predicate_utils.hpp"
+
 namespace kai::test {
 
 /// Returns a value indicating whether the current CPU supports FEAT_AdvSIMD.
@@ -66,7 +68,7 @@ bool cpu_has_i8mm_and_bf16();
 /// Returns a value indicating whether the current CPU supports a set of features
 template <bool (*... Pred)()>
 bool cpu_check() {
-    return (Pred() && ...);
+    return all_true<Pred...>();
 }
 
 }  // namespace kai::test

@@ -29,6 +29,9 @@ namespace kai::test {
 /// Creates a wrapper for kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon kernel.
 [[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp8x8_qsi8cx_neon();
 
+/// Creates a fixed-argument wrapper for kai_rhs_pack_nxk_qsi4c32p_qsu4c32s1s0.
+[[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4c32p8x8_qsu4c32s1s0();
+
 /// Creates a wrapper for kai_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme kernel.
 [[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme();
 
@@ -145,6 +148,10 @@ namespace kai::test {
 
 /// Checks if the portion produces non-empty RHS packing tiles for the qai8dxp1x4/qsi4cxp4vlx4 matmul operator.
 [[nodiscard]] bool is_shape_suitable_rhs_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
+
+/// Checks if the portion produces non-empty RHS packing tiles for the SVE I8MM QAI8DXP/QSI4C32P operator.
+[[nodiscard]] bool is_shape_suitable_rhs_qai8dxp2vsx8sf32_qsi4c32p8x8s16s0sbf16bf32_8vsx8_sve_i8mm(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
 /// Checks if the portion produces non-empty RHS packing tiles for the f32p2vlx1 matmul operator.

@@ -239,6 +239,7 @@ SVE_KERNELS_ASM_NOHDR = [
 
 # buildifier: keep sorted
 SVE_I8MM_KERNELS_ASM_NOHDR = [
+    "matmul_clamp_f32_qai8dxp_qsi4c32p/kai_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4c32p8x8s16s0sbf16bf32_8vsx8_sve_i8mm",
     "matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp4x8sf32_qsi8cxp4vsx8sf32bf32_16x4vs_sve_i8mm",
 ]
 

@@ -37,6 +37,21 @@ struct MatMulPackRhsQuantI8Interface {
         const float* scale, void* rhs_packed, size_t extra_bytes, const kai_rhs_pack_qsi8cx_params* params);
 };
 
+/// Interface for RHS packing with blockwise quantization.
+struct MatMulPackRhsBlockwiseQuantInterface {
+    size_t (*get_n_step)(size_t nr);
+    size_t (*get_rhs_offset)(size_t n_idx, size_t rhs_stride);
+    size_t (*get_rhs_packed_stride)(size_t k, size_t nr, size_t kr, size_t sr, size_t bl, kai_datatype scale_dt);
+    size_t (*get_rhs_packed_offset)(
+        size_t n_idx, size_t k, size_t nr, size_t kr, size_t sr, size_t bl, kai_datatype scale_dt);
+    size_t (*get_rhs_packed_size)(
+        size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t bl, kai_datatype scale_dt);
+    void (*run)(
+        size_t num_groups, size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t bl, const uint8_t* rhs,
+        size_t rhs_stride, const float* bias, const void* scale, size_t scale_stride, void* rhs_packed,
+        size_t extra_bytes, const kai_rhs_pack_nxk_qsi4c32p_qsu4c32s1s0_params* params);
+};
+
 /// Interface for floating-point RHS packing.
 struct MatMulPackRhsFpInterface {
     size_t (*get_n_step)();

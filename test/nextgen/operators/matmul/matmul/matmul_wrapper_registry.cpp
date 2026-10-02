@@ -264,6 +264,22 @@ MatMulKernelPtr create_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot(
         make_poly<PlainFormat>(DataType::FP32));
 }
 
+MatMulKernelPtr create_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4c32p8x8s16s0sbf16bf32_8vsx8_sve_i8mm() {
+    constexpr size_t block_length = 32;
+
+    return std::make_unique<MatMulUkerApiWrapper>(
+        "matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4c32p8x8s16s0sbf16bf32_8vsx8_sve_i8mm",
+        kai_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4c32p8x8s16s0sbf16bf32_8vsx8_sve_i8mm(), MatMulSlot::LHS_PACKED,
+        make_poly<Block2dRowFormat>(
+            4, 8, 32, true, DataType::I8, std::array<DataType, 0>{}, std::array{DataType::I32, DataType::FP32}),
+        make_poly<Block2dRowFormat>(
+            8, 16, 32, false, DataType::I4, std::array<DataType, 0>{}, std::array{DataType::BF16}, block_length,
+            std::nullopt, false, std::array<DataType, 0>{}, std::array{DataType::FP32, DataType::FP32}, 16, true),
+        make_poly<PlainFormat>(DataType::FP32), DataType::FP32, MatMulUkerClampConfig::optional(DataType::FP32),
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS, MatMulUkerOutputStageConfig{},
+        kai_matmul_uker_config{{block_length}});
+}
+
 MatMulKernelPtr create_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa() {
     return std::make_unique<MatMulFpWrapper>(
         "matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa",

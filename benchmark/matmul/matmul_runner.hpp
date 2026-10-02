@@ -159,6 +159,13 @@ inline bool MatMulRunner<MatMulBlockwiseDynamicQuantLutInterface>::is_valid() co
     return m_bl != 0 && m_k % m_bl == 0;
 }
 
+/// Returns whether the configured dimensions meet the shared micro-kernel API's block length requirements.
+template <>
+inline bool MatMulRunner<MatMulUkernelApiInterface>::is_valid() const {
+    const size_t bl_multiple = m_matmul_interface.bl_multiple;
+    return bl_multiple == 0 || (m_bl != 0 && m_bl % bl_multiple == 0 && m_k != 0 && m_k % m_bl == 0);
+}
+
 /// Returns whether the configured dimensions are supported by a ukernel API interface.
 template <>
 inline bool MatMulRunner<MatMulUkernelApiInterface>::is_valid() const {

@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <initializer_list>
 #include <type_traits>
@@ -34,6 +35,17 @@ constexpr std::underlying_type_t<T> n_elements() noexcept {
     static_assert(std::is_enum_v<T>, "this function operates on enum types");
     const std::underlying_type_t<T> last = static_cast<std::underlying_type_t<T>>(T::LAST);
     return last;
+}
+
+/// Returns an std::array of the the valid values of a zero-based, contiguous enum, excluding LAST.
+template <typename T>
+constexpr auto enum_values() noexcept {
+    static_assert(std::is_enum_v<T>, "this function operates on enum types");
+    std::array<T, static_cast<size_t>(n_elements<T>())> values{};
+    for (size_t idx = 0; idx < values.size(); ++idx) {
+        values[idx] = static_cast<T>(idx);
+    }
+    return values;
 }
 
 /// Set of enum flags.
