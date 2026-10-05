@@ -12,6 +12,7 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 - New micro-kernels
   - SME2 FP16 elastic GEMM/GEMV kernels with corresponding packing kernels.
+  - New SVE Fexpa Softmax FP32 micro-kernel
 
 ## v1.30.0
 

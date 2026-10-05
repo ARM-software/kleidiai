@@ -338,6 +338,8 @@ set(KLEIDIAI_FILES_SVE_ASM
     kai/ukernels/matmul/pack/kai_rhs_pack_kxn_x16p16vsx2bx16_x16_x16_sve_asm.S
     kai/ukernels/matmul/pack/kai_rhs_pack_kxn_x32p4vlx1b_x32_x32_sve.c
     kai/ukernels/matmul/pack/kai_rhs_pack_kxn_x32p4vlx1b_x32_x32_sve_asm.S
+    kai/ukernels/softmax/softmax_f32_f32/kai_softmax_f32_f32_1d_sve_fexpa.c
+    kai/ukernels/softmax/softmax_f32_f32/kai_softmax_f32_f32_1d_sve_fexpa_asm.S
 )
 
 set(KLEIDIAI_FILES_SVE_DOTPROD_ASM

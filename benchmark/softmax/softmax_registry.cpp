@@ -9,8 +9,10 @@
 #include <array>
 #include <cstddef>
 
+#include "kai/ukernels/softmax/kai_softmax.h"
 #include "softmax_benchmark_logic.hpp"
 #include "softmax_interface.hpp"
+#include "test/common/cpu_info.hpp"
 
 #ifdef __GNUC__
 #pragma GCC diagnostic push
@@ -35,7 +37,14 @@ struct SoftmaxBenchmark {
     CpuRequirement is_cpu_supported;
 };
 
-const std::array<SoftmaxBenchmark, 0> softmax_benchmarks{};
+const std::array<SoftmaxBenchmark, 1> softmax_benchmarks{{
+    {
+        "kai_softmax_f32_f32_1d_sve_fexpa",
+        kai_benchmark_softmax<float>,
+        {kai_softmax_f32_f32_1d_sve_fexpa},
+        test::cpu_has_sve,
+    },
+}};
 
 }  // namespace
 

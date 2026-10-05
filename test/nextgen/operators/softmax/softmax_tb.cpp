@@ -41,8 +41,6 @@ void SoftmaxTb::generate_test_data(Rng& rng, Range<double> input_range) {
     Tensor& original_src_data = get_tensor(SoftmaxSlot::SRC_DATA_ORIGINAL);
     Tensor& ref_dst_data = get_tensor(SoftmaxSlot::DST_DATA);
 
-    KAI_TEST_ASSERT_MSG(src_data.shape().size() == 1, "Only 1D softmax is currently supported.");
-
     const std::array shape{m_length};
     const Poly<Format> src_format(std::in_place_type<PlainFormat>, m_op->src_dtype);
     const uint32_t seed = rng();

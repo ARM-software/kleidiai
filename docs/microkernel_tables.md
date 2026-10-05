@@ -170,6 +170,12 @@ Micro-kernel categories:
 | f32 | f32 | f32 | - | - | 3x3 stride 1 | 4 rows, planar | SME2 | mla | - | `kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla` | RHS: [`kai_rhs_dwconv_pack_x32p1vlx1b_x32_x32_sme`](#pack-kai-rhs-dwconv-pack-x32p1vlx1b-x32-x32-sme) |
 | f16 | f16 | f16 | - | - | 3x3 stride 1 | 4x4, indirect | SME2 | mla | - | `kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla` | RHS: [`kai_rhs_dwconv_pack_x16p1vlx1b_x16_x16_sme`](#pack-kai-rhs-dwconv-pack-x16p1vlx1b-x16-x16-sme) |
 
+## Softmax micro-kernels
+
+| Output | Input | Dimensions | SIMD | Feature | Micro-kernel |
+| --- | --- | --- | --- | --- | --- |
+| f32 | f32 | 1D | SVE | fexpa | `kai_softmax_f32_f32_1d_sve_fexpa` |
+
 ## Packing micro-kernels
 
 | Output type | Output quantization | Input type | Input quantization | Bias type | Scale type | Zero type | SIMD | Micro-kernel |
