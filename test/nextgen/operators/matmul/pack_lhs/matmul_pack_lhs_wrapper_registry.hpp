@@ -50,16 +50,24 @@ namespace kai::test {
 [[nodiscard]] MatMulPackKernelPtr create_matmul_lhs_pack_x16p2vlx2_x16_sme(DataType data_type);
 
 /// Creates a wrapper for kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme.
-[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme();
+///
+/// @param[in] data_type The LHS and packed data type. Must be 16-bit data type.
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme(DataType data_type);
 
 /// Creates a wrapper for kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2.
-[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2();
+///
+/// @param[in] data_type The LHS and packed data type. Must be 16-bit data type.
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2(DataType data_type);
 
 /// Creates a wrapper for kai_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme.
-[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme();
+///
+/// @param[in] data_type The LHS and packed data type. Must be 32-bit data type.
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme(DataType data_type);
 
 /// Creates a wrapper for kai_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme.
-[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme();
+///
+/// @param[in] data_type The LHS and packed data type. Must be 8-bit data type.
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme(DataType data_type);
 
 /// Checks if the portion produces non-empty LHS packing tiles for the qai8dxp1x4/qsi8cxp8x4 matmul operator.
 [[nodiscard]] bool is_shape_suitable_lhs_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot(

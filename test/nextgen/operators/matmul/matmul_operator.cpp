@@ -67,7 +67,7 @@ MatMulOperator create_operator_matmul_clamp_f16_f16_f16p16vsx2bf16_6x16vs_sve2p1
     op.acc_dtype = DataType::FP32;
     op.dst_dtype = DataType::FP16;
     op.pack_lhs = std::nullopt;
-    op.pack_rhs = create_matmul_rhs_pack_kxn_x16p16vsx2bx16_x16_x16_sve();
+    op.pack_rhs = create_matmul_rhs_pack_kxn_x16p16vsx2bx16_x16_x16_sve(op.rhs_dtype);
     op.matmul = create_matmul_clamp_f16_f16_f16p16vsx2bf16_6x16vs_sve2p1_dot();
     return op;
 }
@@ -93,7 +93,7 @@ MatMulOperator create_operator_matmul_clamp_f16_f16_f16p4vsx2bf16_1x32vs_sme2_do
     op.dst_dtype = DataType::FP16;
 
     op.pack_lhs = std::nullopt;
-    op.pack_rhs = create_matmul_pack_rhs_kxn_x16p4vsx2bx16_x16_x16_sme();
+    op.pack_rhs = create_matmul_pack_rhs_kxn_x16p4vsx2bx16_x16_x16_sme(op.rhs_dtype);
     op.matmul = create_matmul_clamp_f16_f16_f16p4vsx2bf16_1x32vs_sme2_dot();
     return op;
 }
@@ -118,8 +118,8 @@ MatMulOperator create_operator_matmul_clamp_f16_f16p4vsx2_f16p4vsx2bf16_8vsx8vs_
     op.acc_dtype = DataType::FP32;
     op.dst_dtype = DataType::FP16;
 
-    op.pack_lhs = create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme();
-    op.pack_rhs = create_matmul_pack_rhs_kxn_x16p4vsx2bx16_x16_x16_sme();
+    op.pack_lhs = create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme(op.lhs_dtype);
+    op.pack_rhs = create_matmul_pack_rhs_kxn_x16p4vsx2bx16_x16_x16_sme(op.rhs_dtype);
     op.matmul = create_matmul_clamp_f16_f16p4vsx2_f16p4vsx2bf16_8vsx8vs_sme2_mopa();
     return op;
 }
@@ -144,8 +144,8 @@ MatMulOperator create_operator_matmul_clamp_f16_f16p4vsx2_f16p4vsx2bf16_8vsx8vs_
     op.acc_dtype = DataType::FP32;
     op.dst_dtype = DataType::FP16;
 
-    op.pack_lhs = create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2();
-    op.pack_rhs = create_matmul_pack_rhs_kxn_x16p4vsx2bx16_x16_x16_sme();
+    op.pack_lhs = create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2(op.lhs_dtype);
+    op.pack_rhs = create_matmul_pack_rhs_kxn_x16p4vsx2bx16_x16_x16_sme(op.rhs_dtype);
     op.matmul = create_matmul_clamp_f16_f16p4vsx2_f16p4vsx2bf16_8vsx8vs_sme2_mopa();
     return op;
 }
@@ -246,7 +246,7 @@ MatMulOperator create_operator_matmul_clamp_f32_f32_f32p4vsx1b_1x32vs_sme2_mla()
     op.dst_dtype = DataType::FP32;
 
     op.pack_lhs = std::nullopt;
-    op.pack_rhs = create_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme();
+    op.pack_rhs = create_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme(op.rhs_dtype);
     op.matmul = create_matmul_clamp_f32_f32_f32p4vsx1bf32_1x32vs_sme2_mla();
     return op;
 }
@@ -300,8 +300,8 @@ MatMulOperator create_operator_matmul_clamp_f32_f32p4vsx1_f32p4vsx1b_8vsx8vs_ela
     op.acc_dtype = DataType::FP32;
     op.dst_dtype = DataType::FP32;
 
-    op.pack_lhs = create_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme();
-    op.pack_rhs = create_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme();
+    op.pack_lhs = create_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme(op.lhs_dtype);
+    op.pack_rhs = create_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme(op.rhs_dtype);
     op.matmul = create_matmul_clamp_f32_f32p4vsx1_f32p4vsx1b_8vsx8vs_elastic_sme2_mopa();
     return op;
 }
@@ -629,8 +629,8 @@ MatMulOperator create_operator_matmul_clamp_f32_u8p4vsx4_u8p4vsx4_i32_i32_f32_f3
     op.dst_dtype = DataType::FP32;
     op.ref_dtype = DataType::I32;
 
-    op.pack_lhs = create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme();
-    op.pack_rhs = create_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme();
+    op.pack_lhs = create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme(op.lhs_dtype);
+    op.pack_rhs = create_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme(op.rhs_dtype);
     op.matmul = create_matmul_clamp_f32_u8p4vsx4_u8p4vsx4_i32_i32_f32_f32_8vsx8vs_sme2_mopa();
     return op;
 }
@@ -656,8 +656,8 @@ MatMulOperator create_operator_matmul_clamp_f32_u8p4vsx4_u8p4vsx4_i32_i32_f32_f3
     op.dst_dtype = DataType::FP32;
     op.ref_dtype = DataType::I32;
 
-    op.pack_lhs = create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme();
-    op.pack_rhs = create_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme();
+    op.pack_lhs = create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme(op.lhs_dtype);
+    op.pack_rhs = create_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme(op.rhs_dtype);
     op.matmul = create_matmul_clamp_f32_u8p4vsx4_u8p4vsx4_i32_i32_f32_f32_8vsx8vs_sme2_mopa();
     return op;
 }
@@ -952,7 +952,7 @@ MatMulOperator create_operator_matmul_clamp_t_f32_f32_f32p4vsx1b_1x32vs_sme2_mla
     op.dst_dtype = DataType::FP32;
 
     op.pack_lhs = std::nullopt;
-    op.pack_rhs = create_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme();
+    op.pack_rhs = create_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme(op.rhs_dtype);
     op.matmul = create_matmul_clamp_f32_f32_f32p4vsx1bf32_1x32vs_sme2_mla();
     return op;
 }
@@ -977,8 +977,8 @@ MatMulOperator create_operator_matmul_clamp_t_f32_f32p4vsx1_f32p4vsx1b_8vsx8vs_e
     op.acc_dtype = DataType::FP32;
     op.dst_dtype = DataType::FP32;
 
-    op.pack_lhs = create_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme();
-    op.pack_rhs = create_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme();
+    op.pack_lhs = create_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme(op.lhs_dtype);
+    op.pack_rhs = create_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme(op.rhs_dtype);
     op.matmul = create_matmul_clamp_f32_f32p4vsx1_f32p4vsx1b_8vsx8vs_elastic_sme2_mopa();
     return op;
 }
@@ -1004,8 +1004,8 @@ MatMulOperator create_operator_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2
     op.dst_dtype = DataType::I32;
     op.ref_dtype = DataType::I32;
 
-    op.pack_lhs = create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme();
-    op.pack_rhs = create_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme();
+    op.pack_lhs = create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme(op.lhs_dtype);
+    op.pack_rhs = create_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme(op.rhs_dtype);
     op.matmul = create_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa();
     return op;
 }
@@ -1031,8 +1031,8 @@ MatMulOperator create_operator_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2
     op.dst_dtype = DataType::I32;
     op.ref_dtype = DataType::I32;
 
-    op.pack_lhs = create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme();
-    op.pack_rhs = create_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme();
+    op.pack_lhs = create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme(op.lhs_dtype);
+    op.pack_rhs = create_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme(op.rhs_dtype);
     op.matmul = create_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa();
     return op;
 }
