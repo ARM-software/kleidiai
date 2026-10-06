@@ -37,14 +37,20 @@ struct SoftmaxBenchmark {
     CpuRequirement is_cpu_supported;
 };
 
-const std::array<SoftmaxBenchmark, 1> softmax_benchmarks{{
-    {
-        "kai_softmax_f32_f32_1d_sve_fexpa",
-        kai_benchmark_softmax<float>,
-        {kai_softmax_f32_f32_1d_sve_fexpa},
-        test::cpu_has_sve,
-    },
-}};
+const std::array<SoftmaxBenchmark, 2> softmax_benchmarks{
+    {{
+         "kai_softmax_f32_f32_1d_sme2p1_fexpa",
+         kai_benchmark_softmax<float>,
+         {kai_softmax_f32_f32_1d_sme2p1_fexpa},
+         test::cpu_check<
+             test::cpu_has_sme2p1, test::cpu_check_has_one_of<test::cpu_has_sme_fa64, test::cpu_has_ssve_fexpa>>,
+     },
+     {
+         "kai_softmax_f32_f32_1d_sve_fexpa",
+         kai_benchmark_softmax<float>,
+         {kai_softmax_f32_f32_1d_sve_fexpa},
+         test::cpu_has_sve,
+     }}};
 
 }  // namespace
 

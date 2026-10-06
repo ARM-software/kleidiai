@@ -85,6 +85,7 @@ def list_present(ukernels_dir: str, kernel_types: Set[str]) -> Set[str]:
         "matmul/kai_matmul",
         "matmul/kai_matmul_pack_lhs",
         "matmul/kai_matmul_pack_rhs",
+        "softmax/kai_softmax",
     ]
 
     # These header files don't belong to any specific micro-kernel.

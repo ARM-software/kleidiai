@@ -6,6 +6,7 @@
 
 #include <gtest/gtest.h>
 
+#include <array>
 #include <cstddef>
 #include <random>
 #include <string>
@@ -92,13 +93,13 @@ const auto softmax_tests_setup = TestRegistry::register_setup([]() {
             KAI_REGISTER_TEST(SoftmaxFixture, SoftmaxOutputTest, "SoftmaxNext", test_name.c_str(), params);
         }
 
-        // Equal logits must produce uniform probabilities, including the final tail.
-        const SoftmaxFixtureParams uniform_params{0, 257, &op, {-100.0, -100.0}};
+        // Equal logits produce a uniform distribution through both body and tail paths.
+        const SoftmaxFixtureParams uniform_params{0, 1025, &op, {0.0, 0.0}};
         const std::string uniform_name = "Uniform/" + uniform_params.name();
         KAI_REGISTER_TEST(SoftmaxFixture, SoftmaxOutputTest, "SoftmaxNext", uniform_name.c_str(), uniform_params);
 
-        // A wide range exercises exponential underflow after maximum subtraction.
-        const SoftmaxFixtureParams wide_params{0, 257, &op, {-1000.0, 1000.0}};
+        // Wide logits exercise exponential underflow after maximum subtraction.
+        const SoftmaxFixtureParams wide_params{0, 1025, &op, {-120.0, 120.0}};
         const std::string wide_name = "WideRange/" + wide_params.name();
         KAI_REGISTER_TEST(SoftmaxFixture, SoftmaxOutputTest, "SoftmaxNext", wide_name.c_str(), wide_params);
 

@@ -50,27 +50,27 @@ void SoftmaxWrapper::run(const Tensor& src, Tensor& dst) const {
         dst.data().size() == dst.format()->compute_size(dst_tensor_shape),
         "Softmax: Unexpected destination buffer size.");
 
-    const kai_softmax_uker_dim_args step = m_api.get_step(&m_config);
+    const kai_softmax_uker_dim_args step = m_api.get_step(nullptr);
     KAI_TEST_ASSERT_MSG(step.dim_0 == 0, "Softmax: The wrapper requires the full softmax dimension.");
 
     const kai_softmax_uker_src_dim_args src_shape = {length};
-    const kai_softmax_uker_src_stride_args src_stride = m_api.get_src_stride(&m_config, &src_shape);
+    const kai_softmax_uker_src_stride_args src_stride = m_api.get_src_stride(nullptr, &src_shape);
     const std::array unit_shape{static_cast<size_t>(1)};
     KAI_TEST_ASSERT_MSG(
         src_stride.dim_0 == src.format()->compute_size(unit_shape), "Softmax: Source stride helper mismatch.");
     const kai_softmax_uker_src_dim_args src_index = {0};
-    const size_t src_offset = m_api.get_src_offset(&m_config, &src_index, &src_stride);
+    const size_t src_offset = m_api.get_src_offset(nullptr, &src_index, &src_stride);
     KAI_TEST_ASSERT_MSG(src_offset == 0, "Softmax: Source offset helper mismatch.");
 
     const kai_softmax_uker_dst_dim_args dst_shape = {length};
-    const kai_softmax_uker_dst_stride_args dst_stride = m_api.get_dst_stride(&m_config, &dst_shape);
+    const kai_softmax_uker_dst_stride_args dst_stride = m_api.get_dst_stride(nullptr, &dst_shape);
     KAI_TEST_ASSERT_MSG(
         dst_stride.dim_0 == dst.format()->compute_size(unit_shape), "Softmax: Destination stride helper mismatch.");
     const kai_softmax_uker_dst_dim_args dst_index = {0};
-    const size_t dst_offset = m_api.get_dst_offset(&m_config, &dst_index, &dst_stride);
+    const size_t dst_offset = m_api.get_dst_offset(nullptr, &dst_index, &dst_stride);
     KAI_TEST_ASSERT_MSG(dst_offset == 0, "Softmax: Destination offset helper mismatch.");
     KAI_TEST_ASSERT_MSG(
-        m_api.get_dst_size(&m_config, &dst_shape, &dst_stride) == dst.data().size(),
+        m_api.get_dst_size(nullptr, &dst_shape, &dst_stride) == dst.data().size(),
         "Softmax: Destination size helper mismatch.");
 
     kai_softmax_uker_args args{};
@@ -81,7 +81,7 @@ void SoftmaxWrapper::run(const Tensor& src, Tensor& dst) const {
     args.operand.dst.ptr = dst.data_ptr() + dst_offset;
     args.operand.dst.stride = dst_stride;
 
-    abi_check([&] { m_api.run(&m_config, &args); });
+    abi_check([&] { m_api.run(nullptr, &args); });
 }
 
 }  // namespace kai::test

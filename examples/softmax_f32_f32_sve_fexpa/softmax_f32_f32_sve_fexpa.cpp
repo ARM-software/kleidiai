@@ -110,7 +110,6 @@ int main() {
     constexpr float absolute_tolerance = 1.0e-6F;
     constexpr float relative_tolerance = 1.0e-4F;
     constexpr uint32_t seed_src = 0;
-    const kai_softmax_uker_config config{};
     const kai_softmax_uker_api micro_kernel = kai_softmax_f32_f32_1d_sve_fexpa();
     int ret = 0;
 
@@ -129,9 +128,9 @@ int main() {
 
     const kai_softmax_uker_src_dim_args src_shape{length};
     const kai_softmax_uker_dst_dim_args dst_shape{length};
-    const auto src_stride = micro_kernel.get_src_stride(&config, &src_shape);
-    const auto dst_stride = micro_kernel.get_dst_stride(&config, &dst_shape);
-    const size_t dst_size = micro_kernel.get_dst_size(&config, &dst_shape, &dst_stride);
+    const auto src_stride = micro_kernel.get_src_stride(nullptr, &src_shape);
+    const auto dst_stride = micro_kernel.get_dst_stride(nullptr, &dst_shape);
+    const size_t dst_size = micro_kernel.get_dst_size(nullptr, &dst_shape, &dst_stride);
     std::vector<float> actual(dst_size / sizeof(float));
 
     // Softmax is computed over the entire dimension in one invocation; it cannot be split.
@@ -143,7 +142,7 @@ int main() {
     args.operand.dst.stride = dst_stride;
 
     const auto timer_start = std::chrono::steady_clock::now();
-    micro_kernel.run(&config, &args);
+    micro_kernel.run(nullptr, &args);
     const auto timer_end = std::chrono::steady_clock::now();
     const auto time_softmax = std::chrono::duration_cast<std::chrono::nanoseconds>(timer_end - timer_start);
 

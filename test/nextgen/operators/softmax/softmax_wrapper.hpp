@@ -36,7 +36,6 @@ public:
 
 private:
     std::string_view m_name;
-    kai_softmax_uker_config m_config{};
     kai_softmax_uker_api m_api{};
 };
 

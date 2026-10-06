@@ -13,25 +13,25 @@
 
 namespace kai::test {
 
-namespace {
-
-/// Creates an FP32 softmax operator using the SVE FEXPA micro-kernel.
-SoftmaxOperator create_operator_softmax_f32_f32_1d_sve_fexpa() {
-    SoftmaxOperator op{};
-    op.name = "softmax_f32_f32_1d_sve_fexpa";
-    op.is_cpu_supported = cpu_has_sve;
-    op.src_dtype = DataType::FP32;
-    op.dst_dtype = DataType::FP32;
-
-    op.softmax = SoftmaxWrapper("softmax_f32_f32_1d_sve_fexpa", kai_softmax_f32_f32_1d_sve_fexpa());
-    return op;
-}
-}  // namespace
-
 Span<const SoftmaxOperator> get_available_softmax_operators() {
-    const static std::array operators{
-        create_operator_softmax_f32_f32_1d_sve_fexpa(),
+    static const std::array operators{
+        SoftmaxOperator{
+            "softmax_f32_f32_1d_sme2p1_fexpa",
+            test::cpu_check<
+                cpu_has_sme2p1, test::cpu_check_has_one_of<test::cpu_has_sme_fa64, test::cpu_has_ssve_fexpa>>,
+            DataType::FP32,
+            DataType::FP32,
+            SoftmaxWrapper("softmax_f32_f32_1d_sme2p1_fexpa", kai_softmax_f32_f32_1d_sme2p1_fexpa()),
+        },
+        SoftmaxOperator{
+            "softmax_f32_f32_1d_sve_fexpa",
+            test::cpu_has_sve,
+            DataType::FP32,
+            DataType::FP32,
+            SoftmaxWrapper("softmax_f32_f32_1d_sve_fexpa", kai_softmax_f32_f32_1d_sve_fexpa()),
+        },
     };
+
     return operators;
 }
 

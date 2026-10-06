@@ -16,6 +16,7 @@ grammar rules:
 - Micro-kernel source files use names beginning with `kai_`.
 - Matmul micro-kernels use the `matmul_ukernel_name` grammar.
 - Depthwise convolution micro-kernels describe the operation, buffers, filter, stride, output block, SIMD engine, and optional instruction through the `dwconv_ukernel_name` grammar.
+- Softmax micro-kernels use the `softmax_ukernel_name` grammar.
 - Micro-kernel directories use the `directory_name` grammar.
 
 ### Common Name Shapes
@@ -24,6 +25,7 @@ grammar rules:
 - RHS packing micro-kernels are named `kai_rhs_pack_<orientation>_<output>_<inputs>_<description>`.
 - Matmul compute micro-kernels are named `kai_<operation>_<output>_<LHS input>_<RHS input>_<description>`.
 - Depthwise convolution micro-kernels are named with the depthwise operation, buffers, filter, stride, output block, SIMD engine, and optional instruction.
+- Softmax micro-kernels are named `kai_softmax_<output>_<input>_<dimensions>_<engine>[_<tech>]`.
 
 For matmul-family compute micro-kernels, buffer descriptors appear in the order
 destination, LHS input, then RHS input. The output descriptors of LHS and RHS
@@ -63,26 +65,32 @@ The documented naming rules are listed below.
 
 Describes every micro-kernel directory name accepted by the naming rules.
 
-**`directory_name`** = `"pack" | matmul_fused_ops "_" simplified_buffer ("_" simplified_buffer)+ | "dwconv" "_" simplified_buffer ("_" simplified_buffer)+`
+**`directory_name`** = `"pack" | simplified_op`
+
+### Simplified operation descriptor
+
+Describes an operation and its abbreviated buffer descriptors in a micro-kernel directory name.
+
+**`simplified_op`** = `(matmul_fused_ops | "dwconv" | "softmax") "_" simplified_buffer ("_" simplified_buffer)+`
 
 ### Micro-kernel name
 
 Describes every micro-kernel name accepted by the naming rules.
 
-**`kernel_name`** = `matmul_ukernel_name | dwconv_ukernel_name`
+**`kernel_name`** = `matmul_ukernel_name | dwconv_ukernel_name | softmax_ukernel_name`
 
 ### Matmul micro-kernel name
 
 Describes names for matmul-family compute and packing micro-kernels.
 
-**`matmul_ukernel_name`** = `"kai_" matmul_fused_ops ("_" buffer) ("_" buffer)+ ["_" tile_size] ["_" tech] ["_" feature] ["_" instruction] ["_" uarch]`
+**`matmul_ukernel_name`** = `"kai_" matmul_fused_ops ("_" buffer) ("_" buffer)+ ["_" tile_size] ["_" engine] ["_" feature] ["_" instruction] ["_" uarch]`
 
 where:
 
 - **`"_" buffer`**: Destination buffer
 - **`("_" buffer)+`**: Input buffer(s)
 - **`["_" tile_size]`**: Tile size
-- **`["_" tech]`**: SIMD engine
+- **`["_" engine]`**: SIMD engine
 - **`["_" feature]`**: Primary feature
 - **`["_" instruction]`**: Primary instruction
 - **`["_" uarch]`**: Target micro-architecture
@@ -91,7 +99,33 @@ where:
 
 Describes names for depthwise convolution and depthwise RHS packing micro-kernels.
 
-**`dwconv_ukernel_name`** = `"kai_" ("dwconv_clamp" ("_" buffer)+ ("_" filter_size) ("_" dw_stride) ("_" dwconv_output_block_size) ("_" tech) ["_" instruction] | "rhs_dwconv_pack" ("_" buffer)+ ("_" tech))`
+**`dwconv_ukernel_name`** = `"kai_" ("dwconv_clamp" ("_" buffer)+ ("_" filter_size) ("_" dw_stride) ("_" dwconv_output_block_size) ("_" engine) ["_" instruction] | "rhs_dwconv_pack" ("_" buffer)+ ("_" engine))`
+
+### Softmax micro-kernel name
+
+Describes names for softmax micro-kernels.
+
+**`softmax_ukernel_name`** = `"kai_softmax" ("_" buffer) ("_" buffer) ("_" dims) ("_" engine) ["_" tech]`
+
+where:
+
+- **`"_" buffer`**: Destination buffer
+- **`"_" buffer`**: Source buffer
+- **`"_" dims`**: Number of softmax dimensions
+- **`"_" engine`**: SIMD engine
+- **`["_" tech]`**: Primary instruction or feature (optional)
+
+### Softmax primary instruction or feature
+
+Describes the primary instruction or feature that distinguishes softmax micro-kernels targeting the same SIMD engine.
+
+**`tech`** = `"fexpa"`
+
+### Softmax dimensions
+
+Describes the number of dimensions over which softmax is performed.
+
+**`dims`** = `@natural_int "d"`
 
 ### Target microarchitecture
 
@@ -103,7 +137,7 @@ Describes a target microarchitecture for which a micro-kernel is optimized.
 
 Describes the SIMD engine targeted by the implementation.
 
-**`tech`** = `"neon" | "sve" | "sve2" | "sve2p1" | "sme" | "sme2" | "sme2p1"`
+**`engine`** = `"neon" | "sve" | "sve2" | "sve2p1" | "sme" | "sme2" | "sme2p1"`
 
 ### Primary feature
 
@@ -267,12 +301,16 @@ in `tools/naming/issues.py`. To include them in checker output, run
 The grammar below is generated from the naming rules.
 
 ```text
-directory_name = "pack" | matmul_fused_ops "_" simplified_buffer ("_" simplified_buffer)+ | "dwconv" "_" simplified_buffer ("_" simplified_buffer)+
-kernel_name = matmul_ukernel_name | dwconv_ukernel_name
-matmul_ukernel_name = "kai_" matmul_fused_ops ("_" buffer) ("_" buffer)+ ["_" tile_size] ["_" tech] ["_" feature] ["_" instruction] ["_" uarch]
-dwconv_ukernel_name = "kai_" ("dwconv_clamp" ("_" buffer)+ ("_" filter_size) ("_" dw_stride) ("_" dwconv_output_block_size) ("_" tech) ["_" instruction] | "rhs_dwconv_pack" ("_" buffer)+ ("_" tech))
+directory_name = "pack" | simplified_op
+simplified_op = (matmul_fused_ops | "dwconv" | "softmax") "_" simplified_buffer ("_" simplified_buffer)+
+kernel_name = matmul_ukernel_name | dwconv_ukernel_name | softmax_ukernel_name
+matmul_ukernel_name = "kai_" matmul_fused_ops ("_" buffer) ("_" buffer)+ ["_" tile_size] ["_" engine] ["_" feature] ["_" instruction] ["_" uarch]
+dwconv_ukernel_name = "kai_" ("dwconv_clamp" ("_" buffer)+ ("_" filter_size) ("_" dw_stride) ("_" dwconv_output_block_size) ("_" engine) ["_" instruction] | "rhs_dwconv_pack" ("_" buffer)+ ("_" engine))
+softmax_ukernel_name = "kai_softmax" ("_" buffer) ("_" buffer) ("_" dims) ("_" engine) ["_" tech]
+tech = "fexpa"
+dims = @natural_int "d"
 uarch = "cortexa55"
-tech = "neon" | "sve" | "sve2" | "sve2p1" | "sme" | "sme2" | "sme2p1"
+engine = "neon" | "sve" | "sve2" | "sve2p1" | "sme" | "sme2" | "sme2p1"
 feature = "i8mm" | "dotprod"
 instruction = "dot" | "i8mm" | "mla" | "mmla" | "mopa" | "mop4a" | "sdot"
 dw_stride = "s" @natural_int

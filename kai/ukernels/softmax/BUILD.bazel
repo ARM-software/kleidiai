@@ -4,11 +4,25 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-load("//:kai_defs.bzl", "kai_c_library", "kai_cpu_sve")
+load("//:kai_defs.bzl", "kai_c_library", "kai_cpu_sme2", "kai_cpu_sve")
 
 package(default_visibility = ["//visibility:private"])
 
 # buildifier: keep sorted
+SME2P1_SSVE_FEXPA_KERNELS_ASM_NOHDR = [
+    "softmax_f32_f32/kai_softmax_f32_f32_1d_sme2p1_fexpa",
+]
+
+kai_c_library(
+    name = "sme2p1_ssve_fexpa_impl",
+    cpu_uarch = kai_cpu_sme2(),
+    kernels_asm_nohdr = SME2P1_SSVE_FEXPA_KERNELS_ASM_NOHDR,
+    textual_hdrs = [
+        "kai_softmax.h",
+        "kai_softmax_types.h",
+    ],
+)
+
 SVE_KERNELS_ASM_NOHDR = [
     "softmax_f32_f32/kai_softmax_f32_f32_1d_sve_fexpa",
 ]
@@ -37,6 +51,7 @@ kai_c_library(
     visibility = ["//visibility:public"],
     deps = [
         ":interface",
+        ":sme2p1_ssve_fexpa_impl",
         ":sve_impl",
     ],
 )

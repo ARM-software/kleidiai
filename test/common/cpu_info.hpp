@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -47,6 +47,15 @@ bool cpu_has_sme();
 /// Returns a value indicating whether the current CPU supports FEAT_SME2.
 bool cpu_has_sme2();
 
+/// Returns a value indicating whether the current CPU supports FEAT_SME2.1.
+bool cpu_has_sme2p1();
+
+/// Returns a value indicating whether the current CPU supports FEAT_SME_FA64.
+bool cpu_has_sme_fa64();
+
+/// Returns a value indicating whether the current CPU supports FEAT_SSVE_FEXPA.
+bool cpu_has_ssve_fexpa();
+
 /// Returns a value indicating whether the current CPU supports FEAT_BF16 and FEAT_DotProd
 bool cpu_has_dotprod_and_bf16();
 
@@ -57,6 +66,12 @@ bool cpu_has_i8mm_and_bf16();
 template <bool (*... Pred)()>
 bool cpu_check() {
     return (Pred() && ...);
+}
+
+/// Returns a value indicating whether the current CPU supports atleast one of a set of features.
+template <bool (*... Pred)()>
+bool cpu_check_has_one_of() {
+    return (Pred() || ...);
 }
 
 }  // namespace kai::test

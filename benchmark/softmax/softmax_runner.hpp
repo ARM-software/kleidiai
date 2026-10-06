@@ -33,8 +33,8 @@ public:
     /// @return Destination buffer size in bytes.
     [[nodiscard]] size_t get_dst_size() const {
         const kai_softmax_uker_dst_dim_args dst_shape = {m_dim_0};
-        const kai_softmax_uker_dst_stride_args dst_stride = m_api.get_dst_stride(&m_config, &dst_shape);
-        return m_api.get_dst_size(&m_config, &dst_shape, &dst_stride);
+        const kai_softmax_uker_dst_stride_args dst_stride = m_api.get_dst_stride(nullptr, &dst_shape);
+        return m_api.get_dst_size(nullptr, &dst_shape, &dst_stride);
     }
 
     /// Prepares the softmax micro-kernel arguments.
@@ -43,9 +43,9 @@ public:
     /// @param[out] dst Destination buffer.
     void prepare(const void* src, void* dst) {
         const kai_softmax_uker_src_dim_args src_shape = {m_dim_0};
-        const kai_softmax_uker_src_stride_args src_stride = m_api.get_src_stride(&m_config, &src_shape);
+        const kai_softmax_uker_src_stride_args src_stride = m_api.get_src_stride(nullptr, &src_shape);
         const kai_softmax_uker_dst_dim_args dst_shape = {m_dim_0};
-        const kai_softmax_uker_dst_stride_args dst_stride = m_api.get_dst_stride(&m_config, &dst_shape);
+        const kai_softmax_uker_dst_stride_args dst_stride = m_api.get_dst_stride(nullptr, &dst_shape);
 
         m_args.flags = 0;
         m_args.shape.dim_0 = m_dim_0;
@@ -57,12 +57,11 @@ public:
 
     /// Runs the softmax micro-kernel.
     void run() const {
-        m_api.run(&m_config, &m_args);
+        m_api.run(nullptr, &m_args);
     }
 
 private:
     kai_softmax_uker_api m_api;
-    kai_softmax_uker_config m_config{};
     size_t m_dim_0 = 0;
     kai_softmax_uker_args m_args{};
 };

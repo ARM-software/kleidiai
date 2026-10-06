@@ -12,6 +12,7 @@ Micro-kernel categories:
 
 - [Matmul micro-kernels](#matmul-micro-kernels)
 - [Indirect matmul micro-kernels](#indirect-matmul-micro-kernels)
+- [Softmax micro-kernels](#softmax-micro-kernels)
 - [Depthwise convolution micro-kernels](#depthwise-convolution-micro-kernels)
 - [Packing micro-kernels](#packing-micro-kernels).
 
@@ -163,18 +164,19 @@ Micro-kernel categories:
 | i8 | tensorwise asymmetric | i8 | i8 | tensorwise asymmetric | channelwise symmetric | 2vlx2vl | SME | mopa | - | `kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxp2vlx4sb_2vlx2vl_sme_mopa` | LHS: [`kai_lhs_imatmul_pack_x8p2vlx4_x8p_sme`](#pack-kai-lhs-imatmul-pack-x8p2vlx4-x8p-sme)<br>RHS: [`kai_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme`](#pack-kai-rhs-imatmul-pack-kxn-qsi8cxp2vlx4sb-qs8cx-f32-i32-sme) |
 | i8 | tensorwise asymmetric | i8 | i8 | tensorwise asymmetric | channelwise symmetric | 2vlx2vl | SME2 | mopa | - | `kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa` | LHS: [`kai_lhs_imatmul_pack_x8p2vlx4_x8p_sme`](#pack-kai-lhs-imatmul-pack-x8p2vlx4-x8p-sme)<br>RHS: [`kai_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme`](#pack-kai-rhs-imatmul-pack-kxn-qsi8cxp2vlx4sb-qs8cx-f32-i32-sme) |
 
+## Softmax micro-kernels
+
+| Output type | Input type | Dimensions | SIMD | Exponential approximation | Additional feature | Micro-kernel |
+| --- | --- | --- | --- | --- | --- | --- |
+| f32 | f32 | 1D | SME2.1 | FEXPA-based | SME_FA64 or SSVE_FEXPA | `kai_softmax_f32_f32_1d_sme2p1_fexpa` |
+| f32 | f32 | 1D | SVE | FEXPA-based | - | `kai_softmax_f32_f32_1d_sve_fexpa` |
+
 ## Depthwise convolution micro-kernels
 
 | Output type | LHS type | RHS type | LHS quantization | RHS quantization | Filter size | Block size | SIMD | Feature | Uarch | Micro-kernel | Packing micro-kernels |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | f32 | f32 | f32 | - | - | 3x3 stride 1 | 4 rows, planar | SME2 | mla | - | `kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla` | RHS: [`kai_rhs_dwconv_pack_x32p1vlx1b_x32_x32_sme`](#pack-kai-rhs-dwconv-pack-x32p1vlx1b-x32-x32-sme) |
 | f16 | f16 | f16 | - | - | 3x3 stride 1 | 4x4, indirect | SME2 | mla | - | `kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla` | RHS: [`kai_rhs_dwconv_pack_x16p1vlx1b_x16_x16_sme`](#pack-kai-rhs-dwconv-pack-x16p1vlx1b-x16-x16-sme) |
-
-## Softmax micro-kernels
-
-| Output | Input | Dimensions | SIMD | Feature | Micro-kernel |
-| --- | --- | --- | --- | --- | --- |
-| f32 | f32 | 1D | SVE | fexpa | `kai_softmax_f32_f32_1d_sve_fexpa` |
 
 ## Packing micro-kernels
 

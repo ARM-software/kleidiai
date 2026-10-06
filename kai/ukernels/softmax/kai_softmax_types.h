@@ -14,11 +14,9 @@ extern "C" {
 #endif
 
 /// Micro-kernel configuration for a softmax micro-kernel.
-struct kai_softmax_uker_config {
-    uint8_t unused;  ///< Unused value.
-};
+struct kai_softmax_uker_config;
 
-/// Schedulable dimensions for a softmax micro-kernel.
+/// Problem dimensions for a softmax micro-kernel.
 ///
 /// See the [softmax dimension convention](README.md#dimension-convention).
 struct kai_softmax_uker_dim_args {
@@ -65,7 +63,7 @@ struct kai_softmax_uker_operand_args {
 
 /// Softmax micro-kernel run arguments.
 struct kai_softmax_uker_args {
-    uint64_t flags;  ///< Control flags. Must be zero.
+    uint64_t flags;  ///< Control flags.
 
     struct kai_softmax_uker_dim_args shape;        ///< Problem shape.
     struct kai_softmax_uker_operand_args operand;  ///< Operands.

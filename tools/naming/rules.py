@@ -249,7 +249,7 @@ def feature() -> Expr:
     title="SIMD engine",
     description="Describes the SIMD engine targeted by the implementation.",
 )
-def tech() -> Expr:
+def engine() -> Expr:
     return OneOf("neon", "sve", "sve2", "sve2p1", "sme", "sme2", "sme2p1")
 
 
@@ -259,6 +259,43 @@ def tech() -> Expr:
 )
 def uarch() -> Expr:
     return OneOf("cortexa55")
+
+
+@grammar.rule(
+    title="Softmax dimensions",
+    description="Describes the number of dimensions over which softmax is performed.",
+)
+def dims() -> Expr:
+    return Seq(NaturalInt(), "d")
+
+
+@grammar.rule(
+    title="Softmax primary instruction or feature",
+    description=(
+        "Describes the primary instruction or feature that distinguishes "
+        "softmax micro-kernels targeting the same SIMD engine."
+    ),
+)
+def tech() -> Expr:
+    return Doc("fexpa", description="FEXPA instruction")
+
+
+@grammar.rule(
+    title="Softmax micro-kernel name",
+    description="Describes names for softmax micro-kernels.",
+)
+def softmax_ukernel_name() -> Expr:
+    return Seq(
+        "kai_softmax",
+        Doc(Seq("_", buffer), description="Destination buffer"),
+        Doc(Seq("_", buffer), description="Source buffer"),
+        Doc(Seq("_", dims), description="Number of softmax dimensions"),
+        Doc(Seq("_", engine), description="SIMD engine"),
+        Doc(
+            Optional(Seq("_", tech)),
+            description="Primary instruction or feature (optional)",
+        ),
+    )
 
 
 @grammar.rule(
@@ -277,7 +314,7 @@ def dwconv_ukernel_name() -> Expr:
                 Seq("_", dwconv_output_block_size),
                 Seq(
                     "_",
-                    tech,
+                    engine,
                 ),
                 Optional(Seq("_", instruction)),
             ),
@@ -286,7 +323,7 @@ def dwconv_ukernel_name() -> Expr:
                 OneOrMore(Seq("_", buffer)),
                 Seq(
                     "_",
-                    tech,
+                    engine,
                 ),
             ),
         ),
@@ -304,7 +341,7 @@ def matmul_ukernel_name() -> Expr:
         Doc(Seq("_", buffer), description="Destination buffer"),
         Doc(OneOrMore(Seq("_", buffer)), description="Input buffer(s)"),
         Doc(Optional(Seq("_", tile_size)), description="Tile size"),
-        Doc(Optional(Seq("_", tech)), description="SIMD engine"),
+        Doc(Optional(Seq("_", engine)), description="SIMD engine"),
         Doc(Optional(Seq("_", feature)), description="Primary feature"),
         Doc(Optional(Seq("_", instruction)), description="Primary instruction"),
         Doc(Optional(Seq("_", uarch)), description="Target micro-architecture"),
@@ -316,7 +353,23 @@ def matmul_ukernel_name() -> Expr:
     description="Describes every micro-kernel name accepted by the naming rules.",
 )
 def kernel_name() -> Expr:
-    return OneOf(matmul_ukernel_name, dwconv_ukernel_name)
+    return OneOf(matmul_ukernel_name, dwconv_ukernel_name, softmax_ukernel_name)
+
+
+@grammar.rule(
+    title="Simplified operation descriptor",
+    description=(
+        "Describes an operation and its abbreviated buffer descriptors in a "
+        "micro-kernel directory name."
+    ),
+)
+def simplified_op() -> Expr:
+    return Seq(
+        OneOf(matmul_fused_ops, "dwconv", "softmax"),
+        "_",
+        simplified_buffer,
+        OneOrMore(Seq("_", simplified_buffer)),
+    )
 
 
 @grammar.rule(
@@ -324,21 +377,7 @@ def kernel_name() -> Expr:
     description="Describes every micro-kernel directory name accepted by the naming rules.",
 )
 def directory_name() -> Expr:
-    return OneOf(
-        "pack",
-        Seq(
-            matmul_fused_ops,
-            "_",
-            simplified_buffer,
-            OneOrMore(Seq("_", simplified_buffer)),
-        ),
-        Seq(
-            "dwconv",
-            "_",
-            simplified_buffer,
-            OneOrMore(Seq("_", simplified_buffer)),
-        ),
-    )
+    return OneOf("pack", simplified_op)
 
 
 def parse_kernel_name(name: str) -> ParseResult:
