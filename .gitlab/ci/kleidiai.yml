@@ -807,7 +807,7 @@ coverage-linux-sve256:
   extends:
     - coverage-linux
   variables:
-    # Use instance with SVE VL 256
+    #  Use instance with SVE VL 256
     KUBERNETES_NODE_SELECTOR_INSTANCE_GENERATION: "karpenter.k8s.aws/instance-generation=7"
     GTEST_FILTER: "*_sve_*"
 
