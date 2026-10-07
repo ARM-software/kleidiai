@@ -343,21 +343,21 @@ static const auto test_name = [](const auto& info) {
     std::ostringstream sstream;
     sstream << name << "__";
     PrintTo(shape, &sstream);
-    sstream << "__BL_" << bl << "_";
-    sstream << "__clamp_keep_ratio_"
-            << (clamp_keep_ratio.has_value() ? std::to_string(static_cast<int>(clamp_keep_ratio.value() * 100))
-                                             : "noclamp");
+    sstream << "__BL_" << bl;
+    sstream << "__";
+    PrintToClamp(clamp_keep_ratio, &sstream);
 
     if (has_bias) {
-        sstream << "_withBias_";
+        sstream << "__withBias";
     } else {
-        sstream << "_noBias_";
+        sstream << "__noBias";
     }
     if (variants_kai_matmul_clamp_f32_qsi8d32p_qai4c32p.at(variant_idx).rhs_s0s1_input) {
-        sstream << "_RHS_s0s1__";
+        sstream << "__RHS_s0s1";
     } else {
-        sstream << "_RHS_s1s0__";
+        sstream << "__RHS_s1s0";
     }
+    sstream << "__";
     PrintTo(portion, &sstream);
 
     return sstream.str();

@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -354,6 +354,18 @@ bool DefaultMismatchHandler::success(size_t num_checks) const {
 
     const auto mismatched_rate = static_cast<float>(_num_mismatches) / static_cast<float>(num_checks);
     return _num_mismatches <= _abs_mismatched_threshold || mismatched_rate <= _rel_mismatched_threshold;
+}
+
+DefaultMismatchHandler make_compute_mismatch_handler(DataType output_dtype, DataType accumulator_dtype) {
+    if (output_dtype == DataType::FP16 && accumulator_dtype == DataType::FP16) {
+        // FP16 accumulation can differ from the FP32-accumulating reference near zero.
+        return DefaultMismatchHandler(0.01F, 0.01F, 0, 0.01F);
+    }
+    if (output_dtype == DataType::FP32 && accumulator_dtype == DataType::FP32) {
+        return DefaultMismatchHandler(0.0F, 0.0001F, 0, 0.0001F);
+    }
+
+    KAI_ERROR("Unsupported output and accumulator data types for compute comparison.");
 }
 
 }  // namespace kai::test

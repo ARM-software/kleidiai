@@ -7,6 +7,7 @@
 #pragma once
 
 #include <cstddef>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -19,6 +20,17 @@
 namespace kai::test {
 
 /// 2D blocked data with optional per-row values.
+///
+/// By default, the per-row values occur once for each logical row. When a
+/// block length is specified, the values occur once for each row and K block.
+/// Each per-row component buffer is then laid out as
+/// `[row][K block]`, while the data buffer remains a logical 2D array.
+/// Additional outer per-row components can surround all K blocks in each block row.
+/// Component input buffers follow packed order: outer prefixes, block prefixes,
+/// data, block postfixes, then outer postfixes. Outer components have one value
+/// per logical row; block components have one value per row and K block.
+/// When trailing block components are enabled, all K blocks of data in a block
+/// row are stored first, followed by the postfix components of every K block.
 ///
 /// Example:
 ///   Shape: (5, 8)
@@ -70,18 +82,48 @@ public:
     /// @param[in] dtype The data type.
     /// @param[in] pre_dtypes The data type of each prefix per-row component.
     /// @param[in] post_dtypes The data type of each postfix per-row component.
+    /// @param[in] block_length Number of K values sharing the per-row components. A value of 0 means the full row.
+    /// @param[in] pad_value Value used for padding, or no value to pad with 0.
+    /// @param[in] pad_bottom_first Whether bottom data padding repeats the first row of the final block.
+    /// @param[in] row_pre_dtypes Types of components preceding all K blocks in a block row.
+    /// @param[in] row_post_dtypes Types of components following all K blocks in a block row.
+    /// @param[in] interleave_width Distance between the two source nibbles packed into each byte.
+    ///                             A value of 1 preserves adjacent nibbles. Other values require I4 data.
+    /// @param[in] pad_bottom_same Bottom padding repeats the last row, including all components, instead of 0.
+    /// @param[in] trailing_block_components Whether the block postfix components of all K blocks follow
+    ///                                      all K blocks of data in each block row.
     Block2dRowFormat(
         size_t block_height, size_t block_width, size_t width_align, bool pad_right_same, DataType dtype,
-        Span<const DataType> pre_dtypes, Span<const DataType> post_dtypes) :
+        Span<const DataType> pre_dtypes, Span<const DataType> post_dtypes, size_t block_length = 0,
+        std::optional<double> pad_value = std::nullopt, bool pad_bottom_first = false,
+        Span<const DataType> row_pre_dtypes = {}, Span<const DataType> row_post_dtypes = {},
+        size_t interleave_width = 1, bool pad_bottom_same = false, bool trailing_block_components = false) :
         m_block_height(block_height),
         m_block_width(block_width),
         m_width_align(width_align),
         m_pad_right_same(pad_right_same),
         m_dtype(dtype),
         m_pre_dtypes(pre_dtypes.begin(), pre_dtypes.end()),
-        m_post_dtypes(post_dtypes.begin(), post_dtypes.end()) {
+        m_post_dtypes(post_dtypes.begin(), post_dtypes.end()),
+        m_block_length(block_length),
+        m_pad_value(pad_value),
+        m_pad_bottom_first(pad_bottom_first),
+        m_row_pre_dtypes(row_pre_dtypes.begin(), row_pre_dtypes.end()),
+        m_row_post_dtypes(row_post_dtypes.begin(), row_post_dtypes.end()),
+        m_interleave_width(interleave_width),
+        m_pad_bottom_same(pad_bottom_same),
+        m_trailing_block_components(trailing_block_components) {
         KAI_TEST_ASSERT(width_align % block_width == 0);
         KAI_TEST_ASSERT(block_height * block_width * data_type_size_in_bits(dtype) % 8 == 0);
+        KAI_TEST_ASSERT(block_length == 0 || block_length % block_width == 0);
+        KAI_TEST_ASSERT(block_length == 0 || !pre_dtypes.empty() || !post_dtypes.empty());
+        KAI_TEST_ASSERT(!pad_right_same || !pad_value.has_value());
+        KAI_TEST_ASSERT(!pad_bottom_first || !pad_bottom_same);
+        KAI_TEST_ASSERT(interleave_width > 0);
+        KAI_TEST_ASSERT(interleave_width == 1 || dtype == DataType::I4);
+        KAI_TEST_ASSERT(interleave_width == 1 || width_align % (2 * interleave_width) == 0);
+        KAI_TEST_ASSERT(interleave_width == 1 || block_length == 0 || block_length % (2 * interleave_width) == 0);
+        KAI_TEST_ASSERT(!trailing_block_components || (block_length != 0 && pre_dtypes.empty()));
 
         for (const DataType pre_dtype : pre_dtypes) {
             KAI_TEST_ASSERT(data_type_size_in_bits(pre_dtype) % 8 == 0);
@@ -89,6 +131,12 @@ public:
 
         for (const DataType post_dtype : post_dtypes) {
             KAI_TEST_ASSERT(data_type_size_in_bits(post_dtype) % 8 == 0);
+        }
+        for (const DataType row_dtype : row_pre_dtypes) {
+            KAI_TEST_ASSERT(data_type_size_in_bits(row_dtype) % 8 == 0);
+        }
+        for (const DataType row_dtype : row_post_dtypes) {
+            KAI_TEST_ASSERT(data_type_size_in_bits(row_dtype) % 8 == 0);
         }
     }
 
@@ -111,6 +159,14 @@ private:
     DataType m_dtype;
     std::vector<DataType> m_pre_dtypes;
     std::vector<DataType> m_post_dtypes;
+    size_t m_block_length;
+    std::optional<double> m_pad_value;
+    bool m_pad_bottom_first;
+    std::vector<DataType> m_row_pre_dtypes;
+    std::vector<DataType> m_row_post_dtypes;
+    size_t m_interleave_width;
+    bool m_pad_bottom_same;
+    bool m_trailing_block_components;
 };
 
 }  // namespace kai::test

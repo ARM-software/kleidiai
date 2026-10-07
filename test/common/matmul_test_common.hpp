@@ -546,6 +546,7 @@ void PrintTo(const MatMulClampTestParams& param, std::ostream* os);
 void PrintTo(const MatMulShape& shape, std::ostream* os);
 void PrintTo(const MatrixPortion& portion, std::ostream* os);
 void PrintTo(const BiasMode& bias_mode, std::ostream* os);
+void PrintToClamp(const std::optional<float>& clamp_keep_ratio, std::ostream* os);
 
 /// Generate test information
 std::string test_description(

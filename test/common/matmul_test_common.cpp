@@ -21,10 +21,12 @@ void PrintTo(const MatMulClampTestParams& param, std::ostream* os) {
     PrintTo(shape, os);
     *os << "__";
     PrintTo(portion, os);
-    PrintTo(bias_mode, os);
-    *os << "__clamp_keep_ratio_"
-        << (clamp_keep_ratio.has_value() ? std::to_string(static_cast<int>(clamp_keep_ratio.value() * 100))
-                                         : "noclamp");
+    if (bias_mode == BiasMode::INTERNAL) {
+        *os << "__";
+        PrintTo(bias_mode, os);
+    }
+    *os << "__";
+    PrintToClamp(clamp_keep_ratio, os);
 }
 
 void PrintTo(const MatMulShape& shape, std::ostream* os) {
@@ -34,7 +36,7 @@ void PrintTo(const MatMulShape& shape, std::ostream* os) {
 void PrintTo(const BiasMode& bias_mode, std::ostream* os) {
     // Preserve legacy test names
     if (bias_mode == BiasMode::INTERNAL) {
-        *os << "__NullBias";
+        *os << "NullBias";
     }
 }
 
@@ -43,6 +45,12 @@ void PrintTo(const MatrixPortion& portion, std::ostream* os) {
         << "__C_" << static_cast<int>(portion.start_col() * 1000)         //
         << "__H_" << static_cast<int>(portion.height() * 1000)            //
         << "__W_" << static_cast<int>(portion.width() * 1000);
+}
+
+void PrintToClamp(const std::optional<float>& clamp_keep_ratio, std::ostream* os) {
+    *os << "clamp_keep_ratio_"
+        << (clamp_keep_ratio.has_value() ? std::to_string(static_cast<int>(clamp_keep_ratio.value() * 100))
+                                         : "noclamp");
 }
 
 std::string test_description(
@@ -57,8 +65,8 @@ std::string test_description(
     if (bias) {
         os << "__Bias";
     }
-    os << "__clamp_keep_ratio_"
-       << (clamp_keep_ratio.has_value() ? std::to_string(static_cast<int>(clamp_keep_ratio.value() * 100)) : "noclamp");
+    os << "__";
+    PrintToClamp(clamp_keep_ratio, &os);
 
     return os.str();
 }

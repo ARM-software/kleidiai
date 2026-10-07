@@ -1,5 +1,6 @@
 //
 // SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -46,6 +47,7 @@ enum class CpuFeature : size_t {
     FP16,         //
     BF16,         //
     SVE,          //
+    SVEI8MM,      //
     SVE2,         //
     SVE2P1,       //
     SME,          //
@@ -53,6 +55,8 @@ enum class CpuFeature : size_t {
     SME2P1,       //
     SME_FA64,     //
     SSVE_FEXPA,   //
+    SME_F16F32,   //
+    SME_MOP4,     //
     LAST          // This should be last element, please add new CPU capabilities before it
 };
 
@@ -63,6 +67,7 @@ constexpr std::array<std::tuple<CpuFeature, std::string_view>, n_elements<CpuFea
     {CpuFeature::FP16, "FP16"},              //
     {CpuFeature::BF16, "BF16"},              //
     {CpuFeature::SVE, "SVE"},                //
+    {CpuFeature::SVEI8MM, "SVEI8MM"},        //
     {CpuFeature::SVE2, "SVE2"},              //
     {CpuFeature::SVE2P1, "SVE2P1"},          //
     {CpuFeature::SME, "SME"},                //
@@ -70,6 +75,8 @@ constexpr std::array<std::tuple<CpuFeature, std::string_view>, n_elements<CpuFea
     {CpuFeature::SME2P1, "SME2P1"},          //
     {CpuFeature::SME_FA64, "SME_FA64"},      //
     {CpuFeature::SSVE_FEXPA, "SSVE_FEXPA"},  //
+    {CpuFeature::SME_F16F32, "SME_F16F32"},  //
+    {CpuFeature::SME_MOP4, "SME_MOP4"},      //
 }};
 
 constexpr const char* forced_cpu_features_env_name = "KAI_TEST_FORCE_CPU_FEATURES";
@@ -175,6 +182,9 @@ constexpr uint64_t HWCAP_SVE = 1UL << 22;
 #ifndef HWCAP_SME_SFEXPA
 constexpr uint64_t HWCAP_SME_SFEXPA = 1UL << 45;
 #endif
+#ifndef HWCAP2_SVEI8MM
+constexpr uint64_t HWCAP2_SVEI8MM = 1UL << 9;
+#endif
 #ifndef HWCAP2_SVE2
 constexpr uint64_t HWCAP2_SVE2 = 1UL << 1;
 #endif
@@ -199,6 +209,12 @@ constexpr uint64_t HWCAP2_SME2 = 1UL << 37;
 #ifndef HWCAP2_SME2P1
 constexpr uint64_t HWCAP2_SME2P1 = 1UL << 38;
 #endif
+#ifndef HWCAP2_SME_F16F32
+constexpr uint64_t HWCAP2_SME_F16F32 = 1UL << 27;
+#endif
+#ifndef HWCAP_SME_SMOP4
+constexpr uint64_t HWCAP_SME_SMOP4 = 1UL << 47;
+#endif
 
 const std::array<std::tuple<CpuFeature, uint64_t, uint64_t>, n_elements<CpuFeature>()> cpu_caps{{
     {CpuFeature::ADVSIMD, AT_HWCAP, HWCAP_ASIMD},              //
@@ -207,6 +223,7 @@ const std::array<std::tuple<CpuFeature, uint64_t, uint64_t>, n_elements<CpuFeatu
     {CpuFeature::FP16, AT_HWCAP, HWCAP_FPHP | HWCAP_ASIMDHP},  //
     {CpuFeature::BF16, AT_HWCAP2, HWCAP2_BF16},                //
     {CpuFeature::SVE, AT_HWCAP, HWCAP_SVE},                    //
+    {CpuFeature::SVEI8MM, AT_HWCAP2, HWCAP2_SVEI8MM},          //
     {CpuFeature::SVE2, AT_HWCAP2, HWCAP2_SVE2},                //
     {CpuFeature::SVE2P1, AT_HWCAP2, HWCAP2_SVE2P1},            //
     {CpuFeature::SME, AT_HWCAP2, HWCAP2_SME},                  //
@@ -214,6 +231,8 @@ const std::array<std::tuple<CpuFeature, uint64_t, uint64_t>, n_elements<CpuFeatu
     {CpuFeature::SME2P1, AT_HWCAP2, HWCAP2_SME2P1},            //
     {CpuFeature::SME_FA64, AT_HWCAP2, HWCAP2_SME_FA64},        //
     {CpuFeature::SSVE_FEXPA, AT_HWCAP, HWCAP_SME_SFEXPA},      //
+    {CpuFeature::SME_F16F32, AT_HWCAP2, HWCAP2_SME_F16F32},    //
+    {CpuFeature::SME_MOP4, AT_HWCAP, HWCAP_SME_SMOP4},         //
 }};
 
 bool get_cap_support(CpuFeature feature) {
@@ -239,14 +258,17 @@ const std::array<std::tuple<CpuFeature, std::string_view>, n_elements<CpuFeature
     {CpuFeature::I8MM, "hw.optional.arm.FEAT_I8MM"},
     {CpuFeature::FP16, "hw.optional.arm.FEAT_FP16"},
     {CpuFeature::BF16, "hw.optional.arm.FEAT_BF16"},
-    {CpuFeature::SVE, ""},     // not supported
-    {CpuFeature::SVE2, ""},    // not supported
-    {CpuFeature::SVE2P1, ""},  // not supported
+    {CpuFeature::SVE, ""},      // not supported
+    {CpuFeature::SVEI8MM, ""},  // not supported
+    {CpuFeature::SVE2, ""},     // not supported
+    {CpuFeature::SVE2P1, ""},   // not supported
     {CpuFeature::SME, "hw.optional.arm.FEAT_SME"},
     {CpuFeature::SME2, "hw.optional.arm.FEAT_SME2"},
-    {CpuFeature::SME2P1, ""},      // not supported
+    {CpuFeature::SME2P1, "hw.optional.arm.FEAT_SME2p1"},
     {CpuFeature::SME_FA64, ""},    // not supported
     {CpuFeature::SSVE_FEXPA, ""},  // not supported
+    {CpuFeature::SME_F16F32, "hw.optional.arm.SME_F16F32"},
+    {CpuFeature::SME_MOP4, ""},  // not supported
 }};
 
 bool get_cap_support(CpuFeature feature) {
@@ -265,7 +287,9 @@ bool get_cap_support(CpuFeature feature) {
     if (cap_name.length() > 0) {
         size_t size = sizeof(value);
 
-        KAI_ASSERT_ALWAYS(sysctlbyname(cap_name.data(), nullptr, &size, nullptr, 0) == 0);
+        if (sysctlbyname(cap_name.data(), nullptr, &size, nullptr, 0) != 0) {
+            return false;
+        }
         KAI_ASSERT_ALWAYS(size == sizeof(value));
 
         [[maybe_unused]] int status = sysctlbyname(cap_name.data(), &value, &size, nullptr, 0);
@@ -293,6 +317,7 @@ const std::array<std::tuple<CpuFeature, DWORD, const char*, uint64_t>, n_element
     {CpuFeature::FP16, 0, ID_AA64PFR0_EL1, 0x00000000000f0000ULL},
     {CpuFeature::BF16, 0, ID_AA64ISAR1_EL1, 0x0000f00000000000ULL},
     {CpuFeature::SVE, 46, nullptr, 0},
+    {CpuFeature::SVEI8MM, 57, nullptr, 0},
     {CpuFeature::SVE2, 47, nullptr, 0},
     {CpuFeature::SVE2P1, 0, nullptr, 0},
     {CpuFeature::SME, 0, nullptr, 0},
@@ -300,6 +325,8 @@ const std::array<std::tuple<CpuFeature, DWORD, const char*, uint64_t>, n_element
     {CpuFeature::SME2P1, 0, nullptr, 0},
     {CpuFeature::SME_FA64, 0, nullptr, 0},
     {CpuFeature::SSVE_FEXPA, 0, nullptr, 0},
+    {CpuFeature::SME_F16F32, 0, nullptr, 0},
+    {CpuFeature::SME_MOP4, 0, nullptr, 0},
 }};
 
 uint64_t read_sysreg(const char* name) {
@@ -362,13 +389,16 @@ struct CpuInfo {
         has_fp16(get_cap_support(CpuFeature::FP16)),
         has_bf16(get_cap_support(CpuFeature::BF16)),
         has_sve(get_cap_support(CpuFeature::SVE)),
+        has_svei8mm(get_cap_support(CpuFeature::SVEI8MM)),
         has_sve2(get_cap_support(CpuFeature::SVE2)),
         has_sve2p1(get_cap_support(CpuFeature::SVE2P1)),
         has_sme(get_cap_support(CpuFeature::SME)),
         has_sme2(get_cap_support(CpuFeature::SME2)),
         has_sme2p1(get_cap_support(CpuFeature::SME2P1)),
         has_sme_fa64(get_cap_support(CpuFeature::SME_FA64)),
-        has_ssve_fexpa(get_cap_support(CpuFeature::SSVE_FEXPA)) {
+        has_ssve_fexpa(get_cap_support(CpuFeature::SSVE_FEXPA)),
+        has_sme_f16f32(get_cap_support(CpuFeature::SME_F16F32)),
+        has_sme_mop4(get_cap_support(CpuFeature::SME_MOP4)) {
     }
 
     /// Gets the singleton @ref CpuInfo object.
@@ -383,6 +413,7 @@ struct CpuInfo {
     const bool has_fp16{};        ///< FP16 is supported.
     const bool has_bf16{};        ///< B16 is supported.
     const bool has_sve{};         ///< SVE is supported.
+    const bool has_svei8mm{};     ///< SVE I8MM is supported.
     const bool has_sve2{};        ///< SVE2 is supported.
     const bool has_sve2p1{};      ///< SVE2.1 is supported.
     const bool has_sme{};         ///< SME is supported.
@@ -390,6 +421,8 @@ struct CpuInfo {
     const bool has_sme2p1{};      ///< SME2.1 is supported.
     const bool has_sme_fa64{};    ///< SME FA64 is supported.
     const bool has_ssve_fexpa{};  ///< SSVE FEXPA is supported.
+    const bool has_sme_f16f32{};  ///< SME FP16-to-FP32 MOPA is supported.
+    const bool has_sme_mop4{};    ///< SME MOP4 is supported.
 };
 
 }  // namespace
@@ -425,6 +458,10 @@ bool cpu_has_bf16() {
 
 bool cpu_has_sve() {
     return CpuInfo::current().has_sve;
+}
+
+bool cpu_has_svei8mm() {
+    return CpuInfo::current().has_svei8mm;
 }
 
 bool cpu_has_sve_vl256() {
@@ -468,6 +505,19 @@ bool cpu_has_dotprod_and_bf16() {
 
 bool cpu_has_i8mm_and_bf16() {
     return cpu_has_i8mm() && cpu_has_bf16();
+}
+
+bool cpu_has_sme2p1() {
+    return CpuInfo::current().has_sme2p1;
+}
+
+bool cpu_has_sme_f16f32() {
+    const auto& cpu = CpuInfo::current();
+    return cpu.has_sme && cpu.has_sme_f16f32;
+}
+
+bool cpu_has_sme_mop4() {
+    return CpuInfo::current().has_sme_mop4;
 }
 
 }  // namespace kai::test

@@ -11,15 +11,16 @@
 
 #include "test/nextgen/common/poly.hpp"
 #include "test/nextgen/format/format.hpp"
-#include "test/nextgen/harness/kernel_wrapper.hpp"
 #include "test/nextgen/harness/tensor.hpp"
+#include "test/nextgen/operators/matmul/kernel_types.hpp"
 #include "test/nextgen/operators/matmul/matmul_dims.hpp"
+#include "test/nextgen/operators/matmul/matmul_slots.hpp"
 #include "test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_interface.hpp"
 
 namespace kai::test {
 
 /// Wrapper for RHS packing kernel with per-channel quantization.
-class MatMulPackRhsFpNtWrapper : public KernelWrapper<MatShape> {
+class MatMulPackRhsFpNtWrapper : public MatMulPackKernel {
 public:
     /// Creates a new wrapper.
     MatMulPackRhsFpNtWrapper(

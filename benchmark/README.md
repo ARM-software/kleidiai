@@ -9,13 +9,15 @@
 KleidiAI provides a single benchmarking binary that runs multiple variants via subcommands:
 
 - `kleidiai_benchmark matmul` for standard matrix multiplication (matmul)
+- `kleidiai_benchmark matmul_pack_lhs` for matmul LHS packing
 - `kleidiai_benchmark pack_matmul` for LHS packing followed by matrix multiplication
 - `kleidiai_benchmark imatmul` for indirect matrix multiplication (imatmul, chunked K)
+- `kleidiai_benchmark imatmul_pack_lhs` for imatmul LHS packing
 - `kleidiai_benchmark dwconv` for depthwise convolution (dwconv)
 - `kleidiai_benchmark softmax` for softmax activation
 
-The tool supports flexible argument parsing and Benchmark Framework options.
-If no operator is specified, `matmul` will be used by default.
+The tool supports flexible argument parsing and Benchmark Framework options. If no operator is specified, benchmark
+execution defaults to `matmul`, while `--benchmark_list_tests` lists benchmarks across every mode.
 
 ## Building
 
@@ -47,12 +49,14 @@ $ cmake -DCMAKE_TOOLCHAIN_FILE=/path/to/android-ndk/build/cmake/android.toolchai
 
 ### Quick Examples
 
-Run matmul, pack_matmul, imatmul and dwconv with example dimensions:
+Run matmul, matmul_pack_lhs, pack_matmul, imatmul, imatmul_pack_lhs and dwconv with example dimensions:
 
 ```sh
 ./kleidiai_benchmark matmul  -m 32 -n 32 -k 32
+./kleidiai_benchmark matmul_pack_lhs -m 32 -k 32
 ./kleidiai_benchmark pack_matmul -m 32 -n 32 -k 32
 ./kleidiai_benchmark imatmul -m 32 -n 32 -c 4 -l 8
+./kleidiai_benchmark imatmul_pack_lhs -m 32 -c 4 -l 8
 ./kleidiai_benchmark dwconv  --input_height 32 --input_width 32 --channels 64 --padding 1,1,1,1
 ./kleidiai_benchmark softmax -l 1024
 ```
@@ -67,13 +71,20 @@ Run the matmul benchmark with matrix dimensions:
 ./kleidiai_benchmark matmul -m <M> -n <N> -k <K> [-b <BLOCK_SIZE>]
 ```
 
-Use `--benchmark_filter` to run an individual matrix multiplication micro-kernel:
+`-b` sets the block size for blockwise quantization and defaults to `32` if omitted.
 
-```
-./kleidiai_benchmark matmul -m <M> -n <N> -k <K> --benchmark_filter=^<name>
+### Matmul LHS Packing Benchmark
+
+Use `matmul_pack_lhs` to benchmark registered matmul LHS packing micro-kernels for an MxK input matrix.
+The `-m` and `-k` options specify the number of rows and columns; both are required positive integers:
+
+```sh
+./kleidiai_benchmark matmul_pack_lhs -m <M> -k <K> [-b <BLOCK_SIZE>]
 ```
 
 `-b` sets the block size for blockwise quantization and defaults to `32` if omitted.
+
+Benchmark filtering uses the same mechanism described in the [Matmul Benchmark](#matmul-benchmark) section.
 
 ### PackMatmul Benchmark
 
@@ -132,6 +143,18 @@ imatmul_clamp_qai8_qai8p2vlx4_qsi8cxp2vlx4sb_2vlx2vl_sme_mopa         123 ns    
 imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa        123 ns          123 ns      1234567
 ```
 
+### iMatmul LHS Packing Benchmark
+
+Use `imatmul_pack_lhs` to benchmark registered imatmul LHS packing micro-kernels. The `-m` option specifies the
+number of LHS rows, while `-c` and `-l` specify the number and length of the K chunks:
+
+```sh
+./kleidiai_benchmark imatmul_pack_lhs -m <M> -c <CHUNK_COUNT> -l <CHUNK_LENGTH>
+./kleidiai_benchmark imatmul_pack_lhs --benchmark_filter=x16 -m 13 -c 1 -l 18
+```
+
+Benchmark filtering uses the same mechanism described in the [Matmul Benchmark](#matmul-benchmark) section.
+
 ### DWConv Benchmark (depthwise convolution)
 
 Run the dwconv benchmark specifying the input shape, number of channels, and optional stride/padding/dilation.
@@ -180,11 +203,32 @@ Use `--benchmark_filter` to select Softmax micro-kernels:
 
 ### Filtering
 
-Benchmarks can be filtered using the --benchmark_filter option, which accepts a regex. For example, to only run the sme2 micro-kernels:
+`--benchmark_filter` accepts a regular expression and filters benchmarks registered for the selected mode. Filters can
+match fragments or use normal regular-expression anchors:
+
+```sh
+./kleidiai_benchmark <mode> <mode-options> --benchmark_filter='<name-regex>'
+./kleidiai_benchmark <mode> <mode-options> --benchmark_filter='^<micro-kernel-name>/'
+
+./kleidiai_benchmark matmul --benchmark_list_tests --benchmark_filter='sme2'
+./kleidiai_benchmark matmul --benchmark_list_tests --benchmark_filter='.*kai_matmul_clamp_f16_f16_f16p2vlx2b_1x8vl_sme_mla.*'
+./kleidiai_benchmark matmul --benchmark_list_tests --benchmark_filter='^kai_matmul_clamp_f16_f16_f16p2vlx2b_1x8vl_sme_mla/'
+```
+
+`all` selects every benchmark in the specified mode. A leading `-` excludes matches from that mode:
+
+```sh
+./kleidiai_benchmark matmul --benchmark_list_tests --benchmark_filter='all'
+./kleidiai_benchmark matmul --benchmark_list_tests --benchmark_filter='-sme2'
+./kleidiai_benchmark matmul --benchmark_list_tests --benchmark_filter='-(sme2|neon)'
+```
+
+For example, to only run the sme2 micro-kernels:
 (Note: The measurement results are placeholders)
 
 ```
 ./kleidiai_benchmark matmul  --benchmark_filter=sme2 -m 13 -n 17 -k 18
+./kleidiai_benchmark matmul_pack_lhs --benchmark_filter=sme2 -m 13 -k 18
 ./kleidiai_benchmark pack_matmul --benchmark_filter=sme2 -m 13 -n 17 -k 18
 ./kleidiai_benchmark imatmul --benchmark_filter=sme2 -m 13 -n 17 -c 1 -l 18
 ./kleidiai_benchmark dwconv  --benchmark_filter=sme2 --input_height 32 --input_width 32 --channels 64 --padding 1,1,1,1
@@ -201,20 +245,23 @@ kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla           123 ns        
 
 ### Listing Available Benchmarks
 
-To list all available benchmarks:
+Omit the mode to list benchmarks across every mode. A user filter then narrows the combined list:
 
-```
+```sh
 ./kleidiai_benchmark  --benchmark_list_tests
-
+./kleidiai_benchmark  --benchmark_list_tests --benchmark_filter='sme2'
 ```
 
-Specify the micro-kernel operator to list all the benchmarks of a certain type.
+Mode-less execution still defaults to matmul. Specify a mode to scope the list:
 
-```
+```sh
 ./kleidiai_benchmark matmul  --benchmark_list_tests
+./kleidiai_benchmark matmul_pack_lhs --benchmark_list_tests
 ./kleidiai_benchmark pack_matmul --benchmark_list_tests
 ./kleidiai_benchmark imatmul --benchmark_list_tests
+./kleidiai_benchmark imatmul_pack_lhs --benchmark_list_tests
 ./kleidiai_benchmark dwconv  --benchmark_list_tests
+./kleidiai_benchmark matmul --benchmark_list_tests --benchmark_filter='sme2'
 ./kleidiai_benchmark softmax --benchmark_list_tests
 ```
 

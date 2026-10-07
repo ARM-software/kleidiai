@@ -1,5 +1,7 @@
 <!--
     SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+    SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
+    SPDX-FileCopyrightText: Copyright 2026 Meta Platforms, Inc. and affiliates.
 
     SPDX-License-Identifier: Apache-2.0
 -->
@@ -10,10 +12,48 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+- New SME micro-kernels:
+  - Native MxN SME MOPA matrix multiplication for FP16 x signed QSI4C32P with F32 output and the s4s0sf16 RHS packing format.
+- New SME2.1 micro-kernels:
+  - New SME2.1 Fexpa micro-kernel for FP32 datatype.
+- New SVE micro-kernels:
+  - New SVE Fexpa Softmax FP32 micro-kernel
+
+## v1.32.0
+
+- Optimizations:
+  - Improve GEMV performance of `kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot` by processing four RHS column blocks per iteration with four accumulators per block.
+- New Advanced SIMD micro-kernels:
+  - Advanced SIMD packing micro-kernels for 16-bit inputs and per-N 32-bit RHS bias, including use with the BF16 MMLA matrix multiplication micro-kernel.
+- New SVE micro-kernels:
+  - SVE matrix multiplication (MxN) for QAI8DXP LHS and QSI4C32P RHS with F32 output, requiring SVE I8MM support and exactly 256-bit SVE. Uses the scalable name `kai_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4c32p8x8s16s0sbf16bf32_8vsx8_sve_i8mm`; support for other vector lengths is not implemented.
+  - Matrix multiplication (1xN) for QAI8DXP LHS and QSI8CXP RHS with F32 output, optimized for a 256-bit vector length.
+  - Matrix multiplication (MxN) for QAI8DXP LHS and QSI8CXP RHS with F32 output, vector length agnostic.
+- New SVE2 micro-kernels:
+  - Matrix multiplication (MxN) for QAI8DXP LHS and QSI8CXP RHS with F32 output, optimized for a 256-bit vector length.
+- New SME micro-kernels:
+  - NxK RHS packing for FP16 indirect matrix multiplication: `kai_imatmul_pack_rhs_nxk_x16p2vlx2bx16_x16_x16_sme`, with per-chunk K padding and 16-bit bias.
+  - SME packing micro-kernels for 16-bit RHS inputs and per-N 32-bit bias, including use with the BF16 SME2 MOPA matrix multiplication micro-kernel.
+- New SME2 micro-kernels:
+  - Added `kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2`, an optimized LHS packing micro-kernel for the x16p4vsx2 format.
+  - Matrix multiplication micro-kernels with F32 output and optional LUT decoding: MxN for FP16 x QSI4C32P, and 1xN and MxN for QSI8D32P x QSI4C32P.
+- Fixes
+  - Added BF16 support to the NextGen matmul, packing, comparison, and diagnostic references used by the BF16 SME2 tests.
+  - Scoped user-provided benchmark filters to the selected benchmark mode.
+
+## v1.31.0
+
 - New micro-kernels
   - SME2 FP16 elastic GEMM/GEMV kernels with corresponding packing kernels.
-  - New SME2.1 Fexpa micro-kernel for FP32 datatype.
-  - New SVE Fexpa Softmax FP32 micro-kernel
+  - SME2.1 INT8 8vsx8vs MOPA matmul micro-kernel with a 2vsx32vs MOP4A fast path for eligible output regions whose height is half the accumulator vector length (2vs).
+  - SME2 QAI4C32K256 GEMM/GEMV micro-kernels along with corresponding packing kernels.
+  - SME2 GEMM/GEMV micro-kernels with QAI8 LHS, QSU2CXP RHS and QAI8 output along with RHS packing kernel
+  - SME GEMM/GEMMV micro-kernels of QAI8DXP LHS and QSI4C32P RHS with F32 output.
+  - New RHS packing kernels to support the above SME micro-kernels:
+    - kai_rhs_pack_kxn_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme
+    - kai_rhs_pack_nxk_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme
+- Fixes
+  - Corrected the documented indirection-table size and bounds assertions for SME LHS imatmul packing micro-kernels.
 
 ## v1.30.0
 

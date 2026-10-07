@@ -1,9 +1,17 @@
 #
-# SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 #
 # SPDX-License-Identifier: Apache-2.0
 #
 ---
+# bugprone-easily-swappable-parameters:      KleidiAI functions often take many parameters that are inherently swappable.
+# cppcoreguidelines-avoid-magic-numbers:     Optimized micro-kernels make extensive use of numeric constants.
+# llvm-header-guard:                         Header guards are unnecessary because KleidiAI uses `#pragma once`.
+# modernize-use-trailing-return-type:        Classic function declarations keep the C and C++ styles consistent.
+# readability-function-cognitive-complexity: Micro-Kernel functions are by nature complex
+# readability-identifier-length:             KleidiAI symbol names encode information and are therefore often long.
+# readability-magic-numbers:                 Optimized micro-kernels may make extensive use of numeric constants.
+# readability-math-missing-parentheses:      Additional parentheses can make mathematical expressions harder to read.
 Checks: >
   -*,
   bugprone-*,

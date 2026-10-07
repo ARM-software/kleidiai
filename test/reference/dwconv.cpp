@@ -9,9 +9,30 @@
 #include <cmath>
 #include <ostream>
 
+#include "test/common/assert.hpp"
+#include "test/common/bfloat16.hpp"
+#include "test/common/data_type.hpp"
 #include "test/common/float16.hpp"
+#include "test/common/memory.hpp"
+#include "test/common/safe_math.hpp"
 
 namespace kai::test {
+
+namespace {
+
+/// Computes a positive convolution output dimension without overflowing.
+size_t get_output_dimension(const size_t input, const size_t before, const size_t after, const size_t filter) {
+    const auto partial = safe_add(input, before);
+    KAI_TEST_ASSERT(partial);
+    const auto padded = safe_add(*partial, after);
+    KAI_TEST_ASSERT(padded);
+    KAI_TEST_ASSERT(filter > 0 && filter <= *padded);
+    size_t dimension = *padded - filter + 1;
+    KAI_TEST_ASSERT(dimension > 0);
+    return dimension;
+}
+
+}  // namespace
 
 std::ostream& operator<<(std::ostream& os, const Padding2D& pad) {
     os << " [ " << pad.left << " , " << pad.right << " ," << pad.top << " , " << pad.bottom << " ] ";
@@ -27,12 +48,19 @@ Buffer depthwise_reference(
     const size_t batches, const size_t in_height, const size_t in_width, const size_t channels,
     const size_t filter_height, const size_t filter_width, const void* feature_map, const void* weights,
     const void* bias, const Padding2D& pad) {
-    // Calculate output dims according to padding and input params.
-    const size_t out_height = (in_height + pad.top + pad.bottom + 1 - filter_height);
-    const size_t out_width = in_width + pad.left + pad.right + 1 - filter_width;
-    const size_t out_size = out_height * out_width * batches * channels;
+    // Validates output dimensions and allocation size before accessing any data.
+    const size_t out_height = get_output_dimension(in_height, pad.top, pad.bottom, filter_height);
+    const size_t out_width = get_output_dimension(in_width, pad.left, pad.right, filter_width);
 
-    Buffer dst(out_size * size_in_bits<T> / 8);
+    const auto out_area = safe_mul(out_height, out_width);
+    KAI_TEST_ASSERT_MSG(out_area, "Depthwise reference output size overflow");
+    const auto out_batch_size = safe_mul(*out_area, batches);
+    KAI_TEST_ASSERT_MSG(out_batch_size, "Depthwise reference output size overflow");
+    const auto out_size = safe_mul(*out_batch_size, channels);
+    KAI_TEST_ASSERT_MSG(out_size, "Depthwise reference output size overflow");
+    const auto out_bytes = array_size_in_bytes<T>(*out_size);
+
+    Buffer dst(out_bytes);
 
     for (size_t b = 0; b < batches; ++b) {
         for (size_t out_h = 0; out_h < out_height; ++out_h) {
@@ -84,5 +112,29 @@ template Buffer depthwise_reference<Float16>(
     const size_t batches, const size_t in_height, const size_t in_width, const size_t channels,
     const size_t filter_height, const size_t filter_width, const void* feature_map, const void* weights,
     const void* bias, const Padding2D& pad);
+
+// Explicit template
+template Buffer depthwise_reference<BFloat16<>>(
+    const size_t batches, const size_t in_height, const size_t in_width, const size_t channels,
+    const size_t filter_height, const size_t filter_width, const void* feature_map, const void* weights,
+    const void* bias, const Padding2D& pad);
+
+Buffer depthwise_reference(
+    DataType dtype, size_t batches, size_t in_height, size_t in_width, size_t channels, size_t filter_height,
+    size_t filter_width, const void* feature_map, const void* weights, const void* bias, const Padding2D& pad) {
+    switch (dtype) {
+        case DataType::FP32:
+            return depthwise_reference<float>(
+                batches, in_height, in_width, channels, filter_height, filter_width, feature_map, weights, bias, pad);
+        case DataType::FP16:
+            return depthwise_reference<Float16>(
+                batches, in_height, in_width, channels, filter_height, filter_width, feature_map, weights, bias, pad);
+        case DataType::BF16:
+            return depthwise_reference<BFloat16<>>(
+                batches, in_height, in_width, channels, filter_height, filter_width, feature_map, weights, bias, pad);
+        default:
+            KAI_TEST_ERROR("Unsupported depthwise reference data type.");
+    }
+}
 
 }  // namespace kai::test

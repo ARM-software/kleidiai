@@ -1,5 +1,6 @@
 //
 // SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -14,6 +15,7 @@
 #include "test/common/assert.hpp"
 #include "test/common/buffer.hpp"
 #include "test/common/data_type.hpp"
+#include "test/common/int2.hpp"
 #include "test/common/int4.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/round.hpp"
@@ -89,6 +91,11 @@ UnaryElementwiseFn make_change_signedness(DataType dtype) {
         case DataType::U4:
         case DataType::I4:
             return unary_elementwise<ChangeSignednessOp<UInt4>>;
+        case DataType::U2:
+        case DataType::I2:
+            return unary_elementwise<ChangeSignednessOp<UInt2>>;
+        case DataType::I8:
+            return unary_elementwise<ChangeSignednessOp<int8_t>>;
 
         default:
             KAI_TEST_ERROR("Not supported.");

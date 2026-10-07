@@ -12,12 +12,14 @@
 #include <iterator>
 #include <random>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
 #include "test/common/assert.hpp"
 #include "test/common/matrix_portion.hpp"
+#include "test/common/round.hpp"
 #include "test/common/seed.hpp"
 #include "test/common/span.hpp"
 #include "test/nextgen/common/random.hpp"
@@ -32,8 +34,14 @@ namespace kai::test {
 namespace {
 
 struct MatMulDistribution {
-    Rng m_rng{seed_stream("MatMulNext::setup")()};
+    /// Seeds fixture generation using the operator name.
+    explicit MatMulDistribution(std::string_view operator_name) :
+        m_rng(seed_stream("MatMulNext::setup:" + std::string(operator_name))()) {
+    }
+
+    Rng m_rng;
     std::uniform_int_distribution<size_t> m_shape_dist{1, 150};
+    std::uniform_int_distribution<size_t> m_shape_k_dist{1, 512};
     std::uniform_real_distribution<float> m_probability_dist{0.0F, 1.0F};
     std::uniform_real_distribution<float> m_dist_70_to_100{0.7F, 1.0F};
     std::uniform_real_distribution<float> m_dist_10_to_70{0.1F, 0.7F};
@@ -143,6 +151,7 @@ public:
         MatMulFixture(fixture_params), m_test_params(test_params) {
     }
 
+private:
     /// Runs the LHS packing validation for the selected portion.
     void TestBody() override {
         MatMulTb& test = test_bench();
@@ -160,7 +169,6 @@ public:
         test.test_lhs_packing(start_m, start_k, size_m, size_k);
     }
 
-private:
     MatMulTestParams m_test_params;
 };
 
@@ -174,6 +182,7 @@ public:
         MatMulFixture(fixture_params), m_test_params(test_params) {
     }
 
+private:
     /// Runs the RHS packing validation for the selected portion.
     void TestBody() override {
         MatMulTb& test = test_bench();
@@ -191,20 +200,20 @@ public:
         test.test_rhs_packing(start_n, start_k, size_n, size_k);
     }
 
-private:
     MatMulTestParams m_test_params;
 };
 
-class MatMulMatMulTest : public MatMulFixture {
+class MatMulComputeTest : public MatMulFixture {
 public:
     /// Creates a matrix multiplication test instance.
     ///
     /// @param[in] fixture_params The fixture parameters shared across tests.
     /// @param[in] test_params The parameters describing the matrix portion.
-    explicit MatMulMatMulTest(const MatMulFixtureParams& fixture_params, const MatMulTestParams& test_params) :
+    explicit MatMulComputeTest(const MatMulFixtureParams& fixture_params, const MatMulTestParams& test_params) :
         MatMulFixture(fixture_params), m_test_params(test_params) {
     }
 
+private:
     /// Runs the matrix multiplication validation for the selected portion.
     void TestBody() override {
         MatMulTb& test = test_bench();
@@ -222,7 +231,6 @@ public:
         test.test_matmul(start_m, start_n, size_m, size_n);
     }
 
-private:
     MatMulTestParams m_test_params;
 };
 
@@ -231,15 +239,17 @@ public:
     /// Builds a bias-format selector for a given operator.
     ///
     /// @param[in] op The operator providing supported bias format sets.
-    explicit BiasSelector(const MatMulOperator& op) {
+    explicit BiasSelector(const MatMulOperator& op) :
+        has_no_bias_format_set{
+            std::any_of(
+                op.supported_bias_mode_sets.begin(), op.supported_bias_mode_sets.end(),
+                [](MatMulBiasModeSet bias_formats) { return bias_formats.is_empty(); }),
+        } {
         // Separates with-bias format sets from the list of supported bias format sets.
         //
         // Reason: no-bias and with-bias cases are chosen by a distribution,
         // and if the with-bias case is chosen, each with-bias format set will be
         // chosen by another distribution.
-        has_no_bias_format_set = std::any_of(
-            op.supported_bias_mode_sets.begin(), op.supported_bias_mode_sets.end(),
-            [](MatMulBiasModeSet bias_formats) { return bias_formats.is_empty(); });
 
         std::copy_if(
             op.supported_bias_mode_sets.begin(), op.supported_bias_mode_sets.end(),
@@ -291,7 +301,7 @@ std::array<MatrixPortion, 3> make_output_portions() {
     return {
         MatrixPortion(0, 0, 1, 1),        // Full matrix.
         MatrixPortion(0, 0, 0.25, 0.25),  // Top-left corner.
-        MatrixPortion(0.75, 0.75, 1, 1)   // Bottom-right corner.
+        MatrixPortion(0.75, 0.75, 1, 1),  // Bottom-right corner.
     };
 }
 
@@ -355,14 +365,18 @@ MatMulFixtureParams pick_fixture(
     size_t shape_n = 0;
     size_t shape_k = 0;
 
-    static constexpr uint32_t max_attempts = 10'000;
+    static constexpr uint32_t max_attempts = 500'000;
     uint32_t attempts = 0;
     while (true) {
         KAI_TEST_ASSERT_MSG(attempts <= max_attempts, "Unable to find matching shape after _many_ tries");
         ++attempts;
         shape_m = dist_ctx.m_shape_dist(dist_ctx.m_rng);
         shape_n = dist_ctx.m_shape_dist(dist_ctx.m_rng);
-        shape_k = dist_ctx.m_shape_dist(dist_ctx.m_rng);
+        shape_k = dist_ctx.m_shape_k_dist(dist_ctx.m_rng);
+
+        if (op.k_alignment > 1) {
+            shape_k = round_up_multiple(shape_k, op.k_alignment);
+        }
 
         if (op.is_shape_suitable(shape_m, shape_n, shape_k, portion)) {
             break;
@@ -377,39 +391,43 @@ MatMulFixtureParams pick_fixture(
     };
 }
 
-/// Registers pack and matmul tests for a given operator and portion.
+/// Registers pack and matmul tests for a given operator and fixture.
 ///
 /// @param[in] test_suite_name The test suite name to register with.
 /// @param[in] op The operator under test.
 /// @param[in] fixture_params The fixture parameter set.
-/// @param[in] portion The output matrix portion for this test instance.
+/// @param[in] portions The output matrix portions for this fixture.
 void register_operator_test(
     const std::string& test_suite_name,         //
     const MatMulOperator& op,                   //
     const MatMulFixtureParams& fixture_params,  //
-    const MatrixPortion& portion) {
-    const MatMulTestParams test_params{
-        portion,
-    };
+    Span<const MatrixPortion> portions) {
+    const std::string fixture_desc = fixture_params.name();
 
-    const std::string desc = fixture_params.name() + "," + test_params.name();
+    for (const MatrixPortion& portion : portions) {
+        KAI_TEST_ASSERT(
+            op.is_shape_suitable(fixture_params.shape_m, fixture_params.shape_n, fixture_params.shape_k, portion));
 
-    if (op.pack_lhs.has_value()) {
-        KAI_REGISTER_TEST(
-            MatMulFixture, MatMulPackLhsTest, test_suite_name.c_str(), ("PackLhs/" + desc).c_str(), fixture_params,
-            test_params);
-    }
+        const MatMulTestParams test_params{portion};
+        const std::string desc = fixture_desc + "," + test_params.name();
 
-    if (op.pack_rhs.has_value()) {
-        KAI_REGISTER_TEST(
-            MatMulFixture, MatMulPackRhsTest, test_suite_name.c_str(), ("PackRhs/" + desc).c_str(), fixture_params,
-            test_params);
-    }
+        if (op.pack_lhs.has_value()) {
+            KAI_REGISTER_TEST(
+                MatMulFixture, MatMulPackLhsTest, test_suite_name.c_str(), ("PackLhs/" + desc).c_str(), fixture_params,
+                test_params);
+        }
 
-    if (op.matmul.has_value()) {
-        KAI_REGISTER_TEST(
-            MatMulFixture, MatMulMatMulTest, test_suite_name.c_str(), ("MatMul/" + desc).c_str(), fixture_params,
-            test_params);
+        if (op.pack_rhs.has_value()) {
+            KAI_REGISTER_TEST(
+                MatMulFixture, MatMulPackRhsTest, test_suite_name.c_str(), ("PackRhs/" + desc).c_str(), fixture_params,
+                test_params);
+        }
+
+        if (op.matmul.has_value()) {
+            KAI_REGISTER_TEST(
+                MatMulFixture, MatMulComputeTest, test_suite_name.c_str(), ("MatMul/" + desc).c_str(), fixture_params,
+                test_params);
+        }
     }
 }
 
@@ -417,11 +435,10 @@ void register_operator_test(
 const auto matmul_tests_setup = TestRegistry::register_setup([]() {
     const size_t num_shapes_per_op = TestConfig::Get().num_shapes();
     const auto output_portions = make_output_portions();
+    // The generated partial portions are suitable whenever the full output is suitable.
+    const MatrixPortion full_portion = MatrixPortion(0, 0, 1, 1);
 
-    /* NOTE: that `dist_cxt` must only be constructed once here, as
-     * it contains the per test suite seed stream */
     const Span<const MatMulOperator> available_operators = get_available_matmul_operators();
-    MatMulDistribution dist_ctx;
 
     for (const MatMulOperator& op : available_operators) {
         if (!op.is_cpu_supported()) {
@@ -429,13 +446,13 @@ const auto matmul_tests_setup = TestRegistry::register_setup([]() {
         }
 
         const std::string test_suite_name = "MatMulNext";
+        // Each operator has its own stream, independent of registration order.
+        MatMulDistribution dist_ctx(op.name);
         BiasSelector bias_selector(op);
 
         for (size_t shape_no = 0; shape_no < num_shapes_per_op; ++shape_no) {
-            for (const MatrixPortion& portion : output_portions) {
-                const MatMulFixtureParams fixture = pick_fixture(shape_no, op, portion, dist_ctx, bias_selector);
-                register_operator_test(test_suite_name, op, fixture, portion);
-            }
+            const MatMulFixtureParams fixture = pick_fixture(shape_no, op, full_portion, dist_ctx, bias_selector);
+            register_operator_test(test_suite_name, op, fixture, output_portions);
         }
     }
 });

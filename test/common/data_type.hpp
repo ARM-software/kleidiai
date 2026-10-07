@@ -11,6 +11,8 @@
 #include <functional>
 #include <string>
 
+#include "test/common/type_traits.hpp"
+
 namespace kai::test {
 
 /// Data type.
@@ -46,10 +48,12 @@ enum class DataType : uint16_t {
     I32 = 0b1'1'0'0'0000'00100000,  ///< 32-bit signed integer.
     I8 = 0b1'1'0'0'0000'00001000,   ///< 8-bit signed integer.
     I4 = 0b1'1'0'0'0000'00000100,   ///< 4-bit signed integer.
+    I2 = 0b1'1'0'0'0000'00000010,   ///< 2-bit signed integer.
 
     U32 = 0b1'0'0'0'0000'00100000,  ///< 32-bit unsigned integer.
     U8 = 0b1'0'0'0'0000'00001000,   ///< 8-bit unsigned integer.
     U4 = 0b1'0'0'0'0000'00000100,   ///< 4-bit unsigned integer.
+    U2 = 0b1'0'0'0'0000'00000010,   ///< 2-bit unsigned integer.
 
     QAI8 = 0b1'1'1'1'0000'00001000,  ///< 8-bit signed asymmetric quantized.
     QSI8 = 0b1'1'1'0'0000'00001000,  ///< 8-bit signed symmetric quantized.
@@ -91,6 +95,25 @@ enum class DataType : uint16_t {
 ///
 /// @return The size in bits.
 [[nodiscard]] size_t data_type_size_in_bits(DataType dt);
+
+/// Gets the size in bytes of an array with the specified element width using checked math
+///
+/// @param[in] element_bits The size in bits of each element.
+/// @param[in] len The number of elements.
+///
+/// @return The size in bytes, rounded up for packed elements.
+[[nodiscard]] size_t array_size_in_bytes(size_t element_bits, size_t len);
+
+/// Gets the size in bytes of an array of type `T`, using its packed storage width.
+///
+/// @tparam T Element type.
+/// @param[in] len The number of elements.
+///
+/// @return The size in bytes, with the overflow checks of the element-width overload.
+template <typename T>
+[[nodiscard]] inline size_t array_size_in_bytes(size_t len) {
+    return array_size_in_bytes(size_in_bits<T>, len);
+}
 
 /// Gets the size in bytes of an array of the specified data type
 ///

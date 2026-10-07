@@ -92,6 +92,26 @@ struct kai_matmul_pack_rhs_uker_scale_n_args {
     const void* ptr;  ///< Per-N scale buffer.
 };
 
+/// Dimensions of the per-(N, K) scale buffer for matrix multiplication RHS packing micro-kernel.
+struct kai_matmul_pack_rhs_uker_scale_nk_dim_args {
+    size_t n;  ///< Length or coordinate in N dimension.
+    size_t k;  ///< Length or coordinate in K dimension.
+};
+
+/// Strides in bytes of the per-(N, K) scale buffer for matrix multiplication RHS packing micro-kernel.
+struct kai_matmul_pack_rhs_uker_scale_nk_stride_args {
+    size_t n;  ///< Stride in bytes in N dimension.
+    size_t k;  ///< Stride in bytes in K dimension.
+};
+
+/// Per-(N, K) scale buffer for matrix multiplication RHS packing micro-kernel. Unlike `scale_n`, which holds a
+/// single value per N column, this operand holds one value per (N column, K block) pair and therefore requires
+/// explicit strides to locate an element, since the vector-buffer API used by `scale_n` cannot express a stride.
+struct kai_matmul_pack_rhs_uker_scale_nk_args {
+    const void* ptr;                                              ///< Per-(N, K) scale buffer.
+    struct kai_matmul_pack_rhs_uker_scale_nk_stride_args stride;  ///< Strides in bytes.
+};
+
 /// Per-matrix scale buffer for matrix multiplication RHS packing micro-kernel.
 struct kai_matmul_pack_rhs_uker_scale_global_args {
     const void* ptr;  ///< Per-matrix scale buffer.
@@ -105,6 +125,7 @@ struct kai_matmul_pack_rhs_uker_operand_args {
     struct kai_matmul_pack_rhs_uker_k_sum_scale_global_args k_sum_scale_global;  ///< Per-matrix K sum scale buffer.
     struct kai_matmul_pack_rhs_uker_scale_n_args scale_n;                        ///< Per-N scale buffer.
     struct kai_matmul_pack_rhs_uker_scale_global_args scale_global;              ///< Per-matrix scale buffer.
+    struct kai_matmul_pack_rhs_uker_scale_nk_args scale_nk;                      ///< Per-(N, K) scale buffer.
 };
 
 /// Matrix multiplication RHS packing micro-kernel arguments.
@@ -209,6 +230,28 @@ struct kai_matmul_pack_rhs_uker_api {
     size_t (*get_scale_n_offset)(
         const struct kai_matmul_pack_rhs_uker_config* config,
         const struct kai_matmul_pack_rhs_uker_scale_n_dim_args* index);
+
+    /// Gets the stride in bytes in each dimension of the per-(N, K) scale data.
+    ///
+    /// @param[in] config The micro-kernel configuration.
+    /// @param[in] shape The shape.
+    ///
+    /// @return The strides in bytes.
+    struct kai_matmul_pack_rhs_uker_scale_nk_stride_args (*get_scale_nk_stride)(
+        const struct kai_matmul_pack_rhs_uker_config* config,
+        const struct kai_matmul_pack_rhs_uker_scale_nk_dim_args* shape);
+
+    /// Gets the offset in bytes of the per-(N, K) scale data.
+    ///
+    /// @param[in] config The micro-kernel configuration.
+    /// @param[in] index The start coordinate in each dimension.
+    /// @param[in] stride The stride in bytes of the per-(N, K) scale data.
+    ///
+    /// @return The offset in bytes.
+    size_t (*get_scale_nk_offset)(
+        const struct kai_matmul_pack_rhs_uker_config* config,
+        const struct kai_matmul_pack_rhs_uker_scale_nk_dim_args* index,
+        const struct kai_matmul_pack_rhs_uker_scale_nk_stride_args* stride);
 };
 
 #ifdef __cplusplus

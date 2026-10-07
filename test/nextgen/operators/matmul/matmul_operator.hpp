@@ -15,15 +15,11 @@
 #include "test/common/data_type.hpp"
 #include "test/common/matrix_portion.hpp"
 #include "test/common/span.hpp"
-#include "test/nextgen/harness/kernel_wrapper.hpp"
+#include "test/nextgen/operators/matmul/kernel_types.hpp"
 #include "test/nextgen/operators/matmul/matmul_bias_mode.hpp"
-#include "test/nextgen/operators/matmul/matmul_dims.hpp"
 #include "test/nextgen/quantization/quantizer.hpp"
 
 namespace kai::test {
-
-using MatMulKernelPtr = std::unique_ptr<KernelWrapper<MatMulShape>>;
-using MatPackKernelPtr = std::unique_ptr<KernelWrapper<MatShape>>;
 
 /// Matrix multiplication clamping support.
 enum class MatMulClampMode {
@@ -48,6 +44,11 @@ struct MatMulOperator {
     std::vector<MatMulBiasModeSet> supported_bias_mode_sets;
     MatMulClampMode clamp_mode;
 
+    /// Required alignment of the K dimension. Random shape generation snaps K to a multiple of
+    /// this value before checking `is_shape_suitable`, so that operators requiring block-aligned
+    /// K (e.g. block-quantized RHS formats) do not rely on pure rejection sampling to find one.
+    size_t k_alignment = 1;
+
     std::optional<std::unique_ptr<Quantizer>> lhs_quant;
     std::optional<std::unique_ptr<Quantizer>> rhs_quant;
     std::optional<std::unique_ptr<Quantizer>> bias_quant;
@@ -55,14 +56,15 @@ struct MatMulOperator {
     MatMulBiasQuantInfoSource bias_quant_info_source = MatMulBiasQuantInfoSource::DYNAMIC;
 
     DataType lhs_dtype;
+    std::optional<DataType> lhs_cvt_dtype;  ///< Converted LHS data type, if the micro-kernel converts its input.
     DataType rhs_dtype;
     DataType bias_dtype;
     DataType acc_dtype;
     DataType dst_dtype;
     DataType ref_dtype = DataType::FP32;  ///< Data type used by the reference implementation.
 
-    std::optional<MatPackKernelPtr> pack_lhs;
-    std::optional<MatPackKernelPtr> pack_rhs;
+    std::optional<MatMulPackKernelPtr> pack_lhs;
+    std::optional<MatMulPackKernelPtr> pack_rhs;
     std::optional<MatMulKernelPtr> matmul;
 };
 

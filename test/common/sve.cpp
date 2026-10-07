@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -19,7 +19,7 @@ size_t get_sve_vector_length<1>() {
         if (cpu_has_sve()) {
             res = kai_get_sve_vector_length_u8();
         } else {
-            res = 1;
+            res = KAI_VSCALE_UNIT_BYTES;
         }
     }
 
@@ -28,32 +28,16 @@ size_t get_sve_vector_length<1>() {
 
 template <>
 size_t get_sve_vector_length<2>() {
-    static size_t res = 0;
-
-    if (res == 0) {
-        if (cpu_has_sve()) {
-            res = kai_get_sve_vector_length_u16();
-        } else {
-            res = 1;
-        }
-    }
-
-    return res;
+    return get_sve_vector_length<1>() / 2;
 }
 
 template <>
 size_t get_sve_vector_length<4>() {
-    static size_t res = 0;
+    return get_sve_vector_length<1>() / 4;
+}
 
-    if (res == 0) {
-        if (cpu_has_sve()) {
-            res = kai_get_sve_vector_length_u32();
-        } else {
-            res = 1;
-        }
-    }
-
-    return res;
+size_t get_sve_vector_scale() {
+    return get_sve_vector_length<1>() / KAI_VSCALE_UNIT_BYTES;
 }
 
 }  // namespace kai::test

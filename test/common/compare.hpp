@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -7,6 +7,8 @@
 #pragma once
 
 #include <cstddef>
+
+#include "test/common/data_type.hpp"
 
 namespace kai::test {
 
@@ -121,5 +123,13 @@ private:
     size_t _num_mismatches;
     bool _failed;
 };
+
+/// Creates a comparison handler for a compute kernel's output and accumulator types.
+///
+/// @param[in] output_dtype Data type of the output being compared.
+/// @param[in] accumulator_dtype Data type used by the kernel accumulator.
+///
+/// @return A handler with the corresponding precision thresholds.
+[[nodiscard]] DefaultMismatchHandler make_compute_mismatch_handler(DataType output_dtype, DataType accumulator_dtype);
 
 }  // namespace kai::test

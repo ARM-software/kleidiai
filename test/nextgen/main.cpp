@@ -7,7 +7,6 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <charconv>
 #include <cstddef>
 #include <cstdlib>
 #include <iostream>
@@ -22,6 +21,7 @@
 #include "test/nextgen/common/expected.hpp"
 #include "test/nextgen/common/test_config.hpp"
 #include "test/nextgen/common/test_registry.hpp"
+#include "test/nextgen/common/text_utils.hpp"
 
 namespace {
 
@@ -42,16 +42,7 @@ std::optional<size_t> value_to_num_shapes(const std::string& value) {
         return 100;
     }
 
-    size_t parsed{};
-    const char* begin = value.data();
-    const char* end = begin + value.size();
-
-    auto [ptr, ec] = std::from_chars(begin, end, parsed);
-
-    if (ec != std::errc() || ptr != end || parsed == 0) {
-        return std::nullopt;
-    }
-    return parsed;
+    return kai::test::parse_num<size_t>(value);
 }
 
 enum class TestSizeParseErr {
@@ -98,7 +89,7 @@ Expected<size_t, TestSizeParseErr> parse_test_size(int& argc, char** argv) {
     }
 
     auto parsed = value_to_num_shapes(raw_value);
-    if (!parsed) {
+    if (!parsed || *parsed == 0) {
         std::cerr << "Error: invalid --test_size value '" << raw_value << "'.\n";
         std::cerr << "Usage: --test_size <small|large|positive integer>\n";
         return TestSizeParseErr::InvalidValue;
@@ -154,6 +145,8 @@ public:
     void OnTestIterationStart(const testing::UnitTest& unit_test, int iteration) override {
         skipped_by_reason_.clear();
         printed_failure_ = false;
+        current_test_name_.clear();
+        current_test_suite_name_.clear();
 
         std::cout << "[==========] ";
         if (GTEST_FLAG_GET(repeat) != 1) {
@@ -165,6 +158,15 @@ public:
                   << " test suites.\n";
     }
 
+    void OnTestSuiteStart(const testing::TestSuite& test_suite) override {
+        current_test_suite_name_ = test_suite.name();
+    }
+
+    void OnTestStart(const testing::TestInfo& test_info) override {
+        KAI_TEST_ASSERT(current_test_suite_name_ == test_info.test_suite_name());
+        current_test_name_ = test_info.name();
+    }
+
     void OnTestPartResult(const testing::TestPartResult& result) override {
         if (!result.failed()) {
             return;
@@ -172,11 +174,12 @@ public:
 
         printed_failure_ = true;
         std::cout << "\n[  FAILED  ] ";
-        const testing::UnitTest& unit_test = *testing::UnitTest::GetInstance();
-        if (const testing::TestInfo* test_info = unit_test.current_test_info()) {
-            std::cout << test_info->test_suite_name() << "." << test_info->name();
-        } else if (const testing::TestSuite* test_suite = unit_test.current_test_suite()) {
-            std::cout << test_suite->name() << ": SetUpTestSuite or TearDownTestSuite";
+        // The test framework holds its mutex during this callback. Its current_test_info() and
+        // current_test_suite() accessors would lock it again. The lifecycle callbacks supply the context instead.
+        if (!current_test_name_.empty()) {
+            std::cout << current_test_suite_name_ << "." << current_test_name_;
+        } else if (!current_test_suite_name_.empty()) {
+            std::cout << current_test_suite_name_ << ": SetUpTestSuite or TearDownTestSuite";
         } else {
             std::cout << "global test environment";
         }
@@ -186,10 +189,19 @@ public:
     }
 
     void OnTestEnd(const testing::TestInfo& test_info) override {
+        KAI_TEST_ASSERT(current_test_name_ == test_info.name());
+        KAI_TEST_ASSERT(current_test_suite_name_ == test_info.test_suite_name());
+
         const testing::TestResult& result = *test_info.result();
         if (result.Skipped()) {
             ++skipped_by_reason_[get_skip_reason(result)];
         }
+        current_test_name_.clear();
+    }
+
+    void OnTestSuiteEnd(const testing::TestSuite& test_suite) override {
+        KAI_TEST_ASSERT(current_test_suite_name_ == test_suite.name());
+        current_test_suite_name_.clear();
     }
 
     void OnTestIterationEnd(const testing::UnitTest& unit_test, int /*iteration*/) override {
@@ -238,6 +250,8 @@ public:
     }
 
 private:
+    std::string current_test_name_;
+    std::string current_test_suite_name_;
     std::map<std::string, size_t> skipped_by_reason_;
     bool printed_failure_ = false;
 };

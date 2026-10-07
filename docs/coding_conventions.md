@@ -10,6 +10,10 @@ KleidiAI source code must follow the project coding convention described in this
 section. The convention is intentionally small and relies on the repository's
 tooling as the baseline enforcement mechanism.
 
+Requirements for micro-kernel APIs, implementations, build integration, and
+testing are described in
+[Micro-kernel requirements](microkernel_requirements.md).
+
 ## clang-format and clang-tidy
 
 Follow the formatting and static-analysis rules configured in `.clang-format`
@@ -19,7 +23,8 @@ The clang-format configuration is based on Google style with project-specific
 adjustments. Deviation from the base format should be minimal and justified.
 
 The clang-tidy configuration enables the checks that are relevant to KleidiAI
-and disables unsuitable checks explicitly.
+and disables unsuitable checks explicitly. Every disabled check must have a
+justification in a comment in `.clang-tidy`.
 
 ## Comments and documentation
 
@@ -33,10 +38,23 @@ Write comments in descriptive third person when describing what code does.
 Imperative comments are acceptable when describing a future action, for example
 in a `TODO`.
 
+Document every public function clearly with documentation comments, `///`.
+Include a brief one-line description, any necessary longer description, all
+parameters with their directions, and the return value when applicable.
+
+Functions with static linkage should have a documentation comment. For
+trivial functions it's sufficient with only a brief one-line description.
+
+Remove commented-out code. Use `TODO` comments sparingly and explain the
+required follow-up.
+
 Example:
 
 ```cpp
 /// Performs softmax activation function.
+///
+/// The softmax activation takes a `src` array of `length` elements, and
+/// writes the resulting values to the `dst` array of the same length.
 ///
 /// @param[out] dst Output data buffer.
 /// @param[in] src Input data buffer.
@@ -102,6 +120,9 @@ Example:
 ```cpp
 /// Performs softmax activation function.
 ///
+/// The softmax activation takes a `src` array of `length` elements, and
+/// writes the resulting values to the `dst` array of the same length.
+///
 /// @param[out] dst Output data buffer.
 /// @param[in] src Input data buffer.
 /// @param[in] length Number of elements.
@@ -110,13 +131,18 @@ void softmax(float* dst, const float* src, size_t length) {
     KAI_ASSUME(src != NULL);
     KAI_ASSUME(length > 0);
 
+    // Finds max.
     float max = -INFINITY;
     for (size_t i = 0; i < length; ++i) {
+        KAI_ASSUME(!isnan(src[i]));
+        KAI_ASSUME(!isinf(src[i]));
+
         if (src[i] > max) {
             max = src[i];
         }
     }
 
+    // Regularizes.
     float sum = 0;
     for (size_t i = 0; i < length; ++i) {
         const float tmp = exp(src[i] - max);
@@ -126,15 +152,16 @@ void softmax(float* dst, const float* src, size_t length) {
 
     KAI_ASSERT(sum > 0);
 
+    // Normalizes.
     for (size_t i = 0; i < length; ++i) {
         dst[i] = dst[i] / sum;
     }
 }
 ```
 
-Do not assert or assume values for unused parameters. Mark unused parameters
-with `KAI_UNUSED` instead. Requiring specific values for parameters that are not
-used places an unnecessary burden on integrators.
+Mark unused parameters with `KAI_UNUSED`. You may use `KAI_ASSUME` on unused
+parameters in order to allow detection when kernel is used with an unsupported
+configuration.
 
 Example:
 
@@ -144,8 +171,8 @@ void kai_run_...(
     size_t rhs_stride_row, const void* rhs, const void* bias, const void* scale,
     void* rhs_packed, size_t extra_bytes, const void* params) {
     KAI_UNUSED(num_groups);
-    KAI_UNUSED(nr);
-    KAI_UNUSED(kr);
+    KAI_ASSUME(nr == 4);
+    KAI_ASSUME(kr == 16);
     KAI_UNUSED(sr);
     KAI_ASSUME(rhs != NULL);
     KAI_ASSUME(bias != NULL);
@@ -168,37 +195,12 @@ void kai_run_...(
 Test code must use `KAI_ASSUME_ALWAYS(expr)` and `KAI_ASSERT_ALWAYS(expr)` where
 the check must not be optimized away in release builds.
 
-## Assembly code
+## Naming and terminology
 
-Pure assembly micro-kernels must:
+Use the term _micro-kernel_ rather than kernel, ukernel, or function when
+referring to a micro-kernel.
 
-- Conform to [AAPCS64](https://github.com/ARM-software/abi-aa/blob/main/aapcs64/aapcs64.rst).
-- Emit exactly one `ret`.
-- Avoid calls with `bl`.
-
-Avoid using inline assembly, as compiler support is not standardized across the
-supported compilers.
-
-## Naming and file layout
-
-Follow the established naming, directory, CMake, and Bazel conventions used by
-the surrounding code. Micro-kernel naming is described in
+Follow the established naming conventions used by the surrounding code. Follow
+the existing convention when naming a new micro-kernel, or explicitly extend
+it. Micro-kernel naming is described in
 [docs/microkernel_names.md](microkernel_names.md).
-
-## Build scripts
-
-New source files must be added to all relevant build scripts. CMake source lists
-are named `KLEIDIAI_FILES_<TECH>[_<FEAT>]*[_ASM]`. Bazel source lists are named
-`<TECH>[_<FEAT>]*_KERNELS[_ASM]`. Keep file lists sorted when adding files.
-
-Kernels that use inline assembly belong in the non-`_ASM` list. Kernels that do
-not use inline assembly normally belong in an `_ASM` list, which is preferred
-for compiler support.
-
-## Test code
-
-New unit tests must use the NextGen test framework which is described in
-[docs/microkernel_testing.md](docs/microkernel_testing.md).
-
-Cache expensive reference-data generation where appropriate to keep the CI
-pipeline execution time low.

@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -45,7 +45,9 @@ size_t kai_get_lhs_packed_size_lhs_imatmul_pack_x16p2vlx2_x16p_sme(
 /// @param[in] k_chunk_count Number of LHS column splits.
 /// @param[in] k_chunk_length Length of a LHS column split.
 /// @param[in] lhs_ptrs Pointer to an array of input pointers consisting of
-///            `m * k_chunk_count` pointers.
+///            `roundup(m, m_step) * k_chunk_count` pointers. The pointers are
+///            grouped in blocks of `m_step` rows and `k_chunk_count` columns.
+///            Within each block, the pointers are stored in column-major order.
 /// @param[in] lhs_ptr_offset Offset to add to each pointer of the @ref lhs_ptrs
 ///            array, excluding zero pointers.
 /// @param[in] pad_ptr Pointer to chunk used for padding. @ref lhs_ptr_offset is

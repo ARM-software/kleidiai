@@ -1,10 +1,13 @@
 //
 // SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
 //
 // SPDX-License-Identifier: Apache-2.0
 //
 
 #pragma once
+
+#include "test/common/predicate_utils.hpp"
 
 namespace kai::test {
 
@@ -32,6 +35,9 @@ bool cpu_has_bf16();
 /// Returns a value indicating whether the current CPU supports FEAT_SVE.
 bool cpu_has_sve();
 
+/// Returns a value indicating whether the current CPU supports FEAT_SVE and FEAT_I8MM.
+bool cpu_has_svei8mm();
+
 /// Returns a value indicating whether the current CPU supports FEAT_SVE with 256-bit vector lengths.
 bool cpu_has_sve_vl256();
 
@@ -56,6 +62,12 @@ bool cpu_has_sme_fa64();
 /// Returns a value indicating whether the current CPU supports FEAT_SSVE_FEXPA.
 bool cpu_has_ssve_fexpa();
 
+/// Returns a value indicating whether the current CPU supports the SME FP16-to-FP32 MOPA extension.
+bool cpu_has_sme_f16f32();
+
+/// Returns a value indicating whether the current CPU supports FEAT_SME_MOP4.
+bool cpu_has_sme_mop4();
+
 /// Returns a value indicating whether the current CPU supports FEAT_BF16 and FEAT_DotProd
 bool cpu_has_dotprod_and_bf16();
 
@@ -65,7 +77,7 @@ bool cpu_has_i8mm_and_bf16();
 /// Returns a value indicating whether the current CPU supports a set of features
 template <bool (*... Pred)()>
 bool cpu_check() {
-    return (Pred() && ...);
+    return all_true<Pred...>();
 }
 
 /// Returns a value indicating whether the current CPU supports atleast one of a set of features.

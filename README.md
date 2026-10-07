@@ -41,11 +41,11 @@ Some of the key features of KleidiAI are the following:
 
 - No dynamic memory allocation
 
-- No memory management​
+- No memory management
 
 - No scheduling
 
-- Stateless, stable, and consistent API​
+- Stateless, stable, and consistent API
 
 - Performance-critical compute-bound and memory-bound micro-kernels
 

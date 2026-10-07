@@ -18,28 +18,9 @@
 #include "test/common/int4.hpp"
 #include "test/common/round.hpp"
 #include "test/common/span.hpp"
+#include "test/common/type_traits.hpp"
 
 namespace kai::test {
-
-/// The size in bits of type `T`.
-template <typename T>
-inline constexpr size_t size_in_bits = sizeof(T) * 8;
-
-/// The size in bits of type `T`.
-template <>
-inline constexpr size_t size_in_bits<UInt4> = 4;
-
-/// The size in bits of type `T`.
-template <>
-inline constexpr size_t size_in_bits<Int4> = 4;
-
-/// The size in bits of type `T`.
-template <>
-inline constexpr size_t size_in_bits<UInt2> = 2;
-
-/// The size in bits of type `T`.
-template <>
-inline constexpr size_t size_in_bits<Int2> = 2;
 
 /// Reads the array at the specified index.
 ///

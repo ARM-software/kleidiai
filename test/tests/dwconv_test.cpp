@@ -13,6 +13,7 @@
 #include <cstring>
 #include <iostream>
 #include <optional>
+#include <sstream>
 #include <string_view>
 #include <tuple>
 #include <unordered_map>
@@ -496,16 +497,28 @@ void test_depthwise_output(const DepthwiseTestParams& params) {
     ASSERT_TRUE(success);
 }
 
+static std::string depthwise_f16_depthfirst_partial_test_description(const DepthwiseF16DepthfirstPartialParams& param) {
+    std::ostringstream os;
+    PrintTo(param.in_shape, &os);
+    os << "__";
+    PrintTo(param.padding, &os);
+    os << "__OutRow_" << param.out_row;
+    os << "__OutCol_" << param.out_col;
+    os << "__TileRows_" << param.tile_rows;
+    os << "__TileCols_" << param.tile_cols;
+    os << "__";
+    PrintToClamp(std::optional<float>{param.clamp_keep_ratio}, &os);
+    return os.str();
+}
+
 static std::string get_depthwise_f16_depthfirst_partial_test_name(
     const testing::TestParamInfo<DepthwiseF16DepthfirstPartialParams>& info) {
-    const auto& param = info.param;
-    return "M_" + std::to_string(param.in_shape.m) + "__N_" + std::to_string(param.in_shape.n) + "__K_" +
-        std::to_string(param.in_shape.k) + "__Padding_" + std::to_string(param.padding.left) + "_" +
-        std::to_string(param.padding.right) + "_" + std::to_string(param.padding.top) + "_" +
-        std::to_string(param.padding.bottom) + "__OutRow_" + std::to_string(param.out_row) + "__OutCol_" +
-        std::to_string(param.out_col) + "__TileRows_" + std::to_string(param.tile_rows) + "__TileCols_" +
-        std::to_string(param.tile_cols) + "__ClampKeepRatio_" +
-        std::to_string(static_cast<int>(param.clamp_keep_ratio * 100));
+    return depthwise_f16_depthfirst_partial_test_description(info.param);
+}
+
+/// Prints the parameters of an FP16 depth-first partial-output test case.
+void PrintTo(const DepthwiseF16DepthfirstPartialParams& param, std::ostream* os) {
+    *os << depthwise_f16_depthfirst_partial_test_description(param);
 }
 
 }  // namespace
@@ -572,21 +585,7 @@ TEST(DepthwiseF16DepthfirstKernelTest, SupportsMoreThanOneThousandChannels) {
     *os << "__";
     PrintTo(padding, os);
     *os << "__";
-    *os << "__clamp_keep_ratio_"
-        << (clamp_keep_ratio.has_value() ? std::to_string(static_cast<int>(clamp_keep_ratio.value() * 100))
-                                         : "noclamp");
-}
-
-/// Name generator for FP16 depth-first partial-output test case.
-[[maybe_unused]] static void PrintTo(const DepthwiseF16DepthfirstPartialParams& param, std::ostream* os) {
-    PrintTo(param.in_shape, os);
-    *os << "__";
-    PrintTo(param.padding, os);
-    *os << "__out_row_" << param.out_row;
-    *os << "__out_col_" << param.out_col;
-    *os << "__tile_rows_" << param.tile_rows;
-    *os << "__tile_cols_" << param.tile_cols;
-    *os << "__clamp_keep_ratio_" << static_cast<int>(param.clamp_keep_ratio * 100);
+    PrintToClamp(clamp_keep_ratio, os);
 }
 
 ///  Test parameter listing

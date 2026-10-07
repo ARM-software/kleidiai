@@ -1,0 +1,68 @@
+//
+// SPDX-FileCopyrightText: Copyright 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+
+#pragma once
+
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <string_view>
+#include <vector>
+
+#include "kai/kai_common.h"
+#include "test/nextgen/common/poly.hpp"
+#include "test/nextgen/common/shape.hpp"
+#include "test/nextgen/format/format.hpp"
+#include "test/nextgen/operators/matmul/kernel_types.hpp"
+#include "test/nextgen/operators/matmul/matmul_dims.hpp"
+#include "test/nextgen/operators/matmul/matmul_pack_args.hpp"
+#include "test/nextgen/operators/matmul/matmul_slots.hpp"
+#include "test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_interface.hpp"
+
+namespace kai::test {
+
+/// Wrapper for NxK RHS packing with blockwise quantization.
+class MatMulPackRhsBlockwiseQuantWrapper final : public MatMulPackKernel {
+public:
+    /// Creates a new wrapper.
+    MatMulPackRhsBlockwiseQuantWrapper(
+        std::string_view name, const MatMulPackRhsBlockwiseQuantInterface& kernel, const Poly<Format>& src_data_format,
+        const Poly<Format>& src_signed_data_format, const Poly<Format>& src_scale_format,
+        const Poly<Format>& src_bias_format, const Poly<Format>& dst_format, MatMulPackArgs pack_args,
+        kai_datatype scale_dt) :
+        m_name(name),
+        m_kernel(kernel),
+        m_src_data_format(src_data_format),
+        m_src_signed_data_format(src_signed_data_format),
+        m_src_scale_format(src_scale_format),
+        m_src_bias_format(src_bias_format),
+        m_dst_format(dst_format),
+        m_pack_args(pack_args),
+        m_scale_dt(scale_dt) {
+    }
+
+    [[nodiscard]] std::string_view name() const override;
+    [[nodiscard]] std::vector<MatMulSlot> run_inputs(ConstTensorSet tensors) const override;
+    [[nodiscard]] std::vector<MatMulSlot> ref_inputs(ConstTensorSet tensors) const override;
+    [[nodiscard]] std::vector<size_t> steps(MatShape shape, ConstTensorSet tensors) const override;
+    void populate_constant_info(TensorSet tensors) const override;
+    void run(
+        MatShape full_shape, Span<const size_t> tile_coords, MatShape tile_shape, TensorSet tensors) const override;
+    void compute_reference(MatShape shape, TensorSet tensors) const override;
+
+private:
+    std::string m_name;
+    MatMulPackRhsBlockwiseQuantInterface m_kernel;
+    Poly<Format> m_src_data_format;
+    Poly<Format> m_src_signed_data_format;
+    Poly<Format> m_src_scale_format;
+    Poly<Format> m_src_bias_format;
+    Poly<Format> m_dst_format;
+    MatMulPackArgs m_pack_args;
+    kai_datatype m_scale_dt;
+};
+
+}  // namespace kai::test

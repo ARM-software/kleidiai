@@ -1,5 +1,6 @@
 //
 // SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2026 Meta Platforms, Inc. and affiliates.
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -14,8 +15,10 @@
 #include <string>
 
 #include "test/common/assert.hpp"
+#include "test/common/bfloat16.hpp"
 #include "test/common/data_type.hpp"
 #include "test/common/float16.hpp"
+#include "test/common/int2.hpp"
 #include "test/common/int4.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/round.hpp"
@@ -70,6 +73,9 @@ PrintFn make_print_array(DataType dtype) {
         case DataType::FP16:
             return print_array<Float16>;
 
+        case DataType::BF16:
+            return print_array<BFloat16<>>;
+
         case DataType::I32:
             return print_array<int32_t>;
 
@@ -84,6 +90,8 @@ PrintFn make_print_array(DataType dtype) {
 
         case DataType::I4:
             return print_array<Int4>;
+        case DataType::U2:
+            return print_array<UInt2>;
 
         default:
             KAI_TEST_ERROR("Not supported.");

@@ -12,6 +12,7 @@
 
 #include "kai/kai_common.h"
 #include "test/common/assert.hpp"
+#include "test/common/safe_math.hpp"
 
 namespace kai::test {
 
@@ -56,12 +57,16 @@ const char* to_cstring(DataType dt) {
             return "I8";
         case DataType::I4:
             return "I4";
+        case DataType::I2:
+            return "I2";
         case DataType::U32:
             return "U32";
         case DataType::U8:
             return "U8";
         case DataType::U4:
             return "U4";
+        case DataType::U2:
+            return "U2";
         case DataType::QAI8:
             return "QAI8";
         case DataType::QSI8:
@@ -83,8 +88,16 @@ size_t data_type_size_in_bits(DataType dt) {
     return bits(dt);
 }
 
+size_t array_size_in_bytes(size_t element_bits, size_t len) {
+    const auto bit_count = safe_mul(element_bits, len);
+    KAI_TEST_ASSERT(bit_count);
+    const auto size = safe_div_ceil(*bit_count, size_t{8});
+    KAI_TEST_ASSERT(size);
+    return *size;
+}
+
 size_t data_type_array_size_in_bytes(DataType dt, size_t len) {
-    return kai_div_ceil(bits(dt) * len, 8);
+    return array_size_in_bytes(bits(dt), len);
 }
 
 std::string data_type_uid(DataType dt) {
@@ -101,12 +114,16 @@ std::string data_type_uid(DataType dt) {
             return "i8";
         case DataType::I4:
             return "i4";
+        case DataType::I2:
+            return "i2";
         case DataType::U32:
             return "u32";
         case DataType::U8:
             return "u8";
         case DataType::U4:
             return "u4";
+        case DataType::U2:
+            return "u2";
         case DataType::QAI8:
             return "qai8";
         case DataType::QSI8:

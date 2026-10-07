@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <cstddef>
+#include <limits>
 #include <type_traits>
 
 namespace kai::test {
@@ -18,6 +20,26 @@ class Float16;
 
 template <bool hardware_support = true>
 class BFloat16;
+
+/// The size in bits of type `T`.
+template <typename T>
+inline constexpr size_t size_in_bits = sizeof(T) * 8;
+
+/// The size in bits of type `T`.
+template <>
+inline constexpr size_t size_in_bits<UInt4> = 4;
+
+/// The size in bits of type `T`.
+template <>
+inline constexpr size_t size_in_bits<Int4> = 4;
+
+/// The size in bits of type `T`.
+template <>
+inline constexpr size_t size_in_bits<UInt2> = 2;
+
+/// The size in bits of type `T`.
+template <>
+inline constexpr size_t size_in_bits<Int2> = 2;
 
 /// `true` if `T` is unsigned numeric type.
 template <typename T>
@@ -67,6 +89,10 @@ inline constexpr bool is_signed<Int2> = true;
 template <>
 inline constexpr bool is_signed<BFloat16<>> = true;
 
+/// `true` if `T` is signed numeric type.
+template <typename T>
+inline constexpr bool is_signed_v = is_signed<T>;
+
 /// `true` if `T` is integral numeric type.
 template <typename T>
 inline constexpr bool is_integral = std::is_integral_v<T>;
@@ -91,6 +117,10 @@ inline constexpr bool is_integral<Int2> = true;
 template <>
 inline constexpr bool is_integral<BFloat16<>> = false;
 
+/// `true` if `T` is integral numeric type.
+template <typename T>
+inline constexpr bool is_integral_v = is_integral<T>;
+
 /// `true` if `T` is floating-point type.
 template <typename T>
 inline constexpr bool is_floating_point = std::is_floating_point_v<T>;
@@ -106,6 +136,10 @@ inline constexpr bool is_floating_point<BFloat16<>> = true;
 /// `true` if `T` is integral or floating-point type.
 template <typename T>
 inline constexpr bool is_arithmetic = is_integral<T> || is_floating_point<T>;
+
+/// Standard numeric limits for type `T`.
+template <typename T>
+using numeric_limits = std::numeric_limits<T>;
 
 /// Signed version of type `T`.
 template <typename T>

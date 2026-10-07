@@ -95,12 +95,18 @@ private:
     void generate_acc_scale_global_data(Rng& rng, bool required);  ///< Generates the global accumulator scale data.
     void generate_scale_bias_n_data(Rng& rng, bool required);  ///< Generates the per-N scaled-accumulator bias data.
 
+    void compute_lhs_cvt_data(bool required);     ///< Computes the converted LHS data.
     void compute_rhs_t_data(bool required);       ///< Computes the transposed RHS data.
     void quantize_lhs(bool required);             ///< Quantizes the LHS data.
     void quantize_rhs_t(bool required);           ///< Quantizes the RHS data.
     void quantize_bias(Rng& rng, bool required);  ///< Quantizes the bias data.
 
-    void compute_rhs_qdata(bool required);                  ///< Computes the non-transposed quantized RHS data.
+    void compute_rhs_qdata(bool required);           ///< Computes the non-transposed quantized RHS data.
+    void compute_rhs_t_qdata_sign_t(bool required);  ///< Computes transposed RHS_T_QDATA_SIGN.
+    void compute_lhs_qdata_sum(bool required);       ///< Computes the per-block quantized LHS data sum.
+    void compute_lhs_qscale_cvt(bool required);      ///< Converts the LHS quantization scale.
+    void compute_lhs_qscale_mul_lhs_qdata_sum(
+        bool required);                                     ///< Computes the scaled per-block quantized LHS data sum.
     void compute_lhs_qzp_neg(bool required);                ///< Computes the negative LHS quantization zero-point.
     void compute_dst_quantization_info(bool required);      ///< Computes destination quantization information.
     void compute_lhs_qscale_div_dst_qscale(bool required);  ///< Computes LHS_QSCALE / DST_QSCALE.
@@ -113,6 +119,9 @@ private:
     void compute_rhs_t_qdata_sign(bool required);  ///< Computes the quantized RHS data with opposite signedness.
     void compute_rhs_t_qdata_sign_sum(
         bool required);  ///< Computes the row sum of quantized RHS data with opposite signedness.
+    void compute_rhs_t_qscale_rescaled(bool required);  ///< Computes the RHS quantization scale rescaled by `1/16`.
+    void compute_rhs_t_qdata_sign_sum_scaled(
+        bool required);  ///< Computes the block-scale-weighted row sum of RHS data.
 
     void compute_ref_acc_matmul_data(
         bool required);  ///< Computes matrix multiplication accumulator without pre or post processing.
