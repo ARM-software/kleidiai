@@ -25,6 +25,7 @@
 #include "benchmark/matmul_pack_lhs/matmul_pack_lhs_registry.hpp"
 #include "benchmark/pack_matmul/pack_matmul_main.hpp"
 #include "benchmark/pack_matmul/pack_matmul_registry.hpp"
+#include "benchmark/softmax/softmax_main.hpp"
 #include "benchmark/softmax/softmax_registry.hpp"
 #include "kai/kai_common.h"
 
@@ -41,19 +42,11 @@
 
 namespace {
 
-void print_softmax_usage(std::string_view name) {
-    std::ostringstream oss;
-    oss << "Softmax usage:" << '\n';
-    oss << '\t' << name << " softmax -l <dim_0>" << '\n';
-    oss << "Options:" << '\n';
-    oss << "\t-l\tSize of dimension 0" << '\n';
-    std::cerr << oss.str() << '\n';
-}
-
 void print_usage(std::string_view name) {
     std::ostringstream oss;
     oss << "Usage:" << '\n';
-    oss << '\t' << name << " <matmul|matmul_pack_lhs|pack_matmul|imatmul|imatmul_pack_lhs|dwconv> [<options>]" << '\n';
+    oss << '\t' << name << " <matmul|matmul_pack_lhs|pack_matmul|imatmul|imatmul_pack_lhs|dwconv|softmax> [<options>]"
+        << '\n';
     oss << "\nIf no operation is provided, defaults to: " << name << " matmul [options]" << '\n';
     oss << "\nBenchmark Framework options:" << '\n';
     oss << '\t' << name << " --help" << '\n';
@@ -65,46 +58,10 @@ void print_usage(std::string_view name) {
     kai::benchmark::print_imatmul_usage(name);
     kai::benchmark::print_imatmul_pack_lhs_usage(name);
     kai::benchmark::print_dwconv_usage(name);
+    kai::benchmark::print_softmax_usage(name);
 }
 
 }  // namespace
-
-static int run_softmax(int argc, char** argv, const std::optional<std::string>& user_filter_opt) {
-    bool dim_0_set = false;
-    size_t dim_0 = 0;
-
-    optind = 1;
-    int opt;
-    while ((opt = getopt(argc, argv, "l:")) != -1) {
-        switch (opt) {
-            case 'l': {
-                std::string error;
-                if (!parse_size_t_arg(optarg, "-l", SizeValueKind::Positive, dim_0, error)) {
-                    std::cerr << error << '\n';
-                    print_softmax_usage(argv[0]);
-                    return EXIT_FAILURE;
-                }
-                dim_0_set = true;
-                break;
-            }
-            default:
-                print_softmax_usage(argv[0]);
-                return EXIT_FAILURE;
-        }
-    }
-
-    if (!dim_0_set) {
-        print_softmax_usage(argv[0]);
-        return EXIT_FAILURE;
-    }
-
-    kai::benchmark::RegisterSoftmaxBenchmarks(dim_0);
-    const std::string spec = user_filter_opt.has_value() ? *user_filter_opt : std::string("^kai_softmax");
-
-    ::benchmark::RunSpecifiedBenchmarks(nullptr, nullptr, spec);
-    ::benchmark::Shutdown();
-    return 0;
-}
 
 static std::optional<std::string> find_user_benchmark_filter(int argc, char** argv) {
     static constexpr std::string_view benchmark_filter_eq = "--benchmark_filter=";

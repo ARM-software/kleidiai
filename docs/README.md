@@ -33,7 +33,7 @@ The `examples` directory contains standalone C++ sample applications that demons
 | `examples/matmul_clamp_f32_qai8dxp_qsi4c32p` | Matrix multiplication of f32 and per block symmetric quantized int4 matrices using GEMM and GEMV Advanced SIMD micro-kernels. LHS is int8 asymmetric quantized and RHS is packed using packing micro-kernels before the matmul operation is executed. |
 | `examples/matmul_clamp_f32_qai8dxp_qsi4cxp` | Matrix multiplication of f32 and per channel symmetric quantized int4 using GEMM and GEMV Advanced SIMD micro-kernels. LHS is int8 asymmetric quantized and RHS is packed before running the matmul operation. |
 | `examples/matmul_clamp_f32_qsi8d32p_qsi4c32p` | Matrix multiplication of f32 and per block quantized symmetric int4 using GEMM and GEMV Advanced SIMD micro-kernels. LHS is int8 per block symmetric quantized and RHS is int4 with per block symmetric quantization f16 scale factors. This example demonstrates how to split the workload among multiple worker threads. |
-| `examples/softmax_f32_f32_sve_fexpa` | One-dimensional FP32 softmax using the SVE FEXPA micro-kernel and shared API, with reference validation and execution timing across multiple lengths. |
+| `examples/softmax_f32_f32_sve_fexpa` | One-dimensional FP32 softmax using the SVE FEXPA micro-kernel and shared API, with reference validation and execution timing. |
 
 ## Documentation and guides
 

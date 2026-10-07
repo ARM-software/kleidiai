@@ -81,7 +81,8 @@ void SoftmaxTb::test_output() {
     const Format& format = *ref_dst_data.format();
     const std::array compare_shape{size_t{1}, m_length};
     const std::array compare_coords{size_t{0}, size_t{0}};
-    DefaultMismatchHandler handler(1.0e-6F, 1.0e-3F, 0, 0.0F);
+    constexpr float abs_error_threshold = 1.0e-6F;
+    DefaultMismatchHandler handler(abs_error_threshold, 1.0e-3F, 0, 0.0F);
     const bool ok =
         format.compare(compare_shape, compare_coords, compare_shape, imp_dst_data.data(), ref_dst_data.data(), handler);
     KAI_TEST_ASSERT(ok);
@@ -95,6 +96,11 @@ void SoftmaxTb::test_output() {
         const double value = read_array(format.dtype(), imp_dst_data.data_ptr(), i);
         KAI_TEST_ASSERT_MSG(std::isfinite(value), "Softmax: Output probabilities must be finite.");
         KAI_TEST_ASSERT_MSG(value >= 0.0, "Softmax: Output probabilities must be non-negative.");
+        const double expected = read_array(format.dtype(), ref_dst_data.data_ptr(), i);
+        // The common comparator uses zero relative error when the reference is zero.
+        KAI_TEST_ASSERT_MSG(
+            expected != 0.0 || value <= abs_error_threshold,
+            "Softmax: A zero reference probability must satisfy the absolute error threshold.");
         sum += value;
     }
     KAI_TEST_ASSERT_MSG(std::abs(sum - 1.0) <= 1.0e-5, "Softmax: Output probabilities must sum to one.");

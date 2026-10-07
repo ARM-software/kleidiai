@@ -31,6 +31,7 @@ add_executable(kleidiai_benchmark
     benchmark/matmul_pack_lhs/matmul_pack_lhs_registry.cpp
     benchmark/pack_matmul/pack_matmul_main.cpp
     benchmark/pack_matmul/pack_matmul_registry.cpp
+    benchmark/softmax/softmax_main.cpp
     benchmark/softmax/softmax_registry.cpp
     test/common/bfloat16_asm.S
     test/common/buffer.cpp

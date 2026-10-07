@@ -268,6 +268,7 @@ def tech() -> Expr:
         Doc(
             "dotprod", description="8-bit integer dot product feature for Advanced SIMD"
         ),
+        Doc("fexpa", description="FEXPA instruction"),
         Doc(
             "i8mm",
             description="8-bit integer matrix multiplication feature for Advanced SIMD and SVE",
@@ -306,17 +307,6 @@ def uarch() -> Expr:
 )
 def dims() -> Expr:
     return Seq(NaturalInt(), "d")
-
-
-@grammar.rule(
-    title="Softmax primary instruction or feature",
-    description=(
-        "Describes the primary instruction or feature that distinguishes "
-        "softmax micro-kernels targeting the same SIMD engine."
-    ),
-)
-def tech() -> Expr:
-    return Doc("fexpa", description="FEXPA instruction")
 
 
 @grammar.rule(

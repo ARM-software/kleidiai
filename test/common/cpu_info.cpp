@@ -487,10 +487,6 @@ bool cpu_has_sme2() {
     return CpuInfo::current().has_sme2;
 }
 
-bool cpu_has_sme2p1() {
-    return CpuInfo::current().has_sme2p1;
-}
-
 bool cpu_has_sme_fa64() {
     return CpuInfo::current().has_sme_fa64;
 }

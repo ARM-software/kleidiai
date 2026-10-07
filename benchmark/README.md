@@ -49,7 +49,7 @@ $ cmake -DCMAKE_TOOLCHAIN_FILE=/path/to/android-ndk/build/cmake/android.toolchai
 
 ### Quick Examples
 
-Run matmul, matmul_pack_lhs, pack_matmul, imatmul, imatmul_pack_lhs and dwconv with example dimensions:
+Run matmul, matmul_pack_lhs, pack_matmul, imatmul, imatmul_pack_lhs, dwconv and softmax with example dimensions:
 
 ```sh
 ./kleidiai_benchmark matmul  -m 32 -n 32 -k 32
@@ -195,7 +195,7 @@ Run the softmax benchmark with the size of dimension 0:
 ./kleidiai_benchmark softmax -l <dim_0>
 ```
 
-Use `--benchmark_filter` to select Softmax micro-kernels:
+Use `--benchmark_filter` to select softmax micro-kernels:
 
 ```sh
 ./kleidiai_benchmark softmax -l 1024

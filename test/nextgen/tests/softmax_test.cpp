@@ -10,6 +10,7 @@
 #include <cstddef>
 #include <random>
 #include <string>
+#include <string_view>
 
 #include "test/common/range.hpp"
 #include "test/common/seed.hpp"

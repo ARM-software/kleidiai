@@ -105,7 +105,7 @@ bool is_output_correct(
 ///
 /// @return Zero on success, or one if the output does not match the reference.
 int main() {
-    // Covers short inputs, vector and four-vector loop boundaries, and predicated tails.
+    // Computes softmax over one contiguous input of 4096 elements.
     constexpr size_t length = 4096;
     constexpr float absolute_tolerance = 1.0e-6F;
     constexpr float relative_tolerance = 1.0e-4F;
