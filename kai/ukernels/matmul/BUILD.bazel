@@ -275,6 +275,7 @@ SME_KERNELS_ASM = [
 
 # buildifier: keep sorted
 SME_KERNELS_ASM_NOHDR = [
+    "matmul_clamp_f32_f16p_qsi4c32p/kai_matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s4s0sf16_4vsx16vs_sme_mopa",
     "pack/kai_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme",
     "pack/kai_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme",
     "pack/kai_matmul_pack_rhs_kxn_x16p4vsx2bx16_x16_x16_sme",

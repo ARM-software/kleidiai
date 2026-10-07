@@ -110,8 +110,11 @@ size_t Block2dRowFormat::compute_offset(Shape shape, Span<const size_t> indices)
         }
 
         const size_t component_block = col / layout.component_block_length;
+        // Trailing block components follow the data of all K blocks, so each K block starts at its data.
+        const size_t component_block_stride =
+            m_trailing_block_components ? block_size * layout.data_blocks_per_component : component_block_size;
         return block_row * (layout.num_component_blocks * component_block_size + row_components_size) +
-            component_block * component_block_size;
+            component_block * component_block_stride;
     } else {
         return block_row * (num_blocks_per_row * block_size + row_components_size) + block_col * block_size;
     }
@@ -235,7 +238,14 @@ Buffer Block2dRowFormat::pack(Shape shape, Span<const Span<const std::byte>> buf
             std::copy_n(block_data.data() + data_offset, component_data_size, packed_data.begin());
             packed_data = packed_data.subspan(component_data_size);
 
-            pack_components(m_post_dtypes, data_index + 1, block_row, component_block, layout.num_component_blocks);
+            if (!m_trailing_block_components) {
+                pack_components(m_post_dtypes, data_index + 1, block_row, component_block, layout.num_component_blocks);
+            }
+        }
+        if (m_trailing_block_components) {
+            for (size_t component_block = 0; component_block < layout.num_component_blocks; ++component_block) {
+                pack_components(m_post_dtypes, data_index + 1, block_row, component_block, layout.num_component_blocks);
+            }
         }
         pack_components(m_row_post_dtypes, row_post_index, block_row, 0, 1);
     }
@@ -331,6 +341,23 @@ bool Block2dRowFormat::compare(
         const bool row_components_in_tile = block_row_in_tile && tile_width > 0;
         compare_row_components(m_row_pre_dtypes, block_row, row_components_in_tile, "prefix");
 
+        const auto compare_post_components = [&](size_t component_block, bool component_block_in_tile) {
+            for (size_t i = 0; i < num_post_rows; ++i) {
+                num_checks += post_compares.at(i)(
+                    {1, m_block_height}, {0, 0}, {1, component_block_in_tile ? m_block_height : 0}, imp_buffer,
+                    ref_buffer,
+                    [&](std::ostream& os, Span<const size_t> coords) {
+                        os << "Mismatched at block row " << block_row << ", component block " << component_block
+                           << ", postfix per-row component " << i << ", element " << coords.at(1);
+                    },
+                    handler);
+
+                imp_buffer = imp_buffer.subspan(m_block_height * data_type_size_in_bits(m_post_dtypes.at(i)) / 8);
+                ref_buffer = ref_buffer.subspan(m_block_height * data_type_size_in_bits(m_post_dtypes.at(i)) / 8);
+            }
+        };
+
+        std::vector<bool> component_blocks_in_tile(layout.num_component_blocks);
         for (size_t component_block = 0; component_block < layout.num_component_blocks; ++component_block) {
             const size_t data_block_begin = component_block * layout.data_blocks_per_component;
             const size_t local_tile_begin = std::min(
@@ -341,6 +368,7 @@ bool Block2dRowFormat::compare(
                 tile_block_end > data_block_begin ? tile_block_end - data_block_begin : size_t{0});
             const size_t local_tile_size = local_tile_end > local_tile_begin ? local_tile_end - local_tile_begin : 0;
             const bool component_block_in_tile = block_row_in_tile && local_tile_size > 0;
+            component_blocks_in_tile.at(component_block) = component_block_in_tile;
 
             for (size_t i = 0; i < num_pre_rows; ++i) {
                 num_checks += pre_compares.at(i)(
@@ -368,18 +396,13 @@ bool Block2dRowFormat::compare(
             imp_buffer = imp_buffer.subspan(layout.data_blocks_per_component * data_block_size);
             ref_buffer = ref_buffer.subspan(layout.data_blocks_per_component * data_block_size);
 
-            for (size_t i = 0; i < num_post_rows; ++i) {
-                num_checks += post_compares.at(i)(
-                    {1, m_block_height}, {0, 0}, {1, component_block_in_tile ? m_block_height : 0}, imp_buffer,
-                    ref_buffer,
-                    [&](std::ostream& os, Span<const size_t> coords) {
-                        os << "Mismatched at block row " << block_row << ", component block " << component_block
-                           << ", postfix per-row component " << i << ", element " << coords.at(1);
-                    },
-                    handler);
-
-                imp_buffer = imp_buffer.subspan(m_block_height * data_type_size_in_bits(m_post_dtypes.at(i)) / 8);
-                ref_buffer = ref_buffer.subspan(m_block_height * data_type_size_in_bits(m_post_dtypes.at(i)) / 8);
+            if (!m_trailing_block_components) {
+                compare_post_components(component_block, component_block_in_tile);
+            }
+        }
+        if (m_trailing_block_components) {
+            for (size_t component_block = 0; component_block < layout.num_component_blocks; ++component_block) {
+                compare_post_components(component_block, component_blocks_in_tile.at(component_block));
             }
         }
         compare_row_components(m_row_post_dtypes, block_row, row_components_in_tile, "postfix");
@@ -434,6 +457,15 @@ void Block2dRowFormat::print(std::ostream& os, Shape shape, Span<const std::byte
             }
         };
 
+        const auto print_post_components = [&] {
+            for (size_t i = 0; i < m_post_dtypes.size(); ++i) {
+                os << "    \"row_data_" << i + m_pre_dtypes.size() << "\": ";
+                post_row_printers.at(i)(os, std::array{m_block_height}, data, 0);
+                data = data.subspan(round_up_division(m_block_height * data_type_size_in_bits(m_post_dtypes.at(i)), 8));
+                os << ",\n";
+            }
+        };
+
         for (size_t block_row = 0; block_row < num_block_rows; ++block_row) {
             print_row_components(m_row_pre_dtypes, "prefix");
             if (has_per_row_component) {
@@ -458,15 +490,18 @@ void Block2dRowFormat::print(std::ostream& os, Shape shape, Span<const std::byte
 
                     os << "    ],\n";
 
-                    for (size_t i = 0; i < m_post_dtypes.size(); ++i) {
-                        os << "    \"row_data_" << i + m_pre_dtypes.size() << "\": ";
-                        post_row_printers.at(i)(os, std::array{m_block_height}, data, 0);
-                        data = data.subspan(
-                            round_up_division(m_block_height * data_type_size_in_bits(m_post_dtypes.at(i)), 8));
-                        os << ",\n";
+                    if (!m_trailing_block_components) {
+                        print_post_components();
                     }
 
                     os << "  },\n";
+                }
+                if (m_trailing_block_components) {
+                    for (size_t component_block = 0; component_block < layout.num_component_blocks; ++component_block) {
+                        os << "  {\n";
+                        print_post_components();
+                        os << "  },\n";
+                    }
                 }
             } else {
                 for (size_t i = 0; i < layout.data_blocks_per_component; ++i) {
@@ -500,6 +535,9 @@ std::string Block2dRowFormat::uid() const {
     }
     if (m_pad_bottom_same) {
         uid += "_bottom_same";
+    }
+    if (m_trailing_block_components) {
+        uid += "_trailing_components";
     }
 
     uid += "_" + data_type_uid(m_dtype);
@@ -551,7 +589,8 @@ bool Block2dRowFormat::operator==(const Format& other) const {
         m_row_pre_dtypes == rhs->m_row_pre_dtypes &&      //
         m_row_post_dtypes == rhs->m_row_post_dtypes &&    //
         m_interleave_width == rhs->m_interleave_width &&  //
-        m_pad_bottom_same == rhs->m_pad_bottom_same;
+        m_pad_bottom_same == rhs->m_pad_bottom_same &&    //
+        m_trailing_block_components == rhs->m_trailing_block_components;
 }
 
 }  // namespace kai::test

@@ -15,6 +15,7 @@
 #include "test/common/cpu_info.hpp"
 #include "test/common/data_type.hpp"
 #include "test/common/predicate_utils.hpp"
+#include "test/common/sme.hpp"
 #include "test/common/span.hpp"
 #include "test/nextgen/functions/round.hpp"
 #include "test/nextgen/operators/matmul/matmul/matmul_wrapper_registry.hpp"
@@ -221,6 +222,33 @@ MatMulOperator create_operator_matmul_clamp_f32_f16p4vsx2_qai4c32p16vsx4s1s0sf16
     op.pack_lhs = create_matmul_lhs_pack_f16p4vsx2_f32_neon();
     op.pack_rhs = create_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme();
     op.matmul = create_matmul_clamp_f32_f16p4vsx2_qai4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa();
+    return op;
+}
+
+/// Creates an operator for kai_matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s4s0sf16_4vsx16vs_sme_mopa.
+MatMulOperator create_operator_matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s4s0sf16_4vsx16vs_sme_mopa() {
+    MatMulOperator op{};
+    op.name = "matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s4s0sf16_4vsx16vs_sme_mopa";
+
+    op.is_cpu_supported = cpu_check<cpu_has_sme, cpu_has_sme_f16f32>;
+    op.is_shape_suitable = all_true<  //
+        is_shape_suitable_lhs_f16p4vsx2_qsi4c32p16vsx4s4s0sf16_4vsx16vs_sme_mopa,
+        is_shape_suitable_rhs_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon>;
+    op.supported_bias_mode_sets = {no_bias};
+    op.clamp_mode = MatMulClampMode::OPTIONAL;
+    op.k_alignment = 32;
+    op.lhs_cvt_dtype = DataType::FP16;
+    op.lhs_quant = std::nullopt;
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(DataType::U4, DataType::FP32, RoundMode::CURRENT, 1, 32);
+    op.bias_quant = std::nullopt;
+    op.lhs_dtype = DataType::FP32;
+    op.rhs_dtype = DataType::FP32;
+    op.bias_dtype = DataType::FP32;
+    op.acc_dtype = DataType::FP32;
+    op.dst_dtype = DataType::FP32;
+    op.pack_lhs = create_matmul_lhs_pack_f16p4vsx2_f32_neon_bl32();
+    op.pack_rhs = create_matmul_rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon(16 * get_sme_vector_scale());
+    op.matmul = create_matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s4s0sf16_4vsx16vs_sme_mopa();
     return op;
 }
 
@@ -1155,6 +1183,7 @@ Span<const MatMulOperator> get_available_matmul_operators() {
         create_operator_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa_rhs_kxn(),
         create_operator_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa_rhs_nxk(),
         create_operator_matmul_clamp_f32_f16p4vsx2_qai4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa(),
+        create_operator_matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s4s0sf16_4vsx16vs_sme_mopa(),
         create_operator_matmul_clamp_f32_f32_f32p4vsx1b_1x32vs_sme2_mla(),
         create_operator_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa(),
         create_operator_matmul_clamp_f32_f32p4vsx1_f32p4vsx1b_8vsx8vs_elastic_sme2_mopa(),

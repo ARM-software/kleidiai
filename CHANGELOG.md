@@ -12,6 +12,9 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+- New SME micro-kernels:
+  - Native MxN SME MOPA matrix multiplication for FP16 x signed QSI4C32P with F32 output and the s4s0sf16 RHS packing format.
+
 ## v1.32.0
 
 - Optimizations:

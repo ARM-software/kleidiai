@@ -148,6 +148,22 @@ MatMulKernelPtr create_matmul_clamp_f32_f16p4vsx2_qai4c32p16vsx4s1s0sf16_4vsx16v
     );
 }
 
+MatMulKernelPtr create_matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s4s0sf16_4vsx16vs_sme_mopa() {
+    return std::make_unique<MatMulUkerApiWrapper>(
+        "matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s4s0sf16_4vsx16vs_sme_mopa",
+        kai_matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s4s0sf16_4vsx16vs_sme_mopa(), MatMulSlot::LHS_PACKED,
+        make_poly<Block2dRowFormat>(
+            4 * get_sme_vector_scale(), 2, 2, false, DataType::FP16, std::array<DataType, 0>{},
+            std::array<DataType, 0>{}),
+        make_poly<Block2dRowFormat>(
+            16 * get_sme_vector_scale(), 8, 32, false, DataType::I4, std::array<DataType, 0>{},
+            std::array{DataType::FP16}, 32, std::nullopt, false, std::array<DataType, 0>{}, std::array<DataType, 0>{},
+            4, false, true),
+        make_poly<PlainFormat>(DataType::FP32), DataType::FP32, MatMulUkerClampConfig::optional(DataType::FP32),
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS, MatMulUkerOutputStageConfig{}, kai_matmul_uker_config{{32}},
+        MatMulPackArgs{4 * get_sme_vector_scale(), 16 * get_sme_vector_scale(), 4, 2, 32});
+}
+
 MatMulKernelPtr create_matmul_clamp_f32_qsi8d32p1x4_qai4c32p16vsx4s1s0sf16_1x16vs_sme2_dot() {
     return std::make_unique<MatMulUkerApiWrapper>(
         "matmul_clamp_f32_qsi8d32p1x4_qai4c32p16vsx4s1s0sf16_1x16vs_sme2_dot",      // name

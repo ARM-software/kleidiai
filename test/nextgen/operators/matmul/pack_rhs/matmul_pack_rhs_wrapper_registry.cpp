@@ -38,6 +38,7 @@
 #include "test/nextgen/format/two_level_blockwise_format.hpp"
 #include "test/nextgen/harness/kernel_wrapper.hpp"
 #include "test/nextgen/operators/matmul/matmul_pack_args.hpp"
+#include "test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_blockwise_quant_trailing_scale_wrapper.hpp"
 #include "test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_blockwise_quant_wrapper.hpp"
 #include "test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_fp_nt_wrapper.hpp"
 #include "test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_interface.hpp"
@@ -47,6 +48,14 @@
 #include "test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_ukerapi_wrapper.hpp"
 
 namespace kai::test {
+
+MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon(const size_t nr) {
+    return std::make_unique<MatMulPackRhsBlockwiseQuantTrailingScaleWrapper>(
+        "matmul_rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon", nr,
+        make_poly<Block2dRowFormat>(
+            nr, 8, 32, false, DataType::I4, std::array<DataType, 0>{}, std::array{DataType::FP16}, 32, std::nullopt,
+            false, std::array<DataType, 0>{}, std::array<DataType, 0>{}, 4, false, true));
+}
 
 namespace {
 
@@ -699,6 +708,15 @@ bool is_shape_suitable_rhs_nxk_x16p12x4bx32_x16_x32_neon(
     [[maybe_unused]] size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
     return is_shape_suitable_rhs_uker_api(
         shape_n, shape_k, portion, kai_matmul_pack_rhs_nxk_x16p12x4bx32_x16_x32_neon());
+}
+
+bool is_shape_suitable_rhs_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon(
+    [[maybe_unused]] size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
+    if (shape_n == 0 || shape_k == 0 || (shape_k % 32) != 0) {
+        return false;
+    }
+
+    return portion_non_empty(shape_n, shape_k, 16 * get_sme_vector_scale(), shape_k, portion);
 }
 
 }  // namespace kai::test

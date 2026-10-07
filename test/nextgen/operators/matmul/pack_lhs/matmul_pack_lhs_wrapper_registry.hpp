@@ -21,6 +21,9 @@ namespace kai::test {
 /// Creates a wrapper for kai_lhs_pack_f16pmrx2_f32_neon micro-kernel.
 [[nodiscard]] MatMulPackKernelPtr create_matmul_lhs_pack_f16p4vsx2_f32_neon();
 
+/// Creates the FP16 LHS pack wrapper with the native s4s0 block-length contract.
+[[nodiscard]] MatMulPackKernelPtr create_matmul_lhs_pack_f16p4vsx2_f32_neon_bl32();
+
 /// Creates a wrapper for kai_lhs_quant_pack_qai8dxp_f32 micro-kernel.
 [[nodiscard]] MatMulPackKernelPtr create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32();
 
@@ -88,6 +91,10 @@ namespace kai::test {
 
 /// Checks if the portion produces non-empty LHS packing tiles for the f16p4vsx2/qai4c32p16vsx4 matmul operator.
 [[nodiscard]] bool is_shape_suitable_lhs_f16p4vsx2_qai4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
+
+/// Checks if the portion produces non-empty LHS packing tiles for the native s4s0 FP16 matmul operator.
+[[nodiscard]] bool is_shape_suitable_lhs_f16p4vsx2_qsi4c32p16vsx4s4s0sf16_4vsx16vs_sme_mopa(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
 /// Checks if the portion produces non-empty LHS packing tiles for the qsi8d32p1x4/qai4c32p16vsx4 matmul operator.

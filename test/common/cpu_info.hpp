@@ -56,6 +56,9 @@ bool cpu_has_sme2();
 /// Returns a value indicating whether the current CPU supports FEAT_SME2.1.
 bool cpu_has_sme2p1();
 
+/// Returns a value indicating whether the current CPU supports the SME FP16-to-FP32 MOPA extension.
+bool cpu_has_sme_f16f32();
+
 /// Returns a value indicating whether the current CPU supports FEAT_SME_MOP4.
 bool cpu_has_sme_mop4();
 

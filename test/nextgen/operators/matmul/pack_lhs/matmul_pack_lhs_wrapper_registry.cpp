@@ -111,9 +111,10 @@ MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2(DataType data_
             4 * get_sme_vector_scale(), 2, 2, false, data_type, std::array<DataType, 0>{}, std::array<DataType, 0>{}));
 }
 
-MatMulPackKernelPtr create_matmul_lhs_pack_f16p4vsx2_f32_neon() {
+namespace {
+MatMulPackKernelPtr create_matmul_lhs_pack_f16p4vsx2_f32_neon_impl(std::string_view name, size_t block_length) {
     return std::make_unique<MatMulPackLhsFpWrapper>(
-        "lhs_pack_f16p4vsx2_f32_neon",  // name
+        name,  // name
         MatMulPackLhsFpInterface{
             kai_get_m_step_lhs_pack_f16pmrx2_f32_neon,
             kai_get_lhs_offset_lhs_pack_f16pmrx2_f32_neon,
@@ -127,14 +128,24 @@ MatMulPackKernelPtr create_matmul_lhs_pack_f16p4vsx2_f32_neon() {
             std::array<DataType, 0>{}),
         MatMulSlot::LHS_DATA,  // src_slot
         MatMulPackArgs{
-            4 * get_sme_vector_scale(),              // mr
-            16 * get_sme_vector_scale(),             // nr
-            4,                                       // kr
-            2,                                       // sr
-            qai4c32k256_format_config.block_length,  // bl
-        },                                           // fixed_pack_args
-        MatMulSlot::LHS_CVT_DATA                     // reference_lhs_slot
+            4 * get_sme_vector_scale(),   // mr
+            16 * get_sme_vector_scale(),  // nr
+            4,                            // kr
+            2,                            // sr
+            block_length,                 // bl
+        },                                // fixed_pack_args
+        MatMulSlot::LHS_CVT_DATA          // reference_lhs_slot
     );
+}
+}  // namespace
+
+MatMulPackKernelPtr create_matmul_lhs_pack_f16p4vsx2_f32_neon() {
+    return create_matmul_lhs_pack_f16p4vsx2_f32_neon_impl(
+        "lhs_pack_f16p4vsx2_f32_neon", qai4c32k256_format_config.block_length);
+}
+
+MatMulPackKernelPtr create_matmul_lhs_pack_f16p4vsx2_f32_neon_bl32() {
+    return create_matmul_lhs_pack_f16p4vsx2_f32_neon_impl("lhs_pack_f16p4vsx2_f32_neon_bl32", 32);
 }
 
 MatMulPackKernelPtr create_matmul_lhs_pack_x16p2vlx2_x16_sme(DataType data_type) {
@@ -356,6 +367,15 @@ bool is_shape_suitable_lhs_f16p4vsx2_qai4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa(
     }
 
     return is_shape_suitable_lhs_uker_api(shape_m, shape_k, portion, kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme());
+}
+
+bool is_shape_suitable_lhs_f16p4vsx2_qsi4c32p16vsx4s4s0sf16_4vsx16vs_sme_mopa(
+    size_t shape_m, [[maybe_unused]] size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
+    if (shape_m == 0 || shape_k == 0 || (shape_k % 32) != 0) {
+        return false;
+    }
+
+    return portion_non_empty(shape_m, shape_k, 4 * get_sme_vector_scale(), shape_k, portion);
 }
 
 bool is_shape_suitable_lhs_qsi8d32p1x4_qai4c32p16vsx4s1s0sf16_1x16vs_sme2_dot(

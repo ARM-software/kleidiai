@@ -595,7 +595,7 @@ INSTANTIATE_TEST_SUITE_P(
             0.9F,          // Clamp to 90% range
             0.5F,          // Clamp to 50% range
         }),
-        testing::Values(128)),  //
+        testing::Values(256)),  //
     testing::PrintToStringParamName());
 }  // namespace
 }  // namespace kai::test
