@@ -23,27 +23,9 @@ download_and_extract()
     tar -xa -f "${BUILD_CACHE}/${ARCHIVE}" --strip-components=1 -C "${FOLDER}"
 }
 
-TARGETARCH=${TARGETARCH:-$(if [ "`uname -m`" == "aarch64" ]; then echo "arm64"; else echo "amd64"; fi)}
-
 # This script is used by Dockerfile to create a Linux bootloader with the latest Linux kernel.
-if [ "`uname -s`" = "Darwin" ]; then
-    HOST_ARCH=darwin-arm64
-    TARGETARCH=arm64
-    TOOLCHAIN_SHA256=1d9ac0c454ba555c0ee272c62fcf82a36ccc1c7c9173c1f6b0d02b8a14c59789
-elif [ "${TARGETARCH}" = "amd64" ] ; then
-    HOST_ARCH=x86_64
-    TOOLCHAIN_SHA256=1b07847728d455f18895f1ebd5d71a40f2ccb7cb3a84ca9a874d7f961a318ce4
-elif [ "${TARGETARCH}" = "arm64" ] ; then
-    HOST_ARCH=aarch64
-    TOOLCHAIN_SHA256=a1c6fdda8b479ea3e235d38dc0994790b840648b60e9fbaf88c82ca117a7a2df
-else
-    echo "Unknown $TARGETARCH" && exit 1
-fi
-
-# Download access via https://developer.arm.com/tools-and-software/gnu-toolchain
-TOOLCHAIN_VERSION=15.3.rel1
-TOOLCHAIN_TYPE=aarch64-none-elf
-TOOLCHAIN_DIR=$(pwd)/toolchain-${TOOLCHAIN_TYPE}
+TOOLCHAIN_TYPE=${TOOLCHAIN_TYPE:-aarch64-none-elf}
+TOOLCHAIN_DIR=${TOOLCHAIN_DIR:-$(pwd)/toolchain-${TOOLCHAIN_TYPE}}
 CROSS_COMPILE=${TOOLCHAIN_DIR}/bin/${TOOLCHAIN_TYPE}-
 
 KERNEL_VERSION=6.18.52
@@ -57,13 +39,6 @@ BOOTLOADER_VERSION=b621b157b42f1fe398520cf499db88aa654c78e2
 BOOTLOADER_SHA256=102d8d84f79c9c4f7bde8a014b128d6a6b6fb19bc7956dcac4710e80202a6908
 
 mkdir -p ${BUILD_CACHE}
-
-# Downloads tools and source code.
-# Download Arm toolchain
-download_and_extract \
-    "https://gitlab.arm.com/api/v4/projects/tooling%2Fgnu-toolchains-for-arm/packages/generic/gnu-toolchain/${TOOLCHAIN_VERSION}/arm-gnu-toolchain-${TOOLCHAIN_VERSION}-${HOST_ARCH}-${TOOLCHAIN_TYPE}.tar.xz" \
-    "${TOOLCHAIN_DIR}" \
-    "${TOOLCHAIN_SHA256}"
 
 # Download Linux Kernel
 if [[ "${KERNEL_VERSION}" =~ "-rc" ]]; then
@@ -145,7 +120,6 @@ mv boot-wrapper-aarch64/linux-system.axf .
 
 # Cleans up.
 rm -rf \
-    ${TOOLCHAIN_DIR} \
     linux-${KERNEL_VERSION} \
     devicetree-rebasing \
     boot-wrapper-aarch64

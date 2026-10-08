@@ -22,6 +22,7 @@ ARG BAZEL_BUILD_TOOLS_VERSION=v8.5.1
 ARG BAZELISK_VERSION=v1.29.0
 ARG FVP_VERSION=11.32_19
 ARG GLAB_VERSION=1.117.0
+ARG TOOLCHAIN_VERSION=15.3.rel1
 
 # Component checksums precalculated for linux/arm64 platform, provide new values
 # if linux/amd64 is need to be built.
@@ -32,8 +33,11 @@ ARG BUILDIFIER_SHA256=947bf6700d708026b2057b09bea09abbc3cafc15d9ecea35bb3885c4b0
 ARG BUILDOZER_SHA256=87ee1d2d81d08ccae8f9147fc58503967c85878279e892f2990912412feef1a1
 ARG UNUSED_DEPS_SHA256=7948f63fb2dcb5b9868dc67cf8b53ebefa11d09bfdb94cc8162449810c551998
 ARG GLAB_SHA256=ce533c314b69014664020567d006b5c86435f0fa16561aba18929bea26506828
+ARG TOOLCHAIN_SHA256=a1c6fdda8b479ea3e235d38dc0994790b840648b60e9fbaf88c82ca117a7a2df
 
 ENV XDG_CACHE_HOME=/cache BUILD_CACHE=/build_cache
+ENV TOOLCHAIN_TYPE=aarch64-none-elf
+ENV TOOLCHAIN_DIR=/opt/devtools/toolchain-${TOOLCHAIN_TYPE}
 
 RUN mkdir -p /opt/devtools ${XDG_CACHE_HOME}
 
@@ -130,6 +134,16 @@ RUN --mount=type=cache,target=${BUILD_CACHE},sharing=locked \
     wget -cO ${BUILD_CACHE}/ubuntu-base-${FVP_UBUNTU_VERSION}-base-arm64.tar.gz "https://cdimage.ubuntu.com/ubuntu-base/releases/${UBUNTU_DISTRO_VERSION}/release/ubuntu-base-${FVP_UBUNTU_VERSION}-base-arm64.tar.gz" && \
     echo "${FVP_UBUNTU_SHA256}  ${BUILD_CACHE}/ubuntu-base-${FVP_UBUNTU_VERSION}-base-arm64.tar.gz" | sha256sum --check --strict - && \
     genext2fs -a ${BUILD_CACHE}/ubuntu-base-${FVP_UBUNTU_VERSION}-base-arm64.tar.gz -B 4096 -b 51200 linux-rootfs.img
+
+# Download and install Arm GNU toolchain. Download access via https://developer.arm.com/tools-and-software/gnu-toolchain
+RUN --mount=type=cache,target=${BUILD_CACHE} <<EOF
+    TOOLCHAIN_ARCHIVE=arm-gnu-toolchain-${TOOLCHAIN_VERSION}-$(test "${TARGETARCH}" = "arm64" && echo -n "aarch64" || echo -n "x86_64")-${TOOLCHAIN_TYPE}.tar.xz
+    wget -cO "${BUILD_CACHE}/${TOOLCHAIN_ARCHIVE}" \
+        "https://gitlab.arm.com/api/v4/projects/tooling%2Fgnu-toolchains-for-arm/packages/generic/gnu-toolchain/${TOOLCHAIN_VERSION}/${TOOLCHAIN_ARCHIVE}"
+    echo "${TOOLCHAIN_SHA256}  ${BUILD_CACHE}/${TOOLCHAIN_ARCHIVE}" | sha256sum --check --strict -
+    mkdir -p "${TOOLCHAIN_DIR}"
+    tar -xa -f "${BUILD_CACHE}/${TOOLCHAIN_ARCHIVE}" --strip-components=1 -C "${TOOLCHAIN_DIR}"
+EOF
 
 # Compiles the latest Linux kernel, bootloader and root file system for FVP usage
 RUN --mount=type=cache,target=${BUILD_CACHE},sharing=locked \
