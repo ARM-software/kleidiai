@@ -40,12 +40,8 @@
 
     KAI_ASM_GLOBAL(kai_kernel_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_16vsx2vs_sme2p1_mop4)
 
-// Requires m to be a positive multiple of 4 * VL, 0 < n <= VL / 2, and k > 0.
-// VL is the streaming vector length in FP32 elements.
-// LHS and RHS use the same packed panels as the other f32p4vsx1 micro-kernels.
 KAI_ASM_FUNCTION_TYPE(kai_kernel_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_16vsx2vs_sme2p1_mop4)
 KAI_ASM_FUNCTION_LABEL(kai_kernel_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_16vsx2vs_sme2p1_mop4)
-    // Preserves base-PCS SIMD state before streaming transitions.
     stp d8, d9, [sp, #-96]!
     stp d10, d11, [sp, #16]
     stp d12, d13, [sp, #32]
