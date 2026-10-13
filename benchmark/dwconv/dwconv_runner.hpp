@@ -6,259 +6,240 @@
 
 #pragma once
 
-#include <cfloat>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
-#include <test/common/data_type.hpp>
 
 #include "dwconv_interface.hpp"
+#include "test/common/data_type.hpp"
 
 namespace kai::benchmark {
 
-using DataType = test::DataType;
+using test::DataType;
 
-inline size_t data_type_size_bytes(const DataType dt) {
-    return test::data_type_size_in_bits(dt) / 8;
-}
+/// Sizes in bytes of the buffers used by a depthwise convolution micro-kernel.
+struct DwConvBufferSizes {
+    size_t src;
+    size_t rhs;
+    size_t dst;
+};
 
-// Base runner that abstracts common configuration and exposes a uniform API.
+/// Runner for a depthwise convolution micro-kernel.
+///
+/// Configures the tensor shape and executes the micro-kernel.
+///
+/// @tparam DwConvInterface Interface of the depthwise convolution micro-kernel.
+template <typename DwConvInterface>
 class DwConvRunner {
 public:
-    DwConvRunner(const DwConvTraits& traits, DataType src_type, DataType dst_type) :
-        m_traits(traits), m_src_type(src_type), m_dst_type(dst_type) {
+    /// Constructs a DwConvRunner object.
+    ///
+    /// @param interface Abstraction containing the micro-kernel to run.
+    /// @param src_type Input tensor data type.
+    /// @param dst_type Output tensor data type.
+    DwConvRunner(const DwConvInterface& interface, DataType src_type, DataType dst_type) :
+        m_interface(interface),  //
+        m_src_type(src_type),    //
+        m_dst_type(dst_type) {
     }
 
-    virtual ~DwConvRunner() = default;
-
-    void set_input_dims(size_t height, size_t width) {
+    /// Sets the input tensor shape.
+    ///
+    /// @param height Input height.
+    /// @param width Input width.
+    /// @param channels Number of input and output channels.
+    void set_input_shape(size_t height, size_t width, size_t channels) {
         m_input_height = height;
         m_input_width = width;
-    }
-    void set_output_dims(size_t height, size_t width) {
-        m_output_height = height;
-        m_output_width = width;
-    }
-    void set_channels(size_t channels) {
         m_num_channels = channels;
     }
+
+    /// Sets the stride along each spatial dimension.
+    ///
+    /// @param height Row stride.
+    /// @param width Column stride.
+    void set_stride(size_t height, size_t width) {
+        m_stride_height = height;
+        m_stride_width = width;
+    }
+
+    /// Sets the dilation along each spatial dimension.
+    ///
+    /// @param height Row dilation.
+    /// @param width Column dilation.
+    void set_dilation(size_t height, size_t width) {
+        m_dilation_height = height;
+        m_dilation_width = width;
+    }
+
+    /// Sets the padding on each side of the input tensor.
+    ///
+    /// @param top Top padding.
+    /// @param bottom Bottom padding.
+    /// @param left Left padding.
+    /// @param right Right padding.
     void set_padding(size_t top, size_t bottom, size_t left, size_t right) {
         m_pad_top = top;
         m_pad_bottom = bottom;
         m_pad_left = left;
         m_pad_right = right;
     }
-    void set_clamp(float min_val, float max_val) {
-        m_clamp_min = min_val;
-        m_clamp_max = max_val;
-    }
 
-    // API to allow derived classes to stash RHS in the shape they need.
-    virtual void prepare(
-        const void* /* rhs_packed */, const void* /* weights */, const void* /* bias */, const void* /* qp */) {
-        // No-op
-    }
+    /// Gets the buffer sizes required by the micro-kernel in bytes.
+    DwConvBufferSizes get_buffer_sizes() const;
 
-    // Uniform run call from benchmark layer. Implements common tiling and delegates micro-kernel call.
-    virtual void run(const void* src, void* dst) {
-        const size_t m_step = traits().get_m_step();
-        const size_t filter_height = traits().get_filter_height();
+    /// Prepares filter dimensions, output dimensions, and tensor strides from the configured shape.
+    void prepare();
 
-        const size_t in_stride_row = in_stride_row_bytes();
-        const size_t in_stride_col = in_stride_col_bytes();
-        const size_t dst_stride_row = dst_stride_row_bytes();
-        const size_t dst_stride_col = dst_stride_col_bytes();
+    /// Returns whether the configured dimensions are supported by the micro-kernel.
+    bool is_valid() const;
 
-        const uint8_t* src_ptr = reinterpret_cast<const uint8_t*>(src);
-        uint8_t* dst_ptr = reinterpret_cast<uint8_t*>(dst);
-
-        for (size_t out_row = 0; out_row < output_height(); out_row += m_step) {
-            const size_t valid_dst_rows = (out_row + m_step <= output_height()) ? m_step : (output_height() - out_row);
-            const size_t in_row = (out_row > pad_top()) ? (out_row - pad_top()) : 0;
-            const size_t valid_input_rows = (in_row + filter_height + m_step - 1 <= input_height())
-                ? (filter_height + m_step - 1)
-                : (input_height() - in_row);
-
-            const size_t src_offset = traits().get_src_offset(in_row, in_stride_row);
-            const size_t dst_offset = traits().get_dst_offset(out_row, dst_stride_row);
-
-            const size_t tile_pad_top = (out_row < pad_top()) ? (pad_top() - out_row) : 0;
-            const size_t tile_pad_left = pad_left();
-
-            call_kernel(
-                src_ptr + src_offset, dst_ptr + dst_offset, in_stride_row, in_stride_col, dst_stride_row,
-                dst_stride_col, valid_input_rows, valid_dst_rows, tile_pad_left, tile_pad_top);
-        }
-    }
-
-protected:
-    // Derived classes implement the actual micro-kernel invocation for a tile
-    virtual void call_kernel(
-        const uint8_t* src_tile, uint8_t* dst_tile, size_t in_stride_row, size_t in_stride_col, size_t dst_stride_row,
-        size_t dst_stride_col, size_t valid_input_rows, size_t valid_dst_rows, size_t tile_pad_left,
-        size_t tile_pad_top) = 0;
-
-    // Helpers usable by derived classes
-    size_t in_stride_row_bytes() const {
-        return m_input_width * m_num_channels * data_type_size_bytes(m_src_type);
-    }
-    size_t in_stride_col_bytes() const {
-        return m_num_channels * data_type_size_bytes(m_src_type);
-    }
-    size_t dst_stride_row_bytes() const {
-        return m_output_width * m_num_channels * data_type_size_bytes(m_dst_type);
-    }
-    size_t dst_stride_col_bytes() const {
-        return m_num_channels * data_type_size_bytes(m_dst_type);
-    }
-
-    const DwConvTraits& traits() const {
-        return m_traits;
-    }
-    size_t input_height() const {
-        return m_input_height;
-    }
-    size_t input_width() const {
-        return m_input_width;
-    }
-    size_t output_height() const {
-        return m_output_height;
-    }
-    size_t output_width() const {
-        return m_output_width;
-    }
-    size_t num_channels() const {
-        return m_num_channels;
-    }
-    size_t pad_top() const {
-        return m_pad_top;
-    }
-    size_t pad_bottom() const {
-        return m_pad_bottom;
-    }
-    size_t pad_left() const {
-        return m_pad_left;
-    }
-    size_t pad_right() const {
-        return m_pad_right;
-    }
-    float clamp_min() const {
-        return m_clamp_min;
-    }
-    float clamp_max() const {
-        return m_clamp_max;
-    }
+    /// Runs the depthwise convolution micro-kernel.
+    ///
+    /// @param src Input tensor buffer.
+    /// @param rhs Packed weights and bias, or separate weights followed by bias for the split interface.
+    /// @param dst Output tensor buffer.
+    void run(const void* src, const void* rhs, void* dst);
 
 private:
-    DwConvTraits m_traits{};
+    /// Computes one output dimension from the configured operator parameters.
+    static size_t compute_output_dim(
+        size_t input, size_t filter, size_t stride, size_t dilation, size_t pad_before, size_t pad_after) {
+        if (stride == 0 || filter == 0) {
+            return 0;
+        }
+
+        const size_t effective_kernel = (filter - 1) * dilation + 1;
+        const size_t input_plus_pad = input + pad_before + pad_after;
+        if (effective_kernel == 0 || input_plus_pad < effective_kernel) {
+            return 0;
+        }
+
+        return (input_plus_pad - effective_kernel) / stride + 1;
+    }
+
+    /// Prepares the output shape and tensor strides using the micro-kernel's filter dimensions.
+    void prepare_common(size_t filter_height, size_t filter_width) {
+        m_filter_height = filter_height;
+        m_filter_width = filter_width;
+        m_output_height = compute_output_dim(
+            m_input_height, filter_height, m_stride_height, m_dilation_height, m_pad_top, m_pad_bottom);
+        m_output_width =
+            compute_output_dim(m_input_width, filter_width, m_stride_width, m_dilation_width, m_pad_left, m_pad_right);
+
+        m_in_stride_row = test::data_type_array_size_in_bytes(m_src_type, m_input_width * m_num_channels);
+        m_in_stride_col = test::data_type_array_size_in_bytes(m_src_type, m_num_channels);
+        m_dst_stride_row = test::data_type_array_size_in_bytes(m_dst_type, m_output_width * m_num_channels);
+        m_dst_stride_col = test::data_type_array_size_in_bytes(m_dst_type, m_num_channels);
+    }
+
+    DwConvInterface m_interface{};
     DataType m_src_type{DataType::FP32};
     DataType m_dst_type{DataType::FP32};
-
     size_t m_input_height{0};
     size_t m_input_width{0};
     size_t m_output_height{0};
     size_t m_output_width{0};
     size_t m_num_channels{0};
+    size_t m_filter_height{0};
+    size_t m_filter_width{0};
+    size_t m_m_step{0};
+    size_t m_stride_height{1};
+    size_t m_stride_width{1};
+    size_t m_dilation_height{1};
+    size_t m_dilation_width{1};
     size_t m_pad_top{0};
     size_t m_pad_bottom{0};
     size_t m_pad_left{0};
     size_t m_pad_right{0};
-    float m_clamp_min{-std::numeric_limits<float>::infinity()};
-    float m_clamp_max{std::numeric_limits<float>::infinity()};
+    size_t m_in_stride_row{0};
+    size_t m_in_stride_col{0};
+    size_t m_dst_stride_row{0};
+    size_t m_dst_stride_col{0};
 };
 
-// Packed FP32 runner
-class DwConvPackedFloatRunner : public DwConvRunner {
-public:
-    DwConvPackedFloatRunner(
-        const DwConvPackedFloatInterface& iface, const DwConvTraits& traits, DataType src_type, DataType dst_type) :
-        DwConvRunner(traits, src_type, dst_type), m_iface(iface) {
+template <>
+inline void DwConvRunner<DwConvPackedFloatInterface>::prepare() {
+    prepare_common(m_interface.get_filter_height(), m_interface.get_filter_width());
+    m_m_step = m_interface.get_m_step();
+}
+
+template <>
+inline void DwConvRunner<DwConvPackedDepthfirstFloatInterface>::prepare() {
+    prepare_common(m_interface.get_filter_height(), m_interface.get_filter_width());
+}
+
+template <typename DwConvInterface>
+bool DwConvRunner<DwConvInterface>::is_valid() const {
+    return true;
+}
+
+template <>
+inline bool DwConvRunner<DwConvPackedFloatInterface>::is_valid() const {
+    // Planar kernel require non-empty output
+    if (m_output_height != 0 && m_output_width == 0) {
+        return false;
     }
 
-    void prepare(
-        const void* rhs_packed, const void* /* weights */, const void* /* bias */, const void* /* qp */) override {
-        m_rhs_packed = rhs_packed;
+    return m_interface.supports_configuration(m_stride_height, m_stride_width, m_dilation_height, m_dilation_width);
+}
+
+template <>
+inline bool DwConvRunner<DwConvPackedDepthfirstFloatInterface>::is_valid() const {
+    return m_interface.supports_configuration(m_stride_height, m_stride_width, m_dilation_height, m_dilation_width);
+}
+
+template <typename DwConvInterface>
+DwConvBufferSizes DwConvRunner<DwConvInterface>::get_buffer_sizes() const {
+    const size_t rhs_packed_size = m_interface.get_packed_rhs_size(m_filter_height, m_filter_width, m_num_channels);
+    return {
+        m_input_height * m_in_stride_row,
+        rhs_packed_size,
+        m_interface.get_dst_size(m_output_height, m_output_width, m_num_channels),
+    };
+}
+
+template <typename DwConvInterface>
+void DwConvRunner<DwConvInterface>::run(const void* src, const void* rhs, void* dst) {
+    const uint8_t* src_ptr = static_cast<const uint8_t*>(src);
+    uint8_t* dst_ptr = static_cast<uint8_t*>(dst);
+
+    for (size_t out_row = 0; out_row < m_output_height; out_row += m_m_step) {
+        size_t valid_dst_rows = m_m_step;
+        if (out_row + m_m_step > m_output_height) {
+            valid_dst_rows = m_output_height - out_row;
+        }
+
+        size_t in_row = 0;
+        if (out_row > m_pad_top) {
+            in_row = out_row - m_pad_top;
+        }
+
+        size_t valid_input_rows = m_filter_height + m_m_step - 1;
+        if (in_row + valid_input_rows > m_input_height) {
+            valid_input_rows = m_input_height - in_row;
+        }
+
+        const size_t src_offset = m_interface.get_src_offset(in_row, m_in_stride_row);
+        const size_t dst_offset = m_interface.get_dst_offset(out_row, m_dst_stride_row);
+        size_t tile_pad_top = 0;
+        if (out_row < m_pad_top) {
+            tile_pad_top = m_pad_top - out_row;
+        }
+
+        m_interface.run_dwconv(
+            src_ptr + src_offset, rhs, dst_ptr + dst_offset, m_in_stride_row, m_in_stride_col, m_dst_stride_row,
+            m_dst_stride_col, valid_input_rows, valid_dst_rows, m_pad_left, tile_pad_top, 0.0f,
+            -std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
     }
+}
 
-protected:
-    void call_kernel(
-        const uint8_t* src_tile, uint8_t* dst_tile, size_t in_stride_row, size_t in_stride_col, size_t dst_stride_row,
-        size_t dst_stride_col, size_t valid_input_rows, size_t valid_dst_rows, size_t tile_pad_left,
-        size_t tile_pad_top) override {
-        m_iface.run_dwconv(
-            src_tile, m_rhs_packed, dst_tile, in_stride_row, in_stride_col, dst_stride_row, dst_stride_col,
-            valid_input_rows, valid_dst_rows, tile_pad_left, tile_pad_top,
-            0.0f,  // pad_value
-            clamp_min(), clamp_max());
-    }
-
-private:
-    DwConvPackedFloatInterface m_iface{};
-    const void* m_rhs_packed{nullptr};
-};
-
-// Packed depth-first float runner
-class DwConvPackedDepthfirstFloatRunner : public DwConvRunner {
-public:
-    DwConvPackedDepthfirstFloatRunner(
-        const DwConvPackedDepthfirstFloatInterface& iface, const DwConvTraits& traits, DataType src_type,
-        DataType dst_type) :
-        DwConvRunner(traits, src_type, dst_type), m_iface(iface) {
-    }
-
-    void prepare(
-        const void* rhs_packed, const void* /* weights */, const void* /* bias */, const void* /* qp */) override {
-        m_rhs_packed = rhs_packed;
-    }
-
-    // Planar kernel requires different looping than depth-first, so we override here for depth-first.
-    void run(const void* src, void* dst) override {
-        m_iface.run_dwconv(
-            src, m_rhs_packed, dst, num_channels(), input_height(), input_width(), output_height(), output_width(),
-            pad_left(), pad_top(), in_stride_row_bytes(), in_stride_col_bytes(), dst_stride_row_bytes(),
-            dst_stride_col_bytes(), clamp_min(), clamp_max());
-    }
-
-protected:
-    // f16 Depth-first run bypasses the tiled planar path.
-    // f16 Depth-first the wrapper builds per-4x4 pointer tables and calls assembly internally.
-    // f32 Planar the caller supplies one planar row tile to call_kernel below.
-    void call_kernel(
-        const uint8_t*, uint8_t*, size_t, size_t, size_t, size_t, size_t, size_t, size_t, size_t) override {
-    }
-
-private:
-    DwConvPackedDepthfirstFloatInterface m_iface{};
-    const void* m_rhs_packed{nullptr};
-};
-
-// Split FP32 runner
-class DwConvSplitFloatRunner : public DwConvRunner {
-public:
-    DwConvSplitFloatRunner(
-        const DwConvSplitFloatInterface& iface, const DwConvTraits& traits, DataType src_type, DataType dst_type) :
-        DwConvRunner(traits, src_type, dst_type), m_iface(iface) {
-    }
-
-    void prepare(const void* /* rhs_packed */, const void* weights, const void* bias, const void* /* qp */) override {
-        m_weights = static_cast<const float*>(weights);
-        m_bias = static_cast<const float*>(bias);
-    }
-
-protected:
-    void call_kernel(
-        const uint8_t* src_tile, uint8_t* dst_tile, size_t in_stride_row, size_t in_stride_col, size_t dst_stride_row,
-        size_t dst_stride_col, size_t valid_input_rows, size_t valid_dst_rows, size_t tile_pad_left,
-        size_t tile_pad_top) override {
-        m_iface.run_dwconv(
-            src_tile, m_weights, m_bias, dst_tile, in_stride_row, in_stride_col, dst_stride_row, dst_stride_col,
-            valid_input_rows, valid_dst_rows, tile_pad_left, tile_pad_top, 0.0f, clamp_min(), clamp_max());
-    }
-
-private:
-    DwConvSplitFloatInterface m_iface{};
-    const float* m_weights{nullptr};
-    const float* m_bias{nullptr};
-};
+template <>
+inline void DwConvRunner<DwConvPackedDepthfirstFloatInterface>::run(const void* src, const void* rhs, void* dst) {
+    m_interface.run_dwconv(
+        src, rhs, dst, m_num_channels, m_input_height, m_input_width, m_output_height, m_output_width, m_pad_left,
+        m_pad_top, m_in_stride_row, m_in_stride_col, m_dst_stride_row, m_dst_stride_col,
+        -std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
+}
 
 }  // namespace kai::benchmark
