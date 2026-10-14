@@ -75,12 +75,12 @@ void kai_benchmark_matmul(
         return;
     }
 
+    matmul_runner.prepare();
+
     const MatMulBufferSizes buffer_sizes = matmul_runner.get_buffer_sizes();
     const Buffer lhs(buffer_sizes.lhs);
     const Buffer rhs(buffer_sizes.rhs);
     Buffer dst(buffer_sizes.dst);
-
-    matmul_runner.prepare();
 
     const bool cycle_counter_available = cycle_counter_init();
     uint64_t total_cycles = 0;
