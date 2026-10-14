@@ -25,7 +25,7 @@ grammar rules:
 - RHS packing micro-kernels are named `kai_rhs_pack_<orientation>_<output>_<inputs>_<description>`.
 - Matmul compute micro-kernels are named `kai_<operation>_<output>_<LHS input>_<RHS input>_<description>`.
 - Depthwise convolution micro-kernels are named with the depthwise operation, buffers, filter, stride, output block, SIMD engine, and optional instruction.
-- Softmax micro-kernels are named `kai_softmax_<output>_<input>_<dimensions>_<engine>[_<tech>]`.
+- Softmax micro-kernels are named `kai_<operation>_<output>_<input>_<dimensions>_<description>`.
 
 For matmul-family compute micro-kernels, buffer descriptors appear in the order
 destination, LHS input, then RHS input. The output descriptors of LHS and RHS

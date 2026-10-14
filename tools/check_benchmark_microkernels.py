@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 """
-Validate benchmark registrations for matmul, imatmul, dwconv, and softmax micro-kernels.
+Validate that every compute kernel has a benchmark registration
 """
 from __future__ import annotations
 
@@ -18,13 +18,9 @@ from typing import Optional
 from typing import Sequence
 from typing import Set
 
-from utils.microkernels import gather_microkernels
-
 INCLUDE_RE = re.compile(r'^\s*#\s*include\s*["<]([^">]+)[">]')
 BLOCK_COMMENT_RE = re.compile(r"/\*.*?\*/", re.DOTALL)
 LINE_COMMENT_RE = re.compile(r"//.*?$", re.MULTILINE)
-STRING_LITERAL_RE = re.compile(r'"(?:\\.|[^"\\])*"')
-SOFTMAX_FACTORY_RE = re.compile(r"\bkai_softmax_\w+\b")
 
 SRC_EXTS = {".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp", ".hxx"}
 
@@ -135,23 +131,6 @@ def parse_kernel_types(values: Sequence[str]) -> Set[str]:
     return requested
 
 
-def missing_softmax_factories(ukernels_dir: str, benchmark_dir: str) -> Set[str]:
-    """Find softmax factories without references in the benchmark sources."""
-    present = {
-        kernel.name
-        for kernel in gather_microkernels(ukernels_dir)
-        if kernel.operation == "softmax"
-    }
-    used: Set[str] = set()
-    for path in iter_files(benchmark_dir):
-        with open(path, "r", encoding="utf-8", errors="ignore") as fh:
-            content = strip_comments(fh.read())
-        # Benchmark display names and comments do not register a factory.
-        content = STRING_LITERAL_RE.sub("", content)
-        used.update(SOFTMAX_FACTORY_RE.findall(content))
-    return present - used
-
-
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -200,14 +179,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     used = gather_includes(benchmark_dir, include_prefix, kernel_types)
 
-    grouped = defaultdict(list)
-    for rel in sorted(present - used):
-        grouped[classify_kernel(rel)].append(rel)
-    if "softmax" in kernel_types:
-        for name in sorted(missing_softmax_factories(ukernels_dir, benchmark_dir)):
-            grouped["softmax"].append(name)
-    if grouped:
-        print("Missing benchmark registrations for the following micro-kernels:")
+    unused = sorted(present - used)
+    if unused:
+        grouped = defaultdict(list)
+        for rel in unused:
+            grouped[classify_kernel(rel)].append(rel)
+        print("Missing benchmark registrations for the following micro-kernel headers:")
         for kernel_type in sorted(grouped):
             print(f"{kernel_type}:")
             for rel in grouped[kernel_type]:

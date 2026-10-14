@@ -53,10 +53,6 @@ int run_softmax(int argc, char** argv, const std::optional<std::string>& user_fi
         switch (opt) {
             case 'l':
                 dim_0 = test::parse_num<size_t>(optarg);
-                if (!dim_0 || *dim_0 == 0 || *dim_0 > static_cast<size_t>(std::numeric_limits<int64_t>::max())) {
-                    print_softmax_usage(argv[0]);
-                    return EXIT_FAILURE;
-                }
                 break;
             default:
                 print_softmax_usage(argv[0]);
@@ -64,13 +60,13 @@ int run_softmax(int argc, char** argv, const std::optional<std::string>& user_fi
         }
     }
 
-    if (!dim_0 || optind != argc) {
+    if (!dim_0 || *dim_0 == 0 || *dim_0 > static_cast<size_t>(std::numeric_limits<int64_t>::max()) || optind != argc) {
         print_softmax_usage(argv[0]);
         return EXIT_FAILURE;
     }
 
     RegisterSoftmaxBenchmarks(*dim_0);
-    const std::string spec = user_filter_opt.value_or("^kai_softmax");
+    const std::string spec = user_filter_opt.value_or("");
 
     ::benchmark::RunSpecifiedBenchmarks(nullptr, nullptr, spec);
     ::benchmark::Shutdown();

@@ -31,7 +31,7 @@ public:
     ///
     /// @param[in,out] rng Random number generator.
     /// @param[in] input_range Range of source values.
-    void generate_test_data(Rng& rng, Range<double> input_range = {0.0, 1.0});
+    void generate_test_data(Rng& rng, Range<double> input_range = {-1.0, 1.0});
 
     /// Runs and validates the softmax output.
     void test_output();

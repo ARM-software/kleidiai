@@ -28,7 +28,7 @@ struct SoftmaxFixtureParams {
     size_t iteration_no;
     size_t length;
     const SoftmaxOperator* op;
-    Range<double> input_range{0.0, 1.0};
+    Range<double> input_range{-1.0, 1.0};
 
     /// Builds a unique, descriptive test name.
     [[nodiscard]] std::string name() const {

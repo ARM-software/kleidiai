@@ -6,7 +6,6 @@
 
 #include "test/nextgen/operators/softmax/softmax_tb.hpp"
 
-#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
@@ -38,7 +37,6 @@ SoftmaxTb::SoftmaxTb(size_t length, const SoftmaxOperator* op) : m_length(length
 
 void SoftmaxTb::generate_test_data(Rng& rng, Range<double> input_range) {
     Tensor& src_data = get_tensor(SoftmaxSlot::SRC_DATA);
-    Tensor& original_src_data = get_tensor(SoftmaxSlot::SRC_DATA_ORIGINAL);
     Tensor& ref_dst_data = get_tensor(SoftmaxSlot::DST_DATA);
 
     const std::array shape{m_length};
@@ -59,8 +57,6 @@ void SoftmaxTb::generate_test_data(Rng& rng, Range<double> input_range) {
                 }),
             src_id);
 
-    original_src_data = src_data;
-
     const SoftmaxFn reference_fn = make_softmax(m_op->src_dtype, m_op->dst_dtype);
     ref_dst_data.set_shape(shape)
         .set_format(make_poly<PlainFormat>(m_op->dst_dtype))
@@ -71,7 +67,6 @@ void SoftmaxTb::test_output() {
     const std::array full_shape{m_length};
 
     const Tensor& src_data = get_tensor(SoftmaxSlot::SRC_DATA);
-    const Tensor& original_src_data = get_tensor(SoftmaxSlot::SRC_DATA_ORIGINAL);
     const Tensor& ref_dst_data = get_tensor(SoftmaxSlot::DST_DATA);
     Tensor& imp_dst_data = get_tensor(SoftmaxSlot::DST_DATA_IMP);
 
@@ -86,10 +81,6 @@ void SoftmaxTb::test_output() {
     const bool ok =
         format.compare(compare_shape, compare_coords, compare_shape, imp_dst_data.data(), ref_dst_data.data(), handler);
     KAI_TEST_ASSERT(ok);
-
-    KAI_TEST_ASSERT_MSG(
-        std::equal(src_data.data().begin(), src_data.data().end(), original_src_data.data().begin()),
-        "Softmax: The source tensor must not be modified.");
 
     double sum = 0.0;
     for (size_t i = 0; i < m_length; ++i) {

@@ -26,7 +26,7 @@ enum {
 /// @param[in] src Source buffer.
 /// @param[out] dst Destination buffer.
 /// @param[in] length Number of elements, which must be non-zero.
-void kai_kernel_softmax_f32_f32_1d_sme2p1_fexpa(const float* src, float* dst, size_t length);
+void kai_kernel_softmax_f32_f32_1d_sme2p1_fexpa(const void* src, void* dst, size_t length);
 
 static struct kai_softmax_uker_dim_args get_step(const struct kai_softmax_uker_config* config) {
     KAI_UNUSED(config);
@@ -110,8 +110,7 @@ static void run(const struct kai_softmax_uker_config* config, const struct kai_s
 
     kai_commit_za();
 
-    kai_kernel_softmax_f32_f32_1d_sme2p1_fexpa(
-        (const float*)args->operand.src.ptr, (float*)args->operand.dst.ptr, args->shape.dim_0);
+    kai_kernel_softmax_f32_f32_1d_sme2p1_fexpa(args->operand.src.ptr, args->operand.dst.ptr, args->shape.dim_0);
 }
 
 struct kai_softmax_uker_api kai_softmax_f32_f32_1d_sme2p1_fexpa(void) {
