@@ -220,7 +220,7 @@ resolve-gcovr:
     - cmake --build ${CI_JOB_NAME_SLUG} -j${PARALLEL_JOBS} --verbose
     # Run kleidiai_test to generate coverage report for unit tests
     - KLEIDIAI_TEST_CI_QUIET=${KLEIDIAI_TEST_CI_QUIET:-1} ./${CI_JOB_NAME_SLUG}/kleidiai_test --gtest_brief=1 --gtest_random_seed=${GLOBAL_TEST_SEED:-42}
-    # Run combined benchmark for all subcommands (backwards compatibility, matmul, imatmul, dwconv)
+    # Run combined benchmark subcommands and backwards-compatible arguments.
     - |
       declare -a BENCHMARKS=(
         ""        "--benchmark_dry_run=true -m 1 -n 30 -k 64"
@@ -228,6 +228,7 @@ resolve-gcovr:
         "pack_matmul" "--benchmark_dry_run=true -m 1 -n 30 -k 64"
         "imatmul" "--benchmark_dry_run=true -m 1 -n 30 -c 4 -l 15"
         "dwconv"  "--benchmark_dry_run=true --input_height 32 --input_width 32 --channels 64 --padding 1,1,1,1"
+        "softmax" "--benchmark_dry_run=true -l 1024"
       )
       for ((i=0; i<${#BENCHMARKS[@]}; i+=2)); do
         KT="${BENCHMARKS[i]}"
