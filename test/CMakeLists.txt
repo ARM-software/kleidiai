@@ -6,6 +6,10 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+if(KLEIDIAI_SEMIHOSTED)
+    message(FATAL_ERROR "Unit tests do not support semihosting. Set KLEIDIAI_BUILD_TESTS=OFF.")
+endif()
+
 include(FetchGTest)
 enable_testing()
 include(GoogleTest)

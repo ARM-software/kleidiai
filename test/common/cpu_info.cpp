@@ -349,6 +349,68 @@ bool get_cap_support(CpuFeature feature) {
 
     return false;
 }
+#elif defined(__aarch64__) && KAI_SEMIHOSTED
+
+/// Reads architectural feature registers in a privileged environment.
+bool get_cap_support(CpuFeature feature) {
+    struct Registers {
+        uint64_t pfr0 = 0;
+        uint64_t pfr1 = 0;
+        uint64_t isar0 = 0;
+        uint64_t isar1 = 0;
+        uint64_t zfr0 = 0;
+        uint64_t smfr0 = 0;
+    };
+    static const Registers registers = [] {
+        Registers values;
+        __asm__ volatile("mrs %0, ID_AA64PFR0_EL1" : "=r"(values.pfr0));
+        __asm__ volatile("mrs %0, ID_AA64PFR1_EL1" : "=r"(values.pfr1));
+        __asm__ volatile("mrs %0, ID_AA64ISAR0_EL1" : "=r"(values.isar0));
+        __asm__ volatile("mrs %0, ID_AA64ISAR1_EL1" : "=r"(values.isar1));
+        if (((values.pfr0 >> 32) & 0xF) != 0) {
+            __asm__ volatile("mrs %0, S3_0_C0_C4_4" : "=r"(values.zfr0));  // ID_AA64ZFR0_EL1
+        }
+        if (((values.pfr1 >> 24) & 0xF) != 0) {
+            __asm__ volatile("mrs %0, S3_0_C0_C4_5" : "=r"(values.smfr0));  // ID_AA64SMFR0_EL1
+        }
+        return values;
+    }();
+
+    const bool sve = ((registers.pfr0 >> 32) & 0xF) != 0;
+    const bool sme = ((registers.pfr1 >> 24) & 0xF) != 0;
+    switch (feature) {
+        case CpuFeature::ADVSIMD:
+            return ((registers.pfr0 >> 20) & 0xF) != 0xF;
+        case CpuFeature::FP16:
+            return ((registers.pfr0 >> 16) & 0xF) == 1 && ((registers.pfr0 >> 20) & 0xF) == 1;
+        case CpuFeature::DOTPROD:
+            return ((registers.isar0 >> 44) & 0xF) >= 1;
+        case CpuFeature::I8MM:
+            return ((registers.isar1 >> 52) & 0xF) >= 1;
+        case CpuFeature::BF16:
+            return ((registers.isar1 >> 44) & 0xF) >= 1;
+        case CpuFeature::SVE:
+            return sve;
+        case CpuFeature::SVEI8MM:
+            return sve && ((registers.zfr0 >> 44) & 0xF) >= 1;
+        case CpuFeature::SVE2:
+            return sve && (registers.zfr0 & 0xF) >= 1;
+        case CpuFeature::SVE2P1:
+            return sve && (registers.zfr0 & 0xF) >= 2;
+        case CpuFeature::SME:
+            return sme;
+        case CpuFeature::SME2:
+            return sme && ((registers.smfr0 >> 56) & 0xF) >= 1;
+        case CpuFeature::SME2P1:
+            return sme && ((registers.smfr0 >> 56) & 0xF) >= 2;
+        case CpuFeature::SME_F16F32:
+            return sme && ((registers.smfr0 >> 35) & 1) != 0;
+        case CpuFeature::SME_MOP4:
+            return sme && (registers.smfr0 & 1) != 0;
+        default:
+            return false;
+    }
+}
 #elif defined(__aarch64__)
 #error Please add a way how to check implemented CPU features
 #else

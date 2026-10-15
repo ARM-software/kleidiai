@@ -4,8 +4,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-#ifndef KLEIDIAI_BENCHMARK_MATMUL_MATMUL_RUNNER_HPP
-#define KLEIDIAI_BENCHMARK_MATMUL_MATMUL_RUNNER_HPP
+#pragma once
 
 #include <algorithm>
 #include <cfloat>
@@ -466,5 +465,3 @@ inline void MatMulRunner<MatMulUkernelApiInterface>::prepare() {
 }
 
 }  // namespace kai::benchmark
-
-#endif  // KLEIDIAI_BENCHMARK_MATMUL_MATMUL_RUNNER_HPP

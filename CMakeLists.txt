@@ -41,6 +41,9 @@ option(KLEIDIAI_BUILD_TESTS       "Build unit tests."             ON)
 option(KLEIDIAI_BUILD_BENCHMARK   "Build the benchmark tool."     OFF)
 option(KLEIDIAI_ENABLE_CLANG_TIDY "Build with Clang-Tidy checks." OFF)
 option(KLEIDIAI_ERROR_TRAP        "Use trap instead of abort."    OFF)
+option(KLEIDIAI_SEMIHOSTED        "Build executables with semihosting." OFF)
+set(KLEIDIAI_SEMIHOSTING_SPECS rdimon.specs CACHE STRING
+    "GCC specs file used to link semihosted executables.")
 
 check_c_source_compiles("int main(void) { return 0; __assume(0); }"             KLEIDIAI_HAS_BUILTIN_ASSUME0)
 check_c_source_compiles("int main(void) { return 0; __builtin_unreachable(); }" KLEIDIAI_HAS_BUILTIN_UNREACHABLE)

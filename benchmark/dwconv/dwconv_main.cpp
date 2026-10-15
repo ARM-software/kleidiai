@@ -20,18 +20,8 @@
 #include <string_view>
 
 #include "benchmark/dwconv/dwconv_registry.hpp"
+#include "benchmark/kai_benchmark.hpp"
 #include "test/nextgen/common/text_utils.hpp"
-
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wswitch-default"
-#endif  // __GNUC__
-
-#include <benchmark/benchmark.h>
-
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif  // __GNUC__
 
 namespace kai::benchmark {
 
@@ -115,7 +105,6 @@ int run_dwconv(int argc, char** argv, const std::optional<std::string>& user_fil
     std::optional<std::array<size_t, 4>> padding = std::array<size_t, 4>{0, 0, 0, 0};
     std::optional<std::array<size_t, 2>> dilation = std::array<size_t, 2>{1, 1};
 
-    optind = 1;
     static const struct option long_options[] = {
         {"channels", required_argument, nullptr, OPT_CHANNELS},
         {"input_height", required_argument, nullptr, OPT_INPUT_HEIGHT},
@@ -181,9 +170,9 @@ int run_dwconv(int argc, char** argv, const std::optional<std::string>& user_fil
     RegisterDwConvBenchmarks(shape);
 
     const std::string spec = user_filter_opt.value_or("");
-    ::benchmark::RunSpecifiedBenchmarks(nullptr, nullptr, spec);
-    ::benchmark::Shutdown();
-    return 0;
+    const int result = BMFramework::RunSpecifiedBenchmarks(spec);
+    BMFramework::Shutdown();
+    return result;
 }
 
 }  // namespace kai::benchmark

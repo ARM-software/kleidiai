@@ -10,23 +10,12 @@
 #include <array>
 #include <cstdint>
 #include <string>
-#include <string_view>
 #include <test/common/cpu_info.hpp>
 #include <test/common/data_type.hpp>
 
+#include "benchmark/kai_benchmark.hpp"
 #include "pack_matmul_benchmark_logic.hpp"
 #include "pack_matmul_runner.hpp"
-
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wswitch-default"
-#endif  // __GNUC__
-
-#include <benchmark/benchmark.h>
-
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif  // __GNUC__
 
 // Matrix multiplication micro-kernels with associated LHS packing micro-kernels.
 #include "kai/ukernels/matmul/kai_matmul.h"
@@ -76,7 +65,7 @@ namespace {
 using DataType = test::DataType;
 
 struct PackMatMulRegistryEntry {
-    ::benchmark::internal::Benchmark* benchmark;
+    BMFramework::Registration* benchmark;
     const PackMatMulEntry* entry;
 };
 
@@ -920,7 +909,7 @@ inline const PackMatMulEntry kai_matmul_clamp_bf16_qai8dxp4x8_qsi4c32p4x8_16x4_n
 
 PackMatMulRegistryEntry RegisterPackMatMulBenchmarkEntry(const PackMatMulEntry& entry) {
     return {
-        ::benchmark::RegisterBenchmark(std::string(entry.benchmark_name), kai_benchmark_pack_matmul, &entry),
+        BMFramework::RegisterBenchmark(std::string(entry.benchmark_name), kai_benchmark_pack_matmul, &entry),
         &entry,
     };
 }

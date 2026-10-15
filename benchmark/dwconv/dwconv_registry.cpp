@@ -12,19 +12,9 @@
 #include <test/common/cpu_info.hpp>
 #include <test/common/data_type.hpp>
 
+#include "benchmark/kai_benchmark.hpp"
 #include "dwconv_benchmark_logic.hpp"
 #include "dwconv_interface.hpp"
-
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wswitch-default"
-#endif  // __GNUC__
-
-#include <benchmark/benchmark.h>
-
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif  // __GNUC__
 
 // Micro-kernels to register for benchmarking
 #include "kai/ukernels/dwconv/dwconv_f16_f16_f16p/kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla.h"
@@ -67,11 +57,11 @@ inline constexpr DwConvPackedFloatInterface kai_dwconv_clamp_f32_f32_f32p1vlx1b_
 /// @return Registered dwconv benchmarks.
 static const auto& get_dwconv_benchmarks() {
     static const std::array dwconv_benchmarks{
-        ::benchmark::RegisterBenchmark(
+        BMFramework::RegisterBenchmark(
             "kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla", kai_benchmark_dwconv<DwConvPackedFloatInterface>,
             kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla_iface, DataType::FP32, DataType::FP32,
             test::cpu_has_sme2),
-        ::benchmark::RegisterBenchmark(
+        BMFramework::RegisterBenchmark(
             "kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla",
             kai_benchmark_dwconv<DwConvPackedDepthfirstFloatInterface>,
             kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla_iface, DataType::FP16, DataType::FP16,
