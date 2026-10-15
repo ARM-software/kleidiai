@@ -454,6 +454,75 @@ test-linux-aarch64-sve256:
     # Run only SVE unit tests
     GTEST_FILTER: "*_sve_*"
 
+# Purpose: Cross-build the semihosted configuration for FVP.
+build-semihosted:
+  extends:
+    - .stable-rules
+  stage: build
+  needs: []
+  script:
+    - |
+      set -euo pipefail
+
+      export PATH="/opt/devtools/toolchain-aarch64-none-elf/bin:${PATH}"
+
+      # Base FVP DRAM starts at 0x80000000; place the heap and stack above the image.
+      SEMIHOSTED_IMAGE_BASE=0x80000000
+      SEMIHOSTED_HEAP_BASE=0x81000000
+      SEMIHOSTED_HEAP_LIMIT=0x90000000
+      SEMIHOSTED_STACK_BASE=0xA0000000
+      SEMIHOSTED_STACK_LIMIT=0x9F000000
+      cmake --preset semihosted \
+        -DCMAKE_EXE_LINKER_FLAGS="-Wl,-Ttext-segment=${SEMIHOSTED_IMAGE_BASE}" \
+        -DKLEIDIAI_SEMIHOSTING_SPECS=aem-validation.specs \
+        -S . -B "${CI_JOB_NAME_SLUG}"
+      cmake --build "${CI_JOB_NAME_SLUG}" -j"${PARALLEL_JOBS}"
+      {
+        echo "SEMIHOSTED_BUILD_DIR=${CI_JOB_NAME_SLUG}"
+        echo "SEMIHOSTED_HEAP_BASE=${SEMIHOSTED_HEAP_BASE}"
+        echo "SEMIHOSTED_HEAP_LIMIT=${SEMIHOSTED_HEAP_LIMIT}"
+        echo "SEMIHOSTED_STACK_BASE=${SEMIHOSTED_STACK_BASE}"
+        echo "SEMIHOSTED_STACK_LIMIT=${SEMIHOSTED_STACK_LIMIT}"
+      } > semihosted-build.env
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - ${CI_JOB_NAME_SLUG}/kleidiai_benchmark
+    reports:
+      dotenv: semihosted-build.env
+
+# Purpose: Smoke test the semihosted benchmark CLI on FVP.
+test-benchmark-semihosted-fvp:
+  extends:
+    - .stable-rules
+  stage: test
+  needs:
+    - build-semihosted
+  script:
+    - |
+      set -euo pipefail
+
+      FVP_TOOL_BINARY=(/opt/devtools/fvp_base_aemva/models/Linux64*GCC-9.3/FVP_Base_RevC-2xAEMvA)
+      test "${#FVP_TOOL_BINARY[@]}" -eq 1
+      test -x "${FVP_TOOL_BINARY[0]}"
+      "${FVP_TOOL_BINARY[0]}" \
+        -C bp.refcounter.non_arch_start_at_default=1 \
+        -C bp.secure_memory=0 \
+        -C bp.terminal_0.start_telnet=0 \
+        -C bp.terminal_1.start_telnet=0 \
+        -C bp.terminal_2.start_telnet=0 \
+        -C bp.terminal_3.start_telnet=0 \
+        -C bp.vis.disable_visualisation=1 \
+        -C cluster0.NUM_CORES=1 \
+        -C cluster1.NUM_CORES=0 \
+        -C semihosting-enable=1 \
+        -C cluster0.cpu0.semihosting-heap_base="${SEMIHOSTED_HEAP_BASE}" \
+        -C cluster0.cpu0.semihosting-heap_limit="${SEMIHOSTED_HEAP_LIMIT}" \
+        -C cluster0.cpu0.semihosting-stack_base="${SEMIHOSTED_STACK_BASE}" \
+        -C cluster0.cpu0.semihosting-stack_limit="${SEMIHOSTED_STACK_LIMIT}" \
+        -C cluster0.cpu0.semihosting-cmd_line="kleidiai_benchmark --benchmark_list_tests" \
+        -a cluster0.cpu0="${CI_PROJECT_DIR}/${SEMIHOSTED_BUILD_DIR}/kleidiai_benchmark"
+
 # Base template: .test-linux-aarch64-fvp
 # Purpose: Common FVP unit-test runner for feature-specific tests.
 .test-linux-aarch64-fvp:

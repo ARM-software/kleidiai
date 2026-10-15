@@ -4,8 +4,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-#ifndef KLEIDIAI_BENCHMARK_MATMUL_MATMUL_RUNNER_HPP
-#define KLEIDIAI_BENCHMARK_MATMUL_MATMUL_RUNNER_HPP
+#pragma once
 
 #include <algorithm>
 #include <cfloat>
@@ -21,7 +20,7 @@
 
 namespace kai::benchmark {
 
-using DataType = test::DataType;
+using test::DataType;
 
 /// Sizes in bytes of the buffers used by a matrix multiplication micro-kernel.
 struct MatMulBufferSizes {
@@ -56,10 +55,6 @@ public:
         m_m = m;
         m_n = n;
         m_k = k;
-
-        m_lhs_stride = m_k * data_type_size_in_bits(m_dst_type) / 8;
-        m_dst_stride_row = m_n * data_type_size_in_bits(m_dst_type) / 8;
-        m_dst_stride_col = data_type_size_in_bits(m_dst_type) / 8;
     }
 
     /// Sets the block size to use.
@@ -211,7 +206,9 @@ inline MatMulBufferSizes MatMulRunner<MatMulBlockwiseDynamicQuantLutInterface>::
 /// Prepares auxiliary data required by the matrix multiplication micro-kernel.
 template <typename MatMulInterface>
 void MatMulRunner<MatMulInterface>::prepare() {
-    // Default to no-op
+    m_lhs_stride = data_type_array_size_in_bytes(m_dst_type, m_k);
+    m_dst_stride_row = data_type_array_size_in_bytes(m_dst_type, m_n);
+    m_dst_stride_col = data_type_array_size_in_bytes(m_dst_type, 1);
 }
 
 /// Runs the matrix multiplication micro-kernel.
@@ -428,6 +425,8 @@ inline MatMulBufferSizes MatMulRunner<MatMulUkernelApiInterface>::get_buffer_siz
 /// Prepares auxiliary data required by the ukernel API interface.
 template <>
 inline void MatMulRunner<MatMulUkernelApiInterface>::prepare() {
+    m_dst_stride_row = data_type_array_size_in_bytes(m_dst_type, m_n);
+
     m_acc_bias_m.clear();
     m_acc_bias_n.clear();
     m_scale_bias_n.clear();
@@ -466,5 +465,3 @@ inline void MatMulRunner<MatMulUkernelApiInterface>::prepare() {
 }
 
 }  // namespace kai::benchmark
-
-#endif  // KLEIDIAI_BENCHMARK_MATMUL_MATMUL_RUNNER_HPP

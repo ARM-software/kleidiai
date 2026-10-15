@@ -8,30 +8,27 @@
 
 #pragma once
 
-#include <memory>
-
 #include "test/common/data_type.hpp"
 #include "test/common/matrix_portion.hpp"
-#include "test/nextgen/harness/kernel_wrapper.hpp"
 #include "test/nextgen/operators/matmul/kernel_types.hpp"
-#include "test/nextgen/operators/matmul/matmul_dims.hpp"
 
 namespace kai::test {
 
 /// Creates a wrapper for the native legacy s4s0 QSI4C32P RHS packer.
+///
+/// @param[in] nr The packed panel width.
+///
+/// @return The micro-kernel wrapper.
 [[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon(size_t nr);
 
 /// Creates a wrapper for kai_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon kernel.
 [[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4cxp4vlx4s1s0_qsu4cxs1s0_neon();
 
-/// Creates a wrapper for kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon kernel.
-[[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp8x4_qsi8cx_neon();
-
-/// Creates a wrapper for kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon kernel.
-[[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp32x4_qsi8cx_neon();
-
-/// Creates a wrapper for kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon kernel.
-[[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp8x8_qsi8cx_neon();
+/// Creates a fixed-argument wrapper for kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon.
+///
+/// Allowed (block_height, block_width) configurations: (8, 4), (8, 8), and (32, 4).
+[[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon(
+    size_t block_height, size_t block_width);
 
 /// Creates a fixed-argument wrapper for kai_rhs_pack_nxk_qsi4c32p_qsu4c32s1s0.
 [[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4c32p8x8_qsu4c32s1s0();

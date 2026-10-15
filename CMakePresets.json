@@ -26,6 +26,20 @@
         "CMAKE_EXE_LINKER_FLAGS":
             "-fsanitize=address,undefined -fno-sanitize-address-use-odr-indicator -Wlto-type-mismatch"
       }
+    },
+    {
+      "name": "semihosted",
+      "description": "Semihosted build using bare-metal toolchain",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "toolchainFile": "${sourceDir}/cmake/toolchains/aarch64-none-elf.toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "KLEIDIAI_BUILD_TESTS": "OFF",
+        "KLEIDIAI_BUILD_BENCHMARK": "ON",
+        "KLEIDIAI_SEMIHOSTED": "ON",
+        "KLEIDIAI_BUILD_EXPERIMENTAL_OPS": "OFF"
+      }
     }
   ],
   "buildPresets": [
@@ -38,6 +52,10 @@
       "name": "default-debug",
       "configurePreset": "default-debug",
       "configuration": "Debug"
+    },
+    {
+      "name": "semihosted",
+      "configurePreset": "semihosted"
     }
   ]
 }

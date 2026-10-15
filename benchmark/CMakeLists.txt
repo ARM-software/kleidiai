@@ -14,9 +14,7 @@ set(BENCHMARK_DOWNLOAD_DEPENDENCIES "OFF")
 set(BENCHMARK_ENABLE_TESTING "OFF")
 set(BENCHMARK_ENABLE_GTEST_TESTS "OFF")
 
-include(FetchGBench)
-
-# Single benchmark binary combining all supported operators.
+# Single benchmark binary combining all suites
 add_executable(kleidiai_benchmark
     benchmark/dwconv/dwconv_main.cpp
     benchmark/dwconv/dwconv_registry.cpp
@@ -64,30 +62,49 @@ else()
     set_source_files_properties(test/common/bfloat16_asm.S PROPERTIES COMPILE_OPTIONS "-march=armv8.2-a+fp16+bf16${KLEIDIAI_INTERNAL_EXTRA_ARCH}")
 endif()
 
-target_link_libraries(kleidiai_benchmark
-    PRIVATE
-        kleidiai
-        benchmark::benchmark
-)
 
-if(APPLE)
-    find_library(KPERF_FRAMEWORK kperf
-        PATHS /System/Library/PrivateFrameworks
-        NO_DEFAULT_PATH
+if(KLEIDIAI_SEMIHOSTED)
+    target_compile_definitions(kleidiai_benchmark
+        PRIVATE
+            KAI_SEMIHOSTED=1
     )
-    find_library(KPERFDATA_FRAMEWORK kperfdata
-        PATHS /System/Library/PrivateFrameworks
-        NO_DEFAULT_PATH
+    target_link_libraries(kleidiai_benchmark
+        PRIVATE
+            kleidiai
     )
+    target_link_options(kleidiai_benchmark
+        PRIVATE
+            --specs=${KLEIDIAI_SEMIHOSTING_SPECS}
+    )
+else()
+    include(FetchGBench)
 
-    if(KPERF_FRAMEWORK AND KPERFDATA_FRAMEWORK)
-        target_link_libraries(kleidiai_benchmark
-            PRIVATE
-                "${KPERF_FRAMEWORK}"
-                "${KPERFDATA_FRAMEWORK}"
+    target_link_libraries(kleidiai_benchmark
+        PRIVATE
+            kleidiai
+            benchmark::benchmark
+
+    )
+    if(APPLE)
+        find_library(KPERF_FRAMEWORK kperf
+            PATHS /System/Library/PrivateFrameworks
+            NO_DEFAULT_PATH
         )
-        target_compile_definitions(kleidiai_benchmark PRIVATE KAI_BENCHMARK_KPERF=1)
-    else()
-        target_compile_definitions(kleidiai_benchmark PRIVATE KAI_BENCHMARK_KPERF=0)
+        find_library(KPERFDATA_FRAMEWORK kperfdata
+            PATHS /System/Library/PrivateFrameworks
+            NO_DEFAULT_PATH
+        )
+
+        if(KPERF_FRAMEWORK AND KPERFDATA_FRAMEWORK)
+            target_link_libraries(kleidiai_benchmark
+                PRIVATE
+                    "${KPERF_FRAMEWORK}"
+                    "${KPERFDATA_FRAMEWORK}"
+            )
+            target_compile_definitions(kleidiai_benchmark PRIVATE KAI_BENCHMARK_KPERF=1)
+        else()
+            target_compile_definitions(kleidiai_benchmark PRIVATE KAI_BENCHMARK_KPERF=0)
+        endif()
     endif()
 endif()
+

@@ -1,11 +1,10 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
 
-#ifndef KLEIDIAI_BENCHMARK_MATMUL_MATMUL_REGISTRY_HPP
-#define KLEIDIAI_BENCHMARK_MATMUL_MATMUL_REGISTRY_HPP
+#pragma once
 
 #include <cstddef>
 
@@ -21,5 +20,3 @@ using test::MatMulShape;
 void RegisterMatMulBenchmarks(const MatMulShape& shape, size_t bl);
 
 }  // namespace kai::benchmark
-
-#endif  // KLEIDIAI_BENCHMARK_MATMUL_MATMUL_REGISTRY_HPP

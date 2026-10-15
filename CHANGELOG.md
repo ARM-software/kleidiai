@@ -12,6 +12,10 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+- Optimizations:
+  - Improve FP32-to-QAI8DXP LHS quantisation and packing performance in `kai_lhs_quant_pack_qai8dxp_f32` by shortening Advanced SIMD reduction dependencies and reducing redundant clamping and padding work.
+- Fixes:
+  - Correct the documented K requirement for `kai_lhs_quant_pack_qai8dxp_f32`: input K has no divisibility requirement; only the packed K dimension is rounded up to a multiple of 32.
 - New SME micro-kernels:
   - Native MxN SME MOPA matrix multiplication for FP16 x signed QSI4C32P with F32 output and the s4s0sf16 RHS packing format.
 - New SME2.1 micro-kernels:

@@ -241,7 +241,8 @@ TEST_P(MatMulTest_f16_qai8dxp_qsi4cxp, EndToEnd) {
 
     ASSERT_EQ(lhs_packed_offset, lhs_matmul_offset);
 
-    kai_run_lhs_quant_pack_qai8dxp_f16_neon(
+    abi_check(
+        kai_run_lhs_quant_pack_qai8dxp_f16_neon,  //
         rect.height() /* m */, K, mr, kr, sr, 0, ref_lhs_f16.data() + lhs_offset, lhs_stride,
         imp_packed_lhs.data() + lhs_packed_offset);
 
@@ -260,7 +261,8 @@ TEST_P(MatMulTest_f16_qai8dxp_qsi4cxp, EndToEnd) {
     params.lhs_zero_point = 1;
     params.rhs_zero_point = 0;
 
-    ukernel_variant.run_rhs_pack(
+    abi_check(
+        ukernel_variant.run_rhs_pack,  //
         1, N, K, nr, kr, sr, reinterpret_cast<const uint8_t*>(ref_rhs_qsi4_padded.data()),
         has_bias ? reinterpret_cast<const float*>(ref_biases.data()) : nullptr,
         reinterpret_cast<const float*>(ref_rhs_scales.data()), imp_packed_rhs.data(), 0, &params);

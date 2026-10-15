@@ -12,19 +12,9 @@
 #include <test/common/cpu_info.hpp>
 #include <test/common/data_type.hpp>
 
+#include "benchmark/kai_benchmark.hpp"
 #include "imatmul_benchmark_logic.hpp"
 #include "imatmul_interface.hpp"
-
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wswitch-default"
-#endif  // __GNUC__
-
-#include <benchmark/benchmark.h>
-
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif  // __GNUC__
 
 // Micro-kernels to register for benchmarking
 

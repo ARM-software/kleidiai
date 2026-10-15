@@ -19,6 +19,7 @@
 #include "benchmark/imatmul/imatmul_registry.hpp"
 #include "benchmark/imatmul_pack_lhs/imatmul_pack_lhs_main.hpp"
 #include "benchmark/imatmul_pack_lhs/imatmul_pack_lhs_registry.hpp"
+#include "benchmark/kai_benchmark.hpp"
 #include "benchmark/matmul/matmul_main.hpp"
 #include "benchmark/matmul/matmul_registry.hpp"
 #include "benchmark/matmul_pack_lhs/matmul_pack_lhs_main.hpp"
@@ -28,17 +29,6 @@
 #include "benchmark/softmax/softmax_main.hpp"
 #include "benchmark/softmax/softmax_registry.hpp"
 #include "kai/kai_common.h"
-
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wswitch-default"
-#endif  // __GNUC__
-
-#include <benchmark/benchmark.h>
-
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif  // __GNUC__
 
 namespace {
 
@@ -90,6 +80,7 @@ static std::optional<std::string> find_user_benchmark_filter(int argc, char** ar
 }
 
 int main(int argc, char** argv) {
+    using kai::benchmark::BMFramework;
     // Detect user-provided filter BEFORE Initialize() consumes the benchmark framework flags
     const auto user_filter_opt = find_user_benchmark_filter(argc, argv);
 
@@ -102,7 +93,14 @@ int main(int argc, char** argv) {
         }
     }
 
-    ::benchmark::Initialize(&argc, argv);
+    if (!BMFramework::Initialize(&argc, argv)) {
+        return EXIT_FAILURE;
+    }
+    if (BMFramework::HelpRequested()) {
+        print_usage(argv[0]);
+        BMFramework::Shutdown();
+        return EXIT_SUCCESS;
+    }
 
     std::cerr << "KleidiAI version: v" << kai_get_version() << "\n";
 
@@ -143,7 +141,7 @@ int main(int argc, char** argv) {
 
         {"matmul_pack_lhs", Mode::MATMUL_PACK_LHS, kai::benchmark::run_matmul_pack_lhs,
          [] {
-             ::benchmark::ClearRegisteredBenchmarks();
+             BMFramework::ClearRegisteredBenchmarks();
              kai::benchmark::RegisterMatMulPackLhsBenchmarks(1, 1, 32);
          }},
 
@@ -157,7 +155,7 @@ int main(int argc, char** argv) {
 
         {"imatmul_pack_lhs", Mode::IMATMUL_PACK_LHS, kai::benchmark::run_imatmul_pack_lhs,
          [] {
-             ::benchmark::ClearRegisteredBenchmarks();
+             BMFramework::ClearRegisteredBenchmarks();
              kai::benchmark::RegisterImatmulPackLhsBenchmarks(1, 1, 1);
          }},
 
@@ -191,10 +189,9 @@ int main(int argc, char** argv) {
     if (list_tests) {
         selected_mode->register_for_listing();
         const std::string spec = user_filter_opt.value_or("");
-        ::benchmark::SetBenchmarkFilter(spec);
-        ::benchmark::RunSpecifiedBenchmarks(nullptr, nullptr, spec);
-        ::benchmark::Shutdown();
-        return 0;
+        const int result = BMFramework::RunSpecifiedBenchmarks(spec);
+        BMFramework::Shutdown();
+        return result;
     }
 
     return selected_mode->run(argc, argv, user_filter_opt);

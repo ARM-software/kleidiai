@@ -19,7 +19,7 @@ static const size_t kai_num_bytes_per_multiplier = sizeof(float);
 static const size_t kai_num_bytes_per_offset = sizeof(int32_t);
 
 inline static size_t kai_k_roundedup(size_t k) {
-    // Round up k to be a multiple of 32.
+    // Aligns packed K to 32 for block-wise RHS consumers, without constraining the input K.
     size_t kai_k_multiple_of = 32;
     return kai_roundup(k, kai_k_multiple_of);
 }
@@ -69,40 +69,42 @@ void kai_run_lhs_quant_pack_qai8dxp_f32(
 
     const size_t dst_stride = kai_lhs_packed_stride(k, mr, kr, sr);
     const size_t k_internal = kai_k_roundedup(k);
-    const int32_t k_block_len = (int32_t)(kr / sr);
+    const size_t k_block_len = kr / sr;
 
-    const int32_t num_blocks_k = (int32_t)(k / k_block_len);
-    const int32_t num_blocks_k_internal = (int32_t)(k_internal / k_block_len);
+    const size_t num_blocks_k = k / k_block_len;
+    const size_t num_blocks_k_internal = k_internal / k_block_len;
 
     for (size_t row_idx = 0; row_idx < num_rows; ++row_idx) {
         float max0 = -FLT_MAX;
         float min0 = FLT_MAX;
 
         // Find min/max for each channel
-        int32_t k_idx = 0;
+        size_t k_idx = 0;
 
 #if defined(__aarch64__)
         float32x4_t vmax0 = vdupq_n_f32(-FLT_MAX);
         float32x4_t vmin0 = vdupq_n_f32(FLT_MAX);
+        float32x4_t vmax1 = vmax0;
+        float32x4_t vmin1 = vmin0;
 
-        for (; k_idx <= ((int32_t)k - 8); k_idx += 8) {
-            const float32x4_t src0_0 = vld1q_f32(src_ptr + 0 + (size_t)k_idx);
-            const float32x4_t src0_1 = vld1q_f32(src_ptr + 4 + (size_t)k_idx);
+        for (; k - k_idx >= 8; k_idx += 8) {
+            const float32x4_t src0_0 = vld1q_f32(src_ptr + k_idx);
+            const float32x4_t src0_1 = vld1q_f32(src_ptr + k_idx + 4);
 
             // Calculate the max
             vmax0 = vmaxq_f32(src0_0, vmax0);
-            vmax0 = vmaxq_f32(vmax0, src0_1);
+            vmax1 = vmaxq_f32(vmax1, src0_1);
 
             // Calculate the min
             vmin0 = vminq_f32(src0_0, vmin0);
-            vmin0 = vminq_f32(vmin0, src0_1);
+            vmin1 = vminq_f32(vmin1, src0_1);
         }
-        // Get the max/min
-        max0 = vmaxvq_f32(vmax0);
-        min0 = vminvq_f32(vmin0);
+        // Merge the independent accumulators before reducing to the row extrema.
+        max0 = vmaxvq_f32(vmaxq_f32(vmax0, vmax1));
+        min0 = vminvq_f32(vminq_f32(vmin0, vmin1));
 #endif
-        for (; k_idx < (int32_t)k; ++k_idx) {
-            const float src0_0 = *(src_ptr + (size_t)k_idx);
+        for (; k_idx < k; ++k_idx) {
+            const float src0_0 = *(src_ptr + k_idx);
             max0 = fmaxf(src0_0, max0);
             min0 = fminf(src0_0, min0);
         }
@@ -138,13 +140,13 @@ void kai_run_lhs_quant_pack_qai8dxp_f32(
         uint8_t* dst_ptr = (uint8_t*)lhs_packed + (dst_x * k_block_len * sizeof(int8_t));
 
         // Quantize the channels
-        int32_t block_idx = 0;
+        size_t block_idx = 0;
 
 #if defined(__aarch64__)
         if (k_block_len == 8) {
             for (; block_idx < num_blocks_k; ++block_idx) {
                 // Clamp at the last valid k-index
-                const int32_t k_idx_start = block_idx * k_block_len;
+                const size_t k_idx_start = block_idx * k_block_len;
 
                 const float32x4_t src_0 = vld1q_f32(src_ptr + k_idx_start);
                 const float32x4_t src_1 = vld1q_f32(src_ptr + k_idx_start + 4);
@@ -163,9 +165,8 @@ void kai_run_lhs_quant_pack_qai8dxp_f32(
                 int16_t nzp_s16 = (int16_t)nudged_zero_point0;
                 int16x8_t vnzp_s16 = vdupq_n_s16(nzp_s16);
                 v_s16 = vaddq_s16(v_s16, vnzp_s16);
-                v_s16 = vmaxq_s16(v_s16, vdupq_n_s16(INT8_MIN));
-                v_s16 = vminq_s16(v_s16, vdupq_n_s16(INT8_MAX));
 
+                // Saturating narrowing clamps to INT8_MIN..INT8_MAX
                 int8x8_t v0_s8 = vqmovn_s16(v_s16);
                 vst1_s8((int8_t*)(dst_ptr), v0_s8);
                 dst_ptr += 8 * sizeof(int8_t);
@@ -174,7 +175,7 @@ void kai_run_lhs_quant_pack_qai8dxp_f32(
         } else if (k_block_len == 4) {
             for (; block_idx < num_blocks_k; ++block_idx) {
                 // Clamp at the last valid k-index
-                const int32_t k_idx_start = block_idx * k_block_len;
+                const size_t k_idx_start = block_idx * k_block_len;
 
                 const float32x4_t src_0 = vld1q_f32(src_ptr + k_idx_start);
 
@@ -203,8 +204,8 @@ void kai_run_lhs_quant_pack_qai8dxp_f32(
 #endif
         {
             for (; block_idx < num_blocks_k; ++block_idx) {
-                for (int32_t k_block_idx = 0; k_block_idx < k_block_len; ++k_block_idx) {
-                    const int32_t k_idx_start = (block_idx * k_block_len) + k_block_idx;
+                for (size_t k_block_idx = 0; k_block_idx < k_block_len; ++k_block_idx) {
+                    const size_t k_idx_start = (block_idx * k_block_len) + k_block_idx;
 
                     const float src0_0 = *(src_ptr + k_idx_start);
 
@@ -222,11 +223,36 @@ void kai_run_lhs_quant_pack_qai8dxp_f32(
             }
         }
 
+        // If K ends on a complete block, all remaining bytes repeat the last source value.
+        // Quantize it once per row instead of repeating the load, multiply, round and clamp per padding byte.
+        if (block_idx < num_blocks_k_internal && (k % k_block_len) == 0) {
+            int32_t padding_value = (int32_t)roundf(src_ptr[k - 1] * scale0) + nudged_zero_point0;
+            padding_value = KAI_MAX(padding_value, INT8_MIN);
+            padding_value = KAI_MIN(padding_value, INT8_MAX);
+
+#if defined(__aarch64__)
+            if (k_block_len == 8) {
+                const int8x8_t vpadding_s8 = vdup_n_s8((int8_t)padding_value);
+                for (; block_idx < num_blocks_k_internal; ++block_idx) {
+                    vst1_s8((int8_t*)dst_ptr, vpadding_s8);
+                    dst_ptr += mr * k_block_len * sizeof(int8_t);
+                }
+            }
+#endif
+            for (; block_idx < num_blocks_k_internal; ++block_idx) {
+                for (size_t k_block_idx = 0; k_block_idx < k_block_len; ++k_block_idx) {
+                    dst_ptr[k_block_idx] = (uint8_t)(int8_t)padding_value;
+                }
+                dst_ptr += mr * k_block_len * sizeof(int8_t);
+            }
+        }
+
+        // A partial source block still contains real values: quantize those before repeating the last value.
         for (; block_idx < num_blocks_k_internal; ++block_idx) {
             // left over k
-            for (int32_t k_block_idx = 0; k_block_idx < k_block_len; ++k_block_idx) {
+            for (size_t k_block_idx = 0; k_block_idx < k_block_len; ++k_block_idx) {
                 // Clamp at the last valid k-index
-                const size_t k_idx_start = KAI_MIN((size_t)((block_idx * k_block_len) + k_block_idx), k - 1);
+                const size_t k_idx_start = KAI_MIN((block_idx * k_block_len) + k_block_idx, k - 1);
 
                 const float src0_0 = *(src_ptr + k_idx_start);
 

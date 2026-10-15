@@ -219,7 +219,7 @@ MatMulOperator create_operator_matmul_clamp_f32_f16p4vsx2_qai4c32p16vsx4s1s0sf16
     op.bias_dtype = DataType::FP32;
     op.acc_dtype = DataType::FP32;
     op.dst_dtype = DataType::FP32;
-    op.pack_lhs = create_matmul_lhs_pack_f16p4vsx2_f32_neon();
+    op.pack_lhs = create_matmul_lhs_pack_f16p4vsx2_f32_neon(qai4c32k256_format_config.block_length);
     op.pack_rhs = create_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme();
     op.matmul = create_matmul_clamp_f32_f16p4vsx2_qai4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa();
     return op;
@@ -237,16 +237,24 @@ MatMulOperator create_operator_matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s4s0sf16
     op.supported_bias_mode_sets = {no_bias};
     op.clamp_mode = MatMulClampMode::OPTIONAL;
     op.k_alignment = 32;
+
     op.lhs_cvt_dtype = DataType::FP16;
     op.lhs_quant = std::nullopt;
-    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(DataType::U4, DataType::FP32, RoundMode::CURRENT, 1, 32);
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::U4,        // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 32                // 1x32 blocks
+    );
     op.bias_quant = std::nullopt;
+
     op.lhs_dtype = DataType::FP32;
     op.rhs_dtype = DataType::FP32;
     op.bias_dtype = DataType::FP32;
     op.acc_dtype = DataType::FP32;
     op.dst_dtype = DataType::FP32;
-    op.pack_lhs = create_matmul_lhs_pack_f16p4vsx2_f32_neon_bl32();
+
+    op.pack_lhs = create_matmul_lhs_pack_f16p4vsx2_f32_neon(32);
     op.pack_rhs = create_matmul_rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon(16 * get_sme_vector_scale());
     op.matmul = create_matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s4s0sf16_4vsx16vs_sme_mopa();
     return op;
@@ -348,8 +356,19 @@ MatMulOperator create_operator_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4v
     op.clamp_mode = MatMulClampMode::REQUIRED;
 
     op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 1, 0);
-    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(DataType::U4, DataType::FP32, RoundMode::CURRENT, 1, 0);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        1, 0                  // Row blocks
+    );
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::U4,        // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 0                 // Row blocks
+    );
     op.bias_quant = std::nullopt;
 
     op.lhs_dtype = DataType::FP32;
@@ -380,8 +399,19 @@ MatMulOperator create_operator_matmul_clamp_f32_qai8dxp1x4_qsi4c32p16vsx4_1x16vs
     op.k_alignment = 32;
 
     op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 1, 0);
-    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(DataType::U4, DataType::BF16, RoundMode::CURRENT, 1, 32);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        1, 0                  // Row blocks
+    );
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::U4,        // Quantized data type
+        DataType::BF16,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 32                // 1x32 blocks
+    );
     op.bias_quant = std::nullopt;
 
     op.lhs_dtype = DataType::FP32;
@@ -412,8 +442,19 @@ MatMulOperator create_operator_matmul_clamp_f32_qai8dxp1x4_qsi4c32p16vsx4_1x16vs
     op.k_alignment = 32;
 
     op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 1, 0);
-    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(DataType::U4, DataType::BF16, RoundMode::CURRENT, 1, 32);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        1, 0                  // Row blocks
+    );
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::U4,        // Quantized data type
+        DataType::BF16,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 32                // 1x32 blocks
+    );
     op.bias_quant = std::nullopt;
 
     op.lhs_dtype = DataType::FP32;
@@ -442,8 +483,19 @@ MatMulOperator create_operator_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sm
     op.clamp_mode = MatMulClampMode::REQUIRED;
 
     op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 1, 0);
-    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(DataType::U4, DataType::FP32, RoundMode::CURRENT, 1, 0);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        1, 0                  // Row blocks
+    );
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::U4,        // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 0                 // Row blocks
+    );
     op.bias_quant = std::nullopt;
 
     op.lhs_dtype = DataType::FP32;
@@ -472,8 +524,19 @@ MatMulOperator create_operator_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_
     op.clamp_mode = MatMulClampMode::OPTIONAL;
 
     op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 1, 0);
-    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(DataType::I8, DataType::FP32, RoundMode::CURRENT, 1, 0);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        1, 0                  // Row blocks
+    );
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I8,        // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 0                 // Row blocks
+    );
     op.bias_quant = std::nullopt;
 
     op.lhs_dtype = DataType::FP32;
@@ -483,7 +546,7 @@ MatMulOperator create_operator_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_
     op.dst_dtype = DataType::FP32;
 
     op.pack_lhs = create_matmul_lhs_quant_pack_qai8dxp1x4_f32();
-    op.pack_rhs = create_matmul_rhs_pack_nxk_qsi8cxp32x4_qsi8cx_neon();
+    op.pack_rhs = create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon(32, 4);
     op.matmul = create_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dot();
     return op;
 }
@@ -502,8 +565,19 @@ MatMulOperator create_operator_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_do
     op.clamp_mode = MatMulClampMode::OPTIONAL;
 
     op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 1, 0);
-    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(DataType::I8, DataType::FP32, RoundMode::CURRENT, 1, 0);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        1, 0                  // Row blocks
+    );
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I8,        // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 0                 // Row blocks
+    );
     op.bias_quant = std::nullopt;
 
     op.lhs_dtype = DataType::FP32;
@@ -513,7 +587,7 @@ MatMulOperator create_operator_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_do
     op.dst_dtype = DataType::FP32;
 
     op.pack_lhs = create_matmul_lhs_quant_pack_qai8dxp1x4_f32();
-    op.pack_rhs = create_matmul_rhs_pack_nxk_qsi8cxp8x4_qsi8cx_neon();
+    op.pack_rhs = create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon(8, 4);
     op.matmul = create_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot();
     return op;
 }
@@ -532,8 +606,19 @@ MatMulOperator create_operator_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_do
     op.clamp_mode = MatMulClampMode::OPTIONAL;
 
     op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 1, 0);
-    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(DataType::I8, DataType::FP32, RoundMode::CURRENT, 1, 0);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        1, 0                  // Row blocks
+    );
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I8,        // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 0                 // Row blocks
+    );
     op.bias_quant = std::nullopt;
 
     op.lhs_dtype = DataType::FP32;
@@ -543,7 +628,7 @@ MatMulOperator create_operator_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_do
     op.dst_dtype = DataType::FP32;
 
     op.pack_lhs = create_matmul_lhs_quant_pack_qai8dxp1x8_f32();
-    op.pack_rhs = create_matmul_rhs_pack_nxk_qsi8cxp8x8_qsi8cx_neon();
+    op.pack_rhs = create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon(8, 8);
     op.matmul = create_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot();
     return op;
 }
@@ -563,8 +648,19 @@ MatMulOperator create_operator_matmul_clamp_f32_qai8dxp4vsx4_qsi4c32p16vsx4_4vsx
     op.k_alignment = 32;
 
     op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 1, 0);
-    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(DataType::U4, DataType::BF16, RoundMode::CURRENT, 1, 32);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        1, 0                  // Row blocks
+    );
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::U4,        // Quantized data type
+        DataType::BF16,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 32                // 1x32 blocks
+    );
     op.bias_quant = std::nullopt;
 
     op.lhs_dtype = DataType::FP32;
@@ -573,7 +669,7 @@ MatMulOperator create_operator_matmul_clamp_f32_qai8dxp4vsx4_qsi4c32p16vsx4_4vsx
     op.acc_dtype = DataType::FP32;
     op.dst_dtype = DataType::FP32;
 
-    op.pack_lhs = create_matmul_lhs_quant_pack_qai8dxp4vsx4_f32();
+    op.pack_lhs = create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32();
     op.pack_rhs = create_matmul_rhs_pack_kxn_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme();
     op.matmul = create_matmul_clamp_f32_qai8dxp4vsx4_qsi4c32p16vsx4_4vsx16vs_sme_mopa();
     return op;
@@ -594,8 +690,19 @@ MatMulOperator create_operator_matmul_clamp_f32_qai8dxp4vsx4_qsi4c32p16vsx4_4vsx
     op.k_alignment = 32;
 
     op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 1, 0);
-    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(DataType::U4, DataType::BF16, RoundMode::CURRENT, 1, 32);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        1, 0                  // Row blocks
+    );
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::U4,        // Quantized data type
+        DataType::BF16,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 32                // 1x32 blocks
+    );
     op.bias_quant = std::nullopt;
 
     op.lhs_dtype = DataType::FP32;
@@ -604,7 +711,7 @@ MatMulOperator create_operator_matmul_clamp_f32_qai8dxp4vsx4_qsi4c32p16vsx4_4vsx
     op.acc_dtype = DataType::FP32;
     op.dst_dtype = DataType::FP32;
 
-    op.pack_lhs = create_matmul_lhs_quant_pack_qai8dxp4vsx4_f32();
+    op.pack_lhs = create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32();
     op.pack_rhs = create_matmul_rhs_pack_nxk_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme();
     op.matmul = create_matmul_clamp_f32_qai8dxp4vsx4_qsi4c32p16vsx4_4vsx16vs_sme_mopa();
     return op;
@@ -622,7 +729,12 @@ MatMulOperator create_operator_matmul_clamp_f32_qsi8d32p1x4_qai4c32p16vsx4s1s0sf
         is_shape_suitable_rhs_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme>;
     op.supported_bias_mode_sets = {no_bias};
     op.clamp_mode = MatMulClampMode::OPTIONAL;
-    op.lhs_quant = std::make_unique<SymmLinearQuantizer>(DataType::I8, DataType::FP32, RoundMode::CURRENT, 1, 32);
+    op.lhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I8,        // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 32                // 1x32 blocks
+    );
     op.rhs_quant = std::make_unique<TwoLevelAsymBlockQuantizer>(qai4c32k256_format_config);
     op.bias_quant = std::nullopt;
     op.lhs_dtype = DataType::FP32;
@@ -657,7 +769,7 @@ MatMulOperator create_operator_matmul_clamp_f32_u8p4vsx4_u8p4vsx4_i32_i32_f32_f3
     op.dst_dtype = DataType::FP32;
     op.ref_dtype = DataType::I32;
 
-    op.pack_lhs = create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme(op.lhs_dtype);
+    op.pack_lhs = create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme(op.lhs_dtype, MatMulSlot::LHS_DATA);
     op.pack_rhs = create_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme(op.rhs_dtype);
     op.matmul = create_matmul_clamp_f32_u8p4vsx4_u8p4vsx4_i32_i32_f32_f32_8vsx8vs_sme2_mopa();
     return op;
@@ -684,7 +796,7 @@ MatMulOperator create_operator_matmul_clamp_f32_u8p4vsx4_u8p4vsx4_i32_i32_f32_f3
     op.dst_dtype = DataType::FP32;
     op.ref_dtype = DataType::I32;
 
-    op.pack_lhs = create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme(op.lhs_dtype);
+    op.pack_lhs = create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme(op.lhs_dtype, MatMulSlot::LHS_DATA);
     op.pack_rhs = create_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme(op.rhs_dtype);
     op.matmul = create_matmul_clamp_f32_u8p4vsx4_u8p4vsx4_i32_i32_f32_f32_8vsx8vs_sme2_mopa();
     return op;
@@ -699,11 +811,33 @@ MatMulOperator create_operator_matmul_clamp_qai8_qai8_qsi4cxp8vsx4sf32bi32_1x64v
     op.supported_bias_mode_sets = {acc_bias_per_n};
     op.clamp_mode = MatMulClampMode::OPTIONAL;
     op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 0, 0);
-    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(DataType::I4, DataType::FP32, RoundMode::CURRENT, 1, 0);
-    op.bias_quant = std::make_unique<SymmLinearQuantizer>(DataType::I32, DataType::FP32, RoundMode::CURRENT, 1, 1);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        0, 0                  // Full matrix
+    );
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I4,        // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 0                 // Row blocks
+    );
+    op.bias_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I32,       // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 1                 // Element blocks
+    );
     op.dst_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 0, 0);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        0, 0                  // Full matrix
+    );
     op.bias_quant_info_source = MatMulBiasQuantInfoSource::STATIC_FROM_INPUT_AND_OUTPUT_QUANT;
     op.lhs_dtype = DataType::FP32;
     op.rhs_dtype = DataType::FP32;
@@ -725,11 +859,33 @@ MatMulOperator create_operator_matmul_clamp_qai8_qai8_qsi4cxp8vsx4sf32bi32_1x64v
     op.supported_bias_mode_sets = {acc_bias_per_n};
     op.clamp_mode = MatMulClampMode::OPTIONAL;
     op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 0, 0);
-    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(DataType::I4, DataType::FP32, RoundMode::CURRENT, 1, 0);
-    op.bias_quant = std::make_unique<SymmLinearQuantizer>(DataType::I32, DataType::FP32, RoundMode::CURRENT, 1, 1);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        0, 0                  // Full matrix
+    );
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I4,        // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 0                 // Row blocks
+    );
+    op.bias_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I32,       // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 1                 // Element blocks
+    );
     op.dst_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 0, 0);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        0, 0                  // Full matrix
+    );
     op.bias_quant_info_source = MatMulBiasQuantInfoSource::STATIC_FROM_INPUT_AND_OUTPUT_QUANT;
     op.lhs_dtype = DataType::FP32;
     op.rhs_dtype = DataType::FP32;
@@ -751,11 +907,33 @@ MatMulOperator create_operator_matmul_clamp_qai8_qai8_qsu2cxp16vsx4sf32bi32_1x64
     op.supported_bias_mode_sets = {acc_bias_per_n};
     op.clamp_mode = MatMulClampMode::OPTIONAL;
     op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 0, 0);
-    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(DataType::I2, DataType::FP32, RoundMode::CURRENT, 1, 0);
-    op.bias_quant = std::make_unique<SymmLinearQuantizer>(DataType::I32, DataType::FP32, RoundMode::CURRENT, 1, 1);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        0, 0                  // Full matrix
+    );
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I2,        // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 0                 // Row blocks
+    );
+    op.bias_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I32,       // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 1                 // Element blocks
+    );
     op.dst_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 0, 0);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        0, 0                  // Full matrix
+    );
     op.bias_quant_info_source = MatMulBiasQuantInfoSource::STATIC_FROM_INPUT_AND_OUTPUT_QUANT;
     op.lhs_dtype = DataType::FP32;
     op.rhs_dtype = DataType::FP32;
@@ -777,11 +955,33 @@ MatMulOperator create_operator_matmul_clamp_qai8_qai8_qsu2cxp16vsx4sf32bi32_1x64
     op.supported_bias_mode_sets = {acc_bias_per_n};
     op.clamp_mode = MatMulClampMode::OPTIONAL;
     op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 0, 0);
-    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(DataType::I2, DataType::FP32, RoundMode::CURRENT, 1, 0);
-    op.bias_quant = std::make_unique<SymmLinearQuantizer>(DataType::I32, DataType::FP32, RoundMode::CURRENT, 1, 1);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        0, 0                  // Full matrix
+    );
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I2,        // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 0                 // Row blocks
+    );
+    op.bias_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I32,       // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 1                 // Element blocks
+    );
     op.dst_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 0, 0);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        0, 0                  // Full matrix
+    );
     op.bias_quant_info_source = MatMulBiasQuantInfoSource::STATIC_FROM_INPUT_AND_OUTPUT_QUANT;
     op.lhs_dtype = DataType::FP32;
     op.rhs_dtype = DataType::FP32;
@@ -806,11 +1006,33 @@ MatMulOperator create_operator_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32
     op.supported_bias_mode_sets = {acc_bias_per_n};
     op.clamp_mode = MatMulClampMode::OPTIONAL;
     op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 0, 0);
-    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(DataType::I8, DataType::FP32, RoundMode::CURRENT, 1, 0);
-    op.bias_quant = std::make_unique<SymmLinearQuantizer>(DataType::I32, DataType::FP32, RoundMode::CURRENT, 1, 1);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        0, 0                  // Full matrix
+    );
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I8,        // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 0                 // Row blocks
+    );
+    op.bias_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I32,       // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 1                 // Element blocks
+    );
     op.dst_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 0, 0);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        0, 0                  // Full matrix
+    );
     op.bias_quant_info_source = MatMulBiasQuantInfoSource::STATIC_FROM_INPUT_AND_OUTPUT_QUANT;
     op.lhs_dtype = DataType::FP32;
     op.rhs_dtype = DataType::FP32;
@@ -818,7 +1040,7 @@ MatMulOperator create_operator_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32
     op.acc_dtype = DataType::I32;
     op.dst_dtype = DataType::I8;
 
-    op.pack_lhs = create_matmul_pack_lhs_mxk_x8p4vsx4_i8_sme();
+    op.pack_lhs = create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme(DataType::I8, MatMulSlot::LHS_QDATA);
     op.pack_rhs = create_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme();
     op.matmul = create_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx8vs_sme2_mopa();
     return op;
@@ -836,11 +1058,33 @@ MatMulOperator create_operator_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4sf32bi32
     op.supported_bias_mode_sets = {acc_bias_per_n};
     op.clamp_mode = MatMulClampMode::OPTIONAL;
     op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 0, 0);
-    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(DataType::I8, DataType::FP32, RoundMode::CURRENT, 1, 0);
-    op.bias_quant = std::make_unique<SymmLinearQuantizer>(DataType::I32, DataType::FP32, RoundMode::CURRENT, 1, 1);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        0, 0                  // Full matrix
+    );
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I8,        // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 0                 // Row blocks
+    );
+    op.bias_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I32,       // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 1                 // Element blocks
+    );
     op.dst_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 0, 0);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        0, 0                  // Full matrix
+    );
     op.bias_quant_info_source = MatMulBiasQuantInfoSource::STATIC_FROM_INPUT_AND_OUTPUT_QUANT;
     op.lhs_dtype = DataType::FP32;
     op.rhs_dtype = DataType::FP32;
@@ -848,7 +1092,7 @@ MatMulOperator create_operator_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4sf32bi32
     op.acc_dtype = DataType::I32;
     op.dst_dtype = DataType::I8;
 
-    op.pack_lhs = create_matmul_pack_lhs_mxk_x8p4vsx4_i8_sme();
+    op.pack_lhs = create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme(DataType::I8, MatMulSlot::LHS_QDATA);
     op.pack_rhs = create_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme();
     op.matmul = create_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4sf32bi32_8vsx8vs_sme2p1_mop4_mopa();
     return op;
@@ -863,18 +1107,40 @@ MatMulOperator create_operator_matmul_clamp_qai8_qai8p8vsx4_qsi4cxp8vsx4sf32bi32
     op.supported_bias_mode_sets = {acc_bias_per_n};
     op.clamp_mode = MatMulClampMode::OPTIONAL;
     op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 0, 0);
-    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(DataType::I4, DataType::FP32, RoundMode::CURRENT, 1, 0);
-    op.bias_quant = std::make_unique<SymmLinearQuantizer>(DataType::I32, DataType::FP32, RoundMode::CURRENT, 1, 1);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        0, 0                  // Full matrix
+    );
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I4,        // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 0                 // Row blocks
+    );
+    op.bias_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I32,       // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 1                 // Element blocks
+    );
     op.dst_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 0, 0);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        0, 0                  // Full matrix
+    );
     op.bias_quant_info_source = MatMulBiasQuantInfoSource::STATIC_FROM_INPUT_AND_OUTPUT_QUANT;
     op.lhs_dtype = DataType::FP32;
     op.rhs_dtype = DataType::FP32;
     op.bias_dtype = DataType::FP32;
     op.acc_dtype = DataType::I32;
     op.dst_dtype = DataType::I8;
-    op.pack_lhs = create_matmul_lhs_pack_x8p8vsx4_i8_sme();
+    op.pack_lhs = create_matmul_lhs_pack_x8p8vsx4_x8_sme(DataType::I8, MatMulSlot::LHS_QDATA);
     op.pack_rhs = create_matmul_pack_rhs_kxn_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme();
     op.matmul = create_matmul_clamp_qai8_qai8p8vsx4_qsi4cxp8vsx4sf32bi32_8vsx8vs_sme2_mopa();
     return op;
@@ -889,18 +1155,40 @@ MatMulOperator create_operator_matmul_clamp_qai8_qai8p8vsx4_qsi4cxp8vsx4sf32bi32
     op.supported_bias_mode_sets = {acc_bias_per_n};
     op.clamp_mode = MatMulClampMode::OPTIONAL;
     op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 0, 0);
-    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(DataType::I4, DataType::FP32, RoundMode::CURRENT, 1, 0);
-    op.bias_quant = std::make_unique<SymmLinearQuantizer>(DataType::I32, DataType::FP32, RoundMode::CURRENT, 1, 1);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        0, 0                  // Full matrix
+    );
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I4,        // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 0                 // Row blocks
+    );
+    op.bias_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I32,       // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 1                 // Element blocks
+    );
     op.dst_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 0, 0);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        0, 0                  // Full matrix
+    );
     op.bias_quant_info_source = MatMulBiasQuantInfoSource::STATIC_FROM_INPUT_AND_OUTPUT_QUANT;
     op.lhs_dtype = DataType::FP32;
     op.rhs_dtype = DataType::FP32;
     op.bias_dtype = DataType::FP32;
     op.acc_dtype = DataType::I32;
     op.dst_dtype = DataType::I8;
-    op.pack_lhs = create_matmul_lhs_pack_x8p8vsx4_i8_sme();
+    op.pack_lhs = create_matmul_lhs_pack_x8p8vsx4_x8_sme(DataType::I8, MatMulSlot::LHS_QDATA);
     op.pack_rhs = create_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme();
     op.matmul = create_matmul_clamp_qai8_qai8p8vsx4_qsi4cxp8vsx4sf32bi32_8vsx8vs_sme2_mopa();
     return op;
@@ -915,18 +1203,40 @@ MatMulOperator create_operator_matmul_clamp_qai8_qai8p8vsx4_qsu2cxp16vsx4sf32bi3
     op.supported_bias_mode_sets = {acc_bias_per_n};
     op.clamp_mode = MatMulClampMode::OPTIONAL;
     op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 0, 0);
-    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(DataType::I2, DataType::FP32, RoundMode::CURRENT, 1, 0);
-    op.bias_quant = std::make_unique<SymmLinearQuantizer>(DataType::I32, DataType::FP32, RoundMode::CURRENT, 1, 1);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        0, 0                  // Full matrix
+    );
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I2,        // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 0                 // Row blocks
+    );
+    op.bias_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I32,       // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 1                 // Element blocks
+    );
     op.dst_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 0, 0);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        0, 0                  // Full matrix
+    );
     op.bias_quant_info_source = MatMulBiasQuantInfoSource::STATIC_FROM_INPUT_AND_OUTPUT_QUANT;
     op.lhs_dtype = DataType::FP32;
     op.rhs_dtype = DataType::FP32;
     op.bias_dtype = DataType::FP32;
     op.acc_dtype = DataType::I32;
     op.dst_dtype = DataType::I8;
-    op.pack_lhs = create_matmul_lhs_pack_x8p8vsx4_i8_sme();
+    op.pack_lhs = create_matmul_lhs_pack_x8p8vsx4_x8_sme(DataType::I8, MatMulSlot::LHS_QDATA);
     op.pack_rhs = create_matmul_pack_rhs_kxn_qsu2cxp16vsx4sf32bi32_qsu2cx_f32_i32_sme();
     op.matmul = create_matmul_clamp_qai8_qai8p8vsx4_qsu2cxp16vsx4sf32bi32_8vsx16vs_sme2_mopa();
     return op;
@@ -941,18 +1251,40 @@ MatMulOperator create_operator_matmul_clamp_qai8_qai8p8vsx4_qsu2cxp16vsx4sf32bi3
     op.supported_bias_mode_sets = {acc_bias_per_n};
     op.clamp_mode = MatMulClampMode::OPTIONAL;
     op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 0, 0);
-    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(DataType::I2, DataType::FP32, RoundMode::CURRENT, 1, 0);
-    op.bias_quant = std::make_unique<SymmLinearQuantizer>(DataType::I32, DataType::FP32, RoundMode::CURRENT, 1, 1);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        0, 0                  // Full matrix
+    );
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I2,        // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 0                 // Row blocks
+    );
+    op.bias_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I32,       // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 1                 // Element blocks
+    );
     op.dst_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 0, 0);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        0, 0                  // Full matrix
+    );
     op.bias_quant_info_source = MatMulBiasQuantInfoSource::STATIC_FROM_INPUT_AND_OUTPUT_QUANT;
     op.lhs_dtype = DataType::FP32;
     op.rhs_dtype = DataType::FP32;
     op.bias_dtype = DataType::FP32;
     op.acc_dtype = DataType::I32;
     op.dst_dtype = DataType::I8;
-    op.pack_lhs = create_matmul_lhs_pack_x8p8vsx4_i8_sme();
+    op.pack_lhs = create_matmul_lhs_pack_x8p8vsx4_x8_sme(DataType::I8, MatMulSlot::LHS_QDATA);
     op.pack_rhs = create_matmul_pack_rhs_nxk_qsu2cxp16vsx4sf32bi32_qsu2cx_f32_i32_sme();
     op.matmul = create_matmul_clamp_qai8_qai8p8vsx4_qsu2cxp16vsx4sf32bi32_8vsx16vs_sme2_mopa();
     return op;
@@ -1032,7 +1364,7 @@ MatMulOperator create_operator_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2
     op.dst_dtype = DataType::I32;
     op.ref_dtype = DataType::I32;
 
-    op.pack_lhs = create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme(op.lhs_dtype);
+    op.pack_lhs = create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme(op.lhs_dtype, MatMulSlot::LHS_DATA);
     op.pack_rhs = create_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme(op.rhs_dtype);
     op.matmul = create_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa();
     return op;
@@ -1059,7 +1391,7 @@ MatMulOperator create_operator_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2
     op.dst_dtype = DataType::I32;
     op.ref_dtype = DataType::I32;
 
-    op.pack_lhs = create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme(op.lhs_dtype);
+    op.pack_lhs = create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme(op.lhs_dtype, MatMulSlot::LHS_DATA);
     op.pack_rhs = create_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme(op.rhs_dtype);
     op.matmul = create_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa();
     return op;
@@ -1080,8 +1412,19 @@ MatMulOperator create_operator_matmul_clamp_f32_qai8dxp4x8sf32_qsi8cxp4vsx8sf32b
     op.clamp_mode = MatMulClampMode::REQUIRED;
 
     op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 1, 0);
-    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(DataType::I8, DataType::FP32, RoundMode::CURRENT, 1, 0);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        1, 0                  // Row blocks
+    );
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I8,        // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 0                 // Row blocks
+    );
     op.bias_quant = std::nullopt;
 
     op.lhs_dtype = DataType::FP32;
@@ -1157,8 +1500,19 @@ MatMulOperator create_operator_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4c32p8x8s16s
     op.clamp_mode = MatMulClampMode::OPTIONAL;
 
     op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
-        DataType::I8, DataType::FP32, DataType::I32, RoundMode::TIE_AWAY, RoundMode::CURRENT, 1, 0);
-    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(DataType::U4, DataType::BF16, RoundMode::CURRENT, 1, 32);
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        1, 0                  // Row blocks
+    );
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::U4,        // Quantized data type
+        DataType::BF16,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 32                // 1x32 blocks
+    );
     op.bias_quant = std::nullopt;
     op.lhs_dtype = DataType::FP32;
     op.rhs_dtype = DataType::FP32;

@@ -4,8 +4,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-#ifndef KLEIDIAI_BENCHMARK_MATMUL_MATMUL_INTERFACE_HPP
-#define KLEIDIAI_BENCHMARK_MATMUL_MATMUL_INTERFACE_HPP
+#pragma once
 
 #include <cstddef>
 #include <cstdint>
@@ -118,5 +117,3 @@ struct MatMulUkernelApiInterface {
 };
 
 }  // namespace kai::benchmark
-
-#endif  // KLEIDIAI_BENCHMARK_MATMUL_MATMUL_INTERFACE_HPP
