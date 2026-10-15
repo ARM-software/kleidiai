@@ -19,19 +19,9 @@
 #include <string>
 #include <string_view>
 
+#include "benchmark/kai_benchmark.hpp"
 #include "benchmark/softmax/softmax_registry.hpp"
 #include "test/nextgen/common/text_utils.hpp"
-
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wswitch-default"
-#endif  // __GNUC__
-
-#include <benchmark/benchmark.h>
-
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif  // __GNUC__
 
 namespace kai::benchmark {
 
@@ -47,7 +37,6 @@ void print_softmax_usage(std::string_view name) {
 int run_softmax(int argc, char** argv, const std::optional<std::string>& user_filter_opt) {
     std::optional<size_t> dim_0;
 
-    optind = 1;
     int opt;
     while ((opt = getopt(argc, argv, "l:")) != -1) {
         switch (opt) {
@@ -68,9 +57,9 @@ int run_softmax(int argc, char** argv, const std::optional<std::string>& user_fi
     RegisterSoftmaxBenchmarks(*dim_0);
     const std::string spec = user_filter_opt.value_or("");
 
-    ::benchmark::RunSpecifiedBenchmarks(nullptr, nullptr, spec);
-    ::benchmark::Shutdown();
-    return 0;
+    const int result = BMFramework::RunSpecifiedBenchmarks(spec);
+    BMFramework::Shutdown();
+    return result;
 }
 
 }  // namespace kai::benchmark

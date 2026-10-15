@@ -11,20 +11,9 @@
 #include <functional>
 #include <vector>
 
-#include "benchmark/cycle_counter.hpp"
+#include "benchmark/kai_benchmark.hpp"
 #include "softmax_interface.hpp"
 #include "softmax_runner.hpp"
-
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wswitch-default"
-#endif  // __GNUC__
-
-#include <benchmark/benchmark.h>
-
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif  // __GNUC__
 
 namespace kai::benchmark {
 using CpuRequirement = std::function<bool()>;
@@ -37,7 +26,7 @@ using CpuRequirement = std::function<bool()>;
 /// @param is_cpu_supported Function that checks the CPU feature requirement to run this benchmark.
 template <typename SrcType>
 void kai_benchmark_softmax(
-    ::benchmark::State& state, const SoftmaxInterface softmax_interface, const CpuRequirement& is_cpu_supported) {
+    BMState& state, const SoftmaxInterface softmax_interface, const CpuRequirement& is_cpu_supported) {
     if (!is_cpu_supported()) {
         state.SkipWithMessage("Unsupported CPU feature");
         return;
@@ -52,34 +41,7 @@ void kai_benchmark_softmax(
     std::vector<std::byte> dst(runner.get_dst_size());
     runner.prepare(src.data(), dst.data());
 
-    const bool cycle_counter_available = cycle_counter_init();
-    uint64_t start_cycles = 0;
-    bool cycle_measurement_valid = false;
-    if (cycle_counter_available) {
-        cycle_counter_start();
-        cycle_measurement_valid = cycle_counter_read(start_cycles);
-    }
-
-    for ([[maybe_unused]] auto _ : state) {
-        runner.run();
-        ::benchmark::DoNotOptimize(dst.data());
-        ::benchmark::ClobberMemory();
-    }
-
-    uint64_t total_cycles = 0;
-    if (cycle_counter_available) {
-        uint64_t end_cycles = 0;
-        cycle_measurement_valid =
-            cycle_measurement_valid && cycle_counter_read(end_cycles) && end_cycles >= start_cycles;
-        cycle_counter_stop();
-        if (cycle_measurement_valid) {
-            total_cycles = end_cycles - start_cycles;
-        }
-        cycle_counter_shutdown();
-    }
-
-    state.counters["cpu_cycles"] = ::benchmark::Counter(
-        static_cast<double>(total_cycles), ::benchmark::Counter::kAvgIterations, ::benchmark::Counter::OneK::kIs1000);
+    state.run([&] { runner.run(); });
     state.SetItemsProcessed(state.iterations() * static_cast<int64_t>(dim_0));
     state.SetBytesProcessed(state.iterations() * static_cast<int64_t>(src.size() * sizeof(SrcType) + dst.size()));
 }

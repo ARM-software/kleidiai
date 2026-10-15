@@ -9,26 +9,16 @@
 #include <array>
 #include <cstddef>
 
+#include "benchmark/kai_benchmark.hpp"
 #include "kai/ukernels/softmax/kai_softmax.h"
 #include "softmax_benchmark_logic.hpp"
 #include "softmax_interface.hpp"
 #include "test/common/cpu_info.hpp"
 
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wswitch-default"
-#endif  // __GNUC__
-
-#include <benchmark/benchmark.h>
-
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif  // __GNUC__
-
 namespace kai::benchmark {
 namespace {
 
-using SoftmaxBenchmarkFunction = void (*)(::benchmark::State&, const SoftmaxInterface, const CpuRequirement&);
+using SoftmaxBenchmarkFunction = void (*)(BMState&, const SoftmaxInterface, const CpuRequirement&);
 
 struct SoftmaxBenchmark {
     const char* name;
@@ -56,10 +46,10 @@ const std::array<SoftmaxBenchmark, 2> softmax_benchmarks{
 
 void RegisterSoftmaxBenchmarks(size_t dim_0) {
     for (const SoftmaxBenchmark& benchmark : softmax_benchmarks) {
-        ::benchmark::RegisterBenchmark(
+        BMFramework::RegisterBenchmark(
             benchmark.name, benchmark.function, benchmark.interface, benchmark.is_cpu_supported)
-            ->Arg(static_cast<int64_t>(dim_0))
-            ->ArgName("dim_0");
+            ->Args({static_cast<int64_t>(dim_0)})
+            ->ArgNames({"dim_0"});
     }
 }
 
