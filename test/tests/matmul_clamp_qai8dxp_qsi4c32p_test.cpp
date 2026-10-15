@@ -440,13 +440,15 @@ std::tuple<Buffer, size_t> pack_rhs_qsi4c32pscalebf16_neon(
 
     Buffer imp_packed_rhs_neon(imp_packed_rhs_size_neon);
     if (kr / sr == 8) {
-        kai_run_rhs_pack_nxk_qsi4c32pnrx8_qsu4c32s1s0_neon(
+        abi_check(
+            kai_run_rhs_pack_nxk_qsi4c32pnrx8_qsu4c32s1s0_neon,  //
             1, rect_width /* n */, K, nr, kr, sr, bl,
             reinterpret_cast<const uint8_t*>(rhs_qsu4.data() + rhs_offset_neon), rhs_stride_bytes,
             reinterpret_cast<const float*>(biases.data() + bias_offset), rhs_scales.data() + scale_offset,
             scales_stride_bytes, imp_packed_rhs_neon.data() + rhs_packed_offset_neon, 0, &params);
     } else {
-        kai_run_rhs_pack_nxk_qsi4c32pnrx4_qsu4c32s1s0_neon(
+        abi_check(
+            kai_run_rhs_pack_nxk_qsi4c32pnrx4_qsu4c32s1s0_neon,  //
             1, rect_width /* n */, K, nr, kr, sr, bl,
             reinterpret_cast<const uint8_t*>(rhs_qsu4.data() + rhs_offset_neon), rhs_stride_bytes,
             reinterpret_cast<const float*>(biases.data() + bias_offset), rhs_scales.data() + scale_offset,
@@ -918,7 +920,8 @@ BF16TestData ReferenceGenerator<BF16QMatMulRefKey, BF16TestData>::generate_refer
     ref.lhs_packed_offset =
         kai_get_lhs_packed_offset_lhs_quant_pack_qai8dxp_bf16_neon(rect_start_row, ref.K, mr, kr, sr);
 
-    kai_run_lhs_quant_pack_qai8dxp_bf16_neon(
+    abi_check(
+        kai_run_lhs_quant_pack_qai8dxp_bf16_neon,  //
         rect_height, ref.K, mr, kr, sr, 0, ref.lhs_bf16.data() + lhs_offset, lhs_stride,
         reinterpret_cast<uint8_t*>(ref.lhs_packed.data()) + ref.lhs_packed_offset);
 

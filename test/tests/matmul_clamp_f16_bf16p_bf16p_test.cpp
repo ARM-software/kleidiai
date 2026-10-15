@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "kai/kai_common.h"
+#include "test/common/abi_checker.hpp"
 #include "test/common/buffer.hpp"
 #include "test/common/compare.hpp"
 #include "test/common/cpu_info.hpp"
@@ -200,7 +201,8 @@ protected:
 
         if (has_rhs_pack) {
             const auto ref_rhs_row_stride = method.rhs_format.default_row_stride(rhs_w);
-            method.pack_rhs(
+            abi_check(
+                &MatMulMethod::pack_rhs, method,  //
                 info.n, info.k, rhs.data(), ref_rhs_row_stride, has_bias ? bias.data() : nullptr, nullptr,
                 packed_rhs.data());
         }
@@ -286,7 +288,8 @@ void MatMulTestBf16OutFp16::TestBody() {
     uintptr_t lhs_packed_offset = method.fn_get_packed_lhs_offset(lhs_start_row, info.k);
 
     KAI_UNUSED(lhs_offset);
-    method.fn_pack_lhs(
+    abi_check(
+        method.fn_pack_lhs,  //
         rect.height(), info.k, method.m0, method.k0, 1 /* sr */, 0 /* m_idx_start */, data.lhs.data() + lhs_offset,
         lhs_stride, lhs_data.data() + lhs_packed_offset);
 
@@ -307,13 +310,14 @@ void MatMulTestBf16OutFp16::TestBody() {
 
     uintptr_t bias_offset = sizeof(uint16_t) * rect.start_col();
 
-    method.fn_pack_rhs(
-        1,  // num_groups
+    abi_check(
+        method.fn_pack_rhs,  //
+        1,                   // num_groups
         rhs_w, info.k, method.n0, method.k0,
         1,  // sr
         rhs_stride, data.rhs.data() + rhs_offset, has_bias ? data.bias.data() + bias_offset : nullptr,
-        NULL,  // Scale
-        rhs_data.data() + rhs_packed_offset, 0, NULL);
+        nullptr,  // Scale
+        rhs_data.data() + rhs_packed_offset, 0, nullptr);
 
     if (has_bias) {
         const auto ref_bias_offset = method.bias_format.default_offset_in_bytes(0, rect.start_col(), bias_w);
@@ -330,9 +334,11 @@ void MatMulTestBf16OutFp16::TestBody() {
     ASSERT_EQ(dst_size, ref_dst_size);
 
     Buffer dst(dst_size);
-    method.main_kernel(
+    abi_check(
+        &MatMulMethod::main_kernel, method,  //
         rect.height(), rect.width(), info.k, lhs_data.data() + lhs_packed_offset, rhs_data.data() + rhs_packed_offset,
-        NULL, dst.data() + dst_offset, lhs_stride, rhs_stride, dst_stride, data.clamp_range.min, data.clamp_range.max);
+        nullptr, dst.data() + dst_offset, lhs_stride, rhs_stride, dst_stride, data.clamp_range.min,
+        data.clamp_range.max);
 
     DefaultMismatchHandler handler(0, 0.02, 0, 0.05);
     const auto success = compare(dst.data(), data.ref_dst.data(), method.dst_format, info.m, info.n, rect, handler);

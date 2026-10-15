@@ -22,6 +22,7 @@
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp_bf16_neon.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_qsi4cxp_qs4cxs1s0.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4cxp_qs4cxs1s0.h"
+#include "test/common/abi_checker.hpp"
 #include "test/common/bfloat16.hpp"
 #include "test/common/buffer.hpp"
 #include "test/common/cache.hpp"
@@ -222,7 +223,8 @@ TEST_P(MatMulTest_bf16_qai8dxp_qsi4cxp, EndToEnd_RHS_NxK) {
 
     ASSERT_EQ(lhs_packed_offset, lhs_matmul_offset);
 
-    kai_run_lhs_quant_pack_qai8dxp_bf16_neon(
+    abi_check(
+        kai_run_lhs_quant_pack_qai8dxp_bf16_neon,  //
         rect.height() /* m */, K, mr, kr, sr, 0, ref_lhs_bf16.data() + lhs_offset, lhs_stride,
         reinterpret_cast<uint8_t*>(imp_packed_lhs_buf.data()) + lhs_packed_offset);
 
@@ -240,7 +242,8 @@ TEST_P(MatMulTest_bf16_qai8dxp_qsi4cxp, EndToEnd_RHS_NxK) {
     params.lhs_zero_point = 1;
     params.rhs_zero_point = 0;
 
-    kai_run_rhs_pack_nxk_qsi4cxp_qs4cxs1s0(
+    abi_check(
+        kai_run_rhs_pack_nxk_qsi4cxp_qs4cxs1s0,  //
         1, N, K, nr, kr, sr, reinterpret_cast<const uint8_t*>(ref_rhs_qsi4_padded.data()),
         has_bias ? reinterpret_cast<const float*>(ref_biases_buf.data()) : nullptr,
         reinterpret_cast<const float*>(ref_rhs_scales.data()), reinterpret_cast<uint8_t*>(imp_packed_rhs_buf.data()), 0,
@@ -258,7 +261,8 @@ TEST_P(MatMulTest_bf16_qai8dxp_qsi4cxp, EndToEnd_RHS_NxK) {
     ASSERT_EQ(imp_dst_size, ref_dst.size());
     Buffer imp_dst_buf = Buffer(imp_dst_size);
 
-    ukernel_variant.interface.run_matmul(
+    abi_check(
+        ukernel_variant.interface.run_matmul,  //
         rect.height(), rect.width(), K, reinterpret_cast<const uint8_t*>(imp_packed_lhs_buf.data()) + lhs_matmul_offset,
         reinterpret_cast<const uint8_t*>(imp_packed_rhs_buf.data()) + rhs_matmul_offset,
         reinterpret_cast<uint8_t*>(imp_dst_buf.data()) + dst_offset, dst_stride_row, dst_stride_col, clamp_min,
@@ -326,7 +330,8 @@ TEST_P(MatMulTest_bf16_qai8dxp_qsi4cxp, EndToEnd_RHS_KxN) {
     auto lhs_matmul_offset = ukernel_variant.interface.get_lhs_packed_offset(lhs_start_row, K);
     ASSERT_EQ(lhs_packed_offset, lhs_matmul_offset);
 
-    kai_run_lhs_quant_pack_qai8dxp_bf16_neon(
+    abi_check(
+        kai_run_lhs_quant_pack_qai8dxp_bf16_neon,  //
         rect.height() /* m */, K, mr, kr, sr, 0 /* m_idx_start*/, ref_lhs_bf16.data() + lhs_offset, lhs_stride,
         reinterpret_cast<uint8_t*>(imp_packed_lhs_buf.data()) + lhs_packed_offset);
 
@@ -346,7 +351,8 @@ TEST_P(MatMulTest_bf16_qai8dxp_qsi4cxp, EndToEnd_RHS_KxN) {
     kai_rhs_pack_kxn_qsi4cxp_qs4cxs1s0_params params{};
     params.lhs_zero_point = 1;
     params.rhs_zero_point = 0;
-    kai_run_rhs_pack_kxn_qsi4cxp_qs4cxs1s0(
+    abi_check(
+        kai_run_rhs_pack_kxn_qsi4cxp_qs4cxs1s0,  //
         1, N, K, nr, kr, sr, reinterpret_cast<const uint8_t*>(ref_rhs_qsi4_padded.data()),
         has_bias ? reinterpret_cast<const float*>(ref_biases_buf.data()) : nullptr,
         reinterpret_cast<const float*>(ref_rhs_scales.data()), imp_packed_rhs_buf.data(), 0, &params);
@@ -364,7 +370,8 @@ TEST_P(MatMulTest_bf16_qai8dxp_qsi4cxp, EndToEnd_RHS_KxN) {
     const auto dst_stride_row = N * sizeof(uint16_t);
     const auto dst_stride_col = sizeof(uint16_t);
 
-    ukernel_variant.interface.run_matmul(
+    abi_check(
+        ukernel_variant.interface.run_matmul,  //
         rect.height(), rect.width(), K, reinterpret_cast<const uint8_t*>(imp_packed_lhs_buf.data()) + lhs_matmul_offset,
         reinterpret_cast<const uint8_t*>(imp_packed_rhs_buf.data()) + rhs_matmul_offset,
         reinterpret_cast<uint8_t*>(imp_dst_buf.data()) + dst_offset, dst_stride_row, dst_stride_col, clamp_min,
