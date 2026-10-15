@@ -413,6 +413,14 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_qai8dxp_qsi8cxp.size()),
         testing::Values(
+            // Multiple of 8 K values
+            MatMulShape{5, 17, 24},  //
+
+            // Non-multiple-of-8 K values used by existing integrations
+            MatMulShape{1, 33, 23},   //
+            MatMulShape{5, 17, 101},  //
+
+            // Representative shapes
             MatMulShape{17, 33, 67},  //
             MatMulShape{19, 35, 63},  //
             MatMulShape{1, 27, 31},   //
