@@ -1,5 +1,5 @@
 <!--
-    SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+    SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 
     SPDX-License-Identifier: Apache-2.0
 -->
@@ -77,6 +77,7 @@ Quantize and pack LHS matrix with per-dimension(row) quantization parameters.
 Inputs
 
 1. LHS matrix(M x K) with float(f32) input values and dimensions
+1. Input K has no divisibility requirement. The packed K dimension is rounded up internally to a multiple of 32 to support matmul consumers with block-wise RHS quantization using a block quantisation length (`bl`) of 32.
 1. mr, kr, sr and other parameters defines how to interleave multiple rows and split the rows in packing implementation.
 
 Output

@@ -18,18 +18,8 @@
 #include <string_view>
 
 #include "benchmark/imatmul/imatmul_registry.hpp"
+#include "benchmark/kai_benchmark.hpp"
 #include "test/nextgen/common/text_utils.hpp"
-
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wswitch-default"
-#endif  // __GNUC__
-
-#include <benchmark/benchmark.h>
-
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif  // __GNUC__
 
 namespace kai::benchmark {
 
@@ -48,7 +38,6 @@ void print_imatmul_usage(std::string_view name) {
 int run_imatmul(int argc, char** argv, const std::optional<std::string>& user_filter_opt) {
     std::optional<size_t> m, n, k_chunk_count, k_chunk_length;
 
-    optind = 1;
     int opt;
     while ((opt = getopt(argc, argv, "m:n:c:l:")) != -1) {
         switch (opt) {
@@ -82,9 +71,9 @@ int run_imatmul(int argc, char** argv, const std::optional<std::string>& user_fi
 
     const std::string spec = user_filter_opt.value_or("");
 
-    ::benchmark::RunSpecifiedBenchmarks(nullptr, nullptr, spec);
-    ::benchmark::Shutdown();
-    return 0;
+    const int result = BMFramework::RunSpecifiedBenchmarks(spec);
+    BMFramework::Shutdown();
+    return result;
 }
 
 }  // namespace kai::benchmark

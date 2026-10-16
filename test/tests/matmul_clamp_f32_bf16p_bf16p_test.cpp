@@ -443,7 +443,8 @@ protected:
 
         if (has_rhs_pack) {
             const auto ref_rhs_row_stride = method.rhs_format.default_row_stride(rhs_w);
-            method.pack_rhs(
+            abi_check(
+                &MatMulMethod::pack_rhs, method,  //
                 info.n, info.k, rhs.data(), ref_rhs_row_stride, has_bias ? bias.data() : nullptr, nullptr,
                 packed_rhs.data());
         }

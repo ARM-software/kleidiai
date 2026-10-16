@@ -401,7 +401,8 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp_NxK, EndToEnd_RHS_nxk_qsi4cx) {
     auto lhs_matmul_offset = ukernel_variant.interface.get_lhs_packed_offset(lhs_start_row, K);
     ASSERT_EQ(lhs_packed_offset, lhs_matmul_offset);
 
-    kai_run_lhs_quant_pack_qai8dxp_f32(
+    abi_check(
+        kai_run_lhs_quant_pack_qai8dxp_f32,  //
         rect.height() /* m */, K, mr, kr, sr, 0 /* m_idx_start*/,
         reinterpret_cast<const float*>(ref_lhs.data() + lhs_offset), lhs_stride,
         imp_packed_lhs.data() + lhs_packed_offset);
@@ -535,7 +536,8 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp_NxK, EndToEnd_RHS_nxk_qsu4cx) {
     auto lhs_matmul_offset = ukernel_variant.interface.get_lhs_packed_offset(lhs_start_row, K);
     ASSERT_EQ(lhs_packed_offset, lhs_matmul_offset);
 
-    kai_run_lhs_quant_pack_qai8dxp_f32(
+    abi_check(
+        kai_run_lhs_quant_pack_qai8dxp_f32,  //
         rect.height() /* m */, K, mr, kr, sr, 0 /* m_idx_start*/,
         reinterpret_cast<const float*>(ref_lhs.data() + lhs_offset), lhs_stride,
         imp_packed_lhs.data() + lhs_packed_offset);
@@ -677,7 +679,8 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp_KxN, EndToEnd_RHS_kxn_qsi4cx) {
     auto lhs_matmul_offset = ukernel_variant.interface.get_lhs_packed_offset(lhs_start_row, K);
     ASSERT_EQ(lhs_packed_offset, lhs_matmul_offset);
 
-    kai_run_lhs_quant_pack_qai8dxp_f32(
+    abi_check(
+        kai_run_lhs_quant_pack_qai8dxp_f32,  //
         rect.height() /* m */, K, mr, kr, sr, 0 /* m_idx_start*/,
         reinterpret_cast<const float*>(ref_lhs.data() + lhs_offset), lhs_stride,
         imp_packed_lhs.data() + lhs_packed_offset);
@@ -815,7 +818,8 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi4cxp_KxN, EndToEnd_RHS_kxn_qsu4cx) {
     auto lhs_matmul_offset = ukernel_variant.interface.get_lhs_packed_offset(lhs_start_row, K);
     ASSERT_EQ(lhs_packed_offset, lhs_matmul_offset);
 
-    kai_run_lhs_quant_pack_qai8dxp_f32(
+    abi_check(
+        kai_run_lhs_quant_pack_qai8dxp_f32,  //
         rect.height() /* m */, K, mr, kr, sr, 0 /* m_idx_start*/,
         reinterpret_cast<const float*>(ref_lhs.data() + lhs_offset), lhs_stride,
         imp_packed_lhs.data() + lhs_packed_offset);
