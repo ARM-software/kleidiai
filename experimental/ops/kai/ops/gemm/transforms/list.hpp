@@ -23,6 +23,7 @@
 #include "a64_transpose_interleave_32.hpp"
 #include "a64_transpose_interleave_4_1x16.hpp"
 #include "a64_transpose_interleave_4_1x4.hpp"
+#include "a64_transpose_interleave_4_2x4_fp32bf16.hpp"
 #include "a64_transpose_interleave_48.hpp"
 #include "a64_transpose_interleave_64.hpp"
 #include "a64_transpose_interleave_96.hpp"
