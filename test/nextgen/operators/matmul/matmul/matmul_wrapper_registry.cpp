@@ -593,6 +593,20 @@ MatMulKernelPtr create_matmul_clamp_f32_f32p4vsx1_f32p4vsx1b_8vsx8vs_elastic_sme
         MatMulUkerApiBiasDeliveryStage::PACK_RHS);                         // bias stage
 }
 
+MatMulKernelPtr create_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8vs_sme2p1_mop4_mopa() {
+    return std::make_unique<MatMulUkerApiWrapper>(
+        "matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8vs_sme2p1_mop4_mopa",
+        kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8vs_sme2p1_mop4_mopa(), MatMulSlot::LHS_PACKED,
+        make_poly<Block2dRowFormat>(
+            4 * get_sme_vector_scale(), 1, 1, false, DataType::FP32, std::array<DataType, 0>{},
+            std::array<DataType, 0>{}),
+        make_poly<Block2dRowFormat>(
+            4 * get_sme_vector_scale(), 1, 1, false, DataType::FP32, std::array{DataType::FP32},
+            std::array<DataType, 0>{}),
+        make_poly<PlainFormat>(DataType::FP32), DataType::FP32, MatMulUkerClampConfig::optional(DataType::FP32),
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS);
+}
+
 MatMulKernelPtr create_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa() {
     auto lhs_format = make_poly<Block2dRowFormat>(
         4 * get_sme_vector_scale(), 4,  // Block shape

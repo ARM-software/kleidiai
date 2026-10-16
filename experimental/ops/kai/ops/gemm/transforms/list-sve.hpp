@@ -26,6 +26,7 @@
 #include "sve_transpose_interleave_12VL_2x4_fp32bf16.hpp"
 #include "sve_transpose_interleave_1VL.hpp"
 #include "sve_transpose_interleave_2VL.hpp"
+#include "sve_transpose_interleave_2VL_2x4_fp32bf16.hpp"
 #include "sve_transpose_interleave_3VL_1x4.hpp"
 #include "sve_transpose_interleave_3VL_2x2.hpp"
 #include "sve_transpose_interleave_3VL.hpp"

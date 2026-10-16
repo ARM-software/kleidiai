@@ -22,6 +22,7 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
   - New SME2.1 Fexpa micro-kernel for FP32 datatype.
 - New SVE micro-kernels:
   - New SVE Fexpa Softmax FP32 micro-kernel
+  - FP32 matrix multiplication using MOP4A instructions for small-M and small-N cases.
 
 ## v1.32.0
 

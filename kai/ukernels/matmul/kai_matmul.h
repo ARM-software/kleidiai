@@ -132,6 +132,27 @@ struct kai_matmul_uker_api kai_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1
 /// @return The micro-kernel API.
 struct kai_matmul_uker_api kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8vs_sme2_mopa(void);
 
+/// Single-precision floating-point matrix multiplication using SME2 outer product (MOPA)
+/// and SME2.1 quarter tile outer product (MOP4A) instructions.
+///
+/// Required CPU features:
+///   * FEAT_SME2.1
+///   * FEAT_SME_MOP4
+///
+/// Required operands:
+///   * dst
+///   * lhs
+///   * rhs - RHS matrix with per-n accumulator bias
+///
+/// Optional arguments:
+///   * clamp - F32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
+///
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8vs_sme2p1_mop4_mopa(void);
+
 /// Matrix multiplication with single-precision floating-point accumulation using SME2 MOPA instruction.
 ///
 /// Required CPU features:

@@ -17,6 +17,7 @@
 #include "kernel_weight_format.hpp"
 #include "kai/ops/gemm/ndrange.hpp"
 #include "performance_parameters.hpp"
+#include "common_internal/quantized.hpp"
 #include "common_internal/utils.hpp"
 
 #ifdef CYCLE_PROFILING
