@@ -109,9 +109,10 @@ void Transform(
 
 #include "transforms/list.hpp"
 
+template void Transform<8, 1, true, VLType::None>(float *, const float *, int, int, int, int, int);
+
 // We don't have assembler transforms for AArch32, generate templated ones here.
 #ifdef __arm__
-template void Transform<8, 1, true, VLType::None>(float *, const float *, int, int, int, int, int);
 #if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
 template void Transform<8, 1, true, VLType::None>(float *, const __fp16 *, int, int, int, int, int);
 #endif // defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
