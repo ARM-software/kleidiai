@@ -55,7 +55,7 @@ KAI_ASM_FUNCTION_LABEL(kai_kernel_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_2vsx1
     ldr x6, [x0, #8]        // args->m
     ldr x7, [x0, #56]       // args->rhs_stride_row
     ldr x8, [x0, #72]       // args->dst_stride_row
-    ldr x0, [x0, #88]       // args->clamp_args_ptr
+    ldr x0, [x0, #120]      // args->clamp_args_ptr
 
     KAI_ASM_INST(0xd503477f)  // SMSTART
     ptrue p0.s

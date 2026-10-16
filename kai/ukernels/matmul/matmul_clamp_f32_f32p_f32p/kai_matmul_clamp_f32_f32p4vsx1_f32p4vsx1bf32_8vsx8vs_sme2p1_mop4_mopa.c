@@ -17,14 +17,14 @@
 #include "kai/ukernels/matmul/kai_matmul_types.h"
 
 enum {
-    LHS_ESIZE = 4,
-    RHS_ESIZE = 4,
-    DST_ESIZE = 4,
-    ACC_ESIZE = 4,
-    BIAS_ESIZE = 4,
+    LHS_ELEM_BYTES = 4,
+    RHS_ELEM_BYTES = 4,
+    DST_ELEM_BYTES = 4,
+    ACC_ELEM_BYTES = 4,
+    BIAS_ELEM_BYTES = 4,
 
-    MR_VL = 1,
-    NR_VL = 1,
+    MR_VSCALE = 4,
+    NR_VSCALE = 4,
     KR = 1,
 
     SUPPORTED_FLAGS = KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP,
@@ -69,16 +69,21 @@ void kai_kernel_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8vs_sme2_mopa(
 void kai_kernel_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_16vsx4vs_sme2_mopa(
     const struct kai_matmul_uker_args_internal* args);
 
+void kai_kernel_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_2vsx16vs_sme2p1_mop4(
+    const struct kai_matmul_uker_args_internal* args);
+void kai_kernel_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_32vsx2vs_sme2p1_mop4(
+    const struct kai_matmul_uker_args_internal* args);
+
 inline static size_t kai_rounddown(size_t a, size_t b) {
     return (a / b) * b;
 }
 
 static size_t get_mr(void) {
-    return MR_VL * kai_get_sme_vector_length_u32();
+    return MR_VSCALE * kai_get_sme_vscale();
 }
 
 static size_t get_nr(void) {
-    return NR_VL * kai_get_sme_vector_length_u32();
+    return NR_VSCALE * kai_get_sme_vscale();
 }
 
 static size_t get_m_step(void) {
@@ -106,7 +111,7 @@ static struct kai_matmul_uker_lhs_stride_args get_lhs_stride(
     KAI_UNUSED(config);
 
     const struct kai_matmul_uker_lhs_stride_args stride = {
-        .m = get_mr() * kai_roundup(shape->k, KR) * LHS_ESIZE,
+        .m = get_mr() * kai_roundup(shape->k, KR) * LHS_ELEM_BYTES,
     };
 
     return stride;
@@ -127,7 +132,7 @@ static struct kai_matmul_uker_rhs_stride_args get_rhs_stride(
     KAI_UNUSED(config);
 
     const struct kai_matmul_uker_rhs_stride_args stride = {
-        .n = get_nr() * (kai_roundup(shape->k, KR) * RHS_ESIZE + BIAS_ESIZE),
+        .n = get_nr() * (kai_roundup(shape->k, KR) * RHS_ELEM_BYTES + BIAS_ELEM_BYTES),
     };
 
     return stride;
@@ -148,7 +153,7 @@ static struct kai_matmul_uker_dst_stride_args get_dst_stride(
     KAI_UNUSED(config);
 
     const struct kai_matmul_uker_dst_stride_args stride = {
-        .m = shape->n * DST_ESIZE,
+        .m = shape->n * DST_ELEM_BYTES,
     };
 
     return stride;
@@ -161,7 +166,7 @@ static size_t get_dst_offset(
     KAI_ASSUME(index->m % get_m_step() == 0);
     KAI_ASSUME(index->n % get_n_step() == 0);
 
-    return index->m * stride->m + index->n * DST_ESIZE;
+    return index->m * stride->m + index->n * DST_ELEM_BYTES;
 }
 
 static size_t get_dst_size(
@@ -195,20 +200,20 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
 
     kai_commit_za();
 
-    const size_t acc_vl = kai_get_sme_vector_length_u8() / ACC_ESIZE;
+    const size_t acc_vl = kai_get_sme_vector_length_u8() / ACC_ELEM_BYTES;
 
     // Computes most of the output using 8vsx8vs variant,
     // then uses other variants to compute the edges.
-    const size_t main_m = KAI_MIN(args->shape.m, kai_rounddown(kai_roundup(args->shape.m, acc_vl), 2 * acc_vl));
-    const size_t main_n = KAI_MIN(args->shape.n, kai_rounddown(kai_roundup(args->shape.n, acc_vl), 2 * acc_vl));
+    const size_t shape_m_8vs = KAI_MIN(args->shape.m, kai_rounddown(kai_roundup(args->shape.m, acc_vl), 2 * acc_vl));
+    const size_t shape_n_8vs = KAI_MIN(args->shape.n, kai_rounddown(kai_roundup(args->shape.n, acc_vl), 2 * acc_vl));
 
-    if (main_m > 0 && main_n > 0) {
+    if (shape_m_8vs > 0 && shape_n_8vs > 0) {
         struct kai_matmul_uker_args_internal uker_args = {0};
 
         uker_args.flags = args->flags;
 
-        uker_args.m = main_m;
-        uker_args.n = main_n;
+        uker_args.m = shape_m_8vs;
+        uker_args.n = shape_n_8vs;
         uker_args.k = args->shape.k;
 
         uker_args.lhs_ptr = args->operand.lhs.ptr;
@@ -232,14 +237,38 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
     }
 
     // Processes the right edge of the output.
-    if (main_m > 0 && args->shape.n > main_n) {
-        size_t leftover_m = main_m;
-        const size_t leftover_n = args->shape.n - main_n;
+    if (shape_m_8vs > 0 && args->shape.n > shape_n_8vs) {
+        size_t leftover_m = shape_m_8vs;
+        const size_t leftover_n = args->shape.n - shape_n_8vs;
 
         const uint8_t* lhs_ptr = (const uint8_t*)args->operand.lhs.ptr;
         const uint8_t* const rhs_ptr =
-            (const uint8_t*)args->operand.rhs.ptr + main_n / acc_vl * args->operand.rhs.stride.n;
-        uint8_t* dst_ptr = (uint8_t*)args->operand.dst.ptr + main_n * DST_ESIZE;
+            (const uint8_t*)args->operand.rhs.ptr + shape_n_8vs / acc_vl * args->operand.rhs.stride.n;
+        uint8_t* dst_ptr = (uint8_t*)args->operand.dst.ptr + shape_n_8vs * DST_ELEM_BYTES;
+
+        // MOP4 consumes complete groups of four LHS panels at widths up to half a vector.
+        const size_t shape_m_mop4 = leftover_n <= acc_vl / 2 ? kai_rounddown(leftover_m, 4 * acc_vl) : 0;
+
+        if (shape_m_mop4 > 0) {
+            struct kai_matmul_uker_args_internal uker_args = {0};
+            uker_args.flags = args->flags;
+            uker_args.m = shape_m_mop4;
+            uker_args.n = leftover_n;
+            uker_args.k = args->shape.k;
+            uker_args.lhs_ptr = lhs_ptr;
+            uker_args.lhs_stride_row = args->operand.lhs.stride.m;
+            uker_args.rhs_ptr = rhs_ptr;
+            uker_args.rhs_stride_row = args->operand.rhs.stride.n;
+            uker_args.dst_ptr = dst_ptr;
+            uker_args.dst_stride_row = args->operand.dst.stride.m;
+            uker_args.clamp_args_ptr = clamp_min_max;
+            // 32vs micro-kernel that handles 16vs tail as well
+            kai_kernel_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_32vsx2vs_sme2p1_mop4(&uker_args);
+
+            leftover_m -= shape_m_mop4;
+            lhs_ptr += shape_m_mop4 / acc_vl * args->operand.lhs.stride.m;
+            dst_ptr += shape_m_mop4 * args->operand.dst.stride.m;
+        }
 
         // Processes the right edge of the output using 16vsx4vs variant.
         const size_t shape_m_16vs = KAI_MIN(leftover_m, kai_rounddown(kai_roundup(leftover_m, acc_vl), 4 * acc_vl));
@@ -309,14 +338,38 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
     }
 
     // Processes the bottom edge of the output.
-    if (args->shape.m > main_m && args->shape.n > 0) {
-        const size_t leftover_m = args->shape.m - main_m;
+    if (args->shape.m > shape_m_8vs && args->shape.n > 0) {
+        const size_t leftover_m = args->shape.m - shape_m_8vs;
         size_t leftover_n = args->shape.n;
 
         const uint8_t* const lhs_ptr =
-            (const uint8_t*)args->operand.lhs.ptr + main_m / acc_vl * args->operand.lhs.stride.m;
+            (const uint8_t*)args->operand.lhs.ptr + shape_m_8vs / acc_vl * args->operand.lhs.stride.m;
         const uint8_t* rhs_ptr = (const uint8_t*)args->operand.rhs.ptr;
-        uint8_t* dst_ptr = (uint8_t*)args->operand.dst.ptr + main_m * args->operand.dst.stride.m;
+        uint8_t* dst_ptr = (uint8_t*)args->operand.dst.ptr + shape_m_8vs * args->operand.dst.stride.m;
+
+        const size_t shape_n_mop4 = leftover_m <= acc_vl / 2 ? kai_rounddown(leftover_n, 4 * acc_vl) : 0;
+
+        // Small-M case using mop4 micro-kernel
+        if (shape_n_mop4 > 0) {
+            struct kai_matmul_uker_args_internal uker_args = {0};
+            uker_args.flags = args->flags;
+            uker_args.m = leftover_m;
+            uker_args.n = shape_n_mop4;
+            uker_args.k = args->shape.k;
+            uker_args.lhs_ptr = lhs_ptr;
+            uker_args.lhs_stride_row = args->operand.lhs.stride.m;
+            uker_args.rhs_ptr = rhs_ptr;
+            uker_args.rhs_stride_row = args->operand.rhs.stride.n;
+            uker_args.dst_ptr = dst_ptr;
+            uker_args.dst_stride_row = args->operand.dst.stride.m;
+            uker_args.clamp_args_ptr = clamp_min_max;
+
+            kai_kernel_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_2vsx16vs_sme2p1_mop4(&uker_args);
+
+            leftover_n -= shape_n_mop4;
+            rhs_ptr += shape_n_mop4 / acc_vl * args->operand.rhs.stride.n;
+            dst_ptr += shape_n_mop4 * DST_ELEM_BYTES;
+        }
 
         // Processes the bottom edge of the output using 4vsx16vs variant.
         const size_t shape_n_16vs = KAI_MIN(leftover_n, kai_rounddown(kai_roundup(leftover_n, acc_vl), 4 * acc_vl));
@@ -351,7 +404,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
 
             leftover_n -= shape_n_16vs;
             rhs_ptr += shape_n_16vs / acc_vl * args->operand.rhs.stride.n;
-            dst_ptr += shape_n_16vs * DST_ESIZE;
+            dst_ptr += shape_n_16vs * DST_ELEM_BYTES;
         }
 
         // Processes the remaining of the bottom edge of the output using 4vsx8vs variant.
@@ -387,7 +440,7 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
 
             leftover_n -= shape_n_8vs;
             rhs_ptr += shape_n_8vs / acc_vl * args->operand.rhs.stride.n;
-            dst_ptr += shape_n_8vs * DST_ESIZE;
+            dst_ptr += shape_n_8vs * DST_ELEM_BYTES;
         }
 
         // Processes the remaining of the bottom edge of the output using 4vsx4vs variant.
