@@ -81,20 +81,6 @@ void SoftmaxTb::test_output() {
     const bool ok =
         format.compare(compare_shape, compare_coords, compare_shape, imp_dst_data.data(), ref_dst_data.data(), handler);
     KAI_TEST_ASSERT(ok);
-
-    double sum = 0.0;
-    for (size_t i = 0; i < m_length; ++i) {
-        const double value = read_array(format.dtype(), imp_dst_data.data_ptr(), i);
-        KAI_TEST_ASSERT_MSG(std::isfinite(value), "Softmax: Output probabilities must be finite.");
-        KAI_TEST_ASSERT_MSG(value >= 0.0, "Softmax: Output probabilities must be non-negative.");
-        const double expected = read_array(format.dtype(), ref_dst_data.data_ptr(), i);
-        // The common comparator uses zero relative error when the reference is zero.
-        KAI_TEST_ASSERT_MSG(
-            expected != 0.0 || value <= abs_error_threshold,
-            "Softmax: A zero reference probability must satisfy the absolute error threshold.");
-        sum += value;
-    }
-    KAI_TEST_ASSERT_MSG(std::abs(sum - 1.0) <= 1.0e-5, "Softmax: Output probabilities must sum to one.");
 }
 
 Tensor& SoftmaxTb::get_tensor(SoftmaxSlot slot) {

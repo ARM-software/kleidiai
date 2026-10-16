@@ -12,6 +12,12 @@
 
 namespace kai::benchmark {
 
+/// Sizes in bytes of the buffers used by a softmax micro-kernel.
+struct SoftmaxBufferSizes {
+    size_t src;
+    size_t dst;
+};
+
 /// Prepares and invokes a softmax micro-kernel.
 class SoftmaxRunner {
 public:
@@ -28,13 +34,18 @@ public:
         m_dim_0 = dim_0;
     }
 
-    /// Gets the required destination buffer size.
+    /// Gets the buffer sizes required by the micro-kernel.
     ///
-    /// @return Destination buffer size in bytes.
-    [[nodiscard]] size_t get_dst_size() const {
+    /// @return Source and destination buffer sizes in bytes.
+    [[nodiscard]] SoftmaxBufferSizes get_buffer_sizes() const {
+        const kai_softmax_uker_src_dim_args src_shape = {m_dim_0};
+        const kai_softmax_uker_src_stride_args src_stride = m_api.get_src_stride(nullptr, &src_shape);
         const kai_softmax_uker_dst_dim_args dst_shape = {m_dim_0};
         const kai_softmax_uker_dst_stride_args dst_stride = m_api.get_dst_stride(nullptr, &dst_shape);
-        return m_api.get_dst_size(nullptr, &dst_shape, &dst_stride);
+        return {
+            m_dim_0 * src_stride.dim_0,
+            m_api.get_dst_size(nullptr, &dst_shape, &dst_stride),
+        };
     }
 
     /// Prepares the softmax micro-kernel arguments.
