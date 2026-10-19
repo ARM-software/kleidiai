@@ -628,6 +628,28 @@ struct kai_matmul_uker_api kai_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4c32p8x8s16s
 /// @return The micro-kernel API.
 struct kai_matmul_uker_api kai_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0sf32bf32_8vsx8_sve_i8mm(void);
 
+/// Statically quantized INT8 vector-matrix multiplication using Advanced SIMD dot-product instructions.
+///
+/// Required CPU features:
+///   * FEAT_DotProd
+///
+/// Required operands:
+///   * dst
+///   * lhs - M must be 1
+///   * rhs - RHS matrix with per-N bias and per-N scale.
+///   * dst_bias_global
+///
+/// Accumulation: I32, scaled in FP32 and rounded to nearest with ties to even before adding the output zero point.
+///
+/// Optional arguments:
+///   * clamp - INT32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
+///
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8_qsi8cxp16x4sf32bi32_1x16_neon_dotprod(void);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

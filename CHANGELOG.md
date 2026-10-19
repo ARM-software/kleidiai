@@ -12,6 +12,8 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+- New Advanced SIMD micro-kernels:
+  - Statically quantized INT8 GEMV using Advanced SIMD dot-product instructions, with the struct-based API.
 - Optimizations:
   - Improve FP32-to-QAI8DXP LHS quantisation and packing performance in `kai_lhs_quant_pack_qai8dxp_f32` by shortening Advanced SIMD reduction dependencies and reducing redundant clamping and padding work.
 - Fixes:

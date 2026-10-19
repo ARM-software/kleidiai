@@ -173,6 +173,11 @@ DOTPROD_KERNELS_ASM = [
 ]
 
 # buildifier: keep sorted
+DOTPROD_KERNELS_ASM_NOHDR = [
+    "matmul_clamp_qai8_qai8_qsi8cxp/kai_matmul_clamp_qai8_qai8_qsi8cxp16x4sf32bi32_1x16_neon_dotprod",
+]
+
+# buildifier: keep sorted
 I8MM_KERNELS = [
     "matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp4x8_qsi4cxp4x8_4x4x32_neon_i8mm",
     "matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp4x8_qsi4cxp4x8_8x4x32_neon_i8mm",
@@ -519,6 +524,11 @@ kai_c_library(
     name = "dotprod_impl_asm",
     cpu_uarch = kai_cpu_dotprod(),
     kernels_asm = DOTPROD_KERNELS_ASM,
+    kernels_asm_nohdr = DOTPROD_KERNELS_ASM_NOHDR,
+    textual_hdrs = [
+        "kai_matmul.h",
+        "kai_matmul_types.h",
+    ],
 )
 
 kai_c_library(
