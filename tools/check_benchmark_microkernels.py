@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 """
-Validate that every matmul, imatmul, or dwconv micro-kernel header has a benchmark registration.
+Validate that every compute kernel has a benchmark registration
 """
 from __future__ import annotations
 
@@ -43,8 +43,8 @@ def classify_kernel(path: str) -> Optional[str]:
     if not parts:
         return None
     head = parts[0]
-    if head == "dwconv":
-        return "dwconv"
+    if head in {"dwconv", "softmax"}:
+        return head
     if head != "matmul":
         return None
     if len(parts) > 1 and parts[1].startswith("imatmul"):
@@ -86,6 +86,7 @@ def list_present(ukernels_dir: str, kernel_types: Set[str]) -> Set[str]:
         "matmul/kai_matmul",
         "matmul/kai_matmul_pack_lhs",
         "matmul/kai_matmul_pack_rhs",
+        "softmax/kai_softmax",
     ]
 
     # These header files don't belong to any specific micro-kernel.
@@ -120,7 +121,7 @@ def list_present(ukernels_dir: str, kernel_types: Set[str]) -> Set[str]:
 
 
 def parse_kernel_types(values: Sequence[str]) -> Set[str]:
-    allowed = {"matmul", "imatmul", "dwconv"}
+    allowed = {"matmul", "imatmul", "dwconv", "softmax"}
     requested = set(value.lower() for value in values)
     unknown = requested.difference(allowed)
     if unknown:
@@ -145,7 +146,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument(
         "--kernel-types",
         nargs="+",
-        default=["matmul", "imatmul", "dwconv"],
+        default=["matmul", "imatmul", "dwconv", "softmax"],
         help="Kernel families to verify (default: %(default)s)",
     )
     args = parser.parse_args(argv)

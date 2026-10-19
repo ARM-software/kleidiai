@@ -84,6 +84,9 @@ add_library(kleidiai_test_framework
     test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_quant_i8_wrapper.cpp
     test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_quant_wrapper.cpp
     test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_wrapper_registry.cpp
+    test/nextgen/operators/softmax/softmax_operator.cpp
+    test/nextgen/operators/softmax/softmax_tb.cpp
+    test/nextgen/operators/softmax/softmax_wrapper.cpp
     test/nextgen/quantization/asymm_linear_quantizer.cpp
     test/nextgen/quantization/symm_linear_quantizer.cpp
     test/nextgen/quantization/two_level_asym_block_quantizer.cpp
@@ -97,6 +100,7 @@ add_library(kleidiai_test_framework
     test/nextgen/reference/print.cpp
     test/nextgen/reference/quantize.cpp
     test/nextgen/reference/reduce.cpp
+    test/nextgen/reference/softmax.cpp
     test/nextgen/reference/unary_elementwise.cpp
 )
 
@@ -165,6 +169,7 @@ else()
         test/nextgen/tests/dwconv_test_next.cpp
         test/nextgen/tests/matmul_test_next.cpp
         test/nextgen/tests/poly_test.cpp
+        test/nextgen/tests/softmax_test.cpp
     )
 
     set_source_files_properties(

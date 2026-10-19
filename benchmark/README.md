@@ -14,6 +14,7 @@ KleidiAI provides a single benchmarking binary that runs multiple variants via s
 - `kleidiai_benchmark imatmul` for indirect matrix multiplication (imatmul, chunked K)
 - `kleidiai_benchmark imatmul_pack_lhs` for imatmul LHS packing
 - `kleidiai_benchmark dwconv` for depthwise convolution (dwconv)
+- `kleidiai_benchmark softmax` for softmax activation
 
 The tool supports flexible argument parsing and Benchmark Framework options. If no operator is specified, benchmark
 execution defaults to `matmul`, while `--benchmark_list_tests` lists benchmarks across every mode.
@@ -48,7 +49,7 @@ $ cmake -DCMAKE_TOOLCHAIN_FILE=/path/to/android-ndk/build/cmake/android.toolchai
 
 ### Quick Examples
 
-Run matmul, matmul_pack_lhs, pack_matmul, imatmul, imatmul_pack_lhs and dwconv with example dimensions:
+Run matmul, matmul_pack_lhs, pack_matmul, imatmul, imatmul_pack_lhs, dwconv and softmax with example dimensions:
 
 ```sh
 ./kleidiai_benchmark matmul  -m 32 -n 32 -k 32
@@ -57,6 +58,7 @@ Run matmul, matmul_pack_lhs, pack_matmul, imatmul, imatmul_pack_lhs and dwconv w
 ./kleidiai_benchmark imatmul -m 32 -n 32 -c 4 -l 8
 ./kleidiai_benchmark imatmul_pack_lhs -m 32 -c 4 -l 8
 ./kleidiai_benchmark dwconv  --input_height 32 --input_width 32 --channels 64 --padding 1,1,1,1
+./kleidiai_benchmark softmax -l 1024
 ```
 
 ### Matmul Benchmark
@@ -185,6 +187,20 @@ Benchmark                                                               Time    
 kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla                123 ns          123 ns      1234567
 ```
 
+### Softmax Benchmark
+
+Run the softmax benchmark with the size of dimension 0:
+
+```sh
+./kleidiai_benchmark softmax -l <dim_0>
+```
+
+Use `--benchmark_filter` to select softmax micro-kernels:
+
+```sh
+./kleidiai_benchmark softmax -l 1024
+```
+
 ### Filtering
 
 `--benchmark_filter` accepts a regular expression and filters benchmarks registered for the selected mode. Filters can
@@ -216,6 +232,7 @@ For example, to only run the sme2 micro-kernels:
 ./kleidiai_benchmark pack_matmul --benchmark_filter=sme2 -m 13 -n 17 -k 18
 ./kleidiai_benchmark imatmul --benchmark_filter=sme2 -m 13 -n 17 -c 1 -l 18
 ./kleidiai_benchmark dwconv  --benchmark_filter=sme2 --input_height 32 --input_width 32 --channels 64 --padding 1,1,1,1
+./kleidiai_benchmark softmax --benchmark_filter=softmax -l 1024
 Run on (8 X 1800 MHz CPU s)
 Load Average: 10.09, 10.13, 10.09
 -----------------------------------------------------------------------------------------------------
@@ -244,8 +261,8 @@ Mode-less execution still defaults to matmul. Specify a mode to scope the list:
 ./kleidiai_benchmark imatmul --benchmark_list_tests
 ./kleidiai_benchmark imatmul_pack_lhs --benchmark_list_tests
 ./kleidiai_benchmark dwconv  --benchmark_list_tests
-
 ./kleidiai_benchmark matmul --benchmark_list_tests --benchmark_filter='sme2'
+./kleidiai_benchmark softmax --benchmark_list_tests
 ```
 
 ### Notes

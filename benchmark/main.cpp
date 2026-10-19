@@ -26,6 +26,8 @@
 #include "benchmark/matmul_pack_lhs/matmul_pack_lhs_registry.hpp"
 #include "benchmark/pack_matmul/pack_matmul_main.hpp"
 #include "benchmark/pack_matmul/pack_matmul_registry.hpp"
+#include "benchmark/softmax/softmax_main.hpp"
+#include "benchmark/softmax/softmax_registry.hpp"
 #include "kai/kai_common.h"
 
 namespace {
@@ -33,7 +35,8 @@ namespace {
 void print_usage(std::string_view name) {
     std::ostringstream oss;
     oss << "Usage:" << '\n';
-    oss << '\t' << name << " <matmul|matmul_pack_lhs|pack_matmul|imatmul|imatmul_pack_lhs|dwconv> [<options>]" << '\n';
+    oss << '\t' << name << " <matmul|matmul_pack_lhs|pack_matmul|imatmul|imatmul_pack_lhs|dwconv|softmax> [<options>]"
+        << '\n';
     oss << "\nIf no operation is provided, defaults to: " << name << " matmul [options]" << '\n';
     oss << "\nBenchmark Framework options:" << '\n';
     oss << '\t' << name << " --help" << '\n';
@@ -45,6 +48,7 @@ void print_usage(std::string_view name) {
     kai::benchmark::print_imatmul_usage(name);
     kai::benchmark::print_imatmul_pack_lhs_usage(name);
     kai::benchmark::print_dwconv_usage(name);
+    kai::benchmark::print_softmax_usage(name);
 }
 
 }  // namespace
@@ -109,6 +113,7 @@ int main(int argc, char** argv) {
         IMATMUL,
         IMATMUL_PACK_LHS,
         DWCONV,
+        SOFTMAX,
     };
 
     struct ModeMapping {
@@ -126,6 +131,7 @@ int main(int argc, char** argv) {
              kai::benchmark::RegisteriMatMulBenchmarks(1, 1, 1, 1);
              kai::benchmark::RegisterImatmulPackLhsBenchmarks(1, 1, 1);
              kai::benchmark::RegisterDwConvBenchmarks({3, 3, 1});
+             kai::benchmark::RegisterSoftmaxBenchmarks(1);
          }},
 
         {"matmul", Mode::MATMUL, kai::benchmark::run_matmul,
@@ -157,6 +163,8 @@ int main(int argc, char** argv) {
          [] {
              kai::benchmark::RegisterDwConvBenchmarks({3, 3, 1});
          }},
+
+        {"softmax", Mode::SOFTMAX, kai::benchmark::run_softmax, [] { kai::benchmark::RegisterSoftmaxBenchmarks(1); }},
     };
 
     const ModeMapping* selected_mode = &mode_mappings[0];

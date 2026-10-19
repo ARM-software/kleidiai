@@ -56,6 +56,12 @@ bool cpu_has_sme2();
 /// Returns a value indicating whether the current CPU supports FEAT_SME2.1.
 bool cpu_has_sme2p1();
 
+/// Returns a value indicating whether the current CPU supports FEAT_SME_FA64.
+bool cpu_has_sme_fa64();
+
+/// Returns a value indicating whether the current CPU supports FEAT_SSVE_FEXPA.
+bool cpu_has_ssve_fexpa();
+
 /// Returns a value indicating whether the current CPU supports the SME FP16-to-FP32 MOPA extension.
 bool cpu_has_sme_f16f32();
 
@@ -72,6 +78,12 @@ bool cpu_has_i8mm_and_bf16();
 template <bool (*... Pred)()>
 bool cpu_check() {
     return all_true<Pred...>();
+}
+
+/// Returns a value indicating whether the current CPU supports atleast one of a set of features.
+template <bool (*... Pred)()>
+bool cpu_check_has_one_of() {
+    return (Pred() || ...);
 }
 
 }  // namespace kai::test

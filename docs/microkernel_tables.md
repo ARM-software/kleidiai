@@ -14,6 +14,7 @@ Micro-kernel categories:
 
 - [Matmul micro-kernels](#matmul-micro-kernels)
 - [Indirect matmul micro-kernels](#indirect-matmul-micro-kernels)
+- [Softmax micro-kernels](#softmax-micro-kernels)
 - [Depthwise convolution micro-kernels](#depthwise-convolution-micro-kernels)
 - [Packing micro-kernels](#packing-micro-kernels).
 
@@ -187,6 +188,13 @@ Micro-kernel categories:
 | f32 | - | f32 | f32 | - | - | 2vlx2vl | SME | mopa | - | `kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa` | LHS: [`kai_lhs_imatmul_pack_x32p2vlx1_x32p_sme`](#pack-kai-lhs-imatmul-pack-x32p2vlx1-x32p-sme)<br>RHS: [`kai_rhs_imatmul_pack_kxn_x32p2vlx1b_x32_x32_sme`](#pack-kai-rhs-imatmul-pack-kxn-x32p2vlx1b-x32-x32-sme) |
 | i8 | tensorwise asymmetric | i8 | i8 | tensorwise asymmetric | channelwise symmetric | 2vlx2vl | SME | mopa | - | `kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxp2vlx4sb_2vlx2vl_sme_mopa` | LHS: [`kai_lhs_imatmul_pack_x8p2vlx4_x8p_sme`](#pack-kai-lhs-imatmul-pack-x8p2vlx4-x8p-sme)<br>RHS: [`kai_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme`](#pack-kai-rhs-imatmul-pack-kxn-qsi8cxp2vlx4sb-qs8cx-f32-i32-sme) |
 | i8 | tensorwise asymmetric | i8 | i8 | tensorwise asymmetric | channelwise symmetric | 2vlx2vl | SME2 | mopa | - | `kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa` | LHS: [`kai_lhs_imatmul_pack_x8p2vlx4_x8p_sme`](#pack-kai-lhs-imatmul-pack-x8p2vlx4-x8p-sme)<br>RHS: [`kai_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme`](#pack-kai-rhs-imatmul-pack-kxn-qsi8cxp2vlx4sb-qs8cx-f32-i32-sme) |
+
+## Softmax micro-kernels
+
+| Output type | Input type | Dimensions | SIMD | Exponential approximation | Additional feature | Micro-kernel |
+| --- | --- | --- | --- | --- | --- | --- |
+| f32 | f32 | 1D | SME2.1 | FEXPA-based | SME_FA64 or SSVE_FEXPA | `kai_softmax_f32_f32_1d_sme2p1_fexpa` |
+| f32 | f32 | 1D | SVE | FEXPA-based | - | `kai_softmax_f32_f32_1d_sve_fexpa` |
 
 ## Depthwise convolution micro-kernels
 
