@@ -272,6 +272,16 @@ bool is_shape_suitable_lhs_x16p8x4_x16_neon(
     return is_shape_suitable_lhs_uker_api(shape_m, shape_k, portion, kai_matmul_pack_lhs_mxk_x16p8x4_x16_neon());
 }
 
+bool is_shape_suitable_lhs_qai8dxp2vsx8sf32_f32(
+    size_t shape_m, [[maybe_unused]] size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
+    if (shape_m == 0 || shape_k == 0) {
+        return false;
+    }
+
+    const size_t lhs_m_step = kai_get_m_step_lhs_quant_pack_qai8dxp_f32(4);
+    return portion_non_empty(shape_m, shape_k, lhs_m_step, shape_k, portion);
+}
+
 bool is_shape_suitable_lhs_qai8dxp2vsx8sf32_qsi4c32p8x8s16s0sbf16bf32_8vsx8_sve_i8mm(
     size_t shape_m, [[maybe_unused]] size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
     if (shape_m == 0 || shape_k == 0 || shape_k % 32 != 0) {

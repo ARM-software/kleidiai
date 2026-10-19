@@ -1,5 +1,6 @@
 //
 // SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -22,6 +23,7 @@
 #include "test/nextgen/operators/matmul/matmul_config.hpp"
 #include "test/nextgen/operators/matmul/matmul_pack_args.hpp"
 #include "test/nextgen/operators/matmul/matmul_slots.hpp"
+#include "test/reference/binary_elementwise.hpp"
 
 namespace kai::test {
 
@@ -72,7 +74,8 @@ std::vector<MatMulSlot> MatMulPackRhsQuantWrapper::ref_inputs(ConstTensorSet ten
 std::vector<size_t> MatMulPackRhsQuantWrapper::steps(MatShape shape, ConstTensorSet tensors) const {
     KAI_TEST_ASSERT_MSG(shape.size() == 2, "Only N and K dimensions are expected.");
 
-    const auto& pack_args = tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
+    const auto& pack_args =
+        m_fixed_pack_args ? *m_fixed_pack_args : tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
 
     const size_t n_step = m_kernel.get_n_step(pack_args.nr);
     const size_t shape_k = shape.at(MatDim::C);
@@ -124,7 +127,8 @@ void MatMulPackRhsQuantWrapper::run(
     const Tensor& bias_data = tensors.at(bias_tensor_id.value_or(MatMulSlot::ACC_BIAS_N_DATA));
     Tensor& packed_rhs = tensors.at(MatMulSlot::RHS_PACKED_IMP);
 
-    const auto& pack_args = tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
+    const auto& pack_args =
+        m_fixed_pack_args ? *m_fixed_pack_args : tensors.at(MatMulSlot::PACK_ARGS).value<MatMulPackArgs>();
 
     packed_rhs.set_shape({full_n, full_k}).allocate();
 
@@ -185,11 +189,24 @@ void MatMulPackRhsQuantWrapper::compute_reference(MatShape shape, TensorSet tens
         bias_data_view = empty_bias.view();
     }
 
+    Buffer packed_sums;
+    Buffer packed_scales;
+    Span<const std::byte> sum_view = rhs_t_qdata_sign_sum.data();
+    Span<const std::byte> scale_view = rhs_t_qscale.data();
+    if (m_sum_multiplier != 1) {
+        KAI_TEST_ASSERT(m_sum_multiplier > 0);
+        KAI_TEST_ASSERT(m_src_sum_format->dtype() == DataType::I32);
+        KAI_TEST_ASSERT(m_src_scale_format->dtype() == DataType::FP32);
+        const float scale_multiplier = 1.0F / static_cast<float>(m_sum_multiplier);
+        packed_sums = mul<int32_t>(sum_view.data(), shape_n, 1, &m_sum_multiplier, 1, 1);
+        packed_scales = mul<float>(scale_view.data(), shape_n, 1, &scale_multiplier, 1, 1);
+        sum_view = packed_sums.view();
+        scale_view = packed_scales.view();
+    }
+
     ref_packed_rhs.set_shape(shape)
         .set_format(m_dst_format)
-        .set_data(m_dst_format->pack(
-            shape,
-            std::array{rhs_t_qdata_sign.data(), rhs_t_qdata_sign_sum.data(), rhs_t_qscale.data(), bias_data_view}));
+        .set_data(m_dst_format->pack(shape, std::array{rhs_t_qdata_sign.data(), sum_view, scale_view, bias_data_view}));
 }
 
 }  // namespace kai::test

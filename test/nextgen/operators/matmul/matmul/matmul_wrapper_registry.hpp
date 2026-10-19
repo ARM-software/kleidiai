@@ -99,4 +99,7 @@ namespace kai::test {
 /// Creates a wrapper for matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla micro-kernel.
 [[nodiscard]] MatMulKernelPtr create_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla();
 
+/// Creates the 256-bit SVE per-channel INT4 matmul wrapper.
+MatMulKernelPtr create_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0sf32bf32_8vsx8_sve_i8mm();
+
 }  // namespace kai::test
