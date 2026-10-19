@@ -502,6 +502,43 @@ MatMulKernelPtr create_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4c32p8x8s16s0sbf16bf
         kai_matmul_uker_config{{block_length}});                                           // kernel config
 }
 
+MatMulKernelPtr create_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0sf32bf32_8vsx8_sve_i8mm() {
+    auto lhs_format = make_poly<Block2dRowFormat>(
+        4, 8,                                      // Block shape
+        32,                                        // Width alignment
+        true,                                      // Repeat right edge
+        DataType::I8,                              // Packed data type
+        std::array<DataType, 0>{},                 // Per-row prefix types
+        std::array{DataType::I32, DataType::FP32}  // Per-row postfix types
+    );
+    auto rhs_format = make_poly<Block2dRowFormat>(
+        8, 16,                                                      // Block shape
+        32,                                                         // Width alignment
+        false,                                                      // Zero pad right
+        DataType::I4,                                               // Packed data type
+        std::array<DataType, 0>{},                                  // Per-row prefix types
+        std::array{DataType::I32, DataType::FP32, DataType::FP32},  // Per-row postfix types
+        0,                                                          // Block length (full row)
+        std::nullopt,                                               // Padding value
+        false,                                                      // First-row bottom padding
+        std::array<DataType, 0>{},                                  // Block-row prefix types
+        std::array<DataType, 0>{},                                  // Block-row postfix types
+        16,                                                         // Nibble interleave width
+        true                                                        // Last-row bottom padding
+    );
+
+    return std::make_unique<MatMulUkerApiWrapper>(
+        "matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0sf32bf32_8vsx8_sve_i8mm",      // name
+        kai_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0sf32bf32_8vsx8_sve_i8mm(),  // kernel
+        MatMulSlot::LHS_PACKED,                                                          // lhs input slot
+        std::move(lhs_format),                                                           // lhs format
+        std::move(rhs_format),                                                           // rhs format
+        make_poly<PlainFormat>(DataType::FP32),                                          // dst format
+        DataType::FP32,                                                                  // acc dtype
+        MatMulUkerClampConfig::optional(DataType::FP32),                                 // clamp config
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS);                                       // bias stage
+}
+
 MatMulKernelPtr create_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa() {
     const MatMulFpInterface kernel_interface{
         kai_get_m_step_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa,

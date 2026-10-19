@@ -132,6 +132,10 @@ namespace kai::test {
 [[nodiscard]] bool is_shape_suitable_lhs_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
+/// Checks if the portion produces non-empty LHS packing tiles for the QAI8DXP2VSX8SF32 format.
+[[nodiscard]] bool is_shape_suitable_lhs_qai8dxp2vsx8sf32_f32(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
+
 /// Checks if the portion produces non-empty LHS packing tiles for the SVE I8MM QAI8DXP/QSI4C32P operator.
 [[nodiscard]] bool is_shape_suitable_lhs_qai8dxp2vsx8sf32_qsi4c32p8x8s16s0sbf16bf32_8vsx8_sve_i8mm(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);

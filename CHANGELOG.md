@@ -20,6 +20,7 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
   - Native MxN SME MOPA matrix multiplication for FP16 x signed QSI4C32P with F32 output and the s4s0sf16 RHS packing format.
 - New SME2.1 micro-kernels:
   - FP32 matrix multiplication using MOP4A instructions for small-M and small-N cases.
+- New SVE micro-kernel: per-channel INT4 matrix multiplication with FP32 output, `kai_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0sf32bf32_8vsx8_sve_i8mm`, requiring SVE I8MM and exactly 256-bit vectors.
 
 ## v1.32.0
 

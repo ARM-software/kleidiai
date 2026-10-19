@@ -167,6 +167,10 @@ namespace kai::test {
 [[nodiscard]] bool is_shape_suitable_rhs_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
+/// Checks if the portion produces non-empty RHS packing tiles for the QSI4CXP8X8S16S0SF32BF32 format.
+[[nodiscard]] bool is_shape_suitable_rhs_nxk_qsi4cxp8x8s16s0sf32bf32_qsu4cx(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
+
 /// Checks if the portion produces non-empty RHS packing tiles for the SVE I8MM QAI8DXP/QSI4C32P operator.
 [[nodiscard]] bool is_shape_suitable_rhs_qai8dxp2vsx8sf32_qsi4c32p8x8s16s0sbf16bf32_8vsx8_sve_i8mm(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
@@ -204,5 +208,8 @@ namespace kai::test {
 /// Checks if the portion produces non-empty RHS packing tiles for the x16p12x4bx32 NxK matmul operator.
 [[nodiscard]] bool is_shape_suitable_rhs_nxk_x16p12x4bx32_x16_x32_neon(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
+
+/// Creates the per-channel INT4 RHS packer with interleaved nibbles.
+MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4cxp8x8s16s0sf32bf32_qsu4cx();
 
 }  // namespace kai::test
