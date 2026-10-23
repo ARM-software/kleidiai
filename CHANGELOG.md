@@ -20,6 +20,9 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
   - Correct the documented K requirement for `kai_lhs_quant_pack_qai8dxp_f32`: input K has no divisibility requirement; only the packed K dimension is rounded up to a multiple of 32.
 - New SME micro-kernels:
   - Native MxN SME MOPA matrix multiplication for FP16 x signed QSI4C32P with F32 output and the s4s0sf16 RHS packing format.
+  - F32 to QAI8DXP LHS quant and pack kernel `kai_lhs_quant_pack_qai8dxp1vlx4_f32_sme` optimized with SME
+- New SME2 micro-kernels:
+  - F32 to QAI8DXP LHS quant and pack kernel `kai_lhs_quant_pack_qai8dxp1vlx4_f32_sme2` optimized with SME2
 - New SME2.1 micro-kernels:
   - New SME2.1 Fexpa micro-kernel for FP32 datatype.
 - New SVE micro-kernels:

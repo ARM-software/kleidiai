@@ -368,6 +368,47 @@ MatMulOperator create_operator_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8vs_
     return op;
 }
 
+/// Creates an operator for matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa with SME LHS packing.
+MatMulOperator create_operator_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa_lhs_sme() {
+    MatMulOperator op{};
+    op.name = "matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa_lhs_sme";
+
+    op.is_cpu_supported = cpu_has_sme;
+    op.is_shape_suitable = all_true<                                       //
+        is_shape_suitable_lhs_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa,  //
+        is_shape_suitable_rhs_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa>;
+
+    op.supported_bias_mode_sets = {no_bias, acc_bias_per_n};
+    op.clamp_mode = MatMulClampMode::REQUIRED;
+
+    op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        1, 0                  // Row blocks
+    );
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::U4,        // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 0                 // Row blocks
+    );
+    op.bias_quant = std::nullopt;
+
+    op.lhs_dtype = DataType::FP32;
+    op.rhs_dtype = DataType::FP32;
+    op.bias_dtype = DataType::FP32;
+    op.acc_dtype = DataType::FP32;
+    op.dst_dtype = DataType::FP32;
+
+    op.pack_lhs = create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32_sme();
+    op.pack_rhs = create_matmul_rhs_pack_nxk_qsi4cxp4vlx4s16s0sf32bf32_qsu4cx();
+    op.matmul = create_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa();
+    return op;
+}
+
 /// Creates an operator for matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa.
 MatMulOperator create_operator_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa() {
     MatMulOperator op{};
@@ -406,6 +447,211 @@ MatMulOperator create_operator_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4v
     op.pack_lhs = create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32();
     op.pack_rhs = create_matmul_rhs_pack_nxk_qsi4cxp4vlx4s1s0_qsu4cxs1s0_neon();
     op.matmul = create_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa();
+    return op;
+}
+
+/// Creates an operator for matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa - SME LHS pack.
+MatMulOperator create_operator_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa_lhs_sme() {
+    MatMulOperator op{};
+    op.name = "matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa_lhs_sme";
+
+    op.is_cpu_supported = cpu_has_sme2;
+    op.is_shape_suitable = all_true<                                        //
+        is_shape_suitable_lhs_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa,  //
+        is_shape_suitable_rhs_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa>;
+
+    op.supported_bias_mode_sets = {no_bias, acc_bias_per_n};
+    op.clamp_mode = MatMulClampMode::REQUIRED;
+
+    op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        1, 0                  // Row blocks
+    );
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::U4,        // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 0                 // Row blocks
+    );
+    op.bias_quant = std::nullopt;
+
+    op.lhs_dtype = DataType::FP32;
+    op.rhs_dtype = DataType::FP32;
+    op.bias_dtype = DataType::FP32;
+    op.acc_dtype = DataType::FP32;
+    op.dst_dtype = DataType::FP32;
+
+    op.pack_lhs = create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32_sme();
+    op.pack_rhs = create_matmul_rhs_pack_nxk_qsi4cxp4vlx4s1s0_qsu4cxs1s0_neon();
+    op.matmul = create_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa();
+    return op;
+}
+
+/// Creates an operator for matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa - SME2 LHS pack.
+MatMulOperator create_operator_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa_lhs_sme2() {
+    MatMulOperator op{};
+    op.name = "matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa_lhs_sme2";
+
+    op.is_cpu_supported = cpu_has_sme2;
+    op.is_shape_suitable = all_true<                                        //
+        is_shape_suitable_lhs_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa,  //
+        is_shape_suitable_rhs_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa>;
+
+    op.supported_bias_mode_sets = {no_bias, acc_bias_per_n};
+    op.clamp_mode = MatMulClampMode::REQUIRED;
+
+    op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        1, 0                  // Row blocks
+    );
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::U4,        // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 0                 // Row blocks
+    );
+    op.bias_quant = std::nullopt;
+
+    op.lhs_dtype = DataType::FP32;
+    op.rhs_dtype = DataType::FP32;
+    op.bias_dtype = DataType::FP32;
+    op.acc_dtype = DataType::FP32;
+    op.dst_dtype = DataType::FP32;
+
+    op.pack_lhs = create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32_sme2();
+    op.pack_rhs = create_matmul_rhs_pack_nxk_qsi4cxp4vlx4s1s0_qsu4cxs1s0_neon();
+    op.matmul = create_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa();
+    return op;
+}
+
+/// Creates an operator for matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa with SME LHS packing.
+MatMulOperator create_operator_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa_lhs_sme() {
+    MatMulOperator op{};
+    op.name = "matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa_lhs_sme";
+
+    op.is_cpu_supported = cpu_has_sme;
+    op.is_shape_suitable = all_true<                                       //
+        is_shape_suitable_lhs_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa,  //
+        is_shape_suitable_rhs_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa>;
+
+    op.supported_bias_mode_sets = {no_bias, acc_bias_per_n};
+    op.clamp_mode = MatMulClampMode::REQUIRED;
+
+    op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        1, 0                  // Row blocks
+    );
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I8,        // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 0                 // Row blocks
+    );
+    op.bias_quant = std::nullopt;
+
+    op.lhs_dtype = DataType::FP32;
+    op.rhs_dtype = DataType::FP32;
+    op.bias_dtype = DataType::FP32;
+    op.acc_dtype = DataType::FP32;
+    op.dst_dtype = DataType::FP32;
+
+    op.pack_lhs = create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32_sme();
+    op.pack_rhs = create_matmul_rhs_pack_nxk_qsi8cxp4vlx4_qsi8cx_neon();
+    op.matmul = create_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa();
+    return op;
+}
+
+/// Creates an operator for matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa - SME LHS pack.
+MatMulOperator create_operator_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa_lhs_sme() {
+    MatMulOperator op{};
+    op.name = "matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa_lhs_sme";
+
+    op.is_cpu_supported = cpu_has_sme2;
+    op.is_shape_suitable = all_true<                                        //
+        is_shape_suitable_lhs_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa,  //
+        is_shape_suitable_rhs_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa>;
+
+    op.supported_bias_mode_sets = {no_bias, acc_bias_per_n};
+    op.clamp_mode = MatMulClampMode::REQUIRED;
+
+    op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        1, 0                  // Row blocks
+    );
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I8,        // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 0                 // Row blocks
+    );
+    op.bias_quant = std::nullopt;
+
+    op.lhs_dtype = DataType::FP32;
+    op.rhs_dtype = DataType::FP32;
+    op.bias_dtype = DataType::FP32;
+    op.acc_dtype = DataType::FP32;
+    op.dst_dtype = DataType::FP32;
+
+    op.pack_lhs = create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32_sme();
+    op.pack_rhs = create_matmul_rhs_pack_nxk_qsi8cxp4vlx4_qsi8cx_neon();
+    op.matmul = create_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa();
+    return op;
+}
+
+/// Creates an operator for matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa - SME2 LHS pack.
+MatMulOperator create_operator_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa_lhs_sme2() {
+    MatMulOperator op{};
+    op.name = "matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa_lhs_sme2";
+
+    op.is_cpu_supported = cpu_has_sme2;
+    op.is_shape_suitable = all_true<                                        //
+        is_shape_suitable_lhs_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa,  //
+        is_shape_suitable_rhs_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa>;
+
+    op.supported_bias_mode_sets = {no_bias, acc_bias_per_n};
+    op.clamp_mode = MatMulClampMode::REQUIRED;
+
+    op.lhs_quant = std::make_unique<AsymmLinearQuantizer>(
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        1, 0                  // Row blocks
+    );
+    op.rhs_quant = std::make_unique<SymmLinearQuantizer>(
+        DataType::I8,        // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 0                 // Row blocks
+    );
+    op.bias_quant = std::nullopt;
+
+    op.lhs_dtype = DataType::FP32;
+    op.rhs_dtype = DataType::FP32;
+    op.bias_dtype = DataType::FP32;
+    op.acc_dtype = DataType::FP32;
+    op.dst_dtype = DataType::FP32;
+
+    op.pack_lhs = create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32_sme2();
+    op.pack_rhs = create_matmul_rhs_pack_nxk_qsi8cxp4vlx4_qsi8cx_neon();
+    op.matmul = create_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa();
     return op;
 }
 
@@ -1677,7 +1923,13 @@ Span<const MatMulOperator> get_available_matmul_operators() {
         create_operator_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa(),
         create_operator_matmul_clamp_f32_f32p4vsx1_f32p4vsx1b_8vsx8vs_elastic_sme2_mopa(),
         create_operator_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8vs_sme2p1_mop4_mopa(),
+        create_operator_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa_lhs_sme(),
         create_operator_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa(),
+        create_operator_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa_lhs_sme(),
+        create_operator_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa_lhs_sme2(),
+        create_operator_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa_lhs_sme(),
+        create_operator_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa_lhs_sme(),
+        create_operator_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa_lhs_sme2(),
         create_operator_matmul_clamp_f32_qai8dxp1x4_qsi4c32p16vsx4_1x16vs_sme_dot_rhs_kxn(),
         create_operator_matmul_clamp_f32_qai8dxp1x4_qsi4c32p16vsx4_1x16vs_sme_dot_rhs_nxk(),
         create_operator_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot(),

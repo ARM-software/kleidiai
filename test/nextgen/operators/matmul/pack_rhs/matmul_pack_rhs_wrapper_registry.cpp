@@ -21,6 +21,7 @@
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_f32p2vlx1biasf32_f32_f32_sme.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4c32p_qsu4c32s1s0.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4cxp_qs4cxs1s0.h"
@@ -131,6 +132,17 @@ bool is_shape_suitable_rhs_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa(
     const size_t nr = kai_get_nr_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa();
     const size_t rhs_n_step = kai_get_n_step_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon(nr);
 
+    return portion_non_empty(shape_n, shape_k, rhs_n_step, shape_k, portion);
+}
+
+bool is_shape_suitable_rhs_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa(
+    [[maybe_unused]] size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
+    if (shape_n == 0 || shape_k == 0) {
+        return false;
+    }
+
+    const size_t nr = kai_get_nr_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa();
+    const size_t rhs_n_step = kai_get_n_step_rhs_pack_nxk_qsi8cxp_qsi8cx_neon(nr);
     return portion_non_empty(shape_n, shape_k, rhs_n_step, shape_k, portion);
 }
 
@@ -405,6 +417,36 @@ MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon(size_t block_
         make_poly<PlainFormat>(DataType::I32),   // src sum format
         std::move(dst_format),                   // dst format
         pack_args);                              // pack args
+}
+
+MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp4vlx4_qsi8cx_neon() {
+    const MatMulPackArgs pack_args{0, 4 * get_sme_vector_length<float>(), 4, 1, 0};
+    const MatMulPackRhsQuantI8Interface kernel_interface{
+        kai_get_n_step_rhs_pack_nxk_qsi8cxp_qsi8cx_neon,
+        kai_get_rhs_offset_rhs_pack_nxk_qsi8cxp_qsi8cx_neon,
+        kai_get_rhs_packed_stride_rhs_pack_nxk_qsi8cxp_qsi8cx_neon,
+        kai_get_rhs_packed_offset_rhs_pack_nxk_qsi8cxp_qsi8cx_neon,
+        kai_get_rhs_packed_size_rhs_pack_nxk_qsi8cxp_qsi8cx_neon,
+        kai_run_rhs_pack_nxk_qsi8cxp_qsi8cx_neon,
+    };
+    auto dst_format = make_poly<Block2dRowFormat>(
+        pack_args.nr, pack_args.kr,                                // Block shape
+        32,                                                        // Width alignment
+        false,                                                     // Zero pad right
+        DataType::I8,                                              // Packed data type
+        std::array<DataType, 0>{},                                 // Per-row prefix types
+        std::array{DataType::I32, DataType::FP32, DataType::FP32}  // Per-row postfix types
+    );
+
+    return std::make_unique<MatMulPackRhsQuantI8Wrapper>(
+        "matmul_rhs_pack_nxk_qsi8cxp4vlx4_qsi8cx_neon",  // name
+        kernel_interface,                                // kernel
+        make_poly<PlainFormat>(DataType::I8),            // src data format
+        make_poly<PlainFormat>(DataType::FP32),          // src scale format
+        make_poly<PlainFormat>(DataType::FP32),          // src bias format
+        make_poly<PlainFormat>(DataType::I32),           // src sum format
+        std::move(dst_format),                           // dst format
+        pack_args);                                      // pack args
 }
 
 MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4cxp4vlx4s1s0_qsu4cxs1s0_neon() {
@@ -1072,6 +1114,44 @@ MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4cxp8x8s16s0sf32bf32_qsu4cx() 
         std::move(dst_format),                                 // dst format
         16,                                                    // sum multiplier
         pack_args);                                            // pack args
+}
+
+MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4cxp4vlx4s16s0sf32bf32_qsu4cx() {
+    const MatMulPackArgs pack_args{0, 4 * get_sme_vector_length<float>(), 8, 2, 0};
+    const MatMulPackRhsQuantInterface kernel_interface{
+        kai_get_n_step_rhs_pack_nxk_qsi4cxp_qs4cxs1s0,
+        kai_get_rhs_offset_rhs_pack_nxk_qsi4cxp_qs4cxs1s0,
+        kai_get_rhs_packed_stride_rhs_pack_nxk_qsi4cxp_qs4cxs1s0,
+        kai_get_rhs_packed_offset_rhs_pack_nxk_qsi4cxp_qs4cxs1s0,
+        kai_get_rhs_packed_size_rhs_pack_nxk_qsi4cxp_qs4cxs1s0,
+        kai_run_rhs_pack_nxk_qsi4cxp_qs4cxs1s0,
+    };
+    auto dst_format = make_poly<Block2dRowFormat>(
+        pack_args.nr, pack_args.kr,                                 // Block shape
+        32,                                                         // Width alignment
+        false,                                                      // Zero pad right
+        DataType::I4,                                               // Packed data type
+        std::array<DataType, 0>{},                                  // Per-row prefix types
+        std::array{DataType::I32, DataType::FP32, DataType::FP32},  // Per-row postfix types
+        pack_args.bl,                                               // Block length (full row)
+        std::nullopt,                                               // Padding value
+        false,                                                      // First-row bottom padding
+        std::array<DataType, 0>{},                                  // Block-row prefix types
+        std::array<DataType, 0>{},                                  // Block-row postfix types
+        16,                                                         // Nibble interleave width
+        true                                                        // Last-row bottom padding
+    );
+
+    return std::make_unique<MatMulPackRhsQuantWrapper>(
+        "matmul_rhs_pack_nxk_qsi4cxp4vlx4s16s0sf32bf32_qsu4cx",  // name
+        kernel_interface,                                        // kernel
+        make_poly<PlainFormat>(DataType::U4),                    // src data format
+        make_poly<PlainFormat>(DataType::FP32),                  // src scale format
+        make_poly<PlainFormat>(DataType::FP32),                  // src bias format
+        make_poly<PlainFormat>(DataType::I32),                   // src sum format
+        std::move(dst_format),                                   // dst format
+        16,                                                      // sum multiplier
+        pack_args);                                              // pack args
 }
 
 }  // namespace kai::test

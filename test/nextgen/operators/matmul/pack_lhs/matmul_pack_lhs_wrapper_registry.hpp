@@ -24,6 +24,12 @@ namespace kai::test {
 /// Creates a wrapper for kai_lhs_quant_pack_qai8dxp_f32 micro-kernel.
 [[nodiscard]] MatMulPackKernelPtr create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32();
 
+/// Creates a wrapper for kai_lhs_quant_pack_qai8dxp1vlx4_f32_sme micro-kernel.
+[[nodiscard]] MatMulPackKernelPtr create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32_sme();
+
+/// Creates a wrapper for kai_lhs_quant_pack_qai8dxp1vlx4_f32_sme2 micro-kernel.
+[[nodiscard]] MatMulPackKernelPtr create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32_sme2();
+
 /// Creates a wrapper for kai_lhs_quant_pack_qai8dxp_f32 micro-kernel.
 [[nodiscard]] MatMulPackKernelPtr create_matmul_lhs_quant_pack_qai8dxp1x4_f32();
 

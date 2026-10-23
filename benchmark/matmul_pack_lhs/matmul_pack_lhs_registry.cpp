@@ -20,6 +20,7 @@
 #include "kai/ukernels/matmul/matmul_clamp_f32_bf16p_bf16p/kai_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_f16p_qsi4c32p/kai_matmul_clamp_f32_f16p1vlx2_qsi4c32p4vlx2_1vlx4vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qai4c32p/kai_matmul_clamp_f32_qsi8d32p4x4_qai4c32p4x4_8x4_neon_dotprod.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot.h"
@@ -36,6 +37,8 @@
 #include "kai/ukernels/matmul/pack/kai_lhs_pack_x8p2vlx4_x8_sme.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_bf16p1x4_f32_neon.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_bf16p8x4_f32_neon.h"
+#include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp1vlx4_f32_sme.h"
+#include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp1vlx4_f32_sme2.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp_bf16_neon.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp_f16_neon.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp_f32.h"
@@ -125,6 +128,22 @@ inline constexpr MatMulPackLhsBaseInterface kai_lhs_quant_pack_bf16p8x4_f32_neon
     .run = kai_run_lhs_quant_pack_bf16p8x4_f32_neon,
 };
 
+inline constexpr MatMulPackLhsFloatInterface kai_lhs_quant_pack_qai8dxp1vlx4_f32_sme_interface{
+    .get_mr = kai_get_mr_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa,
+    .get_kr = kai_get_kr_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa,
+    .get_sr = kai_get_sr_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa,
+    .get_lhs_packed_size = kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp1vlx4_f32_sme,
+    .run = kai_run_lhs_quant_pack_qai8dxp1vlx4_f32_sme,
+};
+
+inline constexpr MatMulPackLhsFloatInterface kai_lhs_quant_pack_qai8dxp1vlx4_f32_sme2_interface{
+    .get_mr = kai_get_mr_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa,
+    .get_kr = kai_get_kr_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa,
+    .get_sr = kai_get_sr_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa,
+    .get_lhs_packed_size = kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp1vlx4_f32_sme2,
+    .run = kai_run_lhs_quant_pack_qai8dxp1vlx4_f32_sme2,
+};
+
 inline constexpr MatMulPackLhsBaseInterface kai_lhs_quant_pack_qai8dxp_bf16_neon_interface{
     .get_mr = kai_get_mr_matmul_clamp_bf16_qai8dxp4x8_qsi4cxp8x8_8x8_neon_i8mm,
     .get_kr = kai_get_kr_matmul_clamp_bf16_qai8dxp4x8_qsi4cxp8x8_8x8_neon_i8mm,
@@ -147,6 +166,14 @@ inline constexpr MatMulPackLhsFloatInterface kai_lhs_quant_pack_qai8dxp_f32_inte
     .get_mr = kai_get_mr_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm,
     .get_kr = kai_get_kr_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm,
     .get_sr = kai_get_sr_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm,
+    .get_lhs_packed_size = kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp_f32,
+    .run = kai_run_lhs_quant_pack_qai8dxp_f32,
+};
+
+inline constexpr MatMulPackLhsFloatInterface kai_lhs_quant_pack_qai8dxp_f32_1vlx4_interface{
+    .get_mr = kai_get_mr_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa,
+    .get_kr = kai_get_kr_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa,
+    .get_sr = kai_get_sr_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa,
     .get_lhs_packed_size = kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp_f32,
     .run = kai_run_lhs_quant_pack_qai8dxp_f32,
 };
@@ -261,6 +288,14 @@ const auto& get_matmul_pack_lhs_benchmarks() {
             kai_benchmark_matmul_pack_lhs<MatMulPackLhsBaseInterface>, kai_lhs_quant_pack_bf16p8x4_f32_neon_interface,
             DataType::FP32, test::cpu_has_bf16),
         RegisterBenchmark(
+            "kai_matmul_pack_lhs/kai_lhs_quant_pack_qai8dxp1vlx4_f32_sme",
+            kai_benchmark_matmul_pack_lhs<MatMulPackLhsFloatInterface>,
+            kai_lhs_quant_pack_qai8dxp1vlx4_f32_sme_interface, DataType::FP32, test::cpu_has_sme),
+        RegisterBenchmark(
+            "kai_matmul_pack_lhs/kai_lhs_quant_pack_qai8dxp1vlx4_f32_sme2",
+            kai_benchmark_matmul_pack_lhs<MatMulPackLhsFloatInterface>,
+            kai_lhs_quant_pack_qai8dxp1vlx4_f32_sme2_interface, DataType::FP32, test::cpu_has_sme2),
+        RegisterBenchmark(
             "kai_matmul_pack_lhs/kai_lhs_quant_pack_qai8dxp_bf16_neon",
             kai_benchmark_matmul_pack_lhs<MatMulPackLhsBaseInterface>, kai_lhs_quant_pack_qai8dxp_bf16_neon_interface,
             DataType::BF16, test::cpu_has_advsimd),
@@ -272,6 +307,10 @@ const auto& get_matmul_pack_lhs_benchmarks() {
             "kai_matmul_pack_lhs/kai_lhs_quant_pack_qai8dxp_f32",
             kai_benchmark_matmul_pack_lhs<MatMulPackLhsFloatInterface>, kai_lhs_quant_pack_qai8dxp_f32_interface,
             DataType::FP32, test::cpu_has_advsimd),
+        RegisterBenchmark(
+            "kai_matmul_pack_lhs/kai_lhs_quant_pack_qai8dxp_f32/1vlx4",
+            kai_benchmark_matmul_pack_lhs<MatMulPackLhsFloatInterface>, kai_lhs_quant_pack_qai8dxp_f32_1vlx4_interface,
+            DataType::FP32, test::cpu_has_sme),
         RegisterBenchmark(
             "kai_matmul_pack_lhs/kai_lhs_quant_pack_qsi8d32p4x8sb_f32_neon",
             kai_benchmark_matmul_pack_lhs<MatMulPackLhsBlockwiseFloatInterface>,

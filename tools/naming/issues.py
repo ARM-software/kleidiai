@@ -472,6 +472,14 @@ KNOWN_UKERNEL_PROBLEMS.update(
                 "kai_lhs_pack_qai8dxpmrx4_f32",
             ),
             (
+                "kai_lhs_quant_pack_qai8dxp1vlx4_f32_sme",
+                "kai_lhs_pack_qai8dxp1vlx4_f32_sme",
+            ),
+            (
+                "kai_lhs_quant_pack_qai8dxp1vlx4_f32_sme2",
+                "kai_lhs_pack_qai8dxp1vlx4_f32_sme2",
+            ),
+            (
                 "kai_lhs_quant_pack_qsi8d32p_f32",
                 "kai_lhs_pack_qsi8d32pmrx4_f32",
             ),

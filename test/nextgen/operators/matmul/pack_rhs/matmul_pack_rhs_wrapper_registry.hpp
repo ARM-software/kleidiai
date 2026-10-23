@@ -30,6 +30,9 @@ namespace kai::test {
 [[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon(
     size_t block_height, size_t block_width);
 
+/// Creates a wrapper for kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon with 4vlx4 packing.
+[[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp4vlx4_qsi8cx_neon();
+
 /// Creates a fixed-argument wrapper for kai_rhs_pack_nxk_qsi4c32p_qsu4c32s1s0.
 [[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4c32p8x8_qsu4c32s1s0();
 
@@ -159,6 +162,10 @@ namespace kai::test {
 [[nodiscard]] bool is_shape_suitable_rhs_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
+/// Checks if the portion produces non-empty RHS packing tiles for the per-channel INT8 operator.
+[[nodiscard]] bool is_shape_suitable_rhs_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
+
 /// Checks if the portion produces non-empty RHS packing tiles for the qai8dxp1vlx8/qsi4cxp4vlx8 matmul operator.
 [[nodiscard]] bool is_shape_suitable_rhs_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
@@ -211,5 +218,8 @@ namespace kai::test {
 
 /// Creates the per-channel INT4 RHS packer with interleaved nibbles.
 MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4cxp8x8s16s0sf32bf32_qsu4cx();
+
+/// Creates the 4VL per-channel INT4 RHS packer with interleaved nibbles.
+MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4cxp4vlx4s16s0sf32bf32_qsu4cx();
 
 }  // namespace kai::test

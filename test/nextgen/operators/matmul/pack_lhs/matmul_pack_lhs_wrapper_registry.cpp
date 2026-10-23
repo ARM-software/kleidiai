@@ -24,6 +24,8 @@
 #include "kai/ukernels/matmul/pack/kai_lhs_pack_f32p2vlx1_f32_sme.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_pack_x16p2vlx2_x16_sme.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_pack_x8p2vlx4_x8_sme.h"
+#include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp1vlx4_f32_sme.h"
+#include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp1vlx4_f32_sme2.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp_f32.h"
 #include "test/common/assert.hpp"
 #include "test/common/data_type.hpp"
@@ -481,6 +483,54 @@ MatMulPackKernelPtr create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32() {
         kernel_interface,                        // kernel
         make_poly<PlainFormat>(DataType::FP32),  // src format
         std::move(dst_format));                  // dst format
+}
+
+MatMulPackKernelPtr create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32_sme() {
+    const MatMulPackLhsDqInterface kernel_interface{
+        kai_get_m_step_lhs_quant_pack_qai8dxp1vlx4_f32_sme,
+        kai_get_lhs_offset_lhs_quant_pack_qai8dxp1vlx4_f32_sme,
+        kai_get_lhs_packed_offset_lhs_quant_pack_qai8dxp1vlx4_f32_sme,
+        kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp1vlx4_f32_sme,
+        kai_run_lhs_quant_pack_qai8dxp1vlx4_f32_sme,
+    };
+    auto dst_format = make_poly<Block2dRowFormat>(
+        get_sme_vector_length<float>(), 4,         // Block shape
+        32,                                        // Width alignment
+        true,                                      // Repeat right edge
+        DataType::I8,                              // Packed data type
+        std::array<DataType, 0>{},                 // Per-row prefix types
+        std::array{DataType::I32, DataType::FP32}  // Per-row postfix types
+    );
+
+    return std::make_unique<MatMulPackLhsDqWrapper>(
+        "matmul_lhs_quant_pack_qai8dxp1vlx4_f32_sme",  // name
+        kernel_interface,                              // kernel
+        make_poly<PlainFormat>(DataType::FP32),        // src format
+        std::move(dst_format));                        // dst format
+}
+
+MatMulPackKernelPtr create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32_sme2() {
+    const MatMulPackLhsDqInterface kernel_interface{
+        kai_get_m_step_lhs_quant_pack_qai8dxp1vlx4_f32_sme2,
+        kai_get_lhs_offset_lhs_quant_pack_qai8dxp1vlx4_f32_sme2,
+        kai_get_lhs_packed_offset_lhs_quant_pack_qai8dxp1vlx4_f32_sme2,
+        kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp1vlx4_f32_sme2,
+        kai_run_lhs_quant_pack_qai8dxp1vlx4_f32_sme2,
+    };
+    auto dst_format = make_poly<Block2dRowFormat>(
+        get_sme_vector_length<float>(), 4,         // Block shape
+        32,                                        // Width alignment
+        true,                                      // Repeat right edge
+        DataType::I8,                              // Packed data type
+        std::array<DataType, 0>{},                 // Per-row prefix types
+        std::array{DataType::I32, DataType::FP32}  // Per-row postfix types
+    );
+
+    return std::make_unique<MatMulPackLhsDqWrapper>(
+        "matmul_lhs_quant_pack_qai8dxp1vlx4_f32_sme2",  // name
+        kernel_interface,                               // kernel
+        make_poly<PlainFormat>(DataType::FP32),         // src format
+        std::move(dst_format));                         // dst format
 }
 
 MatMulPackKernelPtr create_matmul_lhs_quant_pack_qai8dxp1x4_f32() {

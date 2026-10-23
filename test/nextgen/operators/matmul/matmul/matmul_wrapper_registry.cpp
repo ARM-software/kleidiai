@@ -19,8 +19,11 @@
 #include "kai/ukernels/matmul/kai_matmul.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_bf16p_bf16p/kai_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_fp32_bf16p_bf16p/kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa.h"
 #include "test/common/data_type.hpp"
 #include "test/common/sme.hpp"
@@ -351,6 +354,68 @@ MatMulKernelPtr create_matmul_clamp_f32_qai8dxp4x8sf32_qsi8cxp4vsx8sf32bf32_16x4
         output_stage_config);                                                        // output stage
 }
 
+MatMulKernelPtr create_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa() {
+    const MatMulDqInterface kernel_interface{
+        kai_get_m_step_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa,
+        kai_get_n_step_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa,
+        kai_get_mr_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa,
+        kai_get_nr_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa,
+        kai_get_kr_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa,
+        kai_get_sr_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa,
+        kai_get_lhs_packed_offset_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa,
+        kai_get_rhs_packed_offset_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa,
+        kai_get_dst_offset_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa,
+        kai_get_dst_size_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa,
+        kai_run_matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa,
+    };
+    auto lhs_quantizer = std::make_unique<AsymmLinearQuantizer>(
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        1, 0                  // Row blocks
+    );
+    auto lhs_format = make_poly<Block2dRowFormat>(
+        1 * get_sme_vector_length<float>(), 4,     // Block shape
+        32,                                        // Width alignment
+        true,                                      // Repeat right edge
+        DataType::I8,                              // Packed data type
+        std::array<DataType, 0>{},                 // Per-row prefix types
+        std::array{DataType::I32, DataType::FP32}  // Per-row postfix types
+    );
+    auto rhs_format = make_poly<Block2dRowFormat>(
+        4 * get_sme_vector_length<float>(), 8,                      // Block shape
+        32,                                                         // Width alignment
+        false,                                                      // Zero pad right
+        DataType::I4,                                               // Packed data type
+        std::array<DataType, 0>{},                                  // Per-row prefix types
+        std::array{DataType::I32, DataType::FP32, DataType::FP32},  // Per-row postfix types
+        0,                                                          // Block length (full row)
+        std::nullopt,                                               // Padding value
+        false,                                                      // First-row bottom padding
+        std::array<DataType, 0>{},                                  // Block-row prefix types
+        std::array<DataType, 0>{},                                  // Block-row postfix types
+        16,                                                         // Nibble interleave width
+        true                                                        // Last-row bottom padding
+    );
+
+    auto rhs_quantizer = std::make_unique<SymmLinearQuantizer>(
+        DataType::U4,        // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 0);               // Row blocks
+
+    return std::make_unique<MatMulDqWrapper>(
+        "matmul_clamp_f32_qai8dxp1vlx4_qsi4cxp4vlx4_1vlx4vl_sme_mopa",  // name
+        kernel_interface,                                               // kernel
+        std::move(lhs_quantizer),                                       // lhs quantizer
+        std::move(rhs_quantizer),                                       // rhs quantizer
+        std::move(lhs_format),                                          // lhs format
+        std::move(rhs_format),                                          // rhs format
+        make_poly<PlainFormat>(DataType::FP32));                        // dst format
+}
+
 MatMulKernelPtr create_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa() {
     const MatMulDqInterface kernel_interface{
         kai_get_m_step_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa,
@@ -398,6 +463,116 @@ MatMulKernelPtr create_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_m
 
     return std::make_unique<MatMulDqWrapper>(
         "matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa",  // name
+        kernel_interface,                                                // kernel
+        std::move(lhs_quantizer),                                        // lhs quantizer
+        std::move(rhs_quantizer),                                        // rhs quantizer
+        std::move(lhs_format),                                           // lhs format
+        std::move(rhs_format),                                           // rhs format
+        make_poly<PlainFormat>(DataType::FP32));                         // dst format
+}
+
+MatMulKernelPtr create_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa() {
+    const MatMulDqInterface kernel_interface{
+        kai_get_m_step_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa,
+        kai_get_n_step_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa,
+        kai_get_mr_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa,
+        kai_get_nr_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa,
+        kai_get_kr_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa,
+        kai_get_sr_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa,
+        kai_get_lhs_packed_offset_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa,
+        kai_get_rhs_packed_offset_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa,
+        kai_get_dst_offset_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa,
+        kai_get_dst_size_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa,
+        kai_run_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa,
+    };
+    auto lhs_quantizer = std::make_unique<AsymmLinearQuantizer>(
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        1, 0                  // Row blocks
+    );
+    auto lhs_format = make_poly<Block2dRowFormat>(
+        1 * get_sme_vector_length<float>(), 4,     // Block shape
+        32,                                        // Width alignment
+        true,                                      // Repeat right edge
+        DataType::I8,                              // Packed data type
+        std::array<DataType, 0>{},                 // Per-row prefix types
+        std::array{DataType::I32, DataType::FP32}  // Per-row postfix types
+    );
+    auto rhs_format = make_poly<Block2dRowFormat>(
+        4 * get_sme_vector_length<float>(), 4,                     // Block shape
+        32,                                                        // Width alignment
+        false,                                                     // Zero pad right
+        DataType::I8,                                              // Packed data type
+        std::array<DataType, 0>{},                                 // Per-row prefix types
+        std::array{DataType::I32, DataType::FP32, DataType::FP32}  // Per-row postfix types
+    );
+
+    auto rhs_quantizer = std::make_unique<SymmLinearQuantizer>(
+        DataType::I8,        // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 0);               // Row blocks
+
+    return std::make_unique<MatMulDqWrapper>(
+        "matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa",  // name
+        kernel_interface,                                               // kernel
+        std::move(lhs_quantizer),                                       // lhs quantizer
+        std::move(rhs_quantizer),                                       // rhs quantizer
+        std::move(lhs_format),                                          // lhs format
+        std::move(rhs_format),                                          // rhs format
+        make_poly<PlainFormat>(DataType::FP32));                        // dst format
+}
+
+MatMulKernelPtr create_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa() {
+    const MatMulDqInterface kernel_interface{
+        kai_get_m_step_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa,
+        kai_get_n_step_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa,
+        kai_get_mr_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa,
+        kai_get_nr_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa,
+        kai_get_kr_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa,
+        kai_get_sr_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa,
+        kai_get_lhs_packed_offset_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa,
+        kai_get_rhs_packed_offset_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa,
+        kai_get_dst_offset_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa,
+        kai_get_dst_size_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa,
+        kai_run_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa,
+    };
+    auto lhs_quantizer = std::make_unique<AsymmLinearQuantizer>(
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        1, 0                  // Row blocks
+    );
+    auto lhs_format = make_poly<Block2dRowFormat>(
+        1 * get_sme_vector_length<float>(), 4,     // Block shape
+        32,                                        // Width alignment
+        true,                                      // Repeat right edge
+        DataType::I8,                              // Packed data type
+        std::array<DataType, 0>{},                 // Per-row prefix types
+        std::array{DataType::I32, DataType::FP32}  // Per-row postfix types
+    );
+    auto rhs_format = make_poly<Block2dRowFormat>(
+        4 * get_sme_vector_length<float>(), 4,                     // Block shape
+        32,                                                        // Width alignment
+        false,                                                     // Zero pad right
+        DataType::I8,                                              // Packed data type
+        std::array<DataType, 0>{},                                 // Per-row prefix types
+        std::array{DataType::I32, DataType::FP32, DataType::FP32}  // Per-row postfix types
+    );
+
+    auto rhs_quantizer = std::make_unique<SymmLinearQuantizer>(
+        DataType::I8,        // Quantized data type
+        DataType::FP32,      // Scale data type
+        RoundMode::CURRENT,  // Quantized data rounding mode
+        1, 0);               // Row blocks
+
+    return std::make_unique<MatMulDqWrapper>(
+        "matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa",  // name
         kernel_interface,                                                // kernel
         std::move(lhs_quantizer),                                        // lhs quantizer
         std::move(rhs_quantizer),                                        // rhs quantizer

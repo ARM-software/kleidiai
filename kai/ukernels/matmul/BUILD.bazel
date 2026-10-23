@@ -268,6 +268,7 @@ SME_KERNELS_ASM = [
     "pack/kai_lhs_pack_f32p2vlx1_f32_sme",
     "pack/kai_lhs_pack_x16p2vlx2_x16_sme",
     "pack/kai_lhs_pack_x8p2vlx4_x8_sme",
+    "pack/kai_lhs_quant_pack_qai8dxp1vlx4_f32_sme",
     "pack/kai_rhs_imatmul_pack_kxn_qsi8cxp2vlx4sb_qs8cx_f32_i32_sme",
     "pack/kai_rhs_imatmul_pack_kxn_x16p2vlx2b_x16_x16_sme",
     "pack/kai_rhs_imatmul_pack_kxn_x32p2vlx1b_x32_x32_sme",
@@ -426,6 +427,7 @@ SME2_KERNELS_ASM = [
     "matmul_clamp_qai8_qai8_qsi8cxp/kai_matmul_clamp_qai8_qai8_qsi8cxp2vlx4sb_1x16vl_sme2_dot",
     "matmul_clamp_qai8_qai8p_qsi8cxp/kai_matmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa",
     "pack/kai_lhs_pack_bf16p2vlx2_f32_sme2",
+    "pack/kai_lhs_quant_pack_qai8dxp1vlx4_f32_sme2",
 ]
 
 kai_c_library(
