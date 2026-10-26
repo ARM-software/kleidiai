@@ -10,7 +10,7 @@
 
 KleidiAI follows the [Semantic Versioning](https://semver.org/) specification for releases.
 
-## Upcoming Release
+## v1.33.0
 
 - New Advanced SIMD micro-kernels:
   - Statically quantized INT8 GEMV using Advanced SIMD dot-product instructions, with the struct-based API.
