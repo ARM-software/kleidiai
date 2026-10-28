@@ -10,7 +10,6 @@ load(
     "kai_cpu_bf16",
     "kai_cpu_fp16",
     "kai_cpu_neon",
-    "kai_cpu_sme",
     "kai_cxx_library",
     "kai_cxxopts",
 )
@@ -24,11 +23,9 @@ kai_cxx_library(
             "common/*.cpp",
             "common/*.S",
         ],
-        exclude = ["common/sme.cpp"],
     ),
     hdrs = glob(
         ["common/*.hpp"],
-        exclude = ["common/sme.hpp"],
     ),
     # compare.cpp requires fp16 and bf16 support
     cpu_uarch = kai_cpu_bf16() + kai_cpu_fp16(),
@@ -36,17 +33,6 @@ kai_cxx_library(
         "common/assembly.h",
     ],
     deps = ["@com_google_googletest//:gtest"],
-)
-
-kai_cxx_library(
-    name = "common_sme",
-    srcs = ["common/sme.cpp"],
-    hdrs = ["common/sme.hpp"],
-    # compare.cpp requires fp16 and bf16 support
-    cpu_uarch = kai_cpu_sme(),
-    deps = [
-        ":common",
-    ],
 )
 
 kai_cxx_library(
@@ -74,7 +60,6 @@ kai_cxx_library(
     cpu_uarch = kai_cpu_neon(),
     deps = [
         ":common",
-        ":common_sme",
         ":reference",
         "//:kleidiai",
     ],

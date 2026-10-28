@@ -11,17 +11,17 @@
 
 namespace kai::test {
 
-/// Gets the SME vector length.
+/// Gets the SME vector length in elements, using 128 bits if SME is unavailable.
 template <size_t esize>
 uint64_t get_sme_vector_length();
 
-/// Gets the SME vector length.
+/// Gets the SME vector length in elements, using 128 bits if SME is unavailable.
 template <typename T>
 uint64_t get_sme_vector_length() {
     return get_sme_vector_length<sizeof(T)>();
 }
 
-/// Gets the SME vector scale
+/// Gets the SME vector scale, or one if SME is unavailable.
 uint64_t get_sme_vector_scale();
 
 }  // namespace kai::test

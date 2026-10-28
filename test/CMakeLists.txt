@@ -35,7 +35,7 @@ add_library(kleidiai_test_framework
     test/common/round.cpp
     test/common/round_asm.S
     test/common/seed.cpp
-    $<$<NOT:$<BOOL:${MSVC}>>:test/common/sme.cpp>
+    test/common/sme.cpp
     test/common/sve.cpp
 
     test/reference/binary_elementwise.cpp
@@ -119,7 +119,6 @@ if(MSVC)
 else()
     set_source_files_properties(test/common/float16_asm.S PROPERTIES COMPILE_OPTIONS "-march=armv8.2-a+fp16${KLEIDIAI_INTERNAL_EXTRA_ARCH}")
     set_source_files_properties(test/common/bfloat16_asm.S PROPERTIES COMPILE_OPTIONS "-march=armv8.2-a+fp16+bf16${KLEIDIAI_INTERNAL_EXTRA_ARCH}")
-    set_source_files_properties(test/common/sme.cpp PROPERTIES COMPILE_OPTIONS "-fno-tree-vectorize;-march=armv8.2-a+sve${KLEIDIAI_INTERNAL_EXTRA_ARCH}")
 endif()
 
 target_link_libraries(kleidiai_test_framework

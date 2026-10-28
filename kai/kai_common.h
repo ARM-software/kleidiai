@@ -223,7 +223,6 @@ inline static size_t kai_roundup(size_t a, size_t b) {
     return kai_div_ceil(a, b) * b;
 }
 
-#if defined(__ARM_FEATURE_SVE2) || defined(_M_ARM64)
 /// Gets the SME vector length for 8-bit elements.
 uint64_t kai_get_sme_vector_length_u8(void);
 
@@ -244,7 +243,6 @@ inline static uint64_t kai_get_sme_vscale(void) {
 
 /// Commit ZA to lazy save buffer
 void kai_commit_za(void);
-#endif  // defined(__ARM_FEATURE_SVE2) || defined(_M_ARM64)
 
 /// Gets the SVE vector length for 8-bit elements.
 uint64_t kai_get_sve_vector_length_u8(void);
