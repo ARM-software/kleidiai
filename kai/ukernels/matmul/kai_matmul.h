@@ -34,6 +34,7 @@ extern "C" {
 /// Required operands:
 ///   * lhs, dst
 ///   * rhs - rhs with per-n accumulator bias
+///
 /// Optional arguments:
 ///   * clamp - F32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
 ///
@@ -59,8 +60,7 @@ struct kai_matmul_uker_api kai_matmul_clamp_f16_f16p4vsx2_f16p4vsx2bf16_8vsx8vs_
 ///
 /// Optional arguments:
 ///   * operand.lut.ptr - 16-byte-aligned buffer of 16 32-bit entries mapping packed 4-bit RHS codes to FP16 values.
-///   NULL
-///     selects the default QSI4 mapping.
+///     - NULL: Use the default QSI4 mapping.
 ///   * clamp - F32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
 ///
 /// Supported flags:
@@ -108,8 +108,7 @@ struct kai_matmul_uker_api kai_matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s4s0sf16
 ///
 /// Optional arguments:
 ///   * operand.lut.ptr - 16-byte-aligned buffer of 16 32-bit entries mapping packed 4-bit RHS codes to 8-bit values.
-///   NULL
-///     selects the default QSI4 mapping.
+///     - NULL: Use the default QSI4 mapping.
 ///   * clamp - F32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
 ///
 /// Supported flags:
@@ -123,6 +122,7 @@ struct kai_matmul_uker_api kai_matmul_clamp_f32_qsi8d32p1x4sf16_qsi4c32p16vsx4s1
 /// Required operands:
 ///   * lhs, dst
 ///   * rhs - rhs with per-n accumulator bias
+///
 /// Optional arguments:
 ///   * clamp - F32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
 ///
@@ -168,8 +168,7 @@ struct kai_matmul_uker_api kai_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8vs_
 ///
 /// Optional arguments:
 ///   * operand.lut.ptr - 16-byte-aligned buffer of 16 32-bit entries mapping packed 4-bit RHS codes to 8-bit values.
-///   NULL
-///     selects the default QSI4 mapping.
+///     - NULL: Use the default QSI4 mapping.
 ///   * clamp - F32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
 ///
 /// Supported flags:
@@ -523,8 +522,7 @@ struct kai_matmul_uker_api kai_matmul_clamp_f32_qsi8d32p1x4_qai4c32p16vsx4s1s0sf
 ///   * lhs - Dynamically quantized asymmetric per-row (qai8dxp) LHS, packed with @ref
 ///     kai_lhs_quant_pack_qai8dxp_f32.
 ///   * rhs - Packed RHS matrix, obtained with @ref kai_matmul_pack_rhs_kxn_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme or
-///   @ref
-///     kai_matmul_pack_rhs_nxk_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme.
+///     @ref kai_matmul_pack_rhs_nxk_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme.
 ///
 /// Optional arguments:
 ///   * clamp - F32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
@@ -549,8 +547,7 @@ struct kai_matmul_uker_api kai_matmul_clamp_f32_qai8dxp4vsx4_qsi4c32p16vsx4_4vsx
 ///   * lhs - Dynamically quantized asymmetric per-row (qai8dxp) LHS, packed with @ref
 ///     kai_lhs_quant_pack_qai8dxp_f32.
 ///   * rhs - Packed RHS matrix, obtained with @ref kai_matmul_pack_rhs_kxn_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme or
-///   @ref
-///     kai_matmul_pack_rhs_nxk_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme.
+///     @ref kai_matmul_pack_rhs_nxk_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme.
 ///
 /// Optional arguments:
 ///   * clamp - F32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
@@ -584,14 +581,14 @@ struct kai_matmul_uker_api kai_matmul_clamp_f32_qai8dxp4x8sf32_qsi8cxp4vsx8sf32b
 
 /// Dynamically quantized matrix multiplication with blockwise INT4 RHS using SVE I8MM instructions.
 ///
+/// The scalable name reserves support for other vector lengths. This implementation requires vscale = 2,
+/// with LHS panels of 4 rows and an output block of 16x8.
+///
 /// Required CPU features:
 ///   * FEAT_SVE with a vector length of exactly 256 bits
 ///   * SVE FEAT_I8MM instructions
 ///
-/// The scalable name reserves support for other vector lengths. This implementation requires vscale = 2,
-/// with LHS panels of 4 rows and an output block of 16x8.
-///
-/// Required configuration parameters:
+/// Configuration parameters:
 ///   * format.bl - RHS quantization block length. It must be a non-zero multiple of 32, and K must be a non-zero
 ///     multiple of it.
 ///
@@ -639,10 +636,10 @@ struct kai_matmul_uker_api kai_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0
 ///   * rhs - RHS matrix with per-N bias and per-N scale.
 ///   * dst_bias_global
 ///
-/// Accumulation: I32, scaled in FP32 and rounded to nearest with ties to even before adding the output zero point.
-///
 /// Optional arguments:
 ///   * clamp - INT32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
+///
+/// Accumulation: I32, scaled in FP32 and rounded to nearest with ties to even before adding the output zero point.
 ///
 /// Supported flags:
 ///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.

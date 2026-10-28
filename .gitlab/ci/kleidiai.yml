@@ -235,55 +235,44 @@ test-clang-tidy:
     # Only test the main library with C/C++ files.
     - clang-tidy --header-filter ".*" --warnings-as-errors "*" -p build/${CI_JOB_NAME_SLUG} $(find kai -type f \( -name \*.c -o -name \*.cpp \))
 
-# Purpose: Verify that all micro-kernels are registered for benchmarking.
-test-verify-benchmark-registration:
+# Purpose: Verify micro-kernel benchmark registration, tables, names, API documentation and header includes.
+test-verify-microkernels:
   extends:
     - .stable-rules
   stage: test
   needs: []
   rules: *main_branch_verification_rules
   script:
-    - python3 tools/check_benchmark_microkernels.py
+    - rc=0
 
-# Purpose: Verify that all micro-kernels are documented in docs/microkernel_tables.md.
-test-verify-microkernel-tables:
-  extends:
-    - .stable-rules
-  stage: test
-  needs: []
-  rules: *main_branch_verification_rules
-  script:
-    - python3 tools/check_microkernel_tables.py
+    # Are all compute micro-kernels present in benchmarking framework?
+    - python3 tools/check_benchmark_microkernels.py || rc=$?
 
-# Purpose: Verify that all micro-kernels have correct names.
-test-verify-microkernel-names:
-  extends:
-    - .stable-rules
-  stage: test
-  needs: []
-  rules: *main_branch_verification_rules
-  script:
-    - python3 tools/check_microkernel_names.py
-    - python3 tools/check_microkernel_names.py --generate-documentation docs/microkernel_names.md
+    # Are all micro-kernels present in the tables?
+    - python3 tools/check_microkernel_tables.py || rc=$?
+
+    # Are all micro-kernel names consistent with the grammar?
+    - python3 tools/check_microkernel_names.py || rc=$?
+
+    # Is the naming documentation up to date?
     - |
+      python3 tools/check_microkernel_names.py --generate-documentation docs/microkernel_names.md || rc=$?
       if [ -n "$(git status --porcelain -- docs/microkernel_names.md)" ]; then
         echo "docs/microkernel_names.md is out of date."
         echo "Run:"
         echo "  python3 tools/check_microkernel_names.py --generate-documentation docs/microkernel_names.md"
         echo "and commit the result whenever tools/naming/rules.py is updated."
         git diff -- docs/microkernel_names.md
-        exit 1
+        rc=1
       fi
 
-# Purpose: Verify that all micro-kernel headers contain include directives for used symbols.
-test-verify-microkernel-header-includes:
-  extends:
-    - .stable-rules
-  stage: test
-  needs: []
-  rules: *main_branch_verification_rules
-  script:
-    - python3 tools/check_microkernel_header_includes.py
+    # Are all struct based micro-kernels documented according in the right style?
+    - python3 tools/check_microkernel_documentation.py || rc=$?
+
+    # Are all micro-kernel headers self-contained?
+    - python3 tools/check_microkernel_header_includes.py || rc=$?
+
+    - exit $rc
 
 # Purpose: Build current sources against tests/benchmarks from latest semver tag to detect API breakage.
 test-api-compat:
