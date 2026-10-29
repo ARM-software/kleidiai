@@ -46,9 +46,11 @@ KAI_ASM_FUNCTION_LABEL(kai_kernel_softmax_f32_f32_1d_sme2p1_fexpa)
     // x8: whether a partial vector remains; x9: four-vector step, then output index.
     // x10: element index; x11-x13: pointers, lookahead indices, and constants.
     // p0: partial-vector predicate; p1: all lanes; p2-p3: underflow masks.
+    // pn8: all lanes for multi-vector loads and stores.
     // z0: maximum, then reciprocal sum; z1: exponential sum.
     // z8-z10: independent exponential sums for the unrolled loop.
-    // z2-z7: constants; z16-z31: exponential and normalization temporaries.
+    // z2-z7: exponential constants; z4-z7 are reused for normalization.
+    // z16-z31: exponential temporaries.
 
     // Preserves d8-d15 because streaming-mode transitions invalidate vector state.
     stp d8, d9, [sp, #-64]!
@@ -56,6 +58,7 @@ KAI_ASM_FUNCTION_LABEL(kai_kernel_softmax_f32_f32_1d_sme2p1_fexpa)
     stp d12, d13, [sp, #32]
     stp d14, d15, [sp, #48]
     KAI_ASM_INST(0xd503477f)  // SMSTART
+    KAI_ASM_INST(0x25a07810)  // ptrue pn8.s
 
     // Finds the maximum, using four independent accumulators.
     mov x8, #-1
@@ -85,17 +88,11 @@ KAI_ASM_LABEL(fexpa_kernel_max_init)
     mov z1.d, z0.d
 KAI_ASM_LABEL(fexpa_kernel_max_body)
     incb x10
-    ldr z4, [x11]
-    ldr z5, [x11, #1, mul vl]
-    ldr z6, [x11, #2, mul vl]
-    ldr z7, [x11, #3, mul vl]
+    KAI_ASM_INST(0xa040c164)  // ld1w { z4.s-z7.s }, pn8/z, [x11]
     incb x11, all, mul #4
     mov x12, x10
-    fmax z0.s, p1/m, z0.s, z4.s
-    fmax z3.s, p1/m, z3.s, z5.s
+    KAI_ASM_INST(0xc1a4b900)  // fmax { z0.s-z3.s }, { z0.s-z3.s }, { z4.s-z7.s }
     incb x12
-    fmax z2.s, p1/m, z2.s, z6.s
-    fmax z1.s, p1/m, z1.s, z7.s
     cmp x12, x2
     b.ls fexpa_kernel_max_body
 KAI_ASM_LABEL(fexpa_kernel_max_reduce)
@@ -160,71 +157,68 @@ KAI_ASM_LABEL(fexpa_kernel_exp_init)
     mov z6.s, w11
     mov x11, x1
 KAI_ASM_LABEL(fexpa_kernel_exp_body)
-    ldr z16, [x12]
-    ldr z17, [x12, #1, mul vl]
+    // Groups the inputs at z16 and the first two exponential outputs at z20.
+    KAI_ASM_INST(0xa040c190)  // ld1w { z16.s-z19.s }, pn8/z, [x12]
     incb x10
-    ldr z18, [x12, #2, mul vl]
-    ldr z22, [x12, #3, mul vl]
     incb x12, all, mul #4
     fsub z16.s, z16.s, z0.s
     fsub z17.s, z17.s, z0.s
     mov x13, x10
     fsub z18.s, z18.s, z0.s
-    fsub z22.s, z22.s, z0.s
+    fsub z19.s, z19.s, z0.s
     incb x13
-    KAI_ASM_INST(0x0420bc73)  // movprfx z19, z3
-    fmla z19.s, p1/m, z16.s, z2.s
     KAI_ASM_INST(0x0420bc74)  // movprfx z20, z3
-    fmla z20.s, p1/m, z17.s, z2.s
+    fmla z20.s, p1/m, z16.s, z2.s
+    KAI_ASM_INST(0x0420bc75)  // movprfx z21, z3
+    fmla z21.s, p1/m, z17.s, z2.s
     fcmgt p2.s, p1/z, z7.s, z16.s
     KAI_ASM_INST(0x0420bc78)  // movprfx z24, z3
     fmla z24.s, p1/m, z18.s, z2.s
     fcmgt p3.s, p1/z, z7.s, z17.s
     cmp x13, x2
-    fadd z21.s, z19.s, z4.s
-    fadd z23.s, z20.s, z4.s
-    KAI_ASM_INST(0x04a0ba73)  // fexpa z19.s, z19.s
-    fadd z27.s, z24.s, z4.s
+    fadd z22.s, z20.s, z4.s
+    fadd z23.s, z21.s, z4.s
     KAI_ASM_INST(0x04a0ba94)  // fexpa z20.s, z20.s
+    fadd z27.s, z24.s, z4.s
+    KAI_ASM_INST(0x04a0bab5)  // fexpa z21.s, z21.s
     KAI_ASM_INST(0x0420be19)  // movprfx z25, z16
-    fmls z25.s, p1/m, z21.s, z5.s
+    fmls z25.s, p1/m, z22.s, z5.s
     KAI_ASM_INST(0x0420be3a)  // movprfx z26, z17
     fmls z26.s, p1/m, z23.s, z5.s
     KAI_ASM_INST(0x04a0bb11)  // fexpa z17.s, z24.s
-    KAI_ASM_INST(0x65b9a4d5)  // fmsb z21.s, p1/m, z6.s, z25.s
+    KAI_ASM_INST(0x65b9a4d6)  // fmsb z22.s, p1/m, z6.s, z25.s
     KAI_ASM_INST(0x0420bc79)  // movprfx z25, z3
-    fmla z25.s, p1/m, z22.s, z2.s
+    fmla z25.s, p1/m, z19.s, z2.s
     KAI_ASM_INST(0x65baa4d7)  // fmsb z23.s, p1/m, z6.s, z26.s
     KAI_ASM_INST(0x0420be5a)  // movprfx z26, z18
     fmls z26.s, p1/m, z27.s, z5.s
-    fmul z28.s, z21.s, z21.s
+    fmul z28.s, z22.s, z22.s
     fadd z29.s, z25.s, z4.s
     fmul z31.s, z23.s, z23.s
     fmls z26.s, p1/m, z27.s, z6.s
-    fmla z21.s, p1/m, z28.s, z30.s
-    KAI_ASM_INST(0x0420bedb)  // movprfx z27, z22
+    fmla z22.s, p1/m, z28.s, z30.s
+    KAI_ASM_INST(0x0420be7b)  // movprfx z27, z19
     fmls z27.s, p1/m, z29.s, z5.s
     fmla z23.s, p1/m, z31.s, z30.s
     fmul z28.s, z26.s, z26.s
-    fmad z19.s, p1/m, z21.s, z19.s
+    fmad z20.s, p1/m, z22.s, z20.s
     KAI_ASM_INST(0x0420bf70)  // movprfx z16, z27
     fmls z16.s, p1/m, z29.s, z6.s
-    fmad z20.s, p1/m, z23.s, z20.s
-    KAI_ASM_INST(0x0420bf55)  // movprfx z21, z26
-    fmla z21.s, p1/m, z28.s, z30.s
-    mov z19.s, p2/m, #0
+    fmad z21.s, p1/m, z23.s, z21.s
+    KAI_ASM_INST(0x0420bf56)  // movprfx z22, z26
+    fmla z22.s, p1/m, z28.s, z30.s
+    mov z20.s, p2/m, #0
     fmul z23.s, z16.s, z16.s
-    mov z20.s, p3/m, #0
-    fmad z17.s, p1/m, z21.s, z17.s
+    mov z21.s, p3/m, #0
+    fmad z17.s, p1/m, z22.s, z17.s
     fcmgt p2.s, p1/z, z7.s, z18.s
     KAI_ASM_INST(0x04a0bb32)  // fexpa z18.s, z25.s
-    fadd z1.s, z1.s, z19.s
-    str z19, [x11]
+    fadd z1.s, z1.s, z20.s
+    KAI_ASM_INST(0xa0604174)  // st1w { z20.s-z21.s }, pn8, [x11]
     fmla z16.s, p1/m, z23.s, z30.s
-    str z20, [x11, #1, mul vl]
     mov z17.s, p2/m, #0
-    fcmgt p2.s, p1/z, z7.s, z22.s
-    fadd z8.s, z8.s, z20.s
+    fcmgt p2.s, p1/z, z7.s, z19.s
+    fadd z8.s, z8.s, z21.s
     fmad z16.s, p1/m, z18.s, z18.s
     str z17, [x11, #2, mul vl]
     fadd z9.s, z9.s, z17.s
@@ -337,22 +331,16 @@ KAI_ASM_LABEL(fexpa_kernel_normalize_init)
     mov x9, xzr
     mov x10, x1
 KAI_ASM_LABEL(fexpa_kernel_normalize_body)
-    ldr z1, [x10]
-    ldr z2, [x10, #1, mul vl]
+    KAI_ASM_INST(0xa040c144)  // ld1w { z4.s-z7.s }, pn8/z, [x10]
     incb x9
-    ldr z3, [x10, #2, mul vl]
-    ldr z4, [x10, #3, mul vl]
-    fmul z1.s, z0.s, z1.s
-    fmul z2.s, z0.s, z2.s
-    mov x11, x9
-    fmul z3.s, z0.s, z3.s
     fmul z4.s, z0.s, z4.s
+    fmul z5.s, z0.s, z5.s
+    mov x11, x9
+    fmul z6.s, z0.s, z6.s
+    fmul z7.s, z0.s, z7.s
     incb x11
-    str z1, [x10]
+    KAI_ASM_INST(0xa060c144)  // st1w { z4.s-z7.s }, pn8, [x10]
     cmp x11, x2
-    str z2, [x10, #1, mul vl]
-    str z3, [x10, #2, mul vl]
-    str z4, [x10, #3, mul vl]
     incb x10, all, mul #4
     b.ls fexpa_kernel_normalize_body
 KAI_ASM_LABEL(fexpa_kernel_normalize_vectors_check)
