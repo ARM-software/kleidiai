@@ -42,7 +42,10 @@ kai_c_library(
 
 kai_c_library(
     name = "interface",
-    textual_hdrs = glob(["**/*_interface.h"]),
+    textual_hdrs = glob(["**/*_interface.h"]) + [
+        "kai_dwconv_pack_rhs_types.h",
+        "kai_dwconv_types.h",
+    ],
     visibility = ["//visibility:public"],
 )
 
