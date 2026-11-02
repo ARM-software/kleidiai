@@ -11,6 +11,8 @@
 #include <functional>
 #include <string>
 
+#include "test/common/assert.hpp"
+#include "test/common/safe_math.hpp"
 #include "test/common/type_traits.hpp"
 
 namespace kai::test {
@@ -65,6 +67,26 @@ enum class DataType : uint16_t {
     QSI2 = 0b1'1'1'0'0000'00000010,  ///< 2-bit signed symmetric quantized.
 };
 
+namespace detail {
+
+constexpr bool has_i(DataType dt) {
+    return (static_cast<uint16_t>(dt) & (1 << 15)) != 0;
+}
+
+constexpr bool has_s(DataType dt) {
+    return (static_cast<uint16_t>(dt) & (1 << 14)) != 0;
+}
+
+constexpr bool has_q(DataType dt) {
+    return (static_cast<uint16_t>(dt) & (1 << 13)) != 0;
+}
+
+constexpr bool has_a(DataType dt) {
+    return (static_cast<uint16_t>(dt) & (1 << 12)) != 0;
+}
+
+}  // namespace detail
+
 /// Gets the data type, or the default data type if unknown.
 ///
 /// @param[in] dt The data type.
@@ -80,7 +102,48 @@ enum class DataType : uint16_t {
 /// @param[in] dt The data type.
 ///
 /// @return The data type name.
-[[nodiscard]] const char* to_cstring(DataType dt);
+[[nodiscard]] constexpr const char* to_cstring(DataType dt) {
+    switch (dt) {
+        case DataType::UNKNOWN:
+            return "UNKNOWN";
+        case DataType::FP32:
+            return "FP32";
+        case DataType::FP16:
+            return "FP16";
+        case DataType::BF16:
+            return "BF16";
+        case DataType::I32:
+            return "I32";
+        case DataType::I8:
+            return "I8";
+        case DataType::I4:
+            return "I4";
+        case DataType::I2:
+            return "I2";
+        case DataType::U32:
+            return "U32";
+        case DataType::U8:
+            return "U8";
+        case DataType::U4:
+            return "U4";
+        case DataType::U2:
+            return "U2";
+        case DataType::QAI8:
+            return "QAI8";
+        case DataType::QSI8:
+            return "QSI8";
+        case DataType::QSU4:
+            return "QSU4";
+        case DataType::QSI4:
+            return "QSI4";
+        case DataType::QAI4:
+            return "QAI4";
+        case DataType::QSI2:
+            return "QSI2";
+        default:
+            KAI_ERROR("Unknown data type!");
+    }
+}
 
 /// Gets a short unique identifier for the data type (e.g. f32, bf16, i8).
 ///
@@ -94,7 +157,10 @@ enum class DataType : uint16_t {
 /// @param[in] dt The data type.
 ///
 /// @return The size in bits.
-[[nodiscard]] size_t data_type_size_in_bits(DataType dt);
+[[nodiscard]] constexpr size_t data_type_size_in_bits(DataType dt) {
+    KAI_TEST_ASSERT(dt != DataType::UNKNOWN);
+    return static_cast<uint16_t>(dt) & 0xFF;
+}
 
 /// Gets the size in bytes of an array with the specified element width using checked math
 ///
@@ -102,7 +168,13 @@ enum class DataType : uint16_t {
 /// @param[in] len The number of elements.
 ///
 /// @return The size in bytes, rounded up for packed elements.
-[[nodiscard]] size_t array_size_in_bytes(size_t element_bits, size_t len);
+[[nodiscard]] constexpr size_t array_size_in_bytes(size_t element_bits, size_t len) {
+    const auto bit_count = safe_mul(element_bits, len);
+    KAI_TEST_ASSERT(bit_count);
+    const auto size = safe_div_ceil(*bit_count, size_t{8});
+    KAI_TEST_ASSERT(size);
+    return *size;
+}
 
 /// Gets the size in bytes of an array of type `T`, using its packed storage width.
 ///
@@ -111,7 +183,7 @@ enum class DataType : uint16_t {
 ///
 /// @return The size in bytes, with the overflow checks of the element-width overload.
 template <typename T>
-[[nodiscard]] inline size_t array_size_in_bytes(size_t len) {
+[[nodiscard]] constexpr size_t array_size_in_bytes(size_t len) {
     return array_size_in_bytes(size_in_bits<T>, len);
 }
 
@@ -121,21 +193,28 @@ template <typename T>
 /// @param[in] len The number of elements in the vector
 ///
 /// @return size in bytes
-[[nodiscard]] size_t data_type_array_size_in_bytes(DataType dt, size_t len);
+[[nodiscard]] constexpr size_t data_type_array_size_in_bytes(DataType dt, size_t len) {
+    return array_size_in_bytes(data_type_size_in_bits(dt), len);
+}
 
 /// Gets a value indicating whether the data type is integral.
 ///
 /// @param[in] dt The data type.
 ///
 /// @return `true` if the data type is integral.
-[[nodiscard]] bool data_type_is_integral(DataType dt);
+[[nodiscard]] constexpr bool data_type_is_integral(DataType dt) {
+    return detail::has_i(dt);
+}
 
 /// Gets a value indicating whether the data type is floating-point.
 ///
 /// @param[in] dt The data type.
 ///
 /// @return `true` if the data type is floating-point.
-[[nodiscard]] bool data_type_is_float(DataType dt);
+[[nodiscard]] constexpr bool data_type_is_float(DataType dt) {
+    KAI_ASSERT_ALWAYS(dt != DataType::UNKNOWN);
+    return !data_type_is_integral(dt);
+}
 
 /// Gets a value indicating whether the data type is binary floating-point.
 ///
@@ -144,7 +223,10 @@ template <typename T>
 /// @param[in] dt The data type.
 ///
 /// @return `true` if the data type is binary floating-point.
-[[nodiscard]] bool data_type_is_float_fp(DataType dt);
+[[nodiscard]] constexpr bool data_type_is_float_fp(DataType dt) {
+    KAI_ASSERT_ALWAYS(data_type_is_float(dt));
+    return !detail::has_q(dt);
+}
 
 /// Gets a value indicating whether the data type is brain floating-point.
 ///
@@ -153,42 +235,59 @@ template <typename T>
 /// @param[in] dt The data type.
 ///
 /// @return `true` if the data type is brain floating-point.
-[[nodiscard]] bool data_type_is_float_bf(DataType dt);
+[[nodiscard]] constexpr bool data_type_is_float_bf(DataType dt) {
+    KAI_ASSERT_ALWAYS(data_type_is_float(dt));
+    return detail::has_q(dt);
+}
 
 /// Gets a value indicating whether the data type is signed.
 ///
 /// @param[in] dt The data type.
 ///
 /// @return `true` if the data type is signed.
-[[nodiscard]] bool data_type_is_signed(DataType dt);
+[[nodiscard]] constexpr bool data_type_is_signed(DataType dt) {
+    if (!detail::has_s(dt)) {
+        KAI_ASSERT_ALWAYS(data_type_is_integral(dt));
+    }
+
+    return detail::has_s(dt);
+}
 
 /// Gets a value indicating whether the data type is quantized.
 ///
 /// @param[in] dt The data type.
 ///
 /// @return `true` if the data type is quantized.
-[[nodiscard]] bool data_type_is_quantized(DataType dt);
+[[nodiscard]] constexpr bool data_type_is_quantized(DataType dt) {
+    return data_type_is_integral(dt) && detail::has_q(dt);
+}
 
 /// Gets a value indicating whether the data type is asymmetric quantized.
 ///
 /// @param[in] dt The data type.
 ///
 /// @return `true` if the data type is asymmetric quantized.
-[[nodiscard]] bool data_type_is_quantized_asymm(DataType dt);
+[[nodiscard]] constexpr bool data_type_is_quantized_asymm(DataType dt) {
+    return data_type_is_quantized(dt) && detail::has_a(dt);
+}
 
 /// Gets a value indicating whether the data type is quantized int8.
 ///
 /// @param[in] dt The data type.
 ///
 /// @return `true` if the data type is quantized int8.
-[[nodiscard]] bool data_type_is_quantized_int8(DataType dt);
+[[nodiscard]] constexpr bool data_type_is_quantized_int8(DataType dt) {
+    return data_type_is_quantized(dt) && data_type_size_in_bits(dt) == 8;
+}
 
 /// Gets a value indicating whether the data type is quantized int4.
 ///
 /// @param[in] dt The data type.
 ///
 /// @return `true` if the data type is quantized int4.
-[[nodiscard]] bool data_type_is_quantized_int4(DataType dt);
+[[nodiscard]] constexpr bool data_type_is_quantized_int4(DataType dt) {
+    return data_type_is_quantized(dt) && data_type_size_in_bits(dt) == 4;
+}
 
 }  // namespace kai::test
 

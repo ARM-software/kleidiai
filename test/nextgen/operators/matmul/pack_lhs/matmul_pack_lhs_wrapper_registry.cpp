@@ -8,12 +8,10 @@
 
 #include "test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_wrapper_registry.hpp"
 
-#include <array>
 #include <memory>
 #include <string>
 #include <utility>
 
-#include "kai/kai_common.h"
 #include "kai/ukernels/matmul/kai_matmul.h"
 #include "kai/ukernels/matmul/kai_matmul_pack_lhs.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa.h"
@@ -27,15 +25,11 @@
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp1vlx4_f32_sme.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp1vlx4_f32_sme2.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp_f32.h"
-#include "test/common/assert.hpp"
 #include "test/common/data_type.hpp"
 #include "test/common/matrix_portion.hpp"
 #include "test/common/sme.hpp"
 #include "test/common/sve.hpp"
-#include "test/nextgen/common/poly.hpp"
-#include "test/nextgen/format/block2d_row_format.hpp"
-#include "test/nextgen/format/plain_format.hpp"
-#include "test/nextgen/format/two_level_blockwise_format.hpp"
+#include "test/nextgen/operators/matmul/matmul_formats.hpp"
 #include "test/nextgen/operators/matmul/matmul_pack_args.hpp"
 #include "test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_dq_wrapper.hpp"
 #include "test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_fp_wrapper.hpp"
@@ -43,6 +37,8 @@
 #include "test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_ukerapi_wrapper.hpp"
 
 namespace kai::test {
+
+using namespace kai::test::matmul;
 
 namespace {
 
@@ -294,44 +290,30 @@ bool is_shape_suitable_lhs_qai8dxp2vsx8sf32_qsi4c32p8x8s16s0sbf16bf32_8vsx8_sve_
     return portion_non_empty(shape_m, shape_k, lhs_m_step, shape_k, portion);
 }
 
-MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme(DataType data_type) {
-    KAI_TEST_ASSERT(data_type_size_in_bits(data_type) == 16);
+template <DataType DType>
+MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme() {
+    static_assert(data_type_size_in_bits(DType) == 16);
 
-    const auto dt = data_type_uid(data_type);
-    auto dst_format = make_poly<Block2dRowFormat>(
-        4 * get_sme_vector_scale(), 2,  // Block shape
-        2,                              // Width alignment
-        false,                          // Zero pad right
-        data_type,                      // Packed data type
-        std::array<DataType, 0>{},      // Per-row prefix types
-        std::array<DataType, 0>{}       // Per-row postfix types
-    );
+    const auto dt = data_type_uid(DType);
 
     return std::make_unique<MatMulPackLhsUkerApiWrapper>(
         "matmul_pack_lhs_mxk_" + dt + "p4vsx2_" + dt + "_sme",  // name
         kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme(),            // kernel
-        make_poly<PlainFormat>(data_type),                      // src format
-        std::move(dst_format));                                 // dst format
+        format::plain<DType>(),                                 // src format
+        format::x16p<DType, sme::VS<4>, 2>());                  // dst format
 }
 
-MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2(DataType data_type) {
-    KAI_TEST_ASSERT(data_type_size_in_bits(data_type) == 16);
+template <DataType DType>
+MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2() {
+    static_assert(data_type_size_in_bits(DType) == 16);
 
-    const auto dt = data_type_uid(data_type);
-    auto dst_format = make_poly<Block2dRowFormat>(
-        4 * get_sme_vector_scale(), 2,  // Block shape
-        2,                              // Width alignment
-        false,                          // Zero pad right
-        data_type,                      // Packed data type
-        std::array<DataType, 0>{},      // Per-row prefix types
-        std::array<DataType, 0>{}       // Per-row postfix types
-    );
+    const auto dt = data_type_uid(DType);
 
     return std::make_unique<MatMulPackLhsUkerApiWrapper>(
         "matmul_pack_lhs_mxk_" + dt + "p4vsx2_" + dt + "_sme2",  // name
         kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2(),            // kernel
-        make_poly<PlainFormat>(data_type),                       // src format
-        std::move(dst_format));                                  // dst format
+        format::plain<DType>(),                                  // src format
+        format::x16p<DType, sme::VS<4>, 2>());                   // dst format
 }
 
 MatMulPackKernelPtr create_matmul_lhs_pack_f16p4vsx2_f32_neon(size_t block_length) {
@@ -343,29 +325,22 @@ MatMulPackKernelPtr create_matmul_lhs_pack_f16p4vsx2_f32_neon(size_t block_lengt
         kai_run_lhs_pack_f16pmrx2_f32_neon,
     };
     const MatMulPackArgs pack_args{4 * get_sme_vector_scale(), 0, 4, 2, block_length};
-    auto dst_format = make_poly<Block2dRowFormat>(
-        pack_args.mr, pack_args.kr / pack_args.sr,  // Block shape
-        2,                                          // Width alignment
-        false,                                      // Zero pad right
-        DataType::FP16,                             // Packed data type
-        std::array<DataType, 0>{},                  // Per-row prefix types
-        std::array<DataType, 0>{}                   // Per-row postfix types
-    );
 
     return std::make_unique<MatMulPackLhsFpWrapper>(
-        "matmul_lhs_pack_f16p4vsx2_f32_neon",    // name
-        kernel_interface,                        // kernel
-        make_poly<PlainFormat>(DataType::FP32),  // src_format
-        std::move(dst_format),                   // dst format
-        MatMulSlot::LHS_DATA,                    // src_slot
-        pack_args,                               // fixed_pack_args
-        MatMulSlot::LHS_CVT_DATA);               // reference_lhs_slot
+        "matmul_lhs_pack_f16p4vsx2_f32_neon",           // name
+        kernel_interface,                               // kernel
+        format::plain<DataType::FP32>(),                // src_format
+        format::x16p<DataType::FP16, sme::VS<4>, 2>(),  // dst format
+        MatMulSlot::LHS_DATA,                           // src_slot
+        pack_args,                                      // fixed_pack_args
+        MatMulSlot::LHS_CVT_DATA);                      // reference_lhs_slot
 }
 
-MatMulPackKernelPtr create_matmul_lhs_pack_x16p2vlx2_x16_sme(DataType data_type) {
-    KAI_ASSERT_ALWAYS(data_type_size_in_bits(data_type) == 16);
+template <DataType DType>
+MatMulPackKernelPtr create_matmul_lhs_pack_x16p2vlx2_x16_sme() {
+    static_assert(data_type_size_in_bits(DType) == 16);
 
-    const auto dt = data_type_uid(data_type);
+    const auto dt = data_type_uid(DType);
     const MatMulPackLhsFpInterface kernel_interface{
         kai_get_m_step_lhs_pack_x16p2vlx2_x16_sme,
         kai_get_lhs_offset_lhs_pack_x16p2vlx2_x16_sme,
@@ -373,67 +348,46 @@ MatMulPackKernelPtr create_matmul_lhs_pack_x16p2vlx2_x16_sme(DataType data_type)
         get_lhs_packed_size_without_bl<kai_get_lhs_packed_size_lhs_pack_x16p2vlx2_x16_sme>,
         run_lhs_pack_without_bl<kai_run_lhs_pack_x16p2vlx2_x16_sme>,
     };
-    auto dst_format = make_poly<Block2dRowFormat>(
-        2 * get_sme_vector_length<float>(), 2,  // Block shape
-        2,                                      // Width alignment
-        false,                                  // Zero pad right
-        data_type,                              // Packed data type
-        std::array<DataType, 0>{},              // Per-row prefix types
-        std::array<DataType, 0>{}               // Per-row postfix types
-    );
 
     return std::make_unique<MatMulPackLhsFpWrapper>(
         "matmul_lhs_pack_" + dt + "p2vlx2_" + dt + "_sme",  // name
         kernel_interface,                                   // kernel
-        make_poly<PlainFormat>(data_type),                  // src format
-        std::move(dst_format));                             // dst format
+        format::plain<DType>(),                             // src format
+        format::x16p<DType, sme::VL<2>, 2>());              // dst format
 }
 
-MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme(DataType data_type) {
-    KAI_TEST_ASSERT(data_type_size_in_bits(data_type) == 32);
+template <DataType DType>
+MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme() {
+    static_assert(data_type_size_in_bits(DType) == 32);
 
-    const auto dt = data_type_uid(data_type);
-    auto dst_format = make_poly<Block2dRowFormat>(
-        4 * get_sme_vector_scale(), 1,  // Block shape
-        1,                              // Width alignment
-        false,                          // Zero pad right
-        data_type,                      // Packed data type
-        std::array<DataType, 0>{},      // Per-row prefix types
-        std::array<DataType, 0>{}       // Per-row postfix types
-    );
+    const auto dt = data_type_uid(DType);
 
     return std::make_unique<MatMulPackLhsUkerApiWrapper>(
         "matmul_pack_lhs_mxk_" + dt + "p4vsx1_" + dt + "_sme",  // name
         kai_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme(),            // kernel
-        make_poly<PlainFormat>(data_type),                      // src format
-        std::move(dst_format));                                 // dst format
+        format::plain<DType>(),                                 // src format
+        format::sme::x32p4vsx1<DType>());                       // dst format
 }
 
-MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme(DataType data_type, MatMulSlot src_slot) {
-    KAI_TEST_ASSERT(data_type_size_in_bits(data_type) == 8);
+template <DataType DType>
+MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme(MatMulSlot src_slot) {
+    static_assert(data_type_size_in_bits(DType) == 8);
 
-    const auto dt = data_type_uid(data_type);
-    auto dst_format = make_poly<Block2dRowFormat>(
-        4 * get_sme_vector_scale(), 4,  // Block shape
-        4,                              // Width alignment
-        false,                          // Zero pad right
-        data_type,                      // Packed data type
-        std::array<DataType, 0>{},      // Per-row prefix types
-        std::array<DataType, 0>{}       // Per-row postfix types
-    );
+    const auto dt = data_type_uid(DType);
 
     return std::make_unique<MatMulPackLhsUkerApiWrapper>(
         "matmul_pack_lhs_mxk_" + dt + "p4vsx4_" + dt + "_sme",  // name
         kai_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme(),              // kernel
-        make_poly<PlainFormat>(data_type),                      // src format
-        std::move(dst_format),                                  // dst format
+        format::plain<DType>(),                                 // src format
+        format::x8p<DType, sme::VS<4>, 4>(),                    // dst format
         src_slot);                                              // src slot
 }
 
-MatMulPackKernelPtr create_matmul_lhs_pack_x8p8vsx4_x8_sme(DataType data_type, MatMulSlot src_slot) {
-    KAI_TEST_ASSERT(data_type_size_in_bits(data_type) == 8);
+template <DataType DType>
+MatMulPackKernelPtr create_matmul_lhs_pack_x8p8vsx4_x8_sme(MatMulSlot src_slot) {
+    static_assert(data_type_size_in_bits(DType) == 8);
 
-    const auto dt = data_type_uid(data_type);
+    const auto dt = data_type_uid(DType);
     const MatMulPackLhsFpInterface kernel_interface{
         kai_get_m_step_lhs_pack_x8p2vlx4_x8_sme,
         kai_get_lhs_offset_lhs_pack_x8p2vlx4_x8_sme,
@@ -441,21 +395,14 @@ MatMulPackKernelPtr create_matmul_lhs_pack_x8p8vsx4_x8_sme(DataType data_type, M
         get_lhs_packed_size_without_bl<kai_get_lhs_packed_size_lhs_pack_x8p2vlx4_x8_sme>,
         run_lhs_pack_without_bl<kai_run_lhs_pack_x8p2vlx4_x8_sme>,
     };
+
     const MatMulPackArgs pack_args{8 * get_sme_vector_scale(), 0, 4, 1, 0};
-    auto dst_format = make_poly<Block2dRowFormat>(
-        pack_args.mr, pack_args.kr / pack_args.sr,  // Block shape
-        4,                                          // Width alignment
-        false,                                      // Zero pad right
-        data_type,                                  // Packed data type
-        std::array<DataType, 0>{},                  // Per-row prefix types
-        std::array<DataType, 0>{}                   // Per-row postfix types
-    );
 
     return std::make_unique<MatMulPackLhsFpWrapper>(
         "matmul_lhs_pack_" + dt + "p8vsx4_" + dt + "_sme",  // name
         kernel_interface,                                   // kernel
-        make_poly<PlainFormat>(data_type),                  // src format
-        std::move(dst_format),                              // dst format
+        format::plain<DType>(),                             // src format
+        format::x8p<DType, sme::VS<8>, 4>(),                // dst format
         src_slot,                                           // src slot
         pack_args);                                         // pack args
 }
@@ -469,20 +416,12 @@ MatMulPackKernelPtr create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32() {
         kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp_f32,
         kai_run_lhs_quant_pack_qai8dxp_f32,
     };
-    auto dst_format = make_poly<Block2dRowFormat>(
-        get_sme_vector_length<float>(), 4,         // Block shape
-        32,                                        // Width alignment
-        true,                                      // Repeat right edge
-        DataType::I8,                              // Packed data type
-        std::array<DataType, 0>{},                 // Per-row prefix types
-        std::array{DataType::I32, DataType::FP32}  // Per-row postfix types
-    );
 
     return std::make_unique<MatMulPackLhsDqWrapper>(
-        name,                                    // name
-        kernel_interface,                        // kernel
-        make_poly<PlainFormat>(DataType::FP32),  // src format
-        std::move(dst_format));                  // dst format
+        name,                               // name
+        kernel_interface,                   // kernel
+        format::plain<DataType::FP32>(),    // src format
+        format::qai8dxp<sme::VL<1>, 4>());  // dst format
 }
 
 MatMulPackKernelPtr create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32_sme() {
@@ -493,20 +432,12 @@ MatMulPackKernelPtr create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32_sme() {
         kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp1vlx4_f32_sme,
         kai_run_lhs_quant_pack_qai8dxp1vlx4_f32_sme,
     };
-    auto dst_format = make_poly<Block2dRowFormat>(
-        get_sme_vector_length<float>(), 4,         // Block shape
-        32,                                        // Width alignment
-        true,                                      // Repeat right edge
-        DataType::I8,                              // Packed data type
-        std::array<DataType, 0>{},                 // Per-row prefix types
-        std::array{DataType::I32, DataType::FP32}  // Per-row postfix types
-    );
 
     return std::make_unique<MatMulPackLhsDqWrapper>(
         "matmul_lhs_quant_pack_qai8dxp1vlx4_f32_sme",  // name
         kernel_interface,                              // kernel
-        make_poly<PlainFormat>(DataType::FP32),        // src format
-        std::move(dst_format));                        // dst format
+        format::plain<DataType::FP32>(),               // src format
+        format::qai8dxp<sme::VL<1>, 4>());             // dst format
 }
 
 MatMulPackKernelPtr create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32_sme2() {
@@ -517,20 +448,12 @@ MatMulPackKernelPtr create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32_sme2() {
         kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp1vlx4_f32_sme2,
         kai_run_lhs_quant_pack_qai8dxp1vlx4_f32_sme2,
     };
-    auto dst_format = make_poly<Block2dRowFormat>(
-        get_sme_vector_length<float>(), 4,         // Block shape
-        32,                                        // Width alignment
-        true,                                      // Repeat right edge
-        DataType::I8,                              // Packed data type
-        std::array<DataType, 0>{},                 // Per-row prefix types
-        std::array{DataType::I32, DataType::FP32}  // Per-row postfix types
-    );
 
     return std::make_unique<MatMulPackLhsDqWrapper>(
         "matmul_lhs_quant_pack_qai8dxp1vlx4_f32_sme2",  // name
         kernel_interface,                               // kernel
-        make_poly<PlainFormat>(DataType::FP32),         // src format
-        std::move(dst_format));                         // dst format
+        format::plain<DataType::FP32>(),                // src format
+        format::qai8dxp<sme::VL<1>, 4>());              // dst format
 }
 
 MatMulPackKernelPtr create_matmul_lhs_quant_pack_qai8dxp1x4_f32() {
@@ -544,21 +467,13 @@ MatMulPackKernelPtr create_matmul_lhs_quant_pack_qai8dxp1x4_f32() {
         kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp_f32,
         kai_run_lhs_quant_pack_qai8dxp_f32,
     };
-    auto dst_format = make_poly<Block2dRowFormat>(
-        pack_args.mr, pack_args.kr,                // Block shape
-        32,                                        // Width alignment
-        true,                                      // Repeat right edge
-        DataType::I8,                              // Packed data type
-        std::array<DataType, 0>{},                 // Per-row prefix types
-        std::array{DataType::I32, DataType::FP32}  // Per-row postfix types
-    );
 
     return std::make_unique<MatMulPackLhsDqWrapper>(
-        name,                                    // name
-        kernel_interface,                        // kernel
-        make_poly<PlainFormat>(DataType::FP32),  // src format
-        std::move(dst_format),                   // dst format
-        pack_args);                              // pack args
+        name,                             // name
+        kernel_interface,                 // kernel
+        format::plain<DataType::FP32>(),  // src format
+        format::qai8dxp<1, 4>(),          // dst format
+        pack_args);                       // pack args
 }
 
 MatMulPackKernelPtr create_matmul_lhs_quant_pack_qai8dxp1x8_f32() {
@@ -572,35 +487,16 @@ MatMulPackKernelPtr create_matmul_lhs_quant_pack_qai8dxp1x8_f32() {
         kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp_f32,
         kai_run_lhs_quant_pack_qai8dxp_f32,
     };
-    auto dst_format = make_poly<Block2dRowFormat>(
-        pack_args.mr, pack_args.kr,                // Block shape
-        32,                                        // Width alignment
-        true,                                      // Repeat right edge
-        DataType::I8,                              // Packed data type
-        std::array<DataType, 0>{},                 // Per-row prefix types
-        std::array{DataType::I32, DataType::FP32}  // Per-row postfix types
-    );
 
     return std::make_unique<MatMulPackLhsDqWrapper>(
-        name,                                    // name
-        kernel_interface,                        // kernel
-        make_poly<PlainFormat>(DataType::FP32),  // src format
-        std::move(dst_format),                   // dst format
-        pack_args);                              // pack args
+        name,                             // name
+        kernel_interface,                 // kernel
+        format::plain<DataType::FP32>(),  // src format
+        format::qai8dxp<1, 8>(),          // dst format
+        pack_args);                       // pack args
 }
 
 MatMulPackKernelPtr create_matmul_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon() {
-    constexpr size_t bl = qai4c32k256_format_config.block_length;
-
-    auto dst_format = make_poly<Block2dRowFormat>(
-        1, 4,                                        // Block shape
-        bl,                                          // Width alignment
-        false,                                       // Zero pad right
-        DataType::I8,                                // Packed data type
-        std::array<DataType, 0>{},                   // Per-row prefix types
-        std::array{DataType::FP16, DataType::FP16},  // Per-row postfix types
-        bl                                           // Block length
-    );
     auto reference_slots = std::vector{
         MatMulSlot::LHS_QDATA,
         MatMulSlot::LHS_QSCALE_MUL_LHS_QDATA_SUM,
@@ -610,8 +506,8 @@ MatMulPackKernelPtr create_matmul_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon()
     return std::make_unique<MatMulPackLhsUkerApiWrapper>(
         "matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon",                   // name
         kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon(),               // uker_api
-        make_poly<PlainFormat>(DataType::FP32),                           // src_format
-        std::move(dst_format),                                            // dst format
+        format::plain<DataType::FP32>(),                                  // src_format
+        format::qsi8d32p1x4sf16(),                                        // dst format
         MatMulSlot::LHS_DATA,                                             // src_slot
         std::move(reference_slots),                                       // reference_src_slots
         std::vector{DataType::UNKNOWN, DataType::FP16, DataType::FP16});  // reference_src_dtypes
@@ -627,21 +523,13 @@ MatMulPackKernelPtr create_matmul_lhs_quant_pack_qai8dxp2vsx8sf32_f32() {
         kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp_f32,
         kai_run_lhs_quant_pack_qai8dxp_f32,
     };
-    auto dst_format = make_poly<Block2dRowFormat>(
-        pack_args.mr, pack_args.kr,                // Block shape
-        32,                                        // Width alignment
-        true,                                      // Repeat right edge
-        DataType::I8,                              // Packed data type
-        std::array<DataType, 0>{},                 // Per-row prefix types
-        std::array{DataType::I32, DataType::FP32}  // Per-row postfix types
-    );
 
     return std::make_unique<MatMulPackLhsDqWrapper>(
-        name,                                    // name
-        kernel_interface,                        // kernel
-        make_poly<PlainFormat>(DataType::FP32),  // src format
-        std::move(dst_format),                   // dst format
-        pack_args);                              // pack args
+        name,                              // name
+        kernel_interface,                  // kernel
+        format::plain<DataType::FP32>(),   // src format
+        format::qai8dxp<sve::VS<2>, 8>(),  // dst format
+        pack_args);                        // pack args
 }
 
 MatMulPackKernelPtr create_matmul_lhs_quant_pack_qai8dxp4x8_f32() {
@@ -655,21 +543,13 @@ MatMulPackKernelPtr create_matmul_lhs_quant_pack_qai8dxp4x8_f32() {
         kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp_f32,
         kai_run_lhs_quant_pack_qai8dxp_f32,
     };
-    auto dst_format = make_poly<Block2dRowFormat>(
-        pack_args.mr, pack_args.kr,                // Block shape
-        32,                                        // Width alignment
-        true,                                      // Repeat right edge
-        DataType::I8,                              // Packed data type
-        std::array<DataType, 0>{},                 // Per-row prefix types
-        std::array{DataType::I32, DataType::FP32}  // Per-row postfix types
-    );
 
     return std::make_unique<MatMulPackLhsDqWrapper>(
-        name,                                    // name
-        kernel_interface,                        // kernel
-        make_poly<PlainFormat>(DataType::FP32),  // src format
-        std::move(dst_format),                   // dst format
-        pack_args);                              // pack args
+        name,                             // name
+        kernel_interface,                 // kernel
+        format::plain<DataType::FP32>(),  // src format
+        format::qai8dxp<4, 8>(),          // dst format
+        pack_args);                       // pack args
 }
 
 MatMulPackKernelPtr create_matmul_lhs_pack_f32p2vlx1_f32_sme() {
@@ -680,43 +560,45 @@ MatMulPackKernelPtr create_matmul_lhs_pack_f32p2vlx1_f32_sme() {
         get_lhs_packed_size_without_bl<kai_get_lhs_packed_size_lhs_pack_f32p2vlx1_f32_sme>,
         run_lhs_pack_without_bl<kai_run_lhs_pack_f32p2vlx1_f32_sme>,
     };
-    auto dst_format = make_poly<Block2dRowFormat>(
-        2 * get_sme_vector_length<float>(), 1,  // Block shape
-        1,                                      // Width alignment
-        false,                                  // Zero pad right
-        DataType::FP32,                         // Packed data type
-        std::array<DataType, 0>{},              // Per-row prefix types
-        std::array<DataType, 0>{}               // Per-row postfix types
-    );
 
     return std::make_unique<MatMulPackLhsFpWrapper>(
-        "matmul_lhs_pack_f32p2vlx1_f32_sme",     // name
-        kernel_interface,                        // kernel
-        make_poly<PlainFormat>(DataType::FP32),  // src format
-        std::move(dst_format));                  // dst format
+        "matmul_lhs_pack_f32p2vlx1_f32_sme",  // name
+        kernel_interface,                     // kernel
+        format::plain<DataType::FP32>(),      // src format
+        format::f32p<sme::VL<2>, 1>());       // dst format
 }
 
-MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p8x4_x16_neon(DataType data_type) {
-    KAI_ASSERT_ALWAYS(data_type_size_in_bits(data_type) == 16);
+template <DataType DType>
+MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p8x4_x16_neon() {
+    static_assert(data_type_size_in_bits(DType) == 16);
 
-    const auto dt = data_type_uid(data_type);
-    auto dst_format = make_poly<Block2dRowFormat>(
-        8, 4,                       // Block shape
-        4,                          // Width alignment
-        false,                      // Zero pad right
-        data_type,                  // Packed data type
-        std::array<DataType, 0>{},  // Per-row prefix types
-        std::array<DataType, 0>{},  // Per-row postfix types
-        0,                          // Block length (full row)
-        std::nullopt,               // Padding value
-        true                        // First-row bottom padding
-    );
+    const auto dt = data_type_uid(DType);
 
     return std::make_unique<MatMulPackLhsUkerApiWrapper>(
         "matmul_pack_lhs_mxk_" + dt + "p8x4_" + dt + "_neon",  // name
         kai_matmul_pack_lhs_mxk_x16p8x4_x16_neon(),            // kernel
-        make_poly<PlainFormat>(data_type),                     // src format
-        std::move(dst_format));                                // dst format
+        format::plain<DType>(),                                // src format
+        format::x16p8x4_repeat_first_row<DType>());            // dst format
 }
+
+template MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme<DataType::FP16>();
+template MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme<DataType::BF16>();
+template MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2<DataType::FP16>();
+template MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2<DataType::BF16>();
+template MatMulPackKernelPtr create_matmul_lhs_pack_x16p2vlx2_x16_sme<DataType::FP16>();
+template MatMulPackKernelPtr create_matmul_lhs_pack_x16p2vlx2_x16_sme<DataType::BF16>();
+template MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme<DataType::FP32>();
+template MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme<DataType::I32>();
+template MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme<DataType::U32>();
+template MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme<DataType::I8>(MatMulSlot);
+template MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme<DataType::U8>(MatMulSlot);
+template MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme<DataType::QAI8>(MatMulSlot);
+template MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme<DataType::QSI8>(MatMulSlot);
+template MatMulPackKernelPtr create_matmul_lhs_pack_x8p8vsx4_x8_sme<DataType::I8>(MatMulSlot);
+template MatMulPackKernelPtr create_matmul_lhs_pack_x8p8vsx4_x8_sme<DataType::U8>(MatMulSlot);
+template MatMulPackKernelPtr create_matmul_lhs_pack_x8p8vsx4_x8_sme<DataType::QAI8>(MatMulSlot);
+template MatMulPackKernelPtr create_matmul_lhs_pack_x8p8vsx4_x8_sme<DataType::QSI8>(MatMulSlot);
+template MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p8x4_x16_neon<DataType::FP16>();
+template MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p8x4_x16_neon<DataType::BF16>();
 
 }  // namespace kai::test
