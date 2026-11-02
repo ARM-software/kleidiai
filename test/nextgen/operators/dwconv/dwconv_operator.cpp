@@ -96,10 +96,12 @@ DwConvOperator create_operator_pack_rhs_f32() {
 
 Span<const DwConvOperator> get_available_dwconv_operators() {
     static const std::array operators{
-        create_operator_f16_depthfirst(),
-        create_operator_f32_planar(),
-        create_operator_pack_rhs_f16(),
-        create_operator_pack_rhs_f32(),
+        // kai-keep-sorted-begin
+        create_operator_f16_depthfirst(),  //
+        create_operator_f32_planar(),      //
+        create_operator_pack_rhs_f16(),    //
+        create_operator_pack_rhs_f32(),    //
+        // kai-keep-sorted-end
     };
     return operators;
 }

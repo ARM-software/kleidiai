@@ -15,6 +15,7 @@ enable_testing()
 include(GoogleTest)
 
 add_library(kleidiai_test_framework
+    # kai-keep-sorted-begin
     test/common/bfloat16.cpp
     test/common/bfloat16_asm.S
     test/common/buffer.cpp
@@ -37,21 +38,6 @@ add_library(kleidiai_test_framework
     test/common/seed.cpp
     test/common/sme.cpp
     test/common/sve.cpp
-
-    test/reference/binary_elementwise.cpp
-    test/reference/cast.cpp
-    test/reference/clamp.cpp
-    test/reference/dwconv.cpp
-    test/reference/fill.cpp
-    test/reference/matmul.cpp
-    test/reference/matmul_pack.cpp
-    test/reference/pack.cpp
-    test/reference/pad.cpp
-    test/reference/quantize.cpp
-    test/reference/reduce.cpp
-    test/reference/reorder.cpp
-    test/reference/transpose.cpp
-
     test/nextgen/common/test_config.cpp
     test/nextgen/common/test_registry.cpp
     test/nextgen/format/block2d_row_format.cpp
@@ -102,6 +88,20 @@ add_library(kleidiai_test_framework
     test/nextgen/reference/reduce.cpp
     test/nextgen/reference/softmax.cpp
     test/nextgen/reference/unary_elementwise.cpp
+    test/reference/binary_elementwise.cpp
+    test/reference/cast.cpp
+    test/reference/clamp.cpp
+    test/reference/dwconv.cpp
+    test/reference/fill.cpp
+    test/reference/matmul.cpp
+    test/reference/matmul_pack.cpp
+    test/reference/pack.cpp
+    test/reference/pad.cpp
+    test/reference/quantize.cpp
+    test/reference/reduce.cpp
+    test/reference/reorder.cpp
+    test/reference/transpose.cpp
+    # kai-keep-sorted-end
 )
 
 target_compile_options(kleidiai_test_framework
@@ -112,9 +112,11 @@ target_compile_options(kleidiai_test_framework
 
 if(MSVC)
     set_source_files_properties(
+        # kai-keep-sorted-begin
         test/common/bfloat16_asm.S
         test/common/float16_asm.S
         test/common/round_asm.S
+        # kai-keep-sorted-end
         PROPERTIES LANGUAGE ASM_MARMASM)
 else()
     set_source_files_properties(test/common/float16_asm.S PROPERTIES COMPILE_OPTIONS "-march=armv8.2-a+fp16${KLEIDIAI_INTERNAL_EXTRA_ARCH}")
@@ -128,6 +130,7 @@ target_link_libraries(kleidiai_test_framework
 
 if(MSVC)
     set(KLEIDIAI_FILES_TESTS
+        # kai-keep-sorted-begin
         test/tests/bfloat16_test.cpp
         test/tests/clamp_hard_test.cpp
         test/tests/float16_test.cpp
@@ -138,9 +141,15 @@ if(MSVC)
         test/tests/matmul_clamp_f32_qsi8d32p_qai4c32p_test.cpp
         test/tests/matmul_clamp_qai8dxp_qsi4c32p_test.cpp
         test/tests/safe_math_test.cpp
+        # kai-keep-sorted-end
     )
 else()
     set(KLEIDIAI_FILES_TESTS
+        # kai-keep-sorted-begin
+        test/nextgen/tests/dwconv_test_next.cpp
+        test/nextgen/tests/matmul_test_next.cpp
+        test/nextgen/tests/poly_test.cpp
+        test/nextgen/tests/softmax_test.cpp
         test/tests/abi_checker_test.cpp
         test/tests/bfloat16_test.cpp
         test/tests/buffer_test.cpp
@@ -164,20 +173,18 @@ else()
         test/tests/matmul_clamp_qai8dxp_qsi4c32p_test.cpp
         test/tests/matmul_test.cpp
         test/tests/safe_math_test.cpp
-
-        test/nextgen/tests/dwconv_test_next.cpp
-        test/nextgen/tests/matmul_test_next.cpp
-        test/nextgen/tests/poly_test.cpp
-        test/nextgen/tests/softmax_test.cpp
+        # kai-keep-sorted-end
     )
 
     set_source_files_properties(
+        # kai-keep-sorted-begin
         test/tests/imatmul_test.cpp
         test/tests/matmul_clamp_f16_bf16p_bf16p_test.cpp
         test/tests/matmul_clamp_f32_bf16p_bf16p_test.cpp
         test/tests/matmul_clamp_f32_qai8dxp_qsi4cxp_test.cpp
         test/tests/matmul_clamp_qai8_qai8p_qsi8cxp_test.cpp
         test/tests/matmul_test.cpp
+        # kai-keep-sorted-end
         PROPERTIES COMPILE_FLAGS "-Wpedantic")
 endif()
 

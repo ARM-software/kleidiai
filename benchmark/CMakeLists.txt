@@ -16,6 +16,7 @@ set(BENCHMARK_ENABLE_GTEST_TESTS "OFF")
 
 # Single benchmark binary combining all suites
 add_executable(kleidiai_benchmark
+    # kai-keep-sorted-begin
     benchmark/dwconv/dwconv_main.cpp
     benchmark/dwconv/dwconv_registry.cpp
     benchmark/imatmul/imatmul_main.cpp
@@ -39,6 +40,7 @@ add_executable(kleidiai_benchmark
     test/common/int2.cpp
     test/common/int4.cpp
     test/common/memory.cpp
+    # kai-keep-sorted-end
 )
 
 set_source_files_properties(benchmark/imatmul/imatmul_registry.cpp
@@ -54,8 +56,10 @@ set_source_files_properties(benchmark/pack_matmul/pack_matmul_registry.cpp
 
 if(MSVC)
     set_source_files_properties(
+        # kai-keep-sorted-begin
         test/common/bfloat16_asm.S
         test/common/float16_asm.S
+        # kai-keep-sorted-end
         PROPERTIES LANGUAGE ASM_MARMASM)
 else()
     set_source_files_properties(test/common/float16_asm.S PROPERTIES COMPILE_OPTIONS "-march=armv8.2-a+fp16${KLEIDIAI_INTERNAL_EXTRA_ARCH}")

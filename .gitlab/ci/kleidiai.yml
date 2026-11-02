@@ -245,6 +245,9 @@ test-verify-microkernels:
   script:
     - rc=0
 
+    # Are all marked file and function lists sorted?
+    - python3 tools/keep_sorted.py || rc=$?
+
     # Are all compute micro-kernels present in benchmarking framework?
     - python3 tools/check_benchmark_microkernels.py || rc=$?
 

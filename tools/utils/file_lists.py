@@ -3,9 +3,50 @@
 # SPDX-FileCopyrightText: Copyright 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 #
 # SPDX-License-Identifier: Apache-2.0
-"""Helpers for discovering implemented micro-kernels."""
+"""Helpers for gathering lists."""
 from dataclasses import dataclass
 from pathlib import Path
+
+import utils.git as git_utils
+
+
+def gather_sortable_files(repo_root: Path) -> list[Path]:
+    """
+    Discover tracked core source/configuration files for marked sorting.
+    """
+    extensions = {
+        # kai-keep-sorted-begin
+        ".c",
+        ".clang-format",
+        ".clang-tidy",
+        ".cmake",
+        ".cpp",
+        ".gitignore",
+        ".h",
+        ".hpp",
+        ".md",
+        ".py",
+        ".toml",
+        ".txt",
+        # kai-keep-sorted-end
+    }
+
+    exclude_dirs = {"experimental", "third_party", "LICENSES"}
+
+    files = []
+
+    for candidate in git_utils.get_versioned_files(root_dir=repo_root):
+        if candidate.parts[0] in exclude_dirs:
+            continue
+
+        if candidate.suffix not in extensions:
+            continue
+
+        path = repo_root / candidate
+        if not path.is_symlink():
+            files.append(path)
+
+    return files
 
 
 @dataclass(frozen=True, order=True)
