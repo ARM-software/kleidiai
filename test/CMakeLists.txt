@@ -53,6 +53,9 @@ add_library(kleidiai_test_framework
     test/nextgen/operators/dwconv/dwconv_tb.cpp
     test/nextgen/operators/dwconv/pack_rhs/dwconv_pack_rhs_fp_nt_wrapper.cpp
     test/nextgen/operators/dwconv/pack_rhs/dwconv_pack_rhs_wrapper_registry.cpp
+    test/nextgen/operators/imatmul/imatmul_operator.cpp
+    test/nextgen/operators/imatmul/imatmul_tb.cpp
+    test/nextgen/operators/imatmul/pack_lhs/imatmul_pack_lhs_ukerapi_wrapper.cpp
     test/nextgen/operators/matmul/matmul/matmul_dq_wrapper.cpp
     test/nextgen/operators/matmul/matmul/matmul_fp_wrapper.cpp
     test/nextgen/operators/matmul/matmul/matmul_ukerapi_wrapper.cpp
@@ -147,6 +150,7 @@ else()
     set(KLEIDIAI_FILES_TESTS
         # kai-keep-sorted-begin
         test/nextgen/tests/dwconv_test_next.cpp
+        test/nextgen/tests/imatmul_test_next.cpp
         test/nextgen/tests/matmul_test_next.cpp
         test/nextgen/tests/poly_test.cpp
         test/nextgen/tests/softmax_test.cpp
