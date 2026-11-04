@@ -135,7 +135,7 @@ struct IndirectInputArg {
 
 namespace utils {
 
-#if defined(__aarch64__) || defined(_M_ARM64)
+#ifdef __aarch64__
 
 /// Returns the current SVE vector length in bytes.
 /// Requires SVE support at runtime.
@@ -163,7 +163,7 @@ inline unsigned long get_vector_length() {
 }
 
 } // namespace sme
-#endif  // defined(__aarch64__) || defined(_M_ARM64)
+#endif  // __aarch64__
 
 // get_vector_length(VLType): Returns vector length for type "T".
 //
@@ -172,12 +172,12 @@ inline unsigned long get_vector_length() {
 template <typename T>
 inline unsigned long get_vector_length(VLType vl_type) {
   switch (vl_type) {
-#if defined(__aarch64__) || defined(_M_ARM64)
+#ifdef __aarch64__
     case VLType::SME:
       return sme::get_vector_length<T>();
     case VLType::SVE:
       return get_vector_length<T>();
-#endif  // defined(__aarch64__) || defined(_M_ARM64)
+#endif  // __aarch64__
     default:
       return 16 / sizeof(T);
   }

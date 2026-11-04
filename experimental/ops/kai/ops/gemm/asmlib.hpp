@@ -26,7 +26,7 @@
 /*
  * Do some prefetches.
  */
-#if defined(__aarch64__) || defined(_M_ARM64)
+#ifdef __aarch64__
 
 extern "C" void kai_ops_prefetch_6x(const void* address);
 extern "C" void kai_ops_prefetch_5x(const void* address);
