@@ -55,7 +55,7 @@ public:
     }
 
     template<typename TOut>
-    void Merge(TOut *, const TResult *, int, int, int, int, int, const TOut *, const Activation, bool) {
+    void Merge(const KernelArgs *) {
         // Separate merge not supported for SME.
     }
 };

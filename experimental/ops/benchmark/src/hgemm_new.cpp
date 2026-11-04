@@ -9,6 +9,8 @@
 #include "kai_ops_kernels.hpp"
 #include "gemm_transpose.hpp"
 
+#include "kai/ops/float16.hpp"
+
 #ifdef __aarch64__
 template void benchmark<hgemm_new, false, QuantizationType::NONE, false>(GemmProblem *, int, int, int, mapfn, const char *);
 template void test<gemm_transposeB<__fp16, __fp16>, hgemm_new, false>(GemmProblem *, int, int, const char *, FILE *);

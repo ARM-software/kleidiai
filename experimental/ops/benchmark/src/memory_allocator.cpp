@@ -8,7 +8,7 @@
 #include <malloc.h>
 #endif
 
-//#undef VICIOUS_PAGE_SIZE
+//#define VICIOUS_PAGE_SIZE 4096
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,9 +29,6 @@ void *allocate_aligned_memory(size_t alignment, size_t size) {
     // "Vicious" allocaton policy - round the provided size up to the next page, and provide a pointer offset such
     // that overreading or overwriting will stray into invalid memory.
 
-    // Some kernels deliberately overread by up to 7 bytes.
-    size += 7;
-
     size_t aligned_size = ((size + VICIOUS_PAGE_SIZE-1) / VICIOUS_PAGE_SIZE) * VICIOUS_PAGE_SIZE;
     // Track allocations - we need to provide our own addresses to make sure there are gaps.
     static size_t base_offset=0;
@@ -44,7 +41,7 @@ void *allocate_aligned_memory(size_t alignment, size_t size) {
     size_t offset = size % VICIOUS_PAGE_SIZE;
 
     if (offset) {
-        r = aligned_ptr + (VICIOUS_PAGE_SIZE - offset);
+        r = static_cast<unsigned char *>(aligned_ptr) + (VICIOUS_PAGE_SIZE - offset);
         printf("Allocating %zu bytes, offset=%zu, pointer=%p\n", size, offset, r);
     } else {
         r = aligned_ptr;

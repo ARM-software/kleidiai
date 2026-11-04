@@ -30,6 +30,7 @@
 #include <vector>
 
 #include "kai/ops/bfloat.hpp"
+#include "kai/ops/float16.hpp"
 
 #define restrict __restrict
 

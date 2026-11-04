@@ -10,6 +10,7 @@
 
 #include "depthwise_wrapper.hpp"
 #include "kai/ops/bfloat.hpp"
+#include "kai/ops/float16.hpp"
 #include "kai_ops_wrapper.hpp"
 #include "winograd_wrapper.hpp"
 

@@ -21,89 +21,48 @@
 
 // No preload at all
 //#define ASM_PREFETCH(address) ""
-#else
-
-// "Correct" versions for AArch32
-#define ASM_PREFETCH(address)     "PLD " address "\n"
-#define ASM_PREFETCHW(address)    "PLDW " address "\n"
-
-#endif
+#endif // __aarch64__
 
 /*
  * Do some prefetches.
  */
+#if defined(__aarch64__) || defined(_M_ARM64)
+
+extern "C" void kai_ops_prefetch_6x(const void* address);
+extern "C" void kai_ops_prefetch_5x(const void* address);
+extern "C" void kai_ops_prefetch_4x(const void* address);
+extern "C" void kai_ops_prefetch_3x(const void* address);
+extern "C" void kai_ops_prefetch_2x(const void* address);
+extern "C" void kai_ops_prefetch_1x(const void* address);
+
 template <typename T>
 static inline void prefetch_6x(const T *pfp) {
-    __asm __volatile (
-        ASM_PREFETCH("[%[pfp]]")
-        ASM_PREFETCH("[%[pfp], #64]")
-        ASM_PREFETCH("[%[pfp], #128]")
-        ASM_PREFETCH("[%[pfp], #192]")
-        ASM_PREFETCH("[%[pfp], #256]")
-        ASM_PREFETCH("[%[pfp], #320]")
-    :
-    : [pfp] "r" (pfp)
-    : "memory"
-    );
+    kai_ops_prefetch_6x(pfp);
 }
 
 template <typename T>
 static inline void prefetch_5x(const T *pfp) {
-    __asm __volatile (
-        ASM_PREFETCH("[%[pfp]]")
-        ASM_PREFETCH("[%[pfp], #64]")
-        ASM_PREFETCH("[%[pfp], #128]")
-        ASM_PREFETCH("[%[pfp], #192]")
-        ASM_PREFETCH("[%[pfp], #256]")
-    :
-    : [pfp] "r" (pfp)
-    : "memory"
-    );
+    kai_ops_prefetch_5x(pfp);
 }
 
 template <typename T>
 static inline void prefetch_4x(const T *pfp) {
-    __asm __volatile (
-        ASM_PREFETCH("[%[pfp]]")
-        ASM_PREFETCH("[%[pfp], #64]")
-        ASM_PREFETCH("[%[pfp], #128]")
-        ASM_PREFETCH("[%[pfp], #192]")
-    :
-    : [pfp] "r" (pfp)
-    : "memory"
-    );
+    kai_ops_prefetch_4x(pfp);
 }
 
 template <typename T>
 static inline void prefetch_3x(const T *pfp) {
-    __asm __volatile (
-        ASM_PREFETCH("[%[pfp]]")
-        ASM_PREFETCH("[%[pfp], #64]")
-        ASM_PREFETCH("[%[pfp], #128]")
-    :
-    : [pfp] "r" (pfp)
-    : "memory"
-    );
+    kai_ops_prefetch_3x(pfp);
 }
 
 template <typename T>
 static inline void prefetch_2x(const T *pfp) {
-    __asm __volatile (
-        ASM_PREFETCH("[%[pfp]]")
-        ASM_PREFETCH("[%[pfp], #64]")
-    :
-    : [pfp] "r" (pfp)
-    : "memory"
-    );
+    kai_ops_prefetch_2x(pfp);
 }
 
 template <typename T>
 static inline void prefetch_1x(const T *pfp) {
-    __asm __volatile (
-        ASM_PREFETCH("[%[pfp]]")
-    :
-    : [pfp] "r" (pfp)
-    : "memory"
-    );
+    kai_ops_prefetch_1x(pfp);
 }
 
+#endif

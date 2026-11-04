@@ -5,7 +5,8 @@
 //
 #pragma once
 
-#include "common_internal/utils.hpp" // IndirectInputArg
+#include "common_internal/kernel_args.hpp"
+#include "common_internal/utils.hpp"
 
 namespace kai {
 namespace ops {
@@ -25,8 +26,7 @@ void compute_col_sums(const Requantize32 &qp, unsigned int width, unsigned int h
                       unsigned int multi, unsigned int first_col);
 
 template<typename T>
-void row_sums_indirect(size_t num_strings, const unsigned int *string_lengths, IndirectInputArg<T> A_arg,
-                       size_t M, int32_t *output_ptr, const Requantize32 *qp);
+void row_sums_indirect(const KernelArgs *ka, int32_t *out_ptr, int32_t rhs_offset);
 
 template<typename T>
 void dequantize_block_32(const DequantizeFloat &qp, unsigned int width, unsigned int height,

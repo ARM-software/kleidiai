@@ -13,6 +13,15 @@ project(
     DESCRIPTION "Benchmark GEMM kernels of various flavours for AArch64"
     LANGUAGES C CXX)
 
+if(MSVC)
+    enable_language(ASM_MARMASM)
+    set(CMAKE_ASM_MARMASM_COMPILE_OBJECT
+        "<CMAKE_C_COMPILER> /nologo /EP /P /Tc <SOURCE> <DEFINES> <INCLUDES> /Fi<OBJECT>.asm"
+        "<CMAKE_ASM_MARMASM_COMPILER> -o <OBJECT> <OBJECT>.asm")
+else()
+    enable_language(ASM)
+endif()
+
 if(NOT DEFINED PROJECT_IS_TOP_LEVEL)
     if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
         set(PROJECT_IS_TOP_LEVEL ON)
@@ -50,10 +59,10 @@ endif()
 # Configuration options
 option(KLEIDIAI_OPS_ENABLE_CCACHE_SUPPORT "Enable use of 'ccache' for build" OFF)
 option(KLEIDIAI_OPS_ENABLE_NATIVE "Enable native build" ON)
-option(KLEIDIAI_OPS_ENABLE_AARCH32 "Enable AArch32 mode" OFF)
 option(KLEIDIAI_OPS_ENABLE_BARE_METAL "Enable bare-metal mode" OFF)
 option(KLEIDIAI_OPS_ENABLE_ANDROID "Enable Android build" OFF)
 option(KLEIDIAI_OPS_ENABLE_BUILD_BENCHMARK "Enable build of 'gemm' benchmarking executable" ${PROJECT_IS_TOP_LEVEL})
+option(KLEIDIAI_OPS_ENABLE_BUILD_TESTING "Enable build of unit tests" ${PROJECT_IS_TOP_LEVEL})
 option(KLEIDIAI_OPS_ENABLE_CYCLE_PROFILING "Enable cycle based profiling on the 'new' kernels; reports stats per-thread if threading support is enabled." OFF)
 
 # Benchmarking-specific configuration flags
@@ -85,6 +94,13 @@ add_subdirectory(kai/ops)
 
 if(KLEIDIAI_OPS_ENABLE_BUILD_BENCHMARK)
     add_subdirectory(benchmark)
+endif()
+
+# -------------------------------------------------------------------------------------------------
+
+if(KLEIDIAI_OPS_ENABLE_BUILD_TESTING)
+    enable_testing()
+    add_subdirectory(tests/unit)
 endif()
 
 # -------------------------------------------------------------------------------------------------

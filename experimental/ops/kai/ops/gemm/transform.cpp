@@ -6,6 +6,7 @@
 #include "common_internal/utils.hpp"
 
 #include "kai/ops/bfloat.hpp"
+#include "kai/ops/float16.hpp"
 
 #if !defined(_WIN64) && !defined(__OpenBSD__)
 #include <alloca.h>
@@ -108,16 +109,6 @@ void Transform(
 /*****************************************************************************/
 
 #include "transforms/list.hpp"
-
-template void Transform<8, 1, true, VLType::None>(float *, const float *, int, int, int, int, int);
-
-// We don't have assembler transforms for AArch32, generate templated ones here.
-#ifdef __arm__
-#if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
-template void Transform<8, 1, true, VLType::None>(float *, const __fp16 *, int, int, int, int, int);
-#endif // defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
-template void Transform<8, 1, true, VLType::None>(float *, const bfloat16 *, int, int, int, int, int);
-#endif // AArch32
 
 template void Transform<12, 1, false, VLType::None>(float *, const __fp16 *, int, int, int, int, int);
 template void Transform<12, 1, false, VLType::None>(float *, const bfloat16 *, int, int, int, int, int);

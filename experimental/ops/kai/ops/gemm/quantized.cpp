@@ -630,7 +630,7 @@ template void requantize_block_32(const Requantize32 &qp, unsigned int width, un
  * helper functions below.
  *
  * The general strategy used is to load vectors of 16 bytes and accumulate
- * (using uadalp/sadalp or AArch32 equivalents) into 8x16-bit accumulators.
+ * (using uadalp/sadalp) into 8x16-bit accumulators.
  * These are then reduced (using uadalp/sadalp again) into 4x32-bit
  * accumulators.  The 4 accumulators for up to 4 rows being processed are
  * then added together into a single output vector using pairwise adds.
