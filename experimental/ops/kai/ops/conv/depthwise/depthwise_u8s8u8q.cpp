@@ -81,7 +81,7 @@ static const DepthwiseImplementation<uint8_t, int8_t, uint8_t, Requantize32> dep
     constraint<Requantize32>(cpu_has_sme, cpu_has_sme2,
                              is_supported<sme2_u8s8u8q_planar_5x5_s1_4rows_dot_za>,
                              has_no_channel_multiplier,
-                             qp_has_no_left_shift),
+                             qp_has_no_left_shift, no_prime_right_pad),
     nullptr,
     [] (const DepthwiseArgs &args, const Requantize32 &qp) -> DepthwiseCommon<uint8_t, int8_t, uint8_t> * {
       auto strat = new sme2_u8s8u8q_planar_5x5_s1_4rows_dot_za(args.cpu_info);
@@ -94,7 +94,7 @@ static const DepthwiseImplementation<uint8_t, int8_t, uint8_t, Requantize32> dep
     constraint<Requantize32>(cpu_has_sme, cpu_has_sme2,
                              is_supported<sme2_u8s8u8q_planar_5x5_s2_4rows_dot_za>,
                              has_no_channel_multiplier,
-                             qp_has_no_left_shift),
+                             qp_has_no_left_shift, no_prime_right_pad),
     nullptr,
     [] (const DepthwiseArgs &args, const Requantize32 &qp) -> DepthwiseCommon<uint8_t, int8_t, uint8_t> * {
       auto strat = new sme2_u8s8u8q_planar_5x5_s2_4rows_dot_za(args.cpu_info);

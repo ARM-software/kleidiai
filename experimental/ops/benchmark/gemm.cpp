@@ -134,6 +134,7 @@ typedef kai_ops_quantized<int8_t, int8_t, int8_t> gemm_s8_quant;
 typedef kai_ops_quantized<uint8_t, int8_t, uint8_t> gemm_u8s8_quant;
 typedef depthwise_wrapper<int8_t, int8_t, int8_t, QuantizationType::INTEGER> depthwise_s8q;
 typedef depthwise_wrapper<uint8_t, uint8_t, uint8_t, QuantizationType::INTEGER> depthwise_u8q;
+typedef depthwise_wrapper<uint8_t, int8_t, uint8_t, QuantizationType::INTEGER> depthwise_u8s8u8q;
 
 /*
  * Infrastructure to allow the kernel to be tested to be selected.
@@ -238,6 +239,8 @@ KERN_QUANT_COMP(depthwise_s8q, depthwise_fp32, KERN_CONV | KERN_CONV_ONLY | KERN
 KERN_QUANT_PERCHANNEL_COMP(depthwise_s8q, depthwise_fp32, KERN_CONV | KERN_CONV_ONLY | KERN_ACTOK | KERN_DEPTHWISE)
 KERN_QUANT_COMP(depthwise_u8q, depthwise_fp32, KERN_CONV | KERN_CONV_ONLY | KERN_ACTOK | KERN_DEPTHWISE)
 KERN_QUANT_PERCHANNEL_COMP(depthwise_u8q, depthwise_fp32, KERN_CONV | KERN_CONV_ONLY | KERN_ACTOK | KERN_DEPTHWISE)
+KERN_QUANT_COMP(depthwise_u8s8u8q, depthwise_fp32, KERN_CONV | KERN_CONV_ONLY | KERN_ACTOK | KERN_DEPTHWISE)
+KERN_QUANT_PERCHANNEL_COMP(depthwise_u8s8u8q, depthwise_fp32, KERN_CONV | KERN_CONV_ONLY | KERN_ACTOK | KERN_DEPTHWISE)
 #endif
 /* END OF KERNEL LIST */
 { "", nullptr, nullptr, nullptr, 0 } };
