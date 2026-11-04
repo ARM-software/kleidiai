@@ -1,5 +1,5 @@
 #
-# SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+# SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -11,8 +11,7 @@ if(POLICY CMP0135)
 endif()
 
 fetchcontent_declare(googlebench
-    URL         ${CMAKE_CURRENT_SOURCE_DIR}/third_party/benchmark-v1.9.4.zip
-    URL_HASH    SHA256=7a273667fbc23480df1306f82bdb960672811dd29a0342bb34e14040307cf820
+    URL ${CMAKE_CURRENT_SOURCE_DIR}/third_party/benchmark-v1.10.0.zip
 )
 
 set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
