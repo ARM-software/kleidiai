@@ -16,6 +16,13 @@ namespace kai::test {
 Span<const SoftmaxOperator> get_available_softmax_operators() {
     static const std::array operators{
         SoftmaxOperator{
+            "softmax_f32_f32_1d_sme2",
+            test::cpu_has_sme2,
+            DataType::FP32,
+            DataType::FP32,
+            SoftmaxWrapper("softmax_f32_f32_1d_sme2", kai_softmax_f32_f32_1d_sme2()),
+        },
+        SoftmaxOperator{
             "softmax_f32_f32_1d_sme2p1_fexpa",
             test::cpu_check<
                 cpu_has_sme2p1, test::cpu_check_has_one_of<test::cpu_has_sme_fa64, test::cpu_has_ssve_fexpa>>,

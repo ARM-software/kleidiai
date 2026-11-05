@@ -665,6 +665,8 @@ set(KLEIDIAI_FILES_SME2_ASM
     kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp1vlx4_f32_sme2_asm.S
     kai/ukernels/matmul/pack/kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2.c
     kai/ukernels/matmul/pack/kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2_asm.S
+    kai/ukernels/softmax/softmax_f32_f32/kai_softmax_f32_f32_1d_sme2.c
+    kai/ukernels/softmax/softmax_f32_f32/kai_softmax_f32_f32_1d_sme2_asm.S
     # kai-keep-sorted-end
 )
 

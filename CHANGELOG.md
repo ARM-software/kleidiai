@@ -12,6 +12,8 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+- New SME2 micro-kernels:
+  - FP32 softmax using a Taylor exponential approximation, processing four streaming vectors per iteration.
 - Update dependencies to the latest version:
   - Google Test: v1.18.0.
   - Google Benchmark: v1.10.0.
