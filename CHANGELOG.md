@@ -10,6 +10,13 @@
 
 KleidiAI follows the [Semantic Versioning](https://semver.org/) specification for releases.
 
+## Upcoming Release
+
+- New SME micro-kernels:
+  - Depthwise convolution RHS packing for 8-bit weights.
+- New SME2 micro-kernels:
+  - Planar INT8 depthwise convolution for 3x3 filters and stride 1, with per-channel floating-point requantization.
+
 ## v1.33.0
 
 - New Advanced SIMD micro-kernels:
