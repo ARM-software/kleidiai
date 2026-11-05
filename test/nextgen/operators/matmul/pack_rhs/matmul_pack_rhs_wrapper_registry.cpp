@@ -313,11 +313,12 @@ bool is_shape_suitable_rhs_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon(
     return portion_non_empty(shape_n, shape_k, 16 * get_sme_vector_scale(), shape_k, portion);
 }
 
-MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon(const size_t nr) {
+template <auto BlockHeight>
+MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon() {
     return std::make_unique<MatMulPackRhsBlockwiseQuantTrailingScaleWrapper>(
         "matmul_rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon",  // name
-        nr,                                                        // Packed panel width
-        format::qsi4c32ps4s0sf16(nr));                             // dst format
+        get_block_dimension<BlockHeight>(),                        // Packed panel width
+        format::qsi4c32ps4s0sf16<BlockHeight, 8>());               // dst format
 }
 
 MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon() {
@@ -333,14 +334,14 @@ MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon() {
     const MatMulPackArgs pack_args{0, get_sve_vector_scale() * 4, 8, 1, 0};
 
     return std::make_unique<MatMulPackRhsQuantI8Wrapper>(
-        "matmul_rhs_pack_nxk_qsi8cxp4vsx8_qsi8cx_neon",  // name
-        kernel_interface,                                // kernel
-        format::plain<DataType::I8>(),                   // src data format
-        format::plain<DataType::FP32>(),                 // src scale format
-        format::plain<DataType::FP32>(),                 // src bias format
-        format::plain<DataType::I32>(),                  // src sum format
-        format::qsi8cxp<sve::VS<4>, 8>(),                // dst format
-        pack_args);                                      // pack args
+        "matmul_rhs_pack_nxk_qsi8cxp4vsx8_qsi8cx_neon",    // name
+        kernel_interface,                                  // kernel
+        format::plain<DataType::I8>(),                     // src data format
+        format::plain<DataType::FP32>(),                   // src scale format
+        format::plain<DataType::FP32>(),                   // src bias format
+        format::plain<DataType::I32>(),                    // src sum format
+        format::qsi8cxp_repeat_last_row<sve::VS<4>, 8>(),  // dst format
+        pack_args);                                        // pack args
 }
 
 template <size_t BlockHeight, size_t BlockWidth>
@@ -363,14 +364,14 @@ MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon() {
     const MatMulPackArgs pack_args{0, BlockHeight, BlockWidth, 1, 0};
 
     return std::make_unique<MatMulPackRhsQuantI8Wrapper>(
-        name,                                        // name
-        kernel_interface,                            // kernel
-        format::plain<DataType::I8>(),               // src data format
-        format::plain<DataType::FP32>(),             // src scale format
-        format::plain<DataType::FP32>(),             // src bias format
-        format::plain<DataType::I32>(),              // src sum format
-        format::qsi8cxp<BlockHeight, BlockWidth>(),  // dst format
-        pack_args);                                  // pack args
+        name,                                                        // name
+        kernel_interface,                                            // kernel
+        format::plain<DataType::I8>(),                               // src data format
+        format::plain<DataType::FP32>(),                             // src scale format
+        format::plain<DataType::FP32>(),                             // src bias format
+        format::plain<DataType::I32>(),                              // src sum format
+        format::qsi8cxp_repeat_last_row<BlockHeight, BlockWidth>(),  // dst format
+        pack_args);                                                  // pack args
 }
 
 MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp4vlx4_qsi8cx_neon() {
@@ -385,14 +386,14 @@ MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp4vlx4_qsi8cx_neon() {
     };
 
     return std::make_unique<MatMulPackRhsQuantI8Wrapper>(
-        "matmul_rhs_pack_nxk_qsi8cxp4vlx4_qsi8cx_neon",  // name
-        kernel_interface,                                // kernel
-        format::plain<DataType::I8>(),                   // src data format
-        format::plain<DataType::FP32>(),                 // src scale format
-        format::plain<DataType::FP32>(),                 // src bias format
-        format::plain<DataType::I32>(),                  // src sum format
-        format::qsi8cxp<sme::VL<4>, 4>(),                // dst format
-        pack_args);                                      // pack args
+        "matmul_rhs_pack_nxk_qsi8cxp4vlx4_qsi8cx_neon",    // name
+        kernel_interface,                                  // kernel
+        format::plain<DataType::I8>(),                     // src data format
+        format::plain<DataType::FP32>(),                   // src scale format
+        format::plain<DataType::FP32>(),                   // src bias format
+        format::plain<DataType::I32>(),                    // src sum format
+        format::qsi8cxp_repeat_last_row<sme::VL<4>, 4>(),  // dst format
+        pack_args);                                        // pack args
 }
 
 MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4cxp4vlx4s1s0_qsu4cxs1s0_neon() {
@@ -875,6 +876,7 @@ MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4cxp4vlx4s16s0sf32bf32_qsu4cx(
         pack_args);                                              // pack args
 }
 
+template MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon<sme::VS<16>>();
 template MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon<8, 4>();
 template MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon<8, 8>();
 template MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon<32, 4>();

@@ -251,28 +251,30 @@ template <auto BlockHeight, size_t BlockWidth>
 
 /// Creates the qsi4c32ps4s0sf16 packed format with trailing FP16 block scales.
 ///
-/// @param[in] block_height The packed block height.
+/// @tparam BlockHeight The packed block height.
+/// @tparam BlockWidth The packed block width.
 /// @return The format.
-[[nodiscard]] inline Poly<Format> qsi4c32ps4s0sf16(size_t block_height) {
+template <auto BlockHeight, size_t BlockWidth>
+[[nodiscard]] inline Poly<Format> qsi4c32ps4s0sf16() {
     return make_poly<Block2dRowFormat>(
-        block_height, 8,             // Block shape
-        32,                          // Width alignment
-        false,                       // Zero pad right
-        DataType::I4,                // Packed data type
-        std::array<DataType, 0>{},   // Per-row prefix types
-        std::array{DataType::FP16},  // Per-block scale type
-        32,                          // Block length
-        std::nullopt,                // Padding value
-        false,                       // First-row bottom padding
-        std::array<DataType, 0>{},   // Outer per-row prefix types
-        std::array<DataType, 0>{},   // Outer per-row postfix types
-        4,                           // Nibble interleave width
-        false,                       // Last-row bottom padding
-        true                         // Trailing block components
+        get_block_dimension<BlockHeight>(), BlockWidth,  // Block shape
+        32,                                              // Width alignment
+        false,                                           // Zero pad right
+        DataType::I4,                                    // Packed data type
+        std::array<DataType, 0>{},                       // Per-row prefix types
+        std::array{DataType::FP16},                      // Per-block scale type
+        32,                                              // Block length
+        std::nullopt,                                    // Padding value
+        false,                                           // First-row bottom padding
+        std::array<DataType, 0>{},                       // Outer per-row prefix types
+        std::array<DataType, 0>{},                       // Outer per-row postfix types
+        4,                                               // Nibble interleave width
+        false,                                           // Last-row bottom padding
+        true                                             // Trailing block components
     );
 }
 
-/// Creates the qsi8cxp packed format for the specified block shape.
+/// Creates the qsi8cxp packed format with zero-filled bottom rows.
 ///
 /// @tparam BlockHeight The packed block height.
 /// @tparam BlockWidth The packed block width.
@@ -286,6 +288,30 @@ template <auto BlockHeight, size_t BlockWidth>
         DataType::I8,                                              // Packed data type
         std::array<DataType, 0>{},                                 // Per-row prefix types
         std::array{DataType::I32, DataType::FP32, DataType::FP32}  // Per-row postfix types
+    );
+}
+
+/// Creates the qsi8cxp packed format by repeating the last row for bottom padding.
+///
+/// @tparam BlockHeight The packed block height.
+/// @tparam BlockWidth The packed block width.
+/// @return The format.
+template <auto BlockHeight, size_t BlockWidth>
+[[nodiscard]] inline Poly<Format> qsi8cxp_repeat_last_row() {
+    return make_poly<Block2dRowFormat>(
+        get_block_dimension<BlockHeight>(), BlockWidth,             // Block shape
+        32,                                                         // Width alignment
+        false,                                                      // Zero pad right
+        DataType::I8,                                               // Packed data type
+        std::array<DataType, 0>{},                                  // Per-row prefix types
+        std::array{DataType::I32, DataType::FP32, DataType::FP32},  // Per-row postfix types
+        0,                                                          // Full-row component block length
+        std::nullopt,                                               // Zero padding value
+        false,                                                      // Do not repeat the first row
+        std::array<DataType, 0>{},                                  // Outer per-row prefix types
+        std::array<DataType, 0>{},                                  // Outer per-row postfix types
+        1,                                                          // Adjacent elements
+        true                                                        // Repeat the last row for bottom padding
     );
 }
 

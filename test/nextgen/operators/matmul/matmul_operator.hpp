@@ -61,7 +61,8 @@ struct MatMulOperator {
     DataType bias_dtype;
     DataType acc_dtype;
     DataType dst_dtype;
-    DataType ref_dtype = DataType::FP32;  ///< Data type used by the reference implementation.
+    DataType ref_dtype = DataType::FP32;         ///< Data type used by the reference implementation.
+    DataType dequant_dtype = DataType::UNKNOWN;  ///< Data type used for dequantized values and scale conversions.
 
     std::optional<MatMulPackKernelPtr> pack_lhs;
     std::optional<MatMulPackKernelPtr> pack_rhs;

@@ -16,10 +16,11 @@ namespace kai::test {
 
 /// Creates a wrapper for the native legacy s4s0 QSI4C32P RHS packer.
 ///
-/// @param[in] nr The packed panel width.
+/// @tparam BlockHeight The packed panel width.
 ///
 /// @return The micro-kernel wrapper.
-[[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon(size_t nr);
+template <auto BlockHeight>
+[[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon();
 
 /// Creates a wrapper for kai_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon kernel.
 [[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4cxp4vlx4s1s0_qsu4cxs1s0_neon();

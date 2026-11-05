@@ -15,6 +15,8 @@ namespace kai::test {
 
 std::string data_type_uid(DataType dt) {
     switch (dt) {
+        case DataType::FP64:
+            return "f64";
         case DataType::FP32:
             return "f32";
         case DataType::FP16:

@@ -23,6 +23,9 @@ public:
     }
 
     [[nodiscard]] std::string uid() const override;
+    [[nodiscard]] DefaultMismatchHandler make_mismatch_handler(
+        DataType accumulator_dtype, DataType reference_dtype, DataType reference_accumulator_dtype,
+        DataType dequant_dtype = DataType::UNKNOWN) const override;
     void determine_qinfo(
         DataType fp_dtype, Shape shape, Span<const std::byte> fp_data, Tensor& qscale, Tensor& qzp) const override;
     void quantize(

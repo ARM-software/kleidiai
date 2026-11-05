@@ -23,6 +23,14 @@
 
 namespace kai::test {
 
+DefaultMismatchHandler AsymmLinearQuantizer::make_mismatch_handler(
+    DataType accumulator_dtype, DataType reference_dtype, DataType reference_accumulator_dtype,
+    DataType dequant_dtype) const {
+    KAI_TEST_ASSERT(data_type_is_integral(m_qdata_dtype) && data_type_is_integral(m_qzp_dtype));
+    return make_compute_mismatch_handler(
+        m_qdata_dtype, accumulator_dtype, reference_dtype, reference_accumulator_dtype, m_qscale_dtype, dequant_dtype);
+}
+
 namespace {
 
 std::tuple<size_t, size_t> shape_as_2d(Shape shape) {

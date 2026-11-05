@@ -10,6 +10,7 @@
 #include <string>
 
 #include "test/common/buffer.hpp"
+#include "test/common/compare.hpp"
 #include "test/common/data_type.hpp"
 #include "test/nextgen/common/shape.hpp"
 #include "test/nextgen/harness/tensor.hpp"
@@ -27,6 +28,21 @@ public:
     Quantizer& operator=(Quantizer&&) = default;      ///< Move assignment.
 
     [[nodiscard]] virtual std::string uid() const = 0;
+
+    /// Creates a precision policy for comparing quantized outputs.
+    ///
+    /// Error thresholds use the units compared by the quantized output's format, rather than dequantized units.
+    /// The policy accounts for rounding differences between reference and micro-kernel output quantization.
+    /// It does not describe the error between an unquantized value and its quantized representation.
+    ///
+    /// @param[in] accumulator_dtype The compute kernel's accumulator data type.
+    /// @param[in] reference_dtype The reference values' storage data type.
+    /// @param[in] reference_accumulator_dtype The reference accumulator data type.
+    /// @param[in] dequant_dtype Data type used for dequantized values and scale conversions, or UNKNOWN if absent.
+    /// @return A fresh mismatch handler with the quantizer's precision thresholds.
+    [[nodiscard]] virtual DefaultMismatchHandler make_mismatch_handler(
+        DataType accumulator_dtype, DataType reference_dtype, DataType reference_accumulator_dtype,
+        DataType dequant_dtype = DataType::UNKNOWN) const = 0;
 
     /// Determines dynamic quantization information.
     ///

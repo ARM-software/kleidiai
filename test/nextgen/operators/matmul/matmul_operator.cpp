@@ -19,6 +19,7 @@
 #include "test/nextgen/format/two_level_blockwise_format.hpp"
 #include "test/nextgen/operators/matmul/matmul/matmul_wrapper_registry.hpp"
 #include "test/nextgen/operators/matmul/matmul_bias_mode.hpp"
+#include "test/nextgen/operators/matmul/matmul_formats.hpp"
 #include "test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_wrapper_registry.hpp"
 #include "test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_wrapper_registry.hpp"
 #include "test/nextgen/quantization/matmul_quantizations.hpp"
@@ -218,6 +219,7 @@ MatMulOperator create_operator_matmul_clamp_f32_f16p4vsx2_qai4c32p16vsx4s1s0sf16
     op.bias_dtype = DataType::FP32;
     op.acc_dtype = DataType::FP32;
     op.dst_dtype = DataType::FP32;
+    op.dequant_dtype = DataType::FP16;
     op.pack_lhs = create_matmul_lhs_pack_f16p4vsx2_f32_neon(qai4c32k256_format_config.block_length);
     op.pack_rhs = create_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme();
     op.matmul = create_matmul_clamp_f32_f16p4vsx2_qai4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa();
@@ -247,9 +249,10 @@ MatMulOperator create_operator_matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s4s0sf16
     op.bias_dtype = DataType::FP32;
     op.acc_dtype = DataType::FP32;
     op.dst_dtype = DataType::FP32;
+    op.dequant_dtype = DataType::FP16;
 
     op.pack_lhs = create_matmul_lhs_pack_f16p4vsx2_f32_neon(32);
-    op.pack_rhs = create_matmul_rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon(16 * get_sme_vector_scale());
+    op.pack_rhs = create_matmul_rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon<sme::VS<16>>();
     op.matmul = create_matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s4s0sf16_4vsx16vs_sme_mopa();
     return op;
 }
@@ -823,6 +826,7 @@ MatMulOperator create_operator_matmul_clamp_f32_qsi8d32p1x4_qai4c32p16vsx4s1s0sf
     op.bias_dtype = DataType::FP32;
     op.acc_dtype = DataType::FP32;
     op.dst_dtype = DataType::FP32;
+    op.dequant_dtype = DataType::FP16;
     op.pack_lhs = create_matmul_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon();
     op.pack_rhs = create_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme();
     op.matmul = create_matmul_clamp_f32_qsi8d32p1x4_qai4c32p16vsx4s1s0sf16_1x16vs_sme2_dot();

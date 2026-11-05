@@ -6,7 +6,12 @@
 
 #pragma once
 
+#include <cmath>
 #include <cstddef>
+#include <iosfwd>
+#include <limits>
+#include <string>
+#include <tuple>
 
 #include "test/common/data_type.hpp"
 
@@ -15,6 +20,33 @@ namespace kai::test {
 class DataFormat;
 class Rect;
 class MismatchHandler;
+
+/// Calculates absolute and relative errors after converting the values to float.
+///
+/// Equal values have zero error. A nonzero error against a zero reference has
+/// infinite relative error, leaving the absolute tolerance to decide a mismatch.
+/// Zero references are handled without performing a division by zero.
+///
+/// @tparam T Numeric type of the compared values.
+/// @param[in] imp Value under test.
+/// @param[in] ref Reference value.
+/// @return The absolute error and relative error.
+template <typename T>
+std::tuple<float, float> calculate_error(T imp, T ref) {
+    const auto imp_f = static_cast<float>(imp);
+    const auto ref_f = static_cast<float>(ref);
+
+    const auto abs_error = std::abs(imp_f - ref_f);
+    if (abs_error == 0) {
+        return {abs_error, 0.0F};
+    }
+    if (ref_f == 0) {
+        return {abs_error, std::numeric_limits<float>::infinity()};
+    }
+
+    const auto rel_error = abs_error / std::abs(ref_f);
+    return {abs_error, rel_error};
+}
 
 /// Compares two matrices to check whether they are matched.
 ///
@@ -115,6 +147,19 @@ public:
     [[nodiscard]] bool success(size_t num_checks) const override;
 
 private:
+    /// Returns a string describing the comparison thresholds.
+    ///
+    /// @param[in] handler The mismatch handler.
+    /// @return The comparison thresholds.
+    friend std::string to_string(const DefaultMismatchHandler& handler);
+
+    /// Writes the comparison thresholds to a stream.
+    ///
+    /// @param[in,out] os The output stream.
+    /// @param[in] handler The mismatch handler.
+    /// @return The output stream.
+    friend std::ostream& operator<<(std::ostream& os, const DefaultMismatchHandler& handler);
+
     float _abs_error_threshold;
     float _rel_error_threshold;
     size_t _abs_mismatched_threshold;
@@ -128,8 +173,18 @@ private:
 ///
 /// @param[in] output_dtype Data type of the output being compared.
 /// @param[in] accumulator_dtype Data type used by the kernel accumulator.
+/// @param[in] reference_dtype Data type used to store the reference values.
+/// @param[in] reference_accumulator_dtype Data type used by the reference accumulator.
+/// @param[in] scale_dtype Quantization scale data type, or UNKNOWN for unquantized output.
+/// @param[in] dequant_dtype Data type used for dequantized values and scale conversions, or UNKNOWN if absent.
+/// @param[in] max_absolute_error Maximum absolute error tolerance; can only tighten the type defaults.
+/// @param[in] max_relative_error Maximum relative error tolerance; can only tighten the type defaults.
 ///
 /// @return A handler with the corresponding precision thresholds.
-[[nodiscard]] DefaultMismatchHandler make_compute_mismatch_handler(DataType output_dtype, DataType accumulator_dtype);
+[[nodiscard]] DefaultMismatchHandler make_compute_mismatch_handler(
+    DataType output_dtype, DataType accumulator_dtype, DataType reference_dtype, DataType reference_accumulator_dtype,
+    DataType scale_dtype = DataType::UNKNOWN, DataType dequant_dtype = DataType::UNKNOWN,
+    float max_absolute_error = std::numeric_limits<float>::infinity(),
+    float max_relative_error = std::numeric_limits<float>::infinity());
 
 }  // namespace kai::test

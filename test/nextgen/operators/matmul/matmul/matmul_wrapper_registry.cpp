@@ -144,7 +144,7 @@ MatMulKernelPtr create_matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s4s0sf16_4vsx16v
         kai_matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s4s0sf16_4vsx16vs_sme_mopa(),  // api
         MatMulSlot::LHS_PACKED,                                                     // lhs input slot
         format::x16p<DataType::FP16, sme::VS<4>, 2>(),                              // lhs format
-        format::qsi4c32ps4s0sf16(16 * get_sme_vector_scale()),                      // rhs format
+        format::qsi4c32ps4s0sf16<sme::VS<16>, 8>(),                                 // rhs format
         format::plain<DataType::FP32>(),                                            // dst format
         DataType::FP32,                                                             // acc dtype
         MatMulUkerClampConfig::optional(DataType::FP32),                            // clamp config

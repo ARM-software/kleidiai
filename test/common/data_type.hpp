@@ -42,6 +42,7 @@ enum class DataType : uint16_t {
 
     UNKNOWN = 0,  ///< No data.
 
+    FP64 = 0b0'1'0'0'0000'01000000,  ///< Double-precision floating-point.
     FP32 = 0b0'1'0'0'0000'00100000,  ///< Single-precision floating-point.
     FP16 = 0b0'1'0'0'0000'00010000,  ///< Half-precision floating-point.
 
@@ -106,6 +107,8 @@ constexpr bool has_a(DataType dt) {
     switch (dt) {
         case DataType::UNKNOWN:
             return "UNKNOWN";
+        case DataType::FP64:
+            return "FP64";
         case DataType::FP32:
             return "FP32";
         case DataType::FP16:

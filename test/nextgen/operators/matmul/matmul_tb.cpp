@@ -1342,8 +1342,7 @@ void MatMulTb::test_matmul(size_t start_m, size_t start_n, size_t size_m, size_t
     const Tensor& imp_dst_data = get_tensor(MatMulSlot::DST_DATA_IMP);
     const Format& format = *ref_dst_data.format();
 
-    const float absolute_tolerance = ref_dst_data.format()->dtype() == DataType::I8 ? 1.0F : 1e-3F;
-    DefaultMismatchHandler handler(absolute_tolerance, 1e-3, 0, 0.0F);
+    DefaultMismatchHandler handler = make_mismatch_handler(format.dtype());
     const bool ok = format.compare(
         dst_full_shape, dst_tile_coords, dst_tile_shape, imp_dst_data.data(), ref_dst_data.data(), handler);
     KAI_TEST_ASSERT(ok);
@@ -1363,6 +1362,15 @@ bool MatMulTb::is_tensor_generated(MatMulSlot slot) {
 
 Tensor& MatMulTb::get_tensor(MatMulSlot slot) {
     return m_tensors.at(as_idx(slot));
+}
+
+DefaultMismatchHandler MatMulTb::make_mismatch_handler(DataType output_dtype) const {
+    if (m_op->dst_quant.has_value()) {
+        return m_op->dst_quant.value()->make_mismatch_handler(
+            m_op->acc_dtype, m_op->ref_dtype, m_op->ref_dtype, m_op->dequant_dtype);
+    }
+    return make_compute_mismatch_handler(
+        output_dtype, m_op->acc_dtype, m_op->ref_dtype, m_op->ref_dtype, DataType::UNKNOWN, m_op->dequant_dtype);
 }
 
 }  // namespace kai::test
