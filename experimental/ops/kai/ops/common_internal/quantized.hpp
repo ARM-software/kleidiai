@@ -20,10 +20,10 @@ template<typename T>
 void compute_row_sums(const Requantize32 &qp, unsigned int width, unsigned int height,
                       const T *input, unsigned int in_stride, int32_t *row_bias);
 
+// Compute -offset times each column sum of a direct K x N RHS matrix.
+// Uses rhs, rhs_stride (bytes), K and N; writes N contiguous int32_t values.
 template<typename T>
-void compute_col_sums(const Requantize32 &qp, unsigned int width, unsigned int height,
-                      const T *input, unsigned int in_stride, int32_t *col_bias, unsigned int depth,
-                      unsigned int multi, unsigned int first_col);
+void compute_col_sums(const KernelArgs *ka, int32_t *out_ptr, int32_t offset);
 
 template<typename T>
 void row_sums_indirect(const KernelArgs *ka, int32_t *out_ptr, int32_t rhs_offset);

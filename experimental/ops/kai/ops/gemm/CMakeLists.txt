@@ -316,6 +316,11 @@ set(KLEIDIAI_OPS_GEMM_SOURCES_ASM
     ${CMAKE_CURRENT_LIST_DIR}/transforms/a64_transpose_interleave_4_2x4_fp32bf16.S
     ${CMAKE_CURRENT_LIST_DIR}/transforms/a64_transpose_interleave_64.S
     ${CMAKE_CURRENT_LIST_DIR}/transforms/a64_transpose_interleave_96.S
+    ${CMAKE_CURRENT_LIST_DIR}/transforms/sme_interleave_1VL_1x4.S
+    ${CMAKE_CURRENT_LIST_DIR}/transforms/sme_interleave_1VL_2x1.S
+    ${CMAKE_CURRENT_LIST_DIR}/transforms/sme_interleave_1VL_2x2_fp32bf16.S
+    ${CMAKE_CURRENT_LIST_DIR}/transforms/sme_interleave_2VL_1x4.S
+    ${CMAKE_CURRENT_LIST_DIR}/transforms/sme_interleave_2VL_2x2_fp32bf16.S
     ${CMAKE_CURRENT_LIST_DIR}/transforms/sme_transpose_interleave_16VL.S
     ${CMAKE_CURRENT_LIST_DIR}/transforms/sme_transpose_interleave_16VL_1x4.S
     ${CMAKE_CURRENT_LIST_DIR}/transforms/sme_transpose_interleave_16VL_2x2.S

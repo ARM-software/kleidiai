@@ -170,7 +170,7 @@ public:
 
         // Perform column sums etc as part of the last block.
         if (end >= get_B_pretranspose_window_size()) {
-            this->requantize_bias(in_buffer, B, ldb, B_multi_stride);
+            this->requantize_bias(in_buffer, B, ldb, B_multi_stride, transposed);
         }
 
         // Put the transposed data after the column sums - in non-quantized cases get_col_sum_size() == 0
@@ -225,15 +225,61 @@ public:
         }
     }
 
-    void requantize_bias(void *in_buffer, const Tro *B, const int ldb, const int B_multi_stride) override {
+    void requantize_bias(void *in_buffer, const Tro *B, const int ldb, const int B_multi_stride, const bool transposed) override {
         if (std::is_same<OutputStage, Requantize32>::value) {
             col_bias = reinterpret_cast<int32_t *>(in_buffer);
+            const auto &qp = *reinterpret_cast<const Requantize32 *>(&_os);
 
-            Requantize32 *qp_ptr = reinterpret_cast<Requantize32 *>(&_os);
+            // If a_offset is zero we don't need to do anything except
+            // populate with the supplied bias, if present.
+            if (qp.a_offset == 0) {
+                for (unsigned int i = 0; i < _args._nmulti; i++) {
+                    int32_t *out = col_bias + i * _args._Nsize;
+                    if (qp.bias) {
+                        std::copy_n(qp.bias + i * qp.bias_multi_stride, _args._Nsize, out);
+                    } else {
+                        std::fill_n(out, _args._Nsize, 0);
+                    }
+                }
+                return;
+            }
 
-            for (unsigned int i=0; i<_args._nmulti; i++) {
-                // The input is assumed not to have any padding between sections, so straightforward Ksize * Ksections computation gets the total size.
-                compute_col_sums(*qp_ptr, _args._Nsize, _args._Ksize * _args._Ksections, B + (i * B_multi_stride), ldb, col_bias + (i * _args._Nsize), _args._Ksize * _args._Ksections, i, 0);
+            // Compute total depth - the input is assumed to be packing with
+            // no padding between sections.
+            const int64_t depth = _args._Ksize * _args._Ksections;
+            const int32_t offset_correction = qp.a_offset * qp.b_offset * depth;
+
+            // Arguments to pass to the sum functions; row_sums reads LHS
+            // parameters and col_sums reads RHS parameters, so populate
+            // both for simplicity.
+            KernelArgs ka{};
+            ka.M = ka.N = _args._Nsize;
+            ka.K = depth;
+            ka.lhs_stride = ka.rhs_stride = ldb * sizeof(Tro);
+
+            for (unsigned int i = 0; i < _args._nmulti; i++) {
+                // Set base addresses for this multi
+                ka.lhs = ka.rhs = B + i * B_multi_stride;
+                int32_t *out = col_bias + i * _args._Nsize;
+
+                // Sum rows or columns as appropriate
+                if (transposed) {
+                    row_sums_indirect<Tro>(&ka, out, qp.a_offset);
+                } else {
+                    compute_col_sums<Tro>(&ka, out, qp.a_offset);
+                }
+
+                // Add the supplied bias and/or offset correction if needed.
+                if (qp.bias) {
+                    const int32_t *bias = qp.bias + i * qp.bias_multi_stride;
+                    for (unsigned int n = 0; n < _args._Nsize; n++) {
+                        out[n] += offset_correction + bias[n];
+                    }
+                } else if (qp.b_offset != 0) {
+                    for (unsigned int n = 0; n < _args._Nsize; n++) {
+                        out[n] += offset_correction;
+                    }
+                }
             }
         }
     }
