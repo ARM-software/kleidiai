@@ -17,6 +17,7 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 - Update dependencies to the latest version:
   - Google Test: v1.18.0.
   - Google Benchmark: v1.10.0.
+  - Bazel: 9.x.
 - Fixes:
   - Fix zero padding in `kai_rhs_pack_nxk_x16p32x1bx16_x16_x16_neon` when N is not a multiple of 32.
 

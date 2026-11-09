@@ -1136,7 +1136,7 @@ void test_rhs_pack(
             }
         }
     }
-    ASSERT_EQ(mismatches, 0) << "There are an unexpected amount of mismatches in RHS packing";
+    ASSERT_EQ(mismatches, 0U) << "There are an unexpected amount of mismatches in RHS packing";
 }
 
 void compare_matmul_result(
@@ -1169,7 +1169,7 @@ void compare_matmul_result(
         }
         printed_row = false;
     }
-    ASSERT_EQ(mismatches, 0) << "Mismatches between reference result and actual result:\n" << sstream.str();
+    ASSERT_EQ(mismatches, 0U) << "Mismatches between reference result and actual result:\n" << sstream.str();
 }
 
 /// Test MatMul of GEMM/GEMV like kernel
@@ -1256,7 +1256,7 @@ TEST_P(MatMulQuantizedTest, EndToEnd) {
     ASSERT_EQ(imp_mr, variant.acc_pack.m);
     ASSERT_EQ(imp_nr, variant.acc_pack.n);
     ASSERT_EQ(imp_kr, variant.acc_pack.k);
-    ASSERT_EQ(imp_sr, 1);
+    ASSERT_EQ(imp_sr, 1U);
 
     // Check that stepping is a multiple of accumulation
     const auto imp_m_step = variant.matmul.get_m_step();

@@ -240,7 +240,7 @@ Library C sources must remain C99-compatible, with ACLE and assembly extensions
 where required for Arm architecture features. C++ code in tests and tooling must
 remain C++17-compatible unless maintainers agree otherwise.
 
-The project supports CMake 3.16 and Bazel 6.5 or later. Contributions that add
+The project supports CMake 3.16 and Bazel 9 or later. Contributions that add
 files or change build behavior must keep both build systems up to date.
 
 | OS / environment | Supported versions | Compiler / toolchain | Supported versions / policy |
