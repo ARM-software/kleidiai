@@ -10,6 +10,7 @@
 
 #include "depthwise_wrapper.hpp"
 #include "kai/ops/bfloat.hpp"
+#include "kai/ops/float16.hpp"
 #include "kai_ops_wrapper.hpp"
 #include "winograd_wrapper.hpp"
 
@@ -46,4 +47,5 @@ typedef kai_ops_quantized<uint8_t, int8_t, uint8_t> gemm_u8s8_quant;
 
 typedef depthwise_wrapper<int8_t, int8_t, int8_t, QuantizationType::INTEGER> depthwise_s8q;
 typedef depthwise_wrapper<uint8_t, uint8_t, uint8_t, QuantizationType::INTEGER> depthwise_u8q;
+typedef depthwise_wrapper<uint8_t, int8_t, uint8_t, QuantizationType::INTEGER> depthwise_u8s8u8q;
 #endif

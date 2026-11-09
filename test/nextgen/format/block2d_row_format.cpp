@@ -126,6 +126,9 @@ size_t Block2dRowFormat::compute_size(Shape shape) const {
     const size_t height = shape.at(0);
     const size_t width = shape.at(1);
 
+    KAI_TEST_ASSERT(height > 0);
+    KAI_TEST_ASSERT(width > 0);
+
     const size_t padded_height = round_up_multiple(height, m_block_height);
 
     const size_t size = compute_offset({padded_height + m_block_height, width}, {padded_height, 0});
@@ -141,6 +144,9 @@ Buffer Block2dRowFormat::pack(Shape shape, Span<const Span<const std::byte>> buf
 
     const size_t height = shape.at(0);
     const size_t width = shape.at(1);
+    const size_t packed_size = compute_size(shape);
+
+    KAI_TEST_ASSERT(packed_size > 0);
 
     const size_t num_block_rows = round_up_division(height, m_block_height);
     const Block2dRowLayout layout = get_block2d_row_layout(width, m_width_align, m_block_width, m_block_length);
@@ -148,7 +154,6 @@ Buffer Block2dRowFormat::pack(Shape shape, Span<const Span<const std::byte>> buf
     const size_t data_block_size = m_block_height * m_block_width * data_type_bits / 8;
     const size_t component_data_size = layout.data_blocks_per_component * data_block_size;
 
-    const size_t packed_size = compute_size(shape);
     Buffer packed_buffer(packed_size, 0);
     Span<std::byte> packed_data(packed_buffer);
 

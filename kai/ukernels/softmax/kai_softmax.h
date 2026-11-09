@@ -12,6 +12,25 @@
 extern "C" {
 #endif
 
+/// Single-precision floating-point 1D softmax using a Taylor exponential approximation.
+///
+/// The softmax dimension cannot be split: get_step returns zero and both offset helpers require index zero.
+/// Source and destination must be contiguous, with dim_0 stride in bytes equal to sizeof(float).
+/// The input length must be non-zero.
+///
+/// Required CPU features:
+///   * FEAT_SME2.
+///
+/// Required operands:
+///   * src - Plain 1D buffer of F32 source data.
+///   * dst - Plain 1D buffer of F32 destination data.
+///
+/// Supported flags:
+///   * None - control flags must be 0.
+///
+/// @return The micro-kernel API.
+struct kai_softmax_uker_api kai_softmax_f32_f32_1d_sme2(void);
+
 /// Single-precision floating-point 1D softmax using an FEXPA-based exponential approximation.
 ///
 /// The softmax dimension cannot be split: get_step returns zero and both offset helpers require index zero.

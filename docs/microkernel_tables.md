@@ -194,6 +194,7 @@ Micro-kernel categories:
 
 | Output type | Input type | Dimensions | SIMD | Exponential approximation | Additional feature | Micro-kernel |
 | --- | --- | --- | --- | --- | --- | --- |
+| f32 | f32 | 1D | SME2 | Taylor-Series | - | `kai_softmax_f32_f32_1d_sme2` |
 | f32 | f32 | 1D | SME2.1 | FEXPA-based | SME_FA64 or SSVE_FEXPA | `kai_softmax_f32_f32_1d_sme2p1_fexpa` |
 | f32 | f32 | 1D | SVE | FEXPA-based | - | `kai_softmax_f32_f32_1d_sve_fexpa` |
 

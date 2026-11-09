@@ -21,6 +21,9 @@ struct SoftmaxOperator {
     DataType src_dtype;
     DataType dst_dtype;
     SoftmaxWrapper softmax;
+    DataType acc_dtype = DataType::FP32;      ///< Compute kernel accumulator data type.
+    DataType ref_dtype = DataType::FP32;      ///< Reference storage data type.
+    DataType ref_acc_dtype = DataType::FP64;  ///< Reference computation data type.
 };
 
 /// Gets all softmax operators available to the NextGen tests.

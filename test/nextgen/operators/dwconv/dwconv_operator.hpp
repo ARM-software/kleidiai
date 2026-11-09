@@ -36,12 +36,13 @@ struct DwConvOperator {
 
     DwConvClampMode clamp_mode;
 
-    std::optional<size_t> filter_height;     ///< Filter height required by the compute kernel, if present.
-    std::optional<size_t> filter_width;      ///< Filter width required by the compute kernel, if present.
-    DataType dtype;                          ///< Data type shared by input, filter, bias, and output.
-    DataType acc_dtype = DataType::UNKNOWN;  ///< Compute kernel accumulator type, if present.
-    DataType ref_dtype = DataType::FP32;     ///< Data type used by the reference implementation.
-    bool planar;                             ///< Whether the compute kernel requires complete output rows.
+    std::optional<size_t> filter_height;      ///< Filter height required by the compute kernel, if present.
+    std::optional<size_t> filter_width;       ///< Filter width required by the compute kernel, if present.
+    DataType dtype;                           ///< Data type shared by input, filter, bias, and output.
+    DataType acc_dtype = DataType::UNKNOWN;   ///< Compute kernel accumulator type, if present.
+    DataType ref_acc_dtype = DataType::FP32;  ///< Reference accumulator data type.
+    DataType ref_dtype = DataType::FP32;      ///< Data type used by the reference implementation.
+    bool planar;                              ///< Whether the compute kernel requires complete output rows.
 
     std::optional<DwConvPackKernelPtr> pack_rhs;
     std::optional<DwConvKernelPtr> dwconv;

@@ -41,8 +41,8 @@ from itertools import groupby
 from pathlib import Path
 
 import naming.rules as naming
+import utils.file_lists as file_lists
 import utils.git as git_utils
-import utils.microkernels as microkernels
 from naming.issues import KNOWN_UKERNEL_PROBLEMS
 
 RETURN = "@return The micro-kernel API."
@@ -344,7 +344,7 @@ def check_headers(ukernels_dir: Path) -> tuple[int, int, list[str]]:
     headers = 0
     functions = 0
     try:
-        for header in microkernels.gather_microkernel_headers(ukernels_dir):
+        for header in file_lists.gather_microkernel_headers(ukernels_dir):
             headers += 1
             checker = HeaderChecker(
                 path=header.path,

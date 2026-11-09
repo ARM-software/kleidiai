@@ -12,6 +12,8 @@
 #include "kai_ops_kernels.hpp"
 #include "gemm_transpose.hpp"
 
+#include "kai/ops/float16.hpp"
+
 // gemm_s8_new - GEMM only
 template void benchmark<gemm_s8_new, false, QuantizationType::NONE, false>(GemmProblem *, int, int, int, mapfn, const char *);
 template void test<gemm_transposeB<int8_t, int32_t>, gemm_s8_new, false>(GemmProblem *, int, int, const char *, FILE *);

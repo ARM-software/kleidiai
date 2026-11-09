@@ -26,7 +26,7 @@ namespace kai::benchmark {
 /// Hosted benchmark
 struct HostedBenchmarkApi {
     using State = ::benchmark::State;
-    using Registration = ::benchmark::internal::Benchmark;
+    using Registration = ::benchmark::Benchmark;
 
     /// Initializes and, parse command-line flags.
     static bool Initialize(int* argc, char** argv) {

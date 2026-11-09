@@ -76,8 +76,9 @@ void SoftmaxTb::test_output() {
     const Format& format = *ref_dst_data.format();
     const std::array compare_shape{size_t{1}, m_length};
     const std::array compare_coords{size_t{0}, size_t{0}};
-    constexpr float abs_error_threshold = 1.0e-6F;
-    DefaultMismatchHandler handler(abs_error_threshold, 1.0e-3F, 0, 0.0F);
+    DefaultMismatchHandler handler = make_compute_mismatch_handler(
+        format.dtype(), m_op->acc_dtype, m_op->ref_dtype, m_op->ref_acc_dtype, DataType::UNKNOWN, DataType::UNKNOWN,
+        1e-6F, 1e-4F);
     const bool ok =
         format.compare(compare_shape, compare_coords, compare_shape, imp_dst_data.data(), ref_dst_data.data(), handler);
     KAI_TEST_ASSERT(ok);

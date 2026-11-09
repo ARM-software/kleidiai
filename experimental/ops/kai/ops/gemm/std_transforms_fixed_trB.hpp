@@ -62,8 +62,8 @@ public:
     }
 
     template<typename TOut>
-    void Merge(TOut *out, const TResult *in, int stride, int y0, int ymax, int x0, int xmax, const TOut *bias, const Activation act, bool append) const {
-        MergeResults<width, height>(out, in, stride, y0, ymax, x0, xmax, bias, act, append);
+    void Merge(const KernelArgs *args) const {
+        MergeResults<width, height, false, TResult, TOut>(args);
     }
 };
 

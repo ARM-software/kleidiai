@@ -141,8 +141,7 @@ bool compare_panel_bytes(
                 handler.mark_as_failed();
             }
 
-            const float abs_error = std::fabs(static_cast<float>(imp) - static_cast<float>(ref));
-            const float rel_error = ref != 0 ? abs_error / static_cast<float>(ref) : 0.0F;
+            const auto [abs_error, rel_error] = calculate_error(imp, ref);
             if (!in_tile || handler.handle_data(abs_error, rel_error)) {
                 std::cerr << "Mismatched at panel " << panel << ", byte " << index
                           << ": actual = " << static_cast<unsigned int>(imp)

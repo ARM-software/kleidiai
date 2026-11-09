@@ -6,6 +6,8 @@
 
 #include "test/common/compare.hpp"
 
+#include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -28,23 +30,6 @@
 namespace kai::test {
 
 namespace {
-
-/// Calculates the absolute and relative errors.
-///
-/// @param[in] imp Value under test.
-/// @param[in] ref Reference value.
-///
-/// @return The absolute error and relative error.
-template <typename T>
-std::tuple<float, float> calculate_error(T imp, T ref) {
-    const auto imp_f = static_cast<float>(imp);
-    const auto ref_f = static_cast<float>(ref);
-
-    const auto abs_error = std::abs(imp_f - ref_f);
-    const auto rel_error = ref_f != 0 ? abs_error / std::abs(ref_f) : 0.0F;
-
-    return {abs_error, rel_error};
-}
 
 /// Compares matrices with per-row quantization.
 template <typename Data>
@@ -264,10 +249,12 @@ bool compare(
             if (data_type == DataType::FP16 && offset_dt == DataType::FP16) {
                 return compare_per_row<Float16, std::nullptr_t, Float16>(
                     imp_data, ref_data, format, full_height, full_width, rect, handler);
-            } else if (data_type == DataType::FP32 && offset_dt == DataType::FP32) {
+            }
+            if (data_type == DataType::FP32 && offset_dt == DataType::FP32) {
                 return compare_per_row<float, std::nullptr_t, float>(
                     imp_data, ref_data, format, full_height, full_width, rect, handler);
-            } else if (data_type == DataType::BF16 && offset_dt == DataType::FP32) {
+            }
+            if (data_type == DataType::BF16 && offset_dt == DataType::FP32) {
                 return compare_per_row<BFloat16<>, std::nullptr_t, float>(
                     imp_data, ref_data, format, full_height, full_width, rect, handler);
             }
@@ -278,8 +265,8 @@ bool compare(
             if (data_type_is_quantized_int8(data_type) && scale_dt == DataType::FP32 && offset_dt == DataType::I32) {
                 return compare_per_row<int8_t, float, int32_t>(
                     imp_data, ref_data, format, full_height, full_width, rect, handler);
-            } else if (
-                data_type_is_quantized_int4(data_type) && scale_dt == DataType::FP32 && offset_dt == DataType::I32) {
+            }
+            if (data_type_is_quantized_int4(data_type) && scale_dt == DataType::FP32 && offset_dt == DataType::I32) {
                 return compare_per_row<Int4, float, int32_t>(
                     imp_data, ref_data, format, full_height, full_width, rect, handler);
             }
@@ -356,16 +343,85 @@ bool DefaultMismatchHandler::success(size_t num_checks) const {
     return _num_mismatches <= _abs_mismatched_threshold || mismatched_rate <= _rel_mismatched_threshold;
 }
 
-DefaultMismatchHandler make_compute_mismatch_handler(DataType output_dtype, DataType accumulator_dtype) {
-    if (output_dtype == DataType::FP16 && accumulator_dtype == DataType::FP16) {
-        // FP16 accumulation can differ from the FP32-accumulating reference near zero.
-        return DefaultMismatchHandler(0.01F, 0.01F, 0, 0.01F);
-    }
-    if (output_dtype == DataType::FP32 && accumulator_dtype == DataType::FP32) {
-        return DefaultMismatchHandler(0.0F, 0.0001F, 0, 0.0001F);
+std::string to_string(const DefaultMismatchHandler& handler) {
+    std::ostringstream os;
+    os << "DefaultMismatchHandler{absolute_error=" << handler._abs_error_threshold
+       << ", relative_error=" << handler._rel_error_threshold
+       << ", allowed_mismatches=" << handler._abs_mismatched_threshold
+       << ", allowed_mismatch_ratio=" << handler._rel_mismatched_threshold << "}";
+    return os.str();
+}
+
+std::ostream& operator<<(std::ostream& os, const DefaultMismatchHandler& handler) {
+    return os << to_string(handler);
+}
+
+DefaultMismatchHandler make_compute_mismatch_handler(
+    DataType output_dtype, DataType accumulator_dtype, DataType reference_dtype, DataType reference_accumulator_dtype,
+    DataType scale_dtype, DataType dequant_dtype, float max_absolute_error, float max_relative_error) {
+    struct Thresholds {
+        float absolute_error;
+        float relative_error;
+    };
+    const auto thresholds_for_type = [](DataType dtype) -> Thresholds {
+        if (data_type_is_integral(dtype)) {
+            // Integer accumulation introduces no floating-point rounding tolerance.
+            return {0.0F, 0.0F};
+        }
+        switch (dtype) {
+            case DataType::FP64:
+                return {0.0F, 0.0F};
+            case DataType::FP32:
+                return {1e-3F, 1e-4F};
+            case DataType::FP16:
+                return {1e-2F, 1e-2F};
+            case DataType::BF16:
+                return {0.0F, 2e-2F};
+            default:
+                KAI_ERROR("Unsupported data type for compute comparison.");
+        }
+    };
+
+    // Sets the quantized output error tolerances according to output precision.
+    Thresholds thresholds{0.0F, 0.0F};
+    if (data_type_is_integral(output_dtype)) {
+        switch (data_type_size_in_bits(output_dtype)) {
+            case 2:
+            case 4:
+                thresholds = {0.0F, 1e-1F};
+                break;
+            case 8:
+                // Accept off-by-one due to how rounding can behave differently
+                thresholds = {1.0F, 1e-3F};
+                break;
+            case 32:
+                break;
+            default:
+                KAI_ERROR("Unsupported integer output type for compute comparison.");
+        }
     }
 
-    KAI_ERROR("Unsupported output and accumulator data types for compute comparison.");
+    const bool has_scale = scale_dtype != DataType::UNKNOWN;
+    const Thresholds scale_thresholds = has_scale ? thresholds_for_type(scale_dtype) : Thresholds{};
+    const bool has_dequant = dequant_dtype != DataType::UNKNOWN;
+    const Thresholds dequant_thresholds = has_dequant ? thresholds_for_type(dequant_dtype) : Thresholds{};
+    const std::array type_thresholds{
+        thresholds_for_type(output_dtype),
+        thresholds_for_type(accumulator_dtype),
+        thresholds_for_type(reference_dtype),
+        thresholds_for_type(reference_accumulator_dtype),
+        scale_thresholds,
+        dequant_thresholds,
+    };
+
+    // Combines the type defaults, keeping the largest tolerance for each threshold.
+    for (const Thresholds& other : type_thresholds) {
+        thresholds.absolute_error = std::max(thresholds.absolute_error, other.absolute_error);
+        thresholds.relative_error = std::max(thresholds.relative_error, other.relative_error);
+    }
+    return DefaultMismatchHandler(
+        std::min(thresholds.absolute_error, max_absolute_error),
+        std::min(thresholds.relative_error, max_relative_error), 0, 0.0F);
 }
 
 }  // namespace kai::test

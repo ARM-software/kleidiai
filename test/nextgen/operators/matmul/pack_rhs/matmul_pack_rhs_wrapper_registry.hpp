@@ -16,19 +16,22 @@ namespace kai::test {
 
 /// Creates a wrapper for the native legacy s4s0 QSI4C32P RHS packer.
 ///
-/// @param[in] nr The packed panel width.
+/// @tparam BlockHeight The packed panel width.
 ///
 /// @return The micro-kernel wrapper.
-[[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon(size_t nr);
+template <auto BlockHeight>
+[[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon();
 
 /// Creates a wrapper for kai_rhs_pack_nxk_qsi4cxps1s0_qsu4cxs1s0_neon kernel.
 [[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4cxp4vlx4s1s0_qsu4cxs1s0_neon();
 
 /// Creates a fixed-argument wrapper for kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon.
 ///
+/// @tparam BlockHeight The packed block height.
+/// @tparam BlockWidth The packed block width.
 /// Allowed (block_height, block_width) configurations: (8, 4), (8, 8), and (32, 4).
-[[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon(
-    size_t block_height, size_t block_width);
+template <size_t BlockHeight, size_t BlockWidth>
+[[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon();
 
 /// Creates a wrapper for kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon with 4vlx4 packing.
 [[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp4vlx4_qsi8cx_neon();
@@ -49,36 +52,42 @@ namespace kai::test {
 
 /// Creates a wrapper for kai_rhs_pack_kxn_x16p16vsx2bx16_x16_x16_sve micro-kernel.
 ///
-/// @param[in] data_type The RHS, bias, and packed data type. Must be 16-bit data type.
-[[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_kxn_x16p16vsx2bx16_x16_x16_sve(DataType data_type);
+/// @tparam DType The 16-bit RHS, bias, and packed data type.
+template <DataType DType>
+[[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_kxn_x16p16vsx2bx16_x16_x16_sve();
 
 /// Creates a wrapper for kai_matmul_pack_rhs_kxn_x16p4vsx2bx16_x16_x16_sme kernel.
 ///
-/// @param[in] data_type The RHS, bias, and packed data type. Must be 16-bit data type.
-[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_kxn_x16p4vsx2bx16_x16_x16_sme(DataType data_type);
+/// @tparam DType The 16-bit RHS, bias, and packed data type.
+template <DataType DType>
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_kxn_x16p4vsx2bx16_x16_x16_sme();
 
 /// Creates a wrapper for kai_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme kernel.
 ///
-/// @param[in] data_type The RHS, bias, and packed data type. Must be 32-bit data type.
-[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme(DataType data_type);
+/// @tparam DType The 32-bit RHS, bias, and packed data type.
+template <DataType DType>
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_kxn_x32p4vsx1bx32_x32_x32_sme();
 
 /// Creates a wrapper for kai_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme kernel.
 ///
-/// @param[in] data_type The RHS, bias, and packed data type. Must be 32-bit data type.
-[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme(DataType data_type);
+/// @tparam DType The 32-bit RHS, bias, and packed data type.
+template <DataType DType>
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_nxk_x32p4vsx1bx32_x32_x32_sme();
 
 /// Creates a wrapper for kai_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme kernel.
 ///
-/// @param[in] data_type The RHS and packed data type. Must be 8-bit data type.
-[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme(DataType data_type);
+/// @tparam DType The 8-bit RHS and packed data type.
+template <DataType DType>
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme();
 
 /// Creates a wrapper for kai_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme micro-kernel.
 [[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme();
 
 /// Creates a wrapper for kai_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme kernel.
 ///
-/// @param[in] data_type The RHS and packed data type. Must be 8-bit data type.
-[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme(DataType data_type);
+/// @tparam DType The 8-bit RHS and packed data type.
+template <DataType DType>
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme();
 
 /// Creates a wrapper for kai_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme kernel.
 [[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme();

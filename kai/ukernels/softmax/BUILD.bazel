@@ -9,6 +9,21 @@ load("//:kai_defs.bzl", "kai_c_library", "kai_cpu_sme2", "kai_cpu_sve")
 package(default_visibility = ["//visibility:private"])
 
 # buildifier: keep sorted
+SME2_KERNELS_ASM_NOHDR = [
+    "softmax_f32_f32/kai_softmax_f32_f32_1d_sme2",
+]
+
+kai_c_library(
+    name = "sme2_impl",
+    cpu_uarch = kai_cpu_sme2(),
+    kernels_asm_nohdr = SME2_KERNELS_ASM_NOHDR,
+    textual_hdrs = [
+        "kai_softmax.h",
+        "kai_softmax_types.h",
+    ],
+)
+
+# buildifier: keep sorted
 SME2P1_SSVE_FEXPA_KERNELS_ASM_NOHDR = [
     "softmax_f32_f32/kai_softmax_f32_f32_1d_sme2p1_fexpa",
 ]
@@ -51,6 +66,7 @@ kai_c_library(
     visibility = ["//visibility:public"],
     deps = [
         ":interface",
+        ":sme2_impl",
         ":sme2p1_ssve_fexpa_impl",
         ":sve_impl",
     ],

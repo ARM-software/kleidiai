@@ -47,31 +47,35 @@ namespace kai::test {
 
 /// Creates a wrapper for kai_lhs_pack_x16p2vlx2_x16_sme micro-kernel.
 ///
-/// @param[in] data_type The input and packed data type. Must be 16 bits.
-///
+/// @tparam DType The 16-bit input and packed data type.
 /// @return The micro-kernel wrapper.
-[[nodiscard]] MatMulPackKernelPtr create_matmul_lhs_pack_x16p2vlx2_x16_sme(DataType data_type);
+template <DataType DType>
+[[nodiscard]] MatMulPackKernelPtr create_matmul_lhs_pack_x16p2vlx2_x16_sme();
 
 /// Creates a wrapper for kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme.
 ///
-/// @param[in] data_type The LHS and packed data type. Must be 16-bit data type.
-[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme(DataType data_type);
+/// @tparam DType The 16-bit LHS and packed data type.
+template <DataType DType>
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme();
 
 /// Creates a wrapper for kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2.
 ///
-/// @param[in] data_type The LHS and packed data type. Must be 16-bit data type.
-[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2(DataType data_type);
+/// @tparam DType The 16-bit LHS and packed data type.
+template <DataType DType>
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2();
 
 /// Creates a wrapper for kai_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme.
 ///
-/// @param[in] data_type The LHS and packed data type. Must be 32-bit data type.
-[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme(DataType data_type);
+/// @tparam DType The 32-bit LHS and packed data type.
+template <DataType DType>
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme();
 
 /// Creates a wrapper for kai_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme.
 ///
-/// @param[in] data_type The LHS and packed data type. Must be 8-bit data type.
+/// @tparam DType The 8-bit LHS and packed data type.
 /// @param[in] src_slot The LHS tensor consumed by the micro-kernel.
-[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme(DataType data_type, MatMulSlot src_slot);
+template <DataType DType>
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme(MatMulSlot src_slot);
 
 /// Checks if the portion produces non-empty LHS packing tiles for the qai8dxp1x4/qsi8cxp8x4 matmul operator.
 [[nodiscard]] bool is_shape_suitable_lhs_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot(
@@ -87,9 +91,10 @@ namespace kai::test {
 
 /// Creates a wrapper for kai_lhs_pack_x8p2vlx4_x8_sme with 8vsx4 packed blocks.
 ///
-/// @param[in] data_type The input and packed data type. Must be 8 bits.
+/// @tparam DType The 8-bit input and packed data type.
 /// @param[in] src_slot The LHS tensor consumed by the micro-kernel.
-[[nodiscard]] MatMulPackKernelPtr create_matmul_lhs_pack_x8p8vsx4_x8_sme(DataType data_type, MatMulSlot src_slot);
+template <DataType DType>
+[[nodiscard]] MatMulPackKernelPtr create_matmul_lhs_pack_x8p8vsx4_x8_sme(MatMulSlot src_slot);
 
 /// Checks if the portion produces non-empty LHS packing tiles for the f16p4vsx2/qai4c32p16vsx4 matmul operator.
 [[nodiscard]] bool is_shape_suitable_lhs_f16p4vsx2_qai4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa(
@@ -166,10 +171,10 @@ namespace kai::test {
 
 /// Creates a wrapper for kai_matmul_pack_lhs_mxk_x16p8x4_x16_neon micro-kernel.
 ///
-/// @param[in] data_type The input and packed data type. Must be 16 bits.
-///
+/// @tparam DType The 16-bit input and packed data type.
 /// @return The micro-kernel wrapper.
-[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p8x4_x16_neon(DataType data_type);
+template <DataType DType>
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p8x4_x16_neon();
 
 /// Checks if the portion produces non-empty LHS packing tiles for the x16p8x4 matmul operator.
 [[nodiscard]] bool is_shape_suitable_lhs_x16p8x4_x16_neon(

@@ -20,7 +20,7 @@
  * explicitly specialized with an optimized implementation.
  */
 template<unsigned int height_vectors, unsigned int block, VLType vlt, bool integrate_sums, typename TIn, typename TOut>
-void interleave_block( TOut * &out, const TIn * const *in, size_t width, size_t height, size_t row_offset, bool first,
+void interleave_block( TOut **out_handle, const TIn * const *in, size_t width, size_t height, size_t row_offset, bool first,
                        int32_t sum_multiplier ) {
 #ifdef __aarch64__
     const unsigned int int_by = height_vectors * (vlt == VLType::SVE ? get_vector_length<TOut>() / block :
@@ -28,6 +28,11 @@ void interleave_block( TOut * &out, const TIn * const *in, size_t width, size_t 
 #else
     const unsigned int int_by = height_vectors;
 #endif
+    // interleave_block is expected to update the output pointer.  It would
+    // be most natural to use a C++ reference for this, but as
+    // implementations of this function are in assembler it is cleaner to
+    // use a pure C ABI.
+    TOut *out = *out_handle;
 
     std::vector<int32_t> the_sums;
 
@@ -91,6 +96,8 @@ void interleave_block( TOut * &out, const TIn * const *in, size_t width, size_t 
 
         out = reinterpret_cast<TOut *>(out_int32 + int_by);
     }
+
+    *out_handle = out;
 }
 
 template<unsigned int height_vectors, unsigned int block, VLType vlt, typename TOut>
@@ -182,9 +189,9 @@ void IndirectInterleave(TOut *out, const TIn * const * const *ptr, unsigned int 
                 // Ask interleave_block to perform the scaling multiply iff this is the last block
                 int32_t multiplier = (k_left > out_width) ? 1 : row_sum_multiplier;
 
-                interleave_block<height_vectors, block, vlt, true>(out, row_base, in_width, active_height, stringpos, first, multiplier);
+                interleave_block<height_vectors, block, vlt, true>(&out, row_base, in_width, active_height, stringpos, first, multiplier);
             } else {
-                interleave_block<height_vectors, block, vlt, false>(out, row_base, in_width, active_height, stringpos, first, 0);
+                interleave_block<height_vectors, block, vlt, false>(&out, row_base, in_width, active_height, stringpos, first, 0);
             }
 
             k_left -= out_width;
@@ -232,9 +239,9 @@ void ConvolutionInterleave(TOut *out, const TIn *in, size_t in_stride, const con
                 // Ask interleave_block to perform the scaling multiply iff this is the last block
                 int32_t multiplier = conv_rows.finished() ? row_sum_multiplier : 1;
 
-                interleave_block<height_vectors, block, vlt, true>(out, row_ptrs, width, active_height, offset, first, multiplier);
+                interleave_block<height_vectors, block, vlt, true>(&out, row_ptrs, width, active_height, offset, first, multiplier);
             } else {
-                interleave_block<height_vectors, block, vlt, false>(out, row_ptrs, width, active_height, offset, first, 0);
+                interleave_block<height_vectors, block, vlt, false>(&out, row_ptrs, width, active_height, offset, first, 0);
             }
 
             first=false;
@@ -266,9 +273,9 @@ void Interleave(TOut *out, const TIn *in, size_t in_stride, const unsigned int y
         }
 
         if (std::is_integral<TOut>::value && integrate_sums && row_sum_multiplier) {
-            interleave_block<height_vectors, block, vlt, true>(out, row_ptrs, width, std::min(height, ymax-y), k0, true, row_sum_multiplier);
+            interleave_block<height_vectors, block, vlt, true>(&out, row_ptrs, width, std::min(height, ymax-y), k0, true, row_sum_multiplier);
         } else {
-            interleave_block<height_vectors, block, vlt, false>(out, row_ptrs, width, std::min(height, ymax-y), k0, true, 0);
+            interleave_block<height_vectors, block, vlt, false>(&out, row_ptrs, width, std::min(height, ymax-y), k0, true, 0);
         }
 
         if (std::is_integral<TOut>::value && integrate_sums) {

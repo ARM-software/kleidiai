@@ -10,8 +10,8 @@ from pathlib import Path
 
 import naming.documentation as naming_documentation
 import naming.rules as naming
+import utils.file_lists as file_lists
 import utils.git as git_utils
-import utils.microkernels as microkernels
 from naming.grammar import ParseFailure
 from naming.issues import KNOWN_DIRECTORY_PROBLEMS
 from naming.issues import KNOWN_UKERNEL_PROBLEMS
@@ -85,7 +85,7 @@ def report_known_issue(issue: KnownIssue) -> None:
 
 
 def report_invalid_kernel(
-    kernel: microkernels.Microkernel, parse_result: ParseFailure
+    kernel: file_lists.Microkernel, parse_result: ParseFailure
 ) -> None:
     print(
         "Invalid micro-kernel name in "
@@ -95,7 +95,7 @@ def report_invalid_kernel(
 
 
 def report_invalid_directory(
-    kernel: microkernels.Microkernel, parse_result: ParseFailure
+    kernel: file_lists.Microkernel, parse_result: ParseFailure
 ) -> None:
     print(f"Invalid micro-kernel directory in {kernel.operation}: {kernel.directory}")
     report_invalid_name(kernel.directory, parse_result)
@@ -105,7 +105,7 @@ def check_directory_tree(
     directory: Path, fail_fast: bool, report_known_issues: bool
 ) -> int:
     assert directory.is_dir(), f"{directory} not found"
-    kernels = sorted(microkernels.gather_microkernels(directory))
+    kernels = sorted(file_lists.gather_microkernels(directory))
     misnamed_kernels = 0
     misnamed_directories = 0
     for kernel in kernels:

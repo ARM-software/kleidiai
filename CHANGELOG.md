@@ -15,7 +15,13 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 - New SME micro-kernels:
   - Depthwise convolution RHS packing for 8-bit weights.
 - New SME2 micro-kernels:
+  - FP32 softmax using a Taylor exponential approximation, processing four streaming vectors per iteration.
   - Planar INT8 depthwise convolution for 3x3 filters and stride 1, with per-channel floating-point requantization.
+- Update dependencies to the latest version:
+  - Google Test: v1.18.0.
+  - Google Benchmark: v1.10.0.
+- Fixes:
+  - Fix zero padding in `kai_rhs_pack_nxk_x16p32x1bx16_x16_x16_neon` when N is not a multiple of 32.
 
 ## v1.33.0
 
