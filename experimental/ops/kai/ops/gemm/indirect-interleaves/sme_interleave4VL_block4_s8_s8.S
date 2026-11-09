@@ -35,7 +35,7 @@
     #define KAI_ASM_END
 #endif
 
-    KAI_ASM_CODE()
+    KAI_ASM_CODE(sme_interleave4VL_block4_s8_s8)
     KAI_ASM_ALIGN
 
     KAI_ASM_GLOBAL(kai_ops_sme_interleave4VL_block4_s8_s8)
