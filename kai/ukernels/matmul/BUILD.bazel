@@ -70,8 +70,16 @@ NEON_KERNELS_ASM = [
 NEON_KERNELS_NOHDR = [
     "pack/kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon",
     "pack/kai_matmul_pack_lhs_mxk_x16p8x4_x16_neon",
+    "pack/kai_matmul_pack_rhs_kxn_qsu2cxp16vsx4sf32bi32_qsu2cx_f32_i32_sme",
     "pack/kai_matmul_pack_rhs_kxn_x16p12x4bx32_x16_x32_neon",
+    "pack/kai_matmul_pack_rhs_nxk_qsu2cxp16vsx4sf32bi32_qsu2cx_f32_i32_sme",
     "pack/kai_matmul_pack_rhs_nxk_x16p12x4bx32_x16_x32_neon",
+    "pack/kai_rhs_pack_kxn_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme",
+    "pack/kai_rhs_pack_kxn_qsi4cxp8vsx4sf32bi32_qsu4cx_f32_i32_sme",
+    "pack/kai_rhs_pack_kxn_qsi4cxp8vsx4sf32bi32_qsx4cx_f32_i32_sme",
+    "pack/kai_rhs_pack_nxk_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme",
+    "pack/kai_rhs_pack_nxk_qsi4cxp8vsx4sf32bi32_qsu4cx_f32_i32_sme",
+    "pack/kai_rhs_pack_nxk_qsi4cxp8vsx4sf32bi32_qsx4cx_f32_i32_sme",
 ]
 
 # buildifier: keep sorted
@@ -81,6 +89,11 @@ FP16_KERNELS = [
     "pack/kai_lhs_quant_pack_qai8dxp_f16_neon",
     "pack/kai_lhs_quant_pack_qsi8d32pscalef32_f16_neon",
     "pack/kai_rhs_pack_kxn_f16p16x1biasf16_f16_f16_neon",
+]
+
+# buildifier: keep sorted
+FP16_KERNELS_NOHDR = [
+    "pack/kai_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme",
 ]
 
 # buildifier: keep sorted
@@ -98,6 +111,12 @@ BF16_KERNELS = [
     "pack/kai_lhs_quant_pack_bf16p1x4_f32_neon",
     "pack/kai_lhs_quant_pack_bf16p8x4_f32_neon",
     "pack/kai_rhs_quant_pack_kxn_bf16p12x4biasf32_f32_neon",
+]
+
+# buildifier: keep sorted
+BF16_KERNELS_NOHDR = [
+    "pack/kai_rhs_pack_kxn_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme",
+    "pack/kai_rhs_pack_nxk_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme",
 ]
 
 # buildifier: keep sorted
@@ -298,19 +317,8 @@ SME_KERNELS_NOHDR = [
     "matmul_clamp_f32_qai8dxp_qsi4c32p/kai_matmul_clamp_f32_qai8dxp4vsx4_qsi4c32p16vsx4_4vsx16vs_sme_mopa",
     "pack/kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme",
     "pack/kai_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme",
-    "pack/kai_matmul_pack_rhs_kxn_qsu2cxp16vsx4sf32bi32_qsu2cx_f32_i32_sme",
     "pack/kai_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme",
-    "pack/kai_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme",
-    "pack/kai_matmul_pack_rhs_nxk_qsu2cxp16vsx4sf32bi32_qsu2cx_f32_i32_sme",
     "pack/kai_matmul_pack_rhs_nxk_x8p4vsx4_x8_sme",
-    "pack/kai_rhs_pack_kxn_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme",
-    "pack/kai_rhs_pack_kxn_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme",
-    "pack/kai_rhs_pack_kxn_qsi4cxp8vsx4sf32bi32_qsu4cx_f32_i32_sme",
-    "pack/kai_rhs_pack_kxn_qsi4cxp8vsx4sf32bi32_qsx4cx_f32_i32_sme",
-    "pack/kai_rhs_pack_nxk_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme",
-    "pack/kai_rhs_pack_nxk_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme",
-    "pack/kai_rhs_pack_nxk_qsi4cxp8vsx4sf32bi32_qsu4cx_f32_i32_sme",
-    "pack/kai_rhs_pack_nxk_qsi4cxp8vsx4sf32bi32_qsx4cx_f32_i32_sme",
 ]
 
 # buildifier: keep sorted
@@ -475,6 +483,11 @@ kai_c_library(
     name = "fp16_impl",
     cpu_uarch = kai_cpu_fp16(),
     kernels = FP16_KERNELS,
+    kernels_nohdr = FP16_KERNELS_NOHDR,
+    textual_hdrs = [
+        "kai_matmul_pack_rhs.h",
+        "kai_matmul_pack_rhs_types.h",
+    ],
 )
 
 kai_c_library(
@@ -499,6 +512,11 @@ kai_c_library(
     name = "bf16_impl",
     cpu_uarch = kai_cpu_bf16(),
     kernels = BF16_KERNELS,
+    kernels_nohdr = BF16_KERNELS_NOHDR,
+    textual_hdrs = [
+        "kai_matmul_pack_rhs.h",
+        "kai_matmul_pack_rhs_types.h",
+    ],
 )
 
 kai_c_library(

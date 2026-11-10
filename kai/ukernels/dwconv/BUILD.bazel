@@ -13,7 +13,7 @@ load(
 package(default_visibility = ["//visibility:private"])
 
 # buildifier: keep sorted
-SME2_KERNELS = [
+SCALAR_KERNELS = [
     "pack/kai_rhs_dwconv_pack_x16p1vlx1b_x16_x16_sme",
     "pack/kai_rhs_dwconv_pack_x32p1vlx1b_x32_x32_sme",
 ]
@@ -25,13 +25,12 @@ SME2_KERNELS_ASM = [
 ]
 
 kai_c_library(
-    name = "sme2_impl",
+    name = "scalar_impl",
     copts = [
         "-Wno-error=overlength-strings",
         "-Wno-overlength-strings",
     ],
-    cpu_uarch = kai_cpu_sme2(),
-    kernels = SME2_KERNELS,
+    kernels = SCALAR_KERNELS,
 )
 
 kai_c_library(
@@ -51,7 +50,7 @@ kai_c_library(
     visibility = ["//visibility:public"],
     deps = [
         ":interface",
-        ":sme2_impl",
+        ":scalar_impl",
         ":sme2_impl_asm",
     ],
 )
