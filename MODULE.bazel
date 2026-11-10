@@ -11,9 +11,9 @@ module(
 
 kai_local_archive = use_repo_rule("//:kai_defs.bzl", "kai_local_archive")
 
-bazel_dep(name = "bazel_skylib", version = "1.4.2")
-bazel_dep(name = "platforms", version = "1.0.0")
-bazel_dep(name = "rules_cc", version = "0.2.16")
+bazel_dep(name = "bazel_skylib", version = "1.9.0")
+bazel_dep(name = "platforms", version = "1.1.0")
+bazel_dep(name = "rules_cc", version = "0.2.27")
 
 kai_local_archive(
     name = "com_google_googletest",
