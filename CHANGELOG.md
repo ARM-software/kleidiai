@@ -21,6 +21,7 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
   - Bazel: 9.x.
 - Fixes:
   - Fix zero padding in `kai_rhs_pack_nxk_x16p32x1bx16_x16_x16_neon` when N is not a multiple of 32.
+  - Correct interpretation of `MatrixPortion` height and width parameters in tests to refer to lengths.
 
 ## v1.33.0
 

@@ -622,11 +622,11 @@ INSTANTIATE_TEST_SUITE_P(
             MatMulShape{257, 113, 373}   // Prime numbers
             ),
         testing::Values(
-            MatrixPortion(0, 0, 1, 1),         // Full matrix.
-            MatrixPortion(0, 0, 0.25, 0.25),   // Top-left corner.
-            MatrixPortion(0.75, 0.75, 1, 1),   // Bottom-right corner.
-            MatrixPortion(0.75, 0, 1, 1),      // Partial rows
-            MatrixPortion(0.4, 0.5, 0.6, 0.8)  // Somewhere Middle
+            MatrixPortion(0, 0, 1, 1),              // Full matrix.
+            MatrixPortion(0, 0, 0.25, 0.25),        // Top-left corner.
+            MatrixPortion(0.75, 0.75, 0.25, 0.25),  // Bottom-right corner.
+            MatrixPortion(0.75, 0, 0.25, 1),        // Bottom rows (full width).
+            MatrixPortion(0.4, 0.5, 0.2, 0.3)       // Middle block.
             ),
         testing::Values(BiasMode::PROVIDED),  //
         testing::ValuesIn(std::initializer_list<std::optional<float>>{
@@ -656,10 +656,10 @@ INSTANTIATE_TEST_SUITE_P(
             MatMulShape{1, 113, 373}     // Prime numbers
             ),
         testing::Values(
-            MatrixPortion(0, 0, 1, 1),     // Full matrix.
-            MatrixPortion(0, 0, 1, 0.25),  // Leftmost portion.
-            MatrixPortion(0, 0.75, 1, 1),  // Rightmost portion.
-            MatrixPortion(0, 0.5, 1, 0.8)  // Somewhere Middle
+            MatrixPortion(0, 0, 1, 1),        // Full matrix.
+            MatrixPortion(0, 0, 1, 0.25),     // Leftmost portion.
+            MatrixPortion(0, 0.75, 1, 0.25),  // Rightmost portion.
+            MatrixPortion(0, 0.5, 1, 0.3)     // Middle columns (full height).
             ),
         testing::Values(BiasMode::PROVIDED),  //
         testing::ValuesIn(std::initializer_list<std::optional<float>>{

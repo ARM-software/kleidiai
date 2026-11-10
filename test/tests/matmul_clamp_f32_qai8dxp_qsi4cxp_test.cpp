@@ -883,10 +883,10 @@ static constexpr std::array<MatMulShape, 11> test_shapes = {{
 }};
 
 static const std::array<MatrixPortion, 4> test_portions = {{
-    MatrixPortion(0, 0, 1, 1),     // Full matrix.
-    MatrixPortion(0, 0, 1, 0.25),  // Leftmost portion.
-    MatrixPortion(0, 0.75, 1, 1),  // Rightmost portion.
-    MatrixPortion(0, 0.5, 1, 0.8)  // Somewhere Middle
+    MatrixPortion(0, 0, 1, 1),        // Full matrix.
+    MatrixPortion(0, 0, 1, 0.25),     // Leftmost portion.
+    MatrixPortion(0, 0.75, 1, 0.25),  // Rightmost portion.
+    MatrixPortion(0, 0.5, 1, 0.3)     // Middle columns (full height).
 }};
 
 static std::vector<size_t> variant_indices_with_rhs_pack_type(const RhsPackType rhs_pack_type) {

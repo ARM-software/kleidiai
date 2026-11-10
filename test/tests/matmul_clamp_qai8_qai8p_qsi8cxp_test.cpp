@@ -1489,7 +1489,7 @@ INSTANTIATE_TEST_SUITE_P(
             // clang-format off
             MatrixPortion(   0,    0,    1,    1), // Full matrix.
             MatrixPortion(   0,    0, 0.25, 0.25), // Top-left corner.
-            MatrixPortion(0.75, 0.75,    1,    1), // Bottom-right corner.
+            MatrixPortion(0.75, 0.75, 0.25, 0.25), // Bottom-right corner.
             // clang-format on
         }),
         testing::ValuesIn(std::initializer_list<float>{

@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -36,13 +36,17 @@ Rect MatrixPortion::compute_portion(
     size_t full_height, size_t full_width, size_t scheduler_block_height, size_t scheduler_block_width) const {
     KAI_ASSUME_ALWAYS(_start_row >= 0.0F && _start_row <= 1.0F);
     KAI_ASSUME_ALWAYS(_start_col >= 0.0F && _start_col <= 1.0F);
-    KAI_ASSUME_ALWAYS(_height >= 0.0F && _height <= 1.0F);
-    KAI_ASSUME_ALWAYS(_width >= 0.0F && _width <= 1.0F);
+    KAI_ASSUME_ALWAYS(_height > 0.0F && _height <= 1.0F);
+    KAI_ASSUME_ALWAYS(_width > 0.0F && _width <= 1.0F);
+
+    // The relative portion fits within the full matrix.
+    KAI_ASSUME_ALWAYS(_start_row + _height <= 1.0F);
+    KAI_ASSUME_ALWAYS(_start_col + _width <= 1.0F);
 
     auto start_row = static_cast<size_t>(std::floor(_start_row * static_cast<float>(full_height)));
     auto start_col = static_cast<size_t>(std::floor(_start_col * static_cast<float>(full_width)));
-    auto height = static_cast<size_t>(std::ceil(_height * static_cast<float>(full_height)));
-    auto width = static_cast<size_t>(std::ceil(_width * static_cast<float>(full_width)));
+    auto end_row = static_cast<size_t>(std::ceil((_start_row + _height) * static_cast<float>(full_height)));
+    auto end_col = static_cast<size_t>(std::ceil((_start_col + _width) * static_cast<float>(full_width)));
 
     start_row = round_down_multiple(start_row, scheduler_block_height);
     start_col = round_down_multiple(start_col, scheduler_block_width);
@@ -50,11 +54,11 @@ Rect MatrixPortion::compute_portion(
     start_row = std::min(start_row, round_down_multiple(full_height, scheduler_block_height));
     start_col = std::min(start_col, round_down_multiple(full_width, scheduler_block_width));
 
-    height = round_up_multiple(height, scheduler_block_height);
-    width = round_up_multiple(width, scheduler_block_width);
+    end_row = round_up_multiple(end_row, scheduler_block_height);
+    end_col = round_up_multiple(end_col, scheduler_block_width);
 
-    height = std::min(height, full_height - start_row);
-    width = std::min(width, full_width - start_col);
+    const size_t height = std::min(end_row, full_height) - start_row;
+    const size_t width = std::min(end_col, full_width) - start_col;
 
     return {start_row, start_col, height, width};
 }

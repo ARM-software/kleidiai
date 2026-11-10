@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024, 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -23,8 +23,10 @@ public:
     ///
     /// @param[in] start_row Starting row as the ratio to the height of the matrix.
     /// @param[in] start_col Starting column as the ratio to the width of the matrix.
-    /// @param[in] height Portion height as the ratio to the height of the matrix.
-    /// @param[in] width Portion width as the ratio to the width of the matrix.
+    /// @param[in] height Portion height as the ratio to the height of the matrix. Must be in (0, 1],
+    ///                   with start_row + height <= 1.
+    /// @param[in] width Portion width as the ratio to the width of the matrix. Must be in (0, 1],
+    ///                  with start_col + width <= 1.
     constexpr MatrixPortion(float start_row, float start_col, float height, float width) :
         _start_row(start_row), _start_col(start_col), _height(height), _width(width) {
     }
