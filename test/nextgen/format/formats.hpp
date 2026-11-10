@@ -23,7 +23,7 @@
 #include "test/nextgen/format/plain_format.hpp"
 #include "test/nextgen/format/two_level_blockwise_format.hpp"
 
-namespace kai::test::matmul {
+namespace kai::test {
 
 /// Resolves a block dimension.
 ///
@@ -438,8 +438,8 @@ template <DataType DType, auto BlockHeight, size_t BlockWidth>
 
 namespace sme {
 
-using matmul::sme::VL;
-using matmul::sme::VS;
+using kai::test::sme::VL;
+using kai::test::sme::VS;
 
 /// Creates the qai4c32p16vsx4s1s0sf16 packed format.
 ///
@@ -563,4 +563,4 @@ template <DataType DType>
 
 }  // namespace format
 
-}  // namespace kai::test::matmul
+}  // namespace kai::test

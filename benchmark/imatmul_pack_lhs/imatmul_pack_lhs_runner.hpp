@@ -103,4 +103,44 @@ inline void ImatmulPackLhsRunner<ImatmulPackLhsBaseInterface>::run(const void* c
     m_imatmul_pack_lhs_interface.run(m_m, m_k_chunk_count, m_k_chunk_length, lhs_ptrs, 0, nullptr, lhs_packed);
 }
 
+/// Gets buffer sizes using the ukernel API interface.
+///
+/// @return The required buffer sizes.
+template <>
+inline ImatmulPackLhsBufferSizes ImatmulPackLhsRunner<ImatmulPackLhsUkernelApiInterface>::get_buffer_sizes() const {
+    const auto api = m_imatmul_pack_lhs_interface.get_api();
+    const auto config = m_imatmul_pack_lhs_interface.get_config();
+    const size_t m_step = api.get_step(&config).m;
+    const kai_imatmul_pack_lhs_uker_lhs_packed_dim_args lhs_packed_shape{m_m, m_k_chunk_count, m_k_chunk_length};
+    const auto lhs_packed_stride = api.get_lhs_packed_stride(&config, &lhs_packed_shape);
+
+    return {
+        data_type_array_size_in_bytes(m_lhs_type, m_k_chunk_length),
+        kai_roundup(m_m, m_step) * m_k_chunk_count,
+        api.get_lhs_packed_size(&config, &lhs_packed_shape, &lhs_packed_stride),
+    };
+}
+
+/// Runs the packing micro-kernel. Specialized on the ukernel API interface.
+///
+/// @param lhs_ptrs Input indirection table.
+/// @param lhs_packed Packed output buffer.
+template <>
+inline void ImatmulPackLhsRunner<ImatmulPackLhsUkernelApiInterface>::run(
+    const void* const* lhs_ptrs, void* lhs_packed) {
+    const auto api = m_imatmul_pack_lhs_interface.get_api();
+    const auto config = m_imatmul_pack_lhs_interface.get_config();
+    const kai_imatmul_pack_lhs_uker_lhs_indirect_dim_args lhs_shape{m_m, m_k_chunk_count};
+    const kai_imatmul_pack_lhs_uker_lhs_packed_dim_args lhs_packed_shape{m_m, m_k_chunk_count, m_k_chunk_length};
+
+    kai_imatmul_pack_lhs_uker_args args{};
+    args.shape = {m_m, m_k_chunk_count, m_k_chunk_length};
+    args.operand.lhs_indirect.ptr = lhs_ptrs;
+    args.operand.lhs_indirect.stride = api.get_lhs_indirect_stride(&config, &lhs_shape);
+    args.operand.lhs_packed.ptr = lhs_packed;
+    args.operand.lhs_packed.stride = api.get_lhs_packed_stride(&config, &lhs_packed_shape);
+
+    api.run(&config, &args);
+}
+
 }  // namespace kai::benchmark

@@ -23,11 +23,11 @@
 #include "kai/ukernels/matmul/matmul_clamp_fp32_bf16p_bf16p/kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa.h"
 #include "test/common/data_type.hpp"
 #include "test/common/sme.hpp"
+#include "test/nextgen/format/formats.hpp"
 #include "test/nextgen/operators/matmul/matmul/matmul_dq_wrapper.hpp"
 #include "test/nextgen/operators/matmul/matmul/matmul_fp_wrapper.hpp"
 #include "test/nextgen/operators/matmul/matmul/matmul_interface.hpp"
 #include "test/nextgen/operators/matmul/matmul/matmul_ukerapi_wrapper.hpp"
-#include "test/nextgen/operators/matmul/matmul_formats.hpp"
 #include "test/nextgen/operators/matmul/matmul_slots.hpp"
 #include "test/nextgen/quantization/matmul_quantizations.hpp"
 

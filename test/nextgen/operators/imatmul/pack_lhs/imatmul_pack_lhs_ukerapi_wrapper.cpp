@@ -54,7 +54,7 @@ std::vector<size_t> IMatMulPackLhsUkerApiWrapper::steps(
 }
 
 void IMatMulPackLhsUkerApiWrapper::populate_constant_info(TensorSet tensors) const {
-    Tensor& lhs_data = tensors.at(m_src_slot);
+    Tensor& lhs_data = tensors.at(IMatMulSlot::LHS_DATA);
     Tensor& packed_lhs = tensors.at(IMatMulSlot::LHS_PACKED_IMP);
 
     lhs_data.set_format(m_src_format);
