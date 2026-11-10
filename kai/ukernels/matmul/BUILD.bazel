@@ -361,6 +361,7 @@ SME2_KERNELS_NOHDR = [
     "matmul_clamp_qai8_qai8p_qsi8cxp/kai_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx8vs_sme2_mopa",
     "matmul_clamp_qai8_qai8p_qsu2cxp/kai_matmul_clamp_qai8_qai8p8vsx4_qsu2cxp16vsx4sf32bi32_8vsx16vs_sme2_mopa",
     "matmul_i32_u8p_u8p/kai_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa",
+    "pack/kai_imatmul_pack_lhs_mxk_x16p4vsx2_x16_sme2",
     "pack/kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2",
 ]
 
@@ -397,6 +398,7 @@ SME2_KERNELS_ASM_ONLY = [
     "matmul_clamp_qai8_qai8p_qsi8cxp/kai_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx8vs_sme2_mopa",
     "matmul_clamp_qai8_qai8p_qsu2cxp/kai_matmul_clamp_qai8_qai8p8vsx4_qsu2cxp16vsx4sf32bi32_8vsx16vs_sme2_mopa",
     "matmul_i32_u8p_u8p/kai_kernel_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa",
+    "pack/kai_imatmul_pack_lhs_mxk_x16p4vsx2_x16_sme2",
     "pack/kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2",
 ]
 
@@ -433,6 +435,7 @@ SME2_KERNELS_ASM = [
 kai_c_library(
     name = "interface",
     textual_hdrs = glob(["**/*_interface.h"]) + [
+        "kai_imatmul_pack_lhs.h",
         "kai_imatmul_pack_lhs_types.h",
         "kai_matmul.h",
         "kai_matmul_types.h",
@@ -624,6 +627,8 @@ kai_c_library(
     kernels = SME2_KERNELS,
     kernels_nohdr = SME2_KERNELS_NOHDR,
     textual_hdrs = [
+        "kai_imatmul_pack_lhs.h",
+        "kai_imatmul_pack_lhs_types.h",
         "kai_matmul.h",
         "kai_matmul_types.h",
         "kai_matmul_pack_lhs.h",

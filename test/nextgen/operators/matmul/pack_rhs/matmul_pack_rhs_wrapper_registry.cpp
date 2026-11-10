@@ -26,7 +26,7 @@
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon.h"
 #include "test/common/data_type.hpp"
 #include "test/common/sve.hpp"
-#include "test/nextgen/operators/matmul/matmul_formats.hpp"
+#include "test/nextgen/format/formats.hpp"
 #include "test/nextgen/operators/matmul/matmul_pack_args.hpp"
 #include "test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_blockwise_quant_trailing_scale_wrapper.hpp"
 #include "test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_blockwise_quant_wrapper.hpp"
@@ -38,8 +38,6 @@
 #include "test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_ukerapi_wrapper.hpp"
 
 namespace kai::test {
-
-using namespace kai::test::matmul;
 
 namespace {
 

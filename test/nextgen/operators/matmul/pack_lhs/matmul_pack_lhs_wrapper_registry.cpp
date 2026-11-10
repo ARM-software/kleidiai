@@ -29,7 +29,7 @@
 #include "test/common/matrix_portion.hpp"
 #include "test/common/sme.hpp"
 #include "test/common/sve.hpp"
-#include "test/nextgen/operators/matmul/matmul_formats.hpp"
+#include "test/nextgen/format/formats.hpp"
 #include "test/nextgen/operators/matmul/matmul_pack_args.hpp"
 #include "test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_dq_wrapper.hpp"
 #include "test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_fp_wrapper.hpp"
@@ -37,8 +37,6 @@
 #include "test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_ukerapi_wrapper.hpp"
 
 namespace kai::test {
-
-using namespace kai::test::matmul;
 
 namespace {
 

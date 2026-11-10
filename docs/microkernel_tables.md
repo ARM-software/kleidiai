@@ -274,6 +274,7 @@ Micro-kernel categories:
 | x16 | - | x16 | - | - | - | - | Advanced SIMD | <a id="pack-kai-matmul-pack-lhs-mxk-x16p8x4-x16-neon"></a>`kai_matmul_pack_lhs_mxk_x16p8x4_x16_neon` |
 | x16 | - | x16 | - | - | - | - | SME | <a id="pack-kai-lhs-imatmul-pack-x16p2vlx2-x16p-sme"></a>`kai_lhs_imatmul_pack_x16p2vlx2_x16p_sme` |
 | x16 | - | x16 | - | x16 | - | - | SME | <a id="pack-kai-imatmul-pack-rhs-nxk-x16p2vlx2bx16-x16-x16-sme"></a>`kai_imatmul_pack_rhs_nxk_x16p2vlx2bx16_x16_x16_sme` |
+| x16 | - | x16 | - | - | - | - | SME2 | <a id="pack-kai-imatmul-pack-lhs-mxk-x16p4vsx2-x16-sme2"></a>`kai_imatmul_pack_lhs_mxk_x16p4vsx2_x16_sme2` |
 | x16 | - | x16 | - | x16 | - | - | SME | <a id="pack-kai-rhs-imatmul-pack-kxn-x16p2vlx2b-x16-x16-sme"></a>`kai_rhs_imatmul_pack_kxn_x16p2vlx2b_x16_x16_sme` |
 | x16 | - | x16 | - | x16 | - | - | SME | <a id="pack-kai-rhs-pack-kxn-x16p2vlx2b-x16-x16-sme"></a>`kai_rhs_pack_kxn_x16p2vlx2b_x16_x16_sme` |
 | x16 | - | x16 | - | x32 | - | - | SME | <a id="pack-kai-matmul-pack-rhs-kxn-x16p8vsx2bx32-x16-x32-sme"></a>`kai_matmul_pack_rhs_kxn_x16p8vsx2bx32_x16_x32_sme` |

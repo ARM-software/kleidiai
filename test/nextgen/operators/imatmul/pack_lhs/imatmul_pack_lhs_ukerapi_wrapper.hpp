@@ -31,10 +31,10 @@ public:
     ///
     /// @param[in] name The micro-kernel name.
     /// @param[in] uker_api The micro-kernel API.
-    /// @param[in] src_format The input data format.
+    /// @param[in] src_format The format of the LHS values addressed by the indirection table.
     /// @param[in] dst_format The output data format.
     /// @param[in] mr The number of rows per indirection-table panel.
-    /// @param[in] src_slot The LHS tensor consumed by the micro-kernel.
+    /// @param[in] src_slot The indirection table tensor consumed by the micro-kernel.
     /// @param[in] reference_src_slots The LHS tensors used to produce the reference packed data. If empty,
     ///                                LHS_INTERLEAVED_DATA is used.
     /// @param[in] reference_src_dtypes Optional data types assigned to the reference tensors. Use DataType::UNKNOWN
