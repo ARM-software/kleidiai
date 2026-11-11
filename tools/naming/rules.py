@@ -279,6 +279,10 @@ def tech() -> Expr:
             "mopa", description="Matrix outer product and accumulate instruction family"
         ),
         Doc(
+            "mop4",
+            description="Quarter-tile outer product and accumulate using mop4 feature",
+        ),
+        Doc(
             "mop4_mopa",
             description="Quarter-tile outer product and accumulate feature, using both `mop4a` and `mopa` instructions",
         ),

@@ -140,7 +140,7 @@ Describes the SIMD engine targeted by the implementation.
 
 Describes the primary instruction or feature that most distinguishes the implementation from other implementations targeting the same SIMD engine.
 
-**`tech`** = `"dot" | "dotprod" | "fexpa" | "i8mm" | "mla" | "mmla" | "mopa" | "mop4_mopa"`
+**`tech`** = `"dot" | "dotprod" | "fexpa" | "i8mm" | "mla" | "mmla" | "mopa" | "mop4" | "mop4_mopa"`
 
 where:
 
@@ -151,6 +151,7 @@ where:
 - **`"mla"`**: Multiply-accumulate instruction family
 - **`"mmla"`**: Matrix multiply-accumulate instruction family
 - **`"mopa"`**: Matrix outer product and accumulate instruction family
+- **`"mop4"`**: Quarter-tile outer product and accumulate using mop4 feature
 - **`"mop4_mopa"`**: Quarter-tile outer product and accumulate feature, using both `mop4a` and `mopa` instructions
 
 ### Convolution stride
@@ -322,7 +323,7 @@ softmax_ukernel_name = "kai_softmax" ("_" buffer) ("_" buffer) ("_" dims) ("_" e
 dims = @natural_int "d"
 uarch = "cortexa55"
 engine = "neon" | "sve" | "sve2" | "sve2p1" | "sme" | "sme2" | "sme2p1"
-tech = "dot" | "dotprod" | "fexpa" | "i8mm" | "mla" | "mmla" | "mopa" | "mop4_mopa"
+tech = "dot" | "dotprod" | "fexpa" | "i8mm" | "mla" | "mmla" | "mopa" | "mop4" | "mop4_mopa"
 dw_stride = "s" @natural_int
 filter_size = @natural_int "x" @natural_int
 matmul_fused_ops = ["i"] "matmul" ["_clamp"] | "lhs_pack" | "rhs_pack_kxn" | "rhs_pack_nxk" | ["i"] "matmul_pack_lhs_mxk" | ["i"] "matmul_pack_rhs_nxk" | ["i"] "matmul_pack_rhs_kxn"
