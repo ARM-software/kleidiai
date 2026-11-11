@@ -5,7 +5,6 @@
 //
 #pragma once
 
-#ifdef __aarch64__
 // Macro to use in assembler to get a preload.  Needed because of various
 // workarounds needed to get working preload behaviour.
 //
@@ -21,12 +20,10 @@
 
 // No preload at all
 //#define ASM_PREFETCH(address) ""
-#endif // __aarch64__
 
 /*
  * Do some prefetches.
  */
-#ifdef __aarch64__
 
 extern "C" void kai_ops_prefetch_6x(const void* address);
 extern "C" void kai_ops_prefetch_5x(const void* address);
@@ -65,4 +62,3 @@ static inline void prefetch_1x(const T *pfp) {
     kai_ops_prefetch_1x(pfp);
 }
 
-#endif

@@ -5,7 +5,6 @@
 //
 
 // To date, only AArch64 has these 8-bit kernels.
-#ifdef __aarch64__
 
 #include "gemm-wrappers.hpp"
 
@@ -44,4 +43,3 @@ template void print_kernels<depthwise_s8q, false>(GemmProblem *, unsigned int);
 template void benchmark<gemm_s8_quant, false, QuantizationType::INTEGER, true>(GemmProblem *, int, int, int, mapfn, const char *);
 template void test_quantized<sgemm_new, gemm_s8_quant, true>(GemmProblem *, int, int, const char *, FILE *);
 
-#endif  // aarch64

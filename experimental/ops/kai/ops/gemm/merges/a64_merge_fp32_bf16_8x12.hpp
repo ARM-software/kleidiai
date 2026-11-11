@@ -7,8 +7,6 @@
 // clang-format off
 #pragma once
 
-#ifdef __aarch64__
-
 extern "C" void kai_ops_a64_merge_fp32_bf16_8x12(const KernelArgs *ka);
 template<>
 void MergeResults<12, 8, false, float, bfloat16>(
@@ -16,5 +14,3 @@ void MergeResults<12, 8, false, float, bfloat16>(
 {
     kai_ops_a64_merge_fp32_bf16_8x12(ka);
 }
-
-#endif // __aarch64__

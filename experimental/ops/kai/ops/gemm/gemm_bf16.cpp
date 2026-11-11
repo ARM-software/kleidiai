@@ -11,7 +11,6 @@
 #include "kai/ops/gemm/gemm_common.hpp"
 #include "kai/ops/gemm/kai_ops.hpp"
 
-#ifdef __aarch64__
 #include "kernels/a64_ffhybrid_bf16fp32_mmla_6x16.hpp"
 #include "kernels/a64_ffinterleaved_bf16fp32_dot_8x12.hpp"
 #include "kernels/a64_ffinterleaved_bf16fp32_mmla_8x12.hpp"
@@ -35,14 +34,12 @@
 #include "kernels/sve_hybrid_bf16fp32_mmla_6x4VL.hpp"
 #include "kernels/sve_interleaved_bf16fp32_dot_8x3VL.hpp"
 #include "kernels/sve_interleaved_bf16fp32_mmla_8x3VL.hpp"
-#endif // __aarch64__
 
 namespace kai {
 namespace ops {
 
 static const GemmImplementation<bfloat16, bfloat16, float> gemm_bf16_methods[] =
 {
-#ifdef __aarch64__
 {
     "sme2_gemv_bf16fp32_dot_16VL",
     [](const GemmArgs &args) { return args._ci->has_sme2() && args._Msize==1 && args._nbatches==1 && !args._indirect_input && !args._accumulate; },
@@ -191,7 +188,6 @@ GemmImplementation<bfloat16, bfloat16, float>::with_estimate(
     [](const GemmArgs &args) { return GemmInterleaved<cls_a64_interleaved_fp32_mla_8x12, bfloat16, bfloat16, float>::estimate_cycles<bfloat16>(args); },
     [](const GemmArgs &args) { return new GemmInterleaved<cls_a64_interleaved_fp32_mla_8x12, bfloat16, bfloat16, float>(args); }
 ),
-#endif // __aarch64__
 {
     "",
     nullptr,

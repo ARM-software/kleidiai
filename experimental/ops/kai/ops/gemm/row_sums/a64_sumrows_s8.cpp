@@ -6,8 +6,6 @@
 
 // clang-format off
 
-#ifdef __aarch64__
-
 #include "common_internal/kernel_args.hpp"
 #include "common_internal/quantized.hpp"
 
@@ -25,4 +23,3 @@ void row_sums_indirect<int8_t>(const KernelArgs *ka, int32_t *out_ptr, int32_t r
 } // namespace ops
 } // namespace kai
 
-#endif // __aarch64__

@@ -213,7 +213,6 @@ KERN(gemm_bf16bf16, bfloat16, bfloat16, KERN_WGOK | KERN_ACTOK | KERN_CONV)
 
 KERN(winograd_fp32, float, float, KERN_CONV | KERN_CONV_ONLY | KERN_ACTOK | KERN_NOACC )
 
-#ifdef __aarch64__
 KERN(gemm_fp16fp32, __fp16, float, KERN_WGOK | KERN_ACTOK | KERN_CONV)
 
 KERN(hgemm_new, __fp16, __fp16, KERN_ACTOK | KERN_CONV )
@@ -241,7 +240,6 @@ KERN_QUANT_COMP(depthwise_u8q, depthwise_fp32, KERN_CONV | KERN_CONV_ONLY | KERN
 KERN_QUANT_PERCHANNEL_COMP(depthwise_u8q, depthwise_fp32, KERN_CONV | KERN_CONV_ONLY | KERN_ACTOK | KERN_DEPTHWISE)
 KERN_QUANT_COMP(depthwise_u8s8u8q, depthwise_fp32, KERN_CONV | KERN_CONV_ONLY | KERN_ACTOK | KERN_DEPTHWISE)
 KERN_QUANT_PERCHANNEL_COMP(depthwise_u8s8u8q, depthwise_fp32, KERN_CONV | KERN_CONV_ONLY | KERN_ACTOK | KERN_DEPTHWISE)
-#endif
 /* END OF KERNEL LIST */
 { "", nullptr, nullptr, nullptr, 0 } };
 

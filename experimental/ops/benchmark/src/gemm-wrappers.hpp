@@ -23,12 +23,8 @@
 #endif
 
 #ifdef BARE_METAL
-#ifndef __aarch64__
-static unsigned int s;
-#endif // __aarch64__
 
 static void enable_cyclecounter() {
-#ifdef __aarch64__
     uint64_t tmp;
 
     __asm __volatile (
@@ -40,13 +36,9 @@ static void enable_cyclecounter() {
         "msr    pmcntenset_el0, %[tmp]\n"
         : [tmp] "=r" (tmp)
     );
-#else
-    s = clock();
-#endif
 }
 
 static void disable_cyclecounter() {
-#ifdef __aarch64__
     uint64_t tmp;
 
     __asm __volatile (
@@ -55,11 +47,9 @@ static void disable_cyclecounter() {
             "msr    pmcntenclr_el0, %[tmp]\n"
             : [tmp] "=r" (tmp)
             );
-#endif
 }
 
 static inline uint64_t get_cyclecounter() {
-#ifdef __aarch64__
     uint64_t retval;
 
     __asm __volatile (
@@ -67,9 +57,6 @@ static inline uint64_t get_cyclecounter() {
     : [retval] "=r" (retval));
 
     return retval;
-#else
-    return clock()-s;
-#endif
 }
 #else
 

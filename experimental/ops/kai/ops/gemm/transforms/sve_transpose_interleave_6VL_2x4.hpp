@@ -8,9 +8,8 @@
 
 #pragma once
 
-#ifdef __aarch64__
-
 extern "C" void kai_ops_sve_transpose_interleave_6VL_2x4(uint16_t *out, const uint16_t *in, size_t width, size_t in_stride, size_t height);
+
 
 template<>
 void Transform<6, 4, true, VLType::SVE>(
@@ -24,5 +23,3 @@ void Transform<6, 4, true, VLType::SVE>(
         (kmax-k0)
     );
 }
-
-#endif // __aarch64__

@@ -6,8 +6,6 @@
 
 // clang-format off
 
-#ifdef __aarch64__
-
 extern "C" void kai_ops_a64_interleave8_block8_s8_s8(
   int8_t **out_ptr, const int8_t * const * in, size_t width, size_t height,
   size_t row_offset, bool first, int32_t multiplier
@@ -34,5 +32,3 @@ void interleave_block<8, 8, VLType::None, false>(
   kai_ops_a64_interleave8_block8_s8_s8(out_cast, in_cast, width, height, row_offset, first, multiplier);
 }
 
-
-#endif // __aarch64__

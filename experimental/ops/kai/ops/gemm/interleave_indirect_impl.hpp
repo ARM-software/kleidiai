@@ -22,12 +22,8 @@
 template<unsigned int height_vectors, unsigned int block, VLType vlt, bool integrate_sums, typename TIn, typename TOut>
 void interleave_block( TOut **out_handle, const TIn * const *in, size_t width, size_t height, size_t row_offset, bool first,
                        int32_t sum_multiplier ) {
-#ifdef __aarch64__
     const unsigned int int_by = height_vectors * (vlt == VLType::SVE ? get_vector_length<TOut>() / block :
                                                   (vlt == VLType::SME ? sme::get_vector_length<TOut>() / block : 1 ));
-#else
-    const unsigned int int_by = height_vectors;
-#endif
     // interleave_block is expected to update the output pointer.  It would
     // be most natural to use a C++ reference for this, but as
     // implementations of this function are in assembler it is cleaner to
@@ -102,12 +98,8 @@ void interleave_block( TOut **out_handle, const TIn * const *in, size_t width, s
 
 template<unsigned int height_vectors, unsigned int block, VLType vlt, typename TOut>
 inline void FixupRowSums(TOut * &out, const int32_t row_sum_multiplier) {
-#ifdef __aarch64__
     const unsigned int height = height_vectors * (vlt == VLType::SVE ? get_vector_length<TOut>() / block :
                                                   (vlt == VLType::SME ? sme::get_vector_length<TOut>() / block : 1 ));
-#else
-    const unsigned int height = height_vectors;
-#endif
 
     // If we are integrating row sums, we need to do some fix up, depending on whether the multiplier is non-zero or not.
     if (row_sum_multiplier) {
@@ -132,12 +124,8 @@ void IndirectInterleave(TOut *out, const TIn * const * const *ptr, unsigned int 
                         unsigned int rounded_stringlen, const unsigned int y0, const unsigned int ymax,
                         const unsigned int k0, const unsigned int kmax, bool integrate_sums,
                         const int32_t row_sum_multiplier) {
-#ifdef __aarch64__
     const unsigned int height = height_vectors * (vlt == VLType::SVE ? get_vector_length<TOut>() / block :
                                                   (vlt == VLType::SME ? sme::get_vector_length<TOut>() / block : 1 ));
-#else
-    const unsigned int height = height_vectors;
-#endif
 
     // 'interleave_block' implementations are entitled to read a pointer for each row they handle from the input
     // pointer array, even for out of range rows (although they must not subsequently dereference those pointers for
@@ -209,12 +197,8 @@ void IndirectInterleave(TOut *out, const TIn * const * const *ptr, unsigned int 
 template<unsigned int height_vectors, unsigned int block, VLType vlt, typename TIn, typename TOut>
 void ConvolutionInterleave(TOut *out, const TIn *in, size_t in_stride, const convolver<TIn> &conv, const unsigned int rounded_stringlen,
         const unsigned int y0, const unsigned int ymax, const unsigned int k0, const unsigned int kmax, bool integrate_sums, const int32_t row_sum_multiplier) {
-#ifdef __aarch64__
     const unsigned int height = height_vectors * (vlt == VLType::SVE ? get_vector_length<TOut>() / block :
                                                   (vlt == VLType::SME ? sme::get_vector_length<TOut>() / block : 1 ));
-#else
-    const unsigned int height = height_vectors;
-#endif
 
     auto conv_cols = conv.process_columns(in, in_stride, k0, kmax, rounded_stringlen);
 
@@ -255,12 +239,8 @@ void ConvolutionInterleave(TOut *out, const TIn *in, size_t in_stride, const con
 
 template<unsigned int height_vectors, unsigned int block, VLType vlt, typename TIn, typename TOut>
 void Interleave(TOut *out, const TIn *in, size_t in_stride, const unsigned int y0, const unsigned int ymax, const unsigned int k0, const unsigned int kmax, bool integrate_sums, const int32_t row_sum_multiplier) {
-#ifdef __aarch64__
     const unsigned int height = height_vectors * (vlt == VLType::SVE ? get_vector_length<TOut>() / block :
                                                   (vlt == VLType::SME ? sme::get_vector_length<TOut>() / block : 1 ));
-#else
-    const unsigned int height = height_vectors;
-#endif
 
     // Use alloca here as a std::vector can be expensive in highly threaded scenarios.
     const TIn **row_ptrs = reinterpret_cast<const TIn **>(alloca(height * sizeof(const TIn *)));

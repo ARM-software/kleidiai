@@ -4,7 +4,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-#ifdef __aarch64__
 
 #include <arm_neon.h>
 
@@ -251,4 +250,3 @@ void Transform<24, 1, false, VLType::None>(
 }  // namespace ops
 }  // namespace kai
 
-#endif // __aarch64__

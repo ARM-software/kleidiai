@@ -3,8 +3,6 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 //
-#ifdef __aarch64__
-
 #include "gemm_hybrid_indirect.hpp"
 #include "gemm_implementation.hpp"
 #include "gemm_interleaved.hpp"
@@ -145,5 +143,3 @@ template std::vector<KernelDescription> get_compatible_kernels<int8_t, int8_t, i
 
 }  // namespace ops
 }  // namespace kai
-
-#endif // __aarch64__
