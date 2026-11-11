@@ -331,17 +331,17 @@ KAI_ASM_LABEL(label_15)  // Store to output array
     ldr x6, [x0, #0x58]
     add x3, x0, #0x94
     add x2, x0, #0xa0
-    ld1rw { z30.s }, p2/Z, [x7]
+    KAI_ASM_INST(0x8540c8fe)  // ld1rw { z30.s }, p2/Z, [x7]
     add x1, x0, #0xa4
     sub x5, x26, x28
-    ld1rw { z29.s }, p2/Z, [x7]
+    KAI_ASM_INST(0x8540c8fd)  // ld1rw { z29.s }, p2/Z, [x7]
     add x8, x8, x27  // C += n
-    ld1rw { z28.s }, p2/Z, [x4]
+    KAI_ASM_INST(0x8540c89c)  // ld1rw { z28.s }, p2/Z, [x4]
     madd x8, x28, x6, x8  // C += m * ldc
-    ld1rw { z27.s }, p2/Z, [x4]
-    ld1rw { z26.s }, p2/Z, [x3]
-    ld1rw { z25.s }, p2/Z, [x2]
-    ld1rw { z24.s }, p2/Z, [x1]
+    KAI_ASM_INST(0x8540c89b)  // ld1rw { z27.s }, p2/Z, [x4]
+    KAI_ASM_INST(0x8540c87a)  // ld1rw { z26.s }, p2/Z, [x3]
+    KAI_ASM_INST(0x8540c859)  // ld1rw { z25.s }, p2/Z, [x2]
+    KAI_ASM_INST(0x8540c838)  // ld1rw { z24.s }, p2/Z, [x1]
     tbz x14, #2, label_16
     ldr x2, [x0, #0x78]
     ldr x1, [x0, #0x88]

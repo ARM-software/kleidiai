@@ -233,8 +233,8 @@ KAI_ASM_LABEL(label_10)  // Height 1: no string loop
 KAI_ASM_LABEL(label_11)  // Height 1: per layer parameters
     add x2, x0, #0x9c
     add x1, x0, #0x98
-    ld1rw { z0.s }, p2/Z, [x2]
-    ld1rw { z4.s }, p2/Z, [x1]
+    KAI_ASM_INST(0x8540c840)  // ld1rw { z0.s }, p2/Z, [x2]
+    KAI_ASM_INST(0x8540c824)  // ld1rw { z4.s }, p2/Z, [x1]
     mov z1.d, z0.d
     mov z5.d, z4.d
     mov z2.d, z0.d
@@ -248,12 +248,12 @@ KAI_ASM_LABEL(label_12)  // Height 1: parameters loaded
     add x1, x0, #0xa4
     KAI_ASM_INST(0x04a6714a)  // sqdmulh z10.s, z10.s, z6.s
     KAI_ASM_INST(0x04a7716b)  // sqdmulh z11.s, z11.s, z7.s
-    ld1rw { z4.s }, p2/Z, [x2]
-    ld1rw { z6.s }, p2/Z, [x1]
+    KAI_ASM_INST(0x8540c844)  // ld1rw { z4.s }, p2/Z, [x2]
+    KAI_ASM_INST(0x8540c826)  // ld1rw { z6.s }, p2/Z, [x1]
     add x1, x0, #0xa0
     KAI_ASM_INST(0x4482880f)  // srshl z15.s, p2/M, z15.s, z0.s
     KAI_ASM_INST(0x44828829)  // srshl z9.s, p2/M, z9.s, z1.s
-    ld1rw { z5.s }, p2/Z, [x1]
+    KAI_ASM_INST(0x8540c825)  // ld1rw { z5.s }, p2/Z, [x1]
     KAI_ASM_INST(0x4482884a)  // srshl z10.s, p2/M, z10.s, z2.s
     KAI_ASM_INST(0x4482886b)  // srshl z11.s, p2/M, z11.s, z3.s
     add z15.s, z15.s, z4.s
@@ -452,8 +452,8 @@ KAI_ASM_LABEL(label_23)  // Height 2: no string loop
 KAI_ASM_LABEL(label_24)  // Height 2: per layer parameters
     add x2, x0, #0x9c
     add x1, x0, #0x98
-    ld1rw { z0.s }, p2/Z, [x2]
-    ld1rw { z4.s }, p2/Z, [x1]
+    KAI_ASM_INST(0x8540c840)  // ld1rw { z0.s }, p2/Z, [x2]
+    KAI_ASM_INST(0x8540c824)  // ld1rw { z4.s }, p2/Z, [x1]
     mov z1.d, z0.d
     mov z5.d, z4.d
     mov z2.d, z0.d
@@ -470,15 +470,15 @@ KAI_ASM_LABEL(label_25)  // Height 2: parameters loaded
     add x1, x0, #0xa0
     KAI_ASM_INST(0x04a47108)  // sqdmulh z8.s, z8.s, z4.s
     KAI_ASM_INST(0x04a57129)  // sqdmulh z9.s, z9.s, z5.s
-    ld1rw { z4.s }, p2/Z, [x3]
-    ld1rw { z5.s }, p2/Z, [x1]
+    KAI_ASM_INST(0x8540c864)  // ld1rw { z4.s }, p2/Z, [x3]
+    KAI_ASM_INST(0x8540c825)  // ld1rw { z5.s }, p2/Z, [x1]
     KAI_ASM_INST(0x04a6714a)  // sqdmulh z10.s, z10.s, z6.s
     KAI_ASM_INST(0x04a7716b)  // sqdmulh z11.s, z11.s, z7.s
     KAI_ASM_INST(0x4482880f)  // srshl z15.s, p2/M, z15.s, z0.s
     KAI_ASM_INST(0x4482882c)  // srshl z12.s, p2/M, z12.s, z1.s
     KAI_ASM_INST(0x4482884d)  // srshl z13.s, p2/M, z13.s, z2.s
     KAI_ASM_INST(0x4482886e)  // srshl z14.s, p2/M, z14.s, z3.s
-    ld1rw { z6.s }, p2/Z, [x2]
+    KAI_ASM_INST(0x8540c846)  // ld1rw { z6.s }, p2/Z, [x2]
     KAI_ASM_INST(0x44828808)  // srshl z8.s, p2/M, z8.s, z0.s
     KAI_ASM_INST(0x44828829)  // srshl z9.s, p2/M, z9.s, z1.s
     KAI_ASM_INST(0x4482884a)  // srshl z10.s, p2/M, z10.s, z2.s
@@ -754,8 +754,8 @@ KAI_ASM_LABEL(label_36)  // Height 3: no string loop
 KAI_ASM_LABEL(label_37)  // Height 3: per layer parameters
     add x2, x0, #0x9c
     add x1, x0, #0x98
-    ld1rw { z0.s }, p2/Z, [x2]
-    ld1rw { z4.s }, p2/Z, [x1]
+    KAI_ASM_INST(0x8540c840)  // ld1rw { z0.s }, p2/Z, [x2]
+    KAI_ASM_INST(0x8540c824)  // ld1rw { z4.s }, p2/Z, [x1]
     mov z1.d, z0.d
     mov z5.d, z4.d
     mov z2.d, z0.d
@@ -778,7 +778,7 @@ KAI_ASM_LABEL(label_38)  // Height 3: parameters loaded
     KAI_ASM_INST(0x4482882c)  // srshl z12.s, p2/M, z12.s, z1.s
     KAI_ASM_INST(0x04a47210)  // sqdmulh z16.s, z16.s, z4.s
     KAI_ASM_INST(0x04a57231)  // sqdmulh z17.s, z17.s, z5.s
-    ld1rw { z4.s }, p2/Z, [x3]
+    KAI_ASM_INST(0x8540c864)  // ld1rw { z4.s }, p2/Z, [x3]
     KAI_ASM_INST(0x4482884d)  // srshl z13.s, p2/M, z13.s, z2.s
     KAI_ASM_INST(0x04a67252)  // sqdmulh z18.s, z18.s, z6.s
     KAI_ASM_INST(0x04a77273)  // sqdmulh z19.s, z19.s, z7.s
@@ -786,8 +786,8 @@ KAI_ASM_LABEL(label_38)  // Height 3: parameters loaded
     KAI_ASM_INST(0x44828808)  // srshl z8.s, p2/M, z8.s, z0.s
     KAI_ASM_INST(0x44828829)  // srshl z9.s, p2/M, z9.s, z1.s
     KAI_ASM_INST(0x4482884a)  // srshl z10.s, p2/M, z10.s, z2.s
-    ld1rw { z6.s }, p2/Z, [x2]
-    ld1rw { z5.s }, p2/Z, [x1]
+    KAI_ASM_INST(0x8540c846)  // ld1rw { z6.s }, p2/Z, [x2]
+    KAI_ASM_INST(0x8540c825)  // ld1rw { z5.s }, p2/Z, [x1]
     KAI_ASM_INST(0x4482886b)  // srshl z11.s, p2/M, z11.s, z3.s
     KAI_ASM_INST(0x44828810)  // srshl z16.s, p2/M, z16.s, z0.s
     add z23.s, z23.s, z4.s
@@ -1095,8 +1095,8 @@ KAI_ASM_LABEL(label_49)  // Height 4: no string loop
 KAI_ASM_LABEL(label_50)  // Height 4: per layer parameters
     add x2, x0, #0x9c
     add x1, x0, #0x98
-    ld1rw { z0.s }, p2/Z, [x2]
-    ld1rw { z4.s }, p2/Z, [x1]
+    KAI_ASM_INST(0x8540c840)  // ld1rw { z0.s }, p2/Z, [x2]
+    KAI_ASM_INST(0x8540c824)  // ld1rw { z4.s }, p2/Z, [x1]
     mov z1.d, z0.d
     mov z5.d, z4.d
     mov z2.d, z0.d
@@ -1127,7 +1127,7 @@ KAI_ASM_LABEL(label_51)  // Height 4: parameters loaded
     KAI_ASM_INST(0x44828829)  // srshl z9.s, p2/M, z9.s, z1.s
     KAI_ASM_INST(0x04a47210)  // sqdmulh z16.s, z16.s, z4.s
     KAI_ASM_INST(0x04a57231)  // sqdmulh z17.s, z17.s, z5.s
-    ld1rw { z4.s }, p2/Z, [x3]
+    KAI_ASM_INST(0x8540c864)  // ld1rw { z4.s }, p2/Z, [x3]
     KAI_ASM_INST(0x4482884a)  // srshl z10.s, p2/M, z10.s, z2.s
     KAI_ASM_INST(0x04a67252)  // sqdmulh z18.s, z18.s, z6.s
     KAI_ASM_INST(0x04a77273)  // sqdmulh z19.s, z19.s, z7.s
@@ -1135,8 +1135,8 @@ KAI_ASM_LABEL(label_51)  // Height 4: parameters loaded
     KAI_ASM_INST(0x4482880f)  // srshl z15.s, p2/M, z15.s, z0.s
     KAI_ASM_INST(0x44828834)  // srshl z20.s, p2/M, z20.s, z1.s
     KAI_ASM_INST(0x44828855)  // srshl z21.s, p2/M, z21.s, z2.s
-    ld1rw { z6.s }, p2/Z, [x2]
-    ld1rw { z5.s }, p2/Z, [x1]
+    KAI_ASM_INST(0x8540c846)  // ld1rw { z6.s }, p2/Z, [x2]
+    KAI_ASM_INST(0x8540c825)  // ld1rw { z5.s }, p2/Z, [x1]
     KAI_ASM_INST(0x44828876)  // srshl z22.s, p2/M, z22.s, z3.s
     KAI_ASM_INST(0x44828810)  // srshl z16.s, p2/M, z16.s, z0.s
     add z23.s, z23.s, z4.s
@@ -1519,8 +1519,8 @@ KAI_ASM_LABEL(label_62)  // Height 5: no string loop
 KAI_ASM_LABEL(label_63)  // Height 5: per layer parameters
     add x2, x0, #0x9c
     add x1, x0, #0x98
-    ld1rw { z0.s }, p2/Z, [x2]
-    ld1rw { z4.s }, p2/Z, [x1]
+    KAI_ASM_INST(0x8540c840)  // ld1rw { z0.s }, p2/Z, [x2]
+    KAI_ASM_INST(0x8540c824)  // ld1rw { z4.s }, p2/Z, [x1]
     mov z1.d, z0.d
     mov z5.d, z4.d
     mov z2.d, z0.d
@@ -1559,7 +1559,7 @@ KAI_ASM_LABEL(label_64)  // Height 5: parameters loaded
     KAI_ASM_INST(0x44828834)  // srshl z20.s, p2/M, z20.s, z1.s
     KAI_ASM_INST(0x04a47318)  // sqdmulh z24.s, z24.s, z4.s
     KAI_ASM_INST(0x04a57339)  // sqdmulh z25.s, z25.s, z5.s
-    ld1rw { z4.s }, p2/Z, [x3]
+    KAI_ASM_INST(0x8540c864)  // ld1rw { z4.s }, p2/Z, [x3]
     KAI_ASM_INST(0x44828855)  // srshl z21.s, p2/M, z21.s, z2.s
     KAI_ASM_INST(0x04a6735a)  // sqdmulh z26.s, z26.s, z6.s
     KAI_ASM_INST(0x04a7737b)  // sqdmulh z27.s, z27.s, z7.s
@@ -1567,8 +1567,8 @@ KAI_ASM_LABEL(label_64)  // Height 5: parameters loaded
     KAI_ASM_INST(0x44828810)  // srshl z16.s, p2/M, z16.s, z0.s
     KAI_ASM_INST(0x44828831)  // srshl z17.s, p2/M, z17.s, z1.s
     KAI_ASM_INST(0x44828852)  // srshl z18.s, p2/M, z18.s, z2.s
-    ld1rw { z6.s }, p2/Z, [x2]
-    ld1rw { z5.s }, p2/Z, [x1]
+    KAI_ASM_INST(0x8540c846)  // ld1rw { z6.s }, p2/Z, [x2]
+    KAI_ASM_INST(0x8540c825)  // ld1rw { z5.s }, p2/Z, [x1]
     KAI_ASM_INST(0x44828873)  // srshl z19.s, p2/M, z19.s, z3.s
     KAI_ASM_INST(0x44828818)  // srshl z24.s, p2/M, z24.s, z0.s
     add z31.s, z31.s, z4.s
@@ -1982,8 +1982,8 @@ KAI_ASM_LABEL(label_75)  // Height 6: no string loop
 KAI_ASM_LABEL(label_76)  // Height 6: per layer parameters
     add x2, x0, #0x9c
     add x1, x0, #0x98
-    ld1rw { z0.s }, p2/Z, [x2]
-    ld1rw { z4.s }, p2/Z, [x1]
+    KAI_ASM_INST(0x8540c840)  // ld1rw { z0.s }, p2/Z, [x2]
+    KAI_ASM_INST(0x8540c824)  // ld1rw { z4.s }, p2/Z, [x1]
     mov z1.d, z0.d
     mov z5.d, z4.d
     mov z2.d, z0.d
@@ -2030,7 +2030,7 @@ KAI_ASM_LABEL(label_77)  // Height 6: parameters loaded
     KAI_ASM_INST(0x44828831)  // srshl z17.s, p2/M, z17.s, z1.s
     KAI_ASM_INST(0x04a47318)  // sqdmulh z24.s, z24.s, z4.s
     KAI_ASM_INST(0x04a57339)  // sqdmulh z25.s, z25.s, z5.s
-    ld1rw { z4.s }, p2/Z, [x3]
+    KAI_ASM_INST(0x8540c864)  // ld1rw { z4.s }, p2/Z, [x3]
     KAI_ASM_INST(0x44828852)  // srshl z18.s, p2/M, z18.s, z2.s
     KAI_ASM_INST(0x04a6735a)  // sqdmulh z26.s, z26.s, z6.s
     KAI_ASM_INST(0x04a7737b)  // sqdmulh z27.s, z27.s, z7.s
@@ -2038,8 +2038,8 @@ KAI_ASM_LABEL(label_77)  // Height 6: parameters loaded
     KAI_ASM_INST(0x44828817)  // srshl z23.s, p2/M, z23.s, z0.s
     KAI_ASM_INST(0x4482883c)  // srshl z28.s, p2/M, z28.s, z1.s
     KAI_ASM_INST(0x4482885d)  // srshl z29.s, p2/M, z29.s, z2.s
-    ld1rw { z6.s }, p2/Z, [x2]
-    ld1rw { z5.s }, p2/Z, [x1]
+    KAI_ASM_INST(0x8540c846)  // ld1rw { z6.s }, p2/Z, [x2]
+    KAI_ASM_INST(0x8540c825)  // ld1rw { z5.s }, p2/Z, [x1]
     KAI_ASM_INST(0x4482887e)  // srshl z30.s, p2/M, z30.s, z3.s
     KAI_ASM_INST(0x44828818)  // srshl z24.s, p2/M, z24.s, z0.s
     add z31.s, z31.s, z4.s

@@ -76,16 +76,16 @@ KAI_ASM_LABEL(label_2)  // Width loop
     ld1h { z2.h }, p0/Z, [x3, #2, MUL VL]
     mov z19.b, #0
     mov z20.b, #0
-    ld1rh { z3.h }, p0/Z, [x6]
+    KAI_ASM_INST(0x84c0a0c3)  // ld1rh { z3.h }, p0/Z, [x6]
     mov z21.b, #0
     mov z22.b, #0
-    ld1rh { z4.h }, p0/Z, [x6, #2]
+    KAI_ASM_INST(0x84c1a0c4)  // ld1rh { z4.h }, p0/Z, [x6, #2]
     mov z23.b, #0
     mov z24.b, #0
-    ld1rh { z5.h }, p0/Z, [x6, #4]
+    KAI_ASM_INST(0x84c2a0c5)  // ld1rh { z5.h }, p0/Z, [x6, #4]
     mov z25.b, #0
     mov z26.b, #0
-    ld1rh { z6.h }, p0/Z, [x6, #6]
+    KAI_ASM_INST(0x84c3a0c6)  // ld1rh { z6.h }, p0/Z, [x6, #6]
     mov z27.b, #0
     mov z28.b, #0
     mov z29.b, #0
@@ -97,32 +97,32 @@ KAI_ASM_LABEL(label_3)  // main loop head
     fmla z9.h, p0/M, z1.h, z3.h
     sub x1, x1, #0x2
     fmla z10.h, p0/M, z2.h, z3.h
-    ld1rh { z3.h }, p0/Z, [x6, #8]
+    KAI_ASM_INST(0x84c4a0c3)  // ld1rh { z3.h }, p0/Z, [x6, #8]
     fmla z11.h, p0/M, z0.h, z4.h
     fmla z12.h, p0/M, z1.h, z4.h
     fmla z13.h, p0/M, z2.h, z4.h
-    ld1rh { z4.h }, p0/Z, [x6, #10]
+    KAI_ASM_INST(0x84c5a0c4)  // ld1rh { z4.h }, p0/Z, [x6, #10]
     fmla z14.h, p0/M, z0.h, z5.h
     fmla z15.h, p0/M, z1.h, z5.h
     cmp x1, #0x2
     fmla z16.h, p0/M, z2.h, z5.h
-    ld1rh { z5.h }, p0/Z, [x6, #12]
+    KAI_ASM_INST(0x84c6a0c5)  // ld1rh { z5.h }, p0/Z, [x6, #12]
     fmla z17.h, p0/M, z0.h, z6.h
     fmla z18.h, p0/M, z1.h, z6.h
     fmla z19.h, p0/M, z2.h, z6.h
-    ld1rh { z6.h }, p0/Z, [x6, #14]
+    KAI_ASM_INST(0x84c7a0c6)  // ld1rh { z6.h }, p0/Z, [x6, #14]
     fmla z20.h, p0/M, z0.h, z3.h
     fmla z21.h, p0/M, z1.h, z3.h
     fmla z22.h, p0/M, z2.h, z3.h
-    ld1rh { z3.h }, p0/Z, [x6, #16]
+    KAI_ASM_INST(0x84c8a0c3)  // ld1rh { z3.h }, p0/Z, [x6, #16]
     fmla z23.h, p0/M, z0.h, z4.h
     fmla z24.h, p0/M, z1.h, z4.h
     fmla z25.h, p0/M, z2.h, z4.h
-    ld1rh { z4.h }, p0/Z, [x6, #18]
+    KAI_ASM_INST(0x84c9a0c4)  // ld1rh { z4.h }, p0/Z, [x6, #18]
     fmla z26.h, p0/M, z0.h, z5.h
     fmla z27.h, p0/M, z1.h, z5.h
     fmla z28.h, p0/M, z2.h, z5.h
-    ld1rh { z5.h }, p0/Z, [x6, #20]
+    KAI_ASM_INST(0x84caa0c5)  // ld1rh { z5.h }, p0/Z, [x6, #20]
     fmla z29.h, p0/M, z0.h, z6.h
     ld1h { z0.h }, p0/Z, [x3, #3, MUL VL]
     fmla z30.h, p0/M, z1.h, z6.h
@@ -130,32 +130,32 @@ KAI_ASM_LABEL(label_3)  // main loop head
     ld1h { z1.h }, p0/Z, [x3, #4, MUL VL]
     ld1h { z2.h }, p0/Z, [x3, #5, MUL VL]
     addvl x3, x3, #6
-    ld1rh { z6.h }, p0/Z, [x6, #22]
+    KAI_ASM_INST(0x84cba0c6)  // ld1rh { z6.h }, p0/Z, [x6, #22]
     fmla z8.h, p0/M, z0.h, z3.h
     fmla z11.h, p0/M, z0.h, z4.h
     fmla z9.h, p0/M, z1.h, z3.h
     fmla z12.h, p0/M, z1.h, z4.h
     fmla z10.h, p0/M, z2.h, z3.h
     fmla z13.h, p0/M, z2.h, z4.h
-    ld1rh { z3.h }, p0/Z, [x6, #24]
+    KAI_ASM_INST(0x84cca0c3)  // ld1rh { z3.h }, p0/Z, [x6, #24]
     fmla z14.h, p0/M, z0.h, z5.h
     fmla z15.h, p0/M, z1.h, z5.h
-    ld1rh { z4.h }, p0/Z, [x6, #26]
+    KAI_ASM_INST(0x84cda0c4)  // ld1rh { z4.h }, p0/Z, [x6, #26]
     fmla z16.h, p0/M, z2.h, z5.h
     fmla z17.h, p0/M, z0.h, z6.h
-    ld1rh { z5.h }, p0/Z, [x6, #28]
+    KAI_ASM_INST(0x84cea0c5)  // ld1rh { z5.h }, p0/Z, [x6, #28]
     fmla z18.h, p0/M, z1.h, z6.h
     fmla z19.h, p0/M, z2.h, z6.h
-    ld1rh { z6.h }, p0/Z, [x6, #30]
+    KAI_ASM_INST(0x84cfa0c6)  // ld1rh { z6.h }, p0/Z, [x6, #30]
     add x6, x6, #0x20
     fmla z20.h, p0/M, z0.h, z3.h
     fmla z21.h, p0/M, z1.h, z3.h
     fmla z22.h, p0/M, z2.h, z3.h
     fmla z23.h, p0/M, z0.h, z4.h
-    ld1rh { z3.h }, p0/Z, [x6]
+    KAI_ASM_INST(0x84c0a0c3)  // ld1rh { z3.h }, p0/Z, [x6]
     fmla z24.h, p0/M, z1.h, z4.h
     fmla z25.h, p0/M, z2.h, z4.h
-    ld1rh { z4.h }, p0/Z, [x6, #2]
+    KAI_ASM_INST(0x84c1a0c4)  // ld1rh { z4.h }, p0/Z, [x6, #2]
     fmla z26.h, p0/M, z0.h, z5.h
     fmla z27.h, p0/M, z1.h, z5.h
     fmla z28.h, p0/M, z2.h, z5.h
@@ -165,27 +165,27 @@ KAI_ASM_LABEL(label_3)  // main loop head
     fmla z31.h, p0/M, z2.h, z6.h
     ld1h { z1.h }, p0/Z, [x3, #1, MUL VL]
     ld1h { z2.h }, p0/Z, [x3, #2, MUL VL]
-    ld1rh { z5.h }, p0/Z, [x6, #4]
-    ld1rh { z6.h }, p0/Z, [x6, #6]
+    KAI_ASM_INST(0x84c2a0c5)  // ld1rh { z5.h }, p0/Z, [x6, #4]
+    KAI_ASM_INST(0x84c3a0c6)  // ld1rh { z6.h }, p0/Z, [x6, #6]
     bge label_3
 KAI_ASM_LABEL(label_4)  // main loop skip
     fmla z8.h, p0/M, z0.h, z3.h
     fmla z9.h, p0/M, z1.h, z3.h
     addvl x3, x3, #3
     fmla z10.h, p0/M, z2.h, z3.h
-    ld1rh { z3.h }, p0/Z, [x6, #8]
+    KAI_ASM_INST(0x84c4a0c3)  // ld1rh { z3.h }, p0/Z, [x6, #8]
     fmla z11.h, p0/M, z0.h, z4.h
     fmla z12.h, p0/M, z1.h, z4.h
     fmla z13.h, p0/M, z2.h, z4.h
-    ld1rh { z4.h }, p0/Z, [x6, #10]
+    KAI_ASM_INST(0x84c5a0c4)  // ld1rh { z4.h }, p0/Z, [x6, #10]
     fmla z14.h, p0/M, z0.h, z5.h
     fmla z15.h, p0/M, z1.h, z5.h
     fmla z16.h, p0/M, z2.h, z5.h
-    ld1rh { z5.h }, p0/Z, [x6, #12]
+    KAI_ASM_INST(0x84c6a0c5)  // ld1rh { z5.h }, p0/Z, [x6, #12]
     fmla z17.h, p0/M, z0.h, z6.h
     fmla z18.h, p0/M, z1.h, z6.h
     fmla z19.h, p0/M, z2.h, z6.h
-    ld1rh { z6.h }, p0/Z, [x6, #14]
+    KAI_ASM_INST(0x84c7a0c6)  // ld1rh { z6.h }, p0/Z, [x6, #14]
     fmla z20.h, p0/M, z0.h, z3.h
     fmla z21.h, p0/M, z1.h, z3.h
     add x6, x6, #0x10
@@ -203,27 +203,27 @@ KAI_ASM_LABEL(label_4)  // main loop skip
     ld1h { z0.h }, p0/Z, [x3]
     ld1h { z1.h }, p0/Z, [x3, #1, MUL VL]
     ld1h { z2.h }, p0/Z, [x3, #2, MUL VL]
-    ld1rh { z3.h }, p0/Z, [x6]
+    KAI_ASM_INST(0x84c0a0c3)  // ld1rh { z3.h }, p0/Z, [x6]
     addvl x3, x3, #3
-    ld1rh { z4.h }, p0/Z, [x6, #2]
-    ld1rh { z5.h }, p0/Z, [x6, #4]
-    ld1rh { z6.h }, p0/Z, [x6, #6]
+    KAI_ASM_INST(0x84c1a0c4)  // ld1rh { z4.h }, p0/Z, [x6, #2]
+    KAI_ASM_INST(0x84c2a0c5)  // ld1rh { z5.h }, p0/Z, [x6, #4]
+    KAI_ASM_INST(0x84c3a0c6)  // ld1rh { z6.h }, p0/Z, [x6, #6]
     fmla z8.h, p0/M, z0.h, z3.h
     fmla z9.h, p0/M, z1.h, z3.h
     fmla z10.h, p0/M, z2.h, z3.h
     fmla z11.h, p0/M, z0.h, z4.h
-    ld1rh { z3.h }, p0/Z, [x6, #8]
+    KAI_ASM_INST(0x84c4a0c3)  // ld1rh { z3.h }, p0/Z, [x6, #8]
     fmla z12.h, p0/M, z1.h, z4.h
     fmla z13.h, p0/M, z2.h, z4.h
-    ld1rh { z4.h }, p0/Z, [x6, #10]
+    KAI_ASM_INST(0x84c5a0c4)  // ld1rh { z4.h }, p0/Z, [x6, #10]
     fmla z14.h, p0/M, z0.h, z5.h
     fmla z15.h, p0/M, z1.h, z5.h
     fmla z16.h, p0/M, z2.h, z5.h
     fmla z17.h, p0/M, z0.h, z6.h
-    ld1rh { z5.h }, p0/Z, [x6, #12]
+    KAI_ASM_INST(0x84c6a0c5)  // ld1rh { z5.h }, p0/Z, [x6, #12]
     fmla z18.h, p0/M, z1.h, z6.h
     fmla z19.h, p0/M, z2.h, z6.h
-    ld1rh { z6.h }, p0/Z, [x6, #14]
+    KAI_ASM_INST(0x84c7a0c6)  // ld1rh { z6.h }, p0/Z, [x6, #14]
     fmla z20.h, p0/M, z0.h, z3.h
     fmla z21.h, p0/M, z1.h, z3.h
     add x6, x6, #0x10

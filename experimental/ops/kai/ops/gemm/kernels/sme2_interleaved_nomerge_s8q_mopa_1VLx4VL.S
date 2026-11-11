@@ -249,21 +249,21 @@ KAI_ASM_LABEL(label_15)  // Store to output array
     ldr x5, [x0, #0x58]
     add x4, x0, #0x94
     add x2, x0, #0xa0
-    ld1rw { z4.s }, p1/Z, [x7]
+    KAI_ASM_INST(0x8540c4e4)  // ld1rw { z4.s }, p1/Z, [x7]
     add x1, x0, #0xa4
     sub x3, x24, x26
-    ld1rw { z5.s }, p1/Z, [x7]
+    KAI_ASM_INST(0x8540c4e5)  // ld1rw { z5.s }, p1/Z, [x7]
     add x8, x8, x25  // C += n
-    ld1rw { z6.s }, p1/Z, [x7]
+    KAI_ASM_INST(0x8540c4e6)  // ld1rw { z6.s }, p1/Z, [x7]
     madd x8, x26, x5, x8  // C += m * ldc
-    ld1rw { z7.s }, p1/Z, [x7]
-    ld1rw { z0.s }, p1/Z, [x6]
-    ld1rw { z1.s }, p1/Z, [x6]
-    ld1rw { z2.s }, p1/Z, [x6]
-    ld1rw { z3.s }, p1/Z, [x6]
-    ld1rw { z8.s }, p1/Z, [x4]
-    ld1rw { z21.s }, p1/Z, [x2]
-    ld1rw { z20.s }, p1/Z, [x1]
+    KAI_ASM_INST(0x8540c4e7)  // ld1rw { z7.s }, p1/Z, [x7]
+    KAI_ASM_INST(0x8540c4c0)  // ld1rw { z0.s }, p1/Z, [x6]
+    KAI_ASM_INST(0x8540c4c1)  // ld1rw { z1.s }, p1/Z, [x6]
+    KAI_ASM_INST(0x8540c4c2)  // ld1rw { z2.s }, p1/Z, [x6]
+    KAI_ASM_INST(0x8540c4c3)  // ld1rw { z3.s }, p1/Z, [x6]
+    KAI_ASM_INST(0x8540c488)  // ld1rw { z8.s }, p1/Z, [x4]
+    KAI_ASM_INST(0x8540c455)  // ld1rw { z21.s }, p1/Z, [x2]
+    KAI_ASM_INST(0x8540c434)  // ld1rw { z20.s }, p1/Z, [x1]
     tbz x11, #2, label_16
     ldr x2, [x0, #0x78]
     ldr x1, [x0, #0x88]

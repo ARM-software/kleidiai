@@ -339,8 +339,8 @@ KAI_ASM_LABEL(label_13)  // Height 1: no string loop
     tbz x27, #1, label_14
     add x2, x0, #0xa4
     add x1, x0, #0xa0
-    ld1rw { z17.s }, p5/Z, [x2]
-    ld1rw { z16.s }, p5/Z, [x1]
+    KAI_ASM_INST(0x8540d451)  // ld1rw { z17.s }, p5/Z, [x2]
+    KAI_ASM_INST(0x8540d430)  // ld1rw { z16.s }, p5/Z, [x1]
     fmin z8.s, p5/M, z8.s, z17.s
     fmin z9.s, p5/M, z9.s, z17.s
     fmin z10.s, p5/M, z10.s, z17.s
@@ -704,8 +704,8 @@ KAI_ASM_LABEL(label_28)  // Height 2: no string loop
     tbz x27, #1, label_29
     add x2, x0, #0xa4
     add x1, x0, #0xa0
-    ld1rw { z17.s }, p5/Z, [x2]
-    ld1rw { z16.s }, p5/Z, [x1]
+    KAI_ASM_INST(0x8540d451)  // ld1rw { z17.s }, p5/Z, [x2]
+    KAI_ASM_INST(0x8540d430)  // ld1rw { z16.s }, p5/Z, [x1]
     fmin z8.s, p5/M, z8.s, z17.s
     fmin z9.s, p5/M, z9.s, z17.s
     fmin z10.s, p5/M, z10.s, z17.s
@@ -1165,8 +1165,8 @@ KAI_ASM_LABEL(label_43)  // Height 3: no string loop
     tbz x27, #1, label_44
     add x2, x0, #0xa4
     add x1, x0, #0xa0
-    ld1rw { z21.s }, p5/Z, [x2]
-    ld1rw { z20.s }, p5/Z, [x1]
+    KAI_ASM_INST(0x8540d455)  // ld1rw { z21.s }, p5/Z, [x2]
+    KAI_ASM_INST(0x8540d434)  // ld1rw { z20.s }, p5/Z, [x1]
     fmin z8.s, p5/M, z8.s, z21.s
     fmin z9.s, p5/M, z9.s, z21.s
     fmin z10.s, p5/M, z10.s, z21.s
@@ -1722,8 +1722,8 @@ KAI_ASM_LABEL(label_58)  // Height 4: no string loop
     tbz x27, #1, label_59
     add x2, x0, #0xa4
     add x1, x0, #0xa0
-    ld1rw { z25.s }, p5/Z, [x2]
-    ld1rw { z24.s }, p5/Z, [x1]
+    KAI_ASM_INST(0x8540d459)  // ld1rw { z25.s }, p5/Z, [x2]
+    KAI_ASM_INST(0x8540d438)  // ld1rw { z24.s }, p5/Z, [x1]
     fmin z8.s, p5/M, z8.s, z25.s
     fmin z9.s, p5/M, z9.s, z25.s
     fmin z10.s, p5/M, z10.s, z25.s
@@ -2375,8 +2375,8 @@ KAI_ASM_LABEL(label_73)  // Height 5: no string loop
     tbz x27, #1, label_74
     add x2, x0, #0xa4
     add x1, x0, #0xa0
-    ld1rw { z29.s }, p5/Z, [x2]
-    ld1rw { z28.s }, p5/Z, [x1]
+    KAI_ASM_INST(0x8540d45d)  // ld1rw { z29.s }, p5/Z, [x2]
+    KAI_ASM_INST(0x8540d43c)  // ld1rw { z28.s }, p5/Z, [x1]
     fmin z8.s, p5/M, z8.s, z29.s
     fmin z9.s, p5/M, z9.s, z29.s
     fmin z10.s, p5/M, z10.s, z29.s
@@ -3124,8 +3124,8 @@ KAI_ASM_LABEL(label_88)  // Height 6: no string loop
     tbz x27, #1, label_89
     add x2, x0, #0xa4
     add x1, x0, #0xa0
-    ld1rw { z1.s }, p5/Z, [x2]
-    ld1rw { z0.s }, p5/Z, [x1]
+    KAI_ASM_INST(0x8540d441)  // ld1rw { z1.s }, p5/Z, [x2]
+    KAI_ASM_INST(0x8540d420)  // ld1rw { z0.s }, p5/Z, [x1]
     fmin z8.s, p5/M, z8.s, z1.s
     fmin z9.s, p5/M, z9.s, z1.s
     fmin z10.s, p5/M, z10.s, z1.s

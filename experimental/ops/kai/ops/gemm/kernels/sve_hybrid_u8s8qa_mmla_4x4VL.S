@@ -217,7 +217,7 @@ KAI_ASM_LABEL(label_12)  // Height 1: no string loop
     tbnz x24, #31, label_13
     add x1, x0, #0x90
     KAI_ASM_INST(0x4491a96b)  // addp z11.s, p2/m, z11.s, z11.s
-    ld1rw { z1.s }, p2/Z, [x1]
+    KAI_ASM_INST(0x8540c821)  // ld1rw { z1.s }, p2/Z, [x1]
     neg z1.s, p2/M, z1.s
     mov z11.s, z11.s[0]
     mul z11.s, p2/M, z11.s, z1.s
@@ -234,22 +234,22 @@ KAI_ASM_LABEL(label_13)  // Height 1: skip row sum fixup
     add x1, x0, #0x9c
     add z23.s, z23.s, z0.s
     add z17.s, z17.s, z1.s
-    ld1rw { z4.s }, p2/Z, [x2]
-    ld1rw { z0.s }, p2/Z, [x1]
+    KAI_ASM_INST(0x8540c844)  // ld1rw { z4.s }, p2/Z, [x2]
+    KAI_ASM_INST(0x8540c820)  // ld1rw { z0.s }, p2/Z, [x1]
     add x2, x0, #0x94
     add x1, x0, #0xa4
     add z18.s, z18.s, z2.s
     add z19.s, z19.s, z3.s
-    ld1rw { z6.s }, p2/Z, [x1]
+    KAI_ASM_INST(0x8540c826)  // ld1rw { z6.s }, p2/Z, [x1]
     add x1, x0, #0xa0
-    ld1rw { z5.s }, p2/Z, [x1]
+    KAI_ASM_INST(0x8540c825)  // ld1rw { z5.s }, p2/Z, [x1]
     orr x24, x24, #0x80000000
     addvl x8, x8, #4
     KAI_ASM_INST(0x04a472f7)  // sqdmulh z23.s, z23.s, z4.s
     KAI_ASM_INST(0x04a47231)  // sqdmulh z17.s, z17.s, z4.s
     KAI_ASM_INST(0x04a47252)  // sqdmulh z18.s, z18.s, z4.s
     KAI_ASM_INST(0x04a47273)  // sqdmulh z19.s, z19.s, z4.s
-    ld1rw { z4.s }, p2/Z, [x2]
+    KAI_ASM_INST(0x8540c844)  // ld1rw { z4.s }, p2/Z, [x2]
     KAI_ASM_INST(0x44828817)  // srshl z23.s, p2/M, z23.s, z0.s
     KAI_ASM_INST(0x44828811)  // srshl z17.s, p2/M, z17.s, z0.s
     KAI_ASM_INST(0x44828812)  // srshl z18.s, p2/M, z18.s, z0.s
@@ -435,7 +435,7 @@ KAI_ASM_LABEL(label_26)  // Height 2: no string loop
     tbnz x24, #31, label_27
     add x1, x0, #0x90
     KAI_ASM_INST(0x4491a96b)  // addp z11.s, p2/m, z11.s, z11.s
-    ld1rw { z2.s }, p2/Z, [x1]
+    KAI_ASM_INST(0x8540c822)  // ld1rw { z2.s }, p2/Z, [x1]
     neg z2.s, p2/M, z2.s
     mov z12.s, z11.s[3]
     mov z11.s, z11.s[0]
@@ -456,7 +456,7 @@ KAI_ASM_LABEL(label_27)  // Height 2: skip row sum fixup
     add x4, x0, #0x9c
     add z18.s, z18.s, z12.s
     add z19.s, z19.s, z12.s
-    ld1rw { z4.s }, p2/Z, [x1]
+    KAI_ASM_INST(0x8540c824)  // ld1rw { z4.s }, p2/Z, [x1]
     add x3, x0, #0x94
     add z23.s, z23.s, z0.s
     add z20.s, z20.s, z1.s
@@ -464,11 +464,11 @@ KAI_ASM_LABEL(label_27)  // Height 2: skip row sum fixup
     add x1, x0, #0xa0
     add z21.s, z21.s, z2.s
     add z22.s, z22.s, z3.s
-    ld1rw { z6.s }, p2/Z, [x2]
-    ld1rw { z5.s }, p2/Z, [x1]
+    KAI_ASM_INST(0x8540c846)  // ld1rw { z6.s }, p2/Z, [x2]
+    KAI_ASM_INST(0x8540c825)  // ld1rw { z5.s }, p2/Z, [x1]
     add z16.s, z16.s, z0.s
     add z17.s, z17.s, z1.s
-    ld1rw { z0.s }, p2/Z, [x4]
+    KAI_ASM_INST(0x8540c880)  // ld1rw { z0.s }, p2/Z, [x4]
     orr x24, x24, #0x80000000
     add z18.s, z18.s, z2.s
     add z19.s, z19.s, z3.s
@@ -481,7 +481,7 @@ KAI_ASM_LABEL(label_27)  // Height 2: skip row sum fixup
     KAI_ASM_INST(0x04a47231)  // sqdmulh z17.s, z17.s, z4.s
     KAI_ASM_INST(0x04a47252)  // sqdmulh z18.s, z18.s, z4.s
     KAI_ASM_INST(0x04a47273)  // sqdmulh z19.s, z19.s, z4.s
-    ld1rw { z4.s }, p2/Z, [x3]
+    KAI_ASM_INST(0x8540c864)  // ld1rw { z4.s }, p2/Z, [x3]
     KAI_ASM_INST(0x44828817)  // srshl z23.s, p2/M, z23.s, z0.s
     KAI_ASM_INST(0x44828814)  // srshl z20.s, p2/M, z20.s, z0.s
     KAI_ASM_INST(0x44828815)  // srshl z21.s, p2/M, z21.s, z0.s
@@ -748,7 +748,7 @@ KAI_ASM_LABEL(label_40)  // Height 3: no string loop
     add x1, x0, #0x90
     KAI_ASM_INST(0x4491a96b)  // addp z11.s, p2/m, z11.s, z11.s
     KAI_ASM_INST(0x4491a9ad)  // addp z13.s, p2/m, z13.s, z13.s
-    ld1rw { z3.s }, p2/Z, [x1]
+    KAI_ASM_INST(0x8540c823)  // ld1rw { z3.s }, p2/Z, [x1]
     neg z3.s, p2/M, z3.s
     mov z12.s, z11.s[3]
     mov z11.s, z11.s[0]
@@ -771,7 +771,7 @@ KAI_ASM_LABEL(label_41)  // Height 3: skip row sum fixup
     add x4, x0, #0x9c
     add z18.s, z18.s, z12.s
     add z19.s, z19.s, z12.s
-    ld1rw { z4.s }, p2/Z, [x1]
+    KAI_ASM_INST(0x8540c824)  // ld1rw { z4.s }, p2/Z, [x1]
     add x3, x0, #0x94
     add z24.s, z24.s, z13.s
     add z25.s, z25.s, z13.s
@@ -779,8 +779,8 @@ KAI_ASM_LABEL(label_41)  // Height 3: skip row sum fixup
     add x1, x0, #0xa0
     add z26.s, z26.s, z13.s
     add z27.s, z27.s, z13.s
-    ld1rw { z6.s }, p2/Z, [x2]
-    ld1rw { z5.s }, p2/Z, [x1]
+    KAI_ASM_INST(0x8540c846)  // ld1rw { z6.s }, p2/Z, [x2]
+    KAI_ASM_INST(0x8540c825)  // ld1rw { z5.s }, p2/Z, [x1]
     add z31.s, z31.s, z0.s
     add z20.s, z20.s, z1.s
     orr x24, x24, #0x80000000
@@ -793,7 +793,7 @@ KAI_ASM_LABEL(label_41)  // Height 3: skip row sum fixup
     add z19.s, z19.s, z3.s
     add z24.s, z24.s, z0.s
     add z25.s, z25.s, z1.s
-    ld1rw { z0.s }, p2/Z, [x4]
+    KAI_ASM_INST(0x8540c880)  // ld1rw { z0.s }, p2/Z, [x4]
     add z26.s, z26.s, z2.s
     add z27.s, z27.s, z3.s
     KAI_ASM_INST(0x04a473ff)  // sqdmulh z31.s, z31.s, z4.s
@@ -812,7 +812,7 @@ KAI_ASM_LABEL(label_41)  // Height 3: skip row sum fixup
     KAI_ASM_INST(0x44828816)  // srshl z22.s, p2/M, z22.s, z0.s
     KAI_ASM_INST(0x04a4735a)  // sqdmulh z26.s, z26.s, z4.s
     KAI_ASM_INST(0x04a4737b)  // sqdmulh z27.s, z27.s, z4.s
-    ld1rw { z4.s }, p2/Z, [x3]
+    KAI_ASM_INST(0x8540c864)  // ld1rw { z4.s }, p2/Z, [x3]
     KAI_ASM_INST(0x44828810)  // srshl z16.s, p2/M, z16.s, z0.s
     KAI_ASM_INST(0x44828811)  // srshl z17.s, p2/M, z17.s, z0.s
     KAI_ASM_INST(0x44828812)  // srshl z18.s, p2/M, z18.s, z0.s
@@ -1107,7 +1107,7 @@ KAI_ASM_LABEL(label_54)  // Height 4: no string loop
     add x1, x0, #0x90
     KAI_ASM_INST(0x4491a96b)  // addp z11.s, p2/m, z11.s, z11.s
     KAI_ASM_INST(0x4491a9ad)  // addp z13.s, p2/m, z13.s, z13.s
-    ld1rw { z4.s }, p2/Z, [x1]
+    KAI_ASM_INST(0x8540c824)  // ld1rw { z4.s }, p2/Z, [x1]
     neg z4.s, p2/M, z4.s
     mov z12.s, z11.s[3]
     mov z11.s, z11.s[0]
@@ -1132,7 +1132,7 @@ KAI_ASM_LABEL(label_55)  // Height 4: skip row sum fixup
     add x4, x0, #0x9c
     add z18.s, z18.s, z12.s
     add z19.s, z19.s, z12.s
-    ld1rw { z4.s }, p2/Z, [x1]
+    KAI_ASM_INST(0x8540c824)  // ld1rw { z4.s }, p2/Z, [x1]
     add x3, x0, #0x94
     add z23.s, z23.s, z13.s
     add z28.s, z28.s, z13.s
@@ -1140,8 +1140,8 @@ KAI_ASM_LABEL(label_55)  // Height 4: skip row sum fixup
     add x1, x0, #0xa0
     add z29.s, z29.s, z13.s
     add z30.s, z30.s, z13.s
-    ld1rw { z6.s }, p2/Z, [x2]
-    ld1rw { z5.s }, p2/Z, [x1]
+    KAI_ASM_INST(0x8540c846)  // ld1rw { z6.s }, p2/Z, [x2]
+    KAI_ASM_INST(0x8540c825)  // ld1rw { z5.s }, p2/Z, [x1]
     add z24.s, z24.s, z14.s
     add z25.s, z25.s, z14.s
     orr x24, x24, #0x80000000
@@ -1162,7 +1162,7 @@ KAI_ASM_LABEL(label_55)  // Height 4: skip row sum fixup
     add z30.s, z30.s, z3.s
     add z24.s, z24.s, z0.s
     add z25.s, z25.s, z1.s
-    ld1rw { z0.s }, p2/Z, [x4]
+    KAI_ASM_INST(0x8540c880)  // ld1rw { z0.s }, p2/Z, [x4]
     add z26.s, z26.s, z2.s
     add z27.s, z27.s, z3.s
     KAI_ASM_INST(0x04a473ff)  // sqdmulh z31.s, z31.s, z4.s
@@ -1189,7 +1189,7 @@ KAI_ASM_LABEL(label_55)  // Height 4: skip row sum fixup
     KAI_ASM_INST(0x44828813)  // srshl z19.s, p2/M, z19.s, z0.s
     KAI_ASM_INST(0x04a4735a)  // sqdmulh z26.s, z26.s, z4.s
     KAI_ASM_INST(0x04a4737b)  // sqdmulh z27.s, z27.s, z4.s
-    ld1rw { z4.s }, p2/Z, [x3]
+    KAI_ASM_INST(0x8540c864)  // ld1rw { z4.s }, p2/Z, [x3]
     KAI_ASM_INST(0x44828817)  // srshl z23.s, p2/M, z23.s, z0.s
     KAI_ASM_INST(0x4482881c)  // srshl z28.s, p2/M, z28.s, z0.s
     KAI_ASM_INST(0x4482881d)  // srshl z29.s, p2/M, z29.s, z0.s
