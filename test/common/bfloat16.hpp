@@ -1,11 +1,12 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
 
 #pragma once
 
+#include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <iosfwd>
@@ -66,6 +67,20 @@ public:
         memcpy(&value_f32, &value_u32, sizeof(float));
 
         return value_f32;
+    }
+
+    /// Emulates BF16 accumulation using FP32 FMA followed by the configured BF16 conversion.
+    ///
+    /// @param[in] rhs Second multiplicand.
+    /// @param[in] acc Accumulator.
+    /// @return The BF16 multiplication and addition result.
+    [[nodiscard]] BFloat16 multiply_accumulate(BFloat16 rhs, BFloat16 acc) const {
+        const float lhs_f32 = static_cast<float>(*this);
+        const float rhs_f32 = static_cast<float>(rhs);
+        const float acc_f32 = static_cast<float>(acc);
+        BFloat16 value;
+        value.m_data = f32_bf16_convertfn(std::fmaf(lhs_f32, rhs_f32, acc_f32));
+        return value;
     }
 
 private:

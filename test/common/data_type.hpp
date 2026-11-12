@@ -12,7 +12,7 @@
 #include <string>
 
 #include "test/common/assert.hpp"
-#include "test/common/safe_math.hpp"
+#include "test/common/math.hpp"
 #include "test/common/type_traits.hpp"
 
 namespace kai::test {

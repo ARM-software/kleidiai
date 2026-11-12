@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -56,6 +56,16 @@ uint16_t kai_test_float16_sub(uint16_t lhs, uint16_t rhs);
 ///
 /// @return The result of the multiplication.
 uint16_t kai_test_float16_mul(uint16_t lhs, uint16_t rhs);
+
+/// Fused multiplies and adds half-precision floating-point numbers.
+///
+/// All half-precision floating-point values are reinterpreted as 16-bit unsigned integers.
+///
+/// @param[in] lhs First multiplicand.
+/// @param[in] rhs Second multiplicand.
+/// @param[in] acc Accumulator.
+/// @return The fused multiplication and addition result.
+uint16_t kai_test_float16_fma(uint16_t lhs, uint16_t rhs, uint16_t acc);
 
 /// Divides two half-precision floating-point numbers.
 ///
@@ -126,6 +136,17 @@ public:
     /// Converts to single-precision floating-point.
     explicit operator float() const {
         return kai_test_float_from_float16(m_data);
+    }
+
+    /// Fused multiplies this value by rhs and adds acc using FP16 arithmetic.
+    ///
+    /// @param[in] rhs Second multiplicand.
+    /// @param[in] acc Accumulator.
+    /// @return The fused multiplication and addition result.
+    [[nodiscard]] Float16 multiply_accumulate(Float16 rhs, Float16 acc) const {
+        Float16 value;
+        value.m_data = kai_test_float16_fma(m_data, rhs.m_data, acc.m_data);
+        return value;
     }
 
     /// Addition and assignment operator.

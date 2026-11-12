@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2024-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2024-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -31,6 +31,7 @@
     KAI_ASM_GLOBAL(kai_test_float16_add)
     KAI_ASM_GLOBAL(kai_test_float16_sub)
     KAI_ASM_GLOBAL(kai_test_float16_mul)
+    KAI_ASM_GLOBAL(kai_test_float16_fma)
     KAI_ASM_GLOBAL(kai_test_float16_div)
     KAI_ASM_GLOBAL(kai_test_float16_lt)
     KAI_ASM_GLOBAL(kai_test_float16_gt)
@@ -70,6 +71,14 @@ KAI_ASM_LABEL_GLOBAL(kai_test_float16_div)
     fmov h0, w0
     fmov h1, w1
     fdiv h0, h0, h1
+    fmov w0, h0
+    ret
+
+KAI_ASM_LABEL_GLOBAL(kai_test_float16_fma)
+    fmov h0, w0
+    fmov h1, w1
+    fmov h2, w2
+    fmadd h0, h0, h1, h2
     fmov w0, h0
     ret
 

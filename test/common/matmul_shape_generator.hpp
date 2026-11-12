@@ -16,8 +16,8 @@
 #include <utility>
 #include <vector>
 
+#include "test/common/math.hpp"
 #include "test/common/matmul_test_common.hpp"
-#include "test/common/safe_math.hpp"
 
 namespace kai::test {
 

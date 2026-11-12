@@ -10,17 +10,16 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <type_traits>
 
 #include "test/common/assert.hpp"
 #include "test/common/bfloat16.hpp"
 #include "test/common/buffer.hpp"
 #include "test/common/data_type.hpp"
 #include "test/common/float16.hpp"
+#include "test/common/math.hpp"
 #include "test/common/memory.hpp"
 #include "test/common/round.hpp"
 #include "test/common/span.hpp"
-#include "test/nextgen/functions/fused_mul_add.hpp"
 
 namespace kai::test {
 
@@ -39,11 +38,7 @@ template <typename Lhs, typename Rhs, typename Acc>
                 const Acc lhs_value = static_cast<Acc>(read_2d<Lhs>(lhs, shape_k, row, depth));
                 const Acc rhs_value = static_cast<Acc>(read_2d<Rhs>(rhs, shape_k, col, depth));
 
-                if constexpr (std::is_floating_point_v<Acc>) {
-                    acc = fused_mul_add<Acc>(lhs_value, rhs_value, acc);
-                } else {
-                    acc += lhs_value * rhs_value;
-                }
+                acc = multiply_accumulate(lhs_value, rhs_value, acc);
             }
 
             write_2d<Acc>(dst.view(), shape_n, row, col, acc);

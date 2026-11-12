@@ -6,16 +6,64 @@
 
 #pragma once
 
+#include <cmath>
 #include <cstdint>
 #include <optional>
 #include <type_traits>
 
+#include "bfloat16.hpp"
+#include "float16.hpp"
 #include "numeric_limits.hpp"
 #include "type_traits.hpp"
 
 namespace kai::test {
 
-/// The functions in this file return `std::nullopt` for out-of-range results,
+/// Multiplies and accumulates integers without checking for overflow.
+///
+/// @param[in] lhs First multiplicand.
+/// @param[in] rhs Second multiplicand.
+/// @param[in] acc Accumulator.
+/// @return The multiplication and addition result.
+template <typename T>
+[[nodiscard]] inline T multiply_accumulate(T lhs, T rhs, T acc) {
+    static_assert(is_integral<T>);
+    return static_cast<T>(lhs * rhs + acc);
+}
+
+/// Multiplies and accumulates with fused floating-point rounding.
+///
+/// @param[in] lhs First multiplicand.
+/// @param[in] rhs Second multiplicand.
+/// @param[in] acc Accumulator.
+/// @return The fused multiplication and addition result.
+template <>
+[[nodiscard]] inline float multiply_accumulate<float>(float lhs, float rhs, float acc) {
+    return std::fmaf(lhs, rhs, acc);
+}
+
+/// Multiplies and accumulates with native FP16 fused rounding.
+///
+/// @param[in] lhs First multiplicand.
+/// @param[in] rhs Second multiplicand.
+/// @param[in] acc Accumulator.
+/// @return The FP16 fused multiplication and addition result.
+template <>
+[[nodiscard]] inline Float16 multiply_accumulate<Float16>(Float16 lhs, Float16 rhs, Float16 acc) {
+    return lhs.multiply_accumulate(rhs, acc);
+}
+
+/// Multiplies and accumulates in FP32, then uses the existing BFloat16 conversion.
+///
+/// @param[in] lhs First multiplicand.
+/// @param[in] rhs Second multiplicand.
+/// @param[in] acc Accumulator.
+/// @return The multiplication and addition result.
+template <>
+[[nodiscard]] inline BFloat16<> multiply_accumulate<BFloat16<>>(BFloat16<> lhs, BFloat16<> rhs, BFloat16<> acc) {
+    return lhs.multiply_accumulate(rhs, acc);
+}
+
+/// The safe_* functions return `std::nullopt` for out-of-range results,
 /// zero divisors, and division or remainder of the minimum signed value by -1.
 
 namespace detail {

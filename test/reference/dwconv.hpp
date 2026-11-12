@@ -79,4 +79,28 @@ Buffer depthwise_reference(
     DataType dtype, size_t batches, size_t in_height, size_t in_width, size_t channels, size_t filter_height,
     size_t filter_width, const void* feature_map, const void* weights, const void* bias, const Padding2D& pad);
 
+/// Runs depthwise convolution with independent operand, accumulator, and output types.
+///
+/// @param[in] lhs_dtype Input feature-map data type.
+/// @param[in] rhs_dtype Filter data type.
+/// @param[in] bias_dtype Per-channel bias data type.
+/// @param[in] acc_dtype Accumulator data type (FP32 or I32).
+/// @param[in] dst_dtype Output data type.
+/// @param[in] batches Batch dimension of the feature map.
+/// @param[in] in_height Height of the feature map.
+/// @param[in] in_width Width of the feature map.
+/// @param[in] channels Number of channels.
+/// @param[in] filter_height Height of the filter.
+/// @param[in] filter_width Width of the filter.
+/// @param[in] feature_map Input feature map.
+/// @param[in] weights Filter weights.
+/// @param[in] bias Per-channel bias.
+/// @param[in] pad Input padding.
+///
+/// @return The result data buffer.
+Buffer depthwise_reference(
+    DataType lhs_dtype, DataType rhs_dtype, DataType bias_dtype, DataType acc_dtype, DataType dst_dtype, size_t batches,
+    size_t in_height, size_t in_width, size_t channels, size_t filter_height, size_t filter_width,
+    const void* feature_map, const void* weights, const void* bias, const Padding2D& pad);
+
 }  // namespace kai::test

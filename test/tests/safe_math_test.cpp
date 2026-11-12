@@ -4,14 +4,14 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-#include "test/common/safe_math.hpp"
-
 #include <gtest/gtest.h>
 
 #include <cstdint>
 #include <limits>
 #include <optional>
 #include <type_traits>
+
+#include "test/common/math.hpp"
 
 namespace kai::test {
 namespace {
@@ -28,6 +28,37 @@ void expect_value(const std::optional<T>& result, Expected expected) {
 }
 
 }  // namespace
+
+TEST(MathTest, MultiplyAccumulateFloatingPoint) {
+    // Separate multiplication and addition would round this result to zero.
+    EXPECT_EQ(multiply_accumulate(0x1.000002p0F, 0x1.fffffcp-1F, -1.0F), -0x1p-46F);
+}
+
+TEST(MathTest, MultiplyAccumulateInteger) {
+    EXPECT_EQ(multiply_accumulate<int32_t>(-2, 4, 16777217), 16777209);
+    EXPECT_EQ(static_cast<int32_t>(multiply_accumulate(Int4(2), Int4(-2), Int4(1))), -3);
+}
+
+TEST(MathTest, MultiplyAccumulateFloat16) {
+    if (!cpu_has_fp16()) {
+        GTEST_SKIP() << "No CPU support for FP16";
+    }
+
+    const Float16 lhs = Float16::from_binary(0x3c01);  // 1 + 2^-10
+    const Float16 rhs = Float16::from_binary(0x3bfe);  // 1 - 2^-10
+    EXPECT_EQ(multiply_accumulate(lhs, rhs, Float16(-1.0F)), Float16::from_binary(0x8010));
+
+    // The exact result lies below an FP16 midpoint; rounding through FP32 would land on it.
+    const Float16 tiny_negative = Float16::from_binary(0x8001);  // -2^-24
+    EXPECT_EQ(multiply_accumulate(lhs, Float16(1.5F), tiny_negative), Float16::from_binary(0x3e01));
+}
+
+TEST(MathTest, MultiplyAccumulateBFloat16) {
+    const BFloat16<> lhs = BFloat16<>::from_binary(0x3f81);  // 1 + 2^-7
+    const BFloat16<> rhs = BFloat16<>::from_binary(0x3f7e);  // 1 - 2^-7
+    EXPECT_EQ(multiply_accumulate(lhs, rhs, BFloat16<>(-1.0F)), BFloat16<>::from_binary(0xb880));
+    EXPECT_EQ(multiply_accumulate(BFloat16<>(1.5F), BFloat16<>(2.0F), BFloat16<>(0.5F)), BFloat16<>(3.5F));
+}
 
 TEST(SafeMathTest, SignedArithmetic) {
     constexpr int64_t lowest = std::numeric_limits<int64_t>::min();
