@@ -566,6 +566,8 @@ set(KLEIDIAI_FILES_SME2_ASM
     kai/ukernels/matmul/imatmul_clamp_f32_f32p_f32p/kai_imatmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme2_mopa_asm.S
     kai/ukernels/matmul/imatmul_clamp_qai8_qai8p_qsi8cxp/kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa.c
     kai/ukernels/matmul/imatmul_clamp_qai8_qai8p_qsi8cxp/kai_imatmul_clamp_qai8_qai8p2vlx4_qsi8cxpsb2vlx4_2vlx2vl_sme2_mopa_asm.S
+    kai/ukernels/matmul/matmul_clamp_bf16_qai8dxp_qsi8cxp/kai_matmul_clamp_bf16_qai8dxp4vsx4_qsi8cxp16vsx4_4vsx16vs_sme2_mopa.c
+    kai/ukernels/matmul/matmul_clamp_bf16_qai8dxp_qsi8cxp/kai_matmul_clamp_bf16_qai8dxp4vsx4_qsi8cxp16vsx4_4vsx16vs_sme2_mopa_asm.S
     kai/ukernels/matmul/matmul_clamp_f16_f16_f16p/kai_matmul_clamp_f16_f16_f16p2vlx2b_1x16vl_sme2_dot.c
     kai/ukernels/matmul/matmul_clamp_f16_f16_f16p/kai_matmul_clamp_f16_f16_f16p2vlx2b_1x16vl_sme2_dot_asm.S
     kai/ukernels/matmul/matmul_clamp_f16_f16_f16p/kai_matmul_clamp_f16_f16_f16p4vsx2bf16_1x32vs_sme2_dot.c

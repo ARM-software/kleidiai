@@ -663,4 +663,22 @@ MatMulKernelPtr create_matmul_clamp_f32_bf16p8x4_bf16p12x4b_8x12_neon_mmla() {
         format::plain<DataType::FP32>());                       // dst format
 }
 
+MatMulKernelPtr create_matmul_clamp_bf16_qai8dxp4vsx4_qsi8cxp16vsx4_4vsx16vs_sme2_mopa() {
+    const MatMulPackArgs lhs_pack_args{4 * get_sme_vector_scale(), 16 * get_sme_vector_scale(), 4, 1, 0};
+
+    return std::make_unique<MatMulUkerApiWrapper>(
+        "matmul_clamp_bf16_qai8dxp4vsx4_qsi8cxp16vsx4_4vsx16vs_sme2_mopa",      // name
+        kai_matmul_clamp_bf16_qai8dxp4vsx4_qsi8cxp16vsx4_4vsx16vs_sme2_mopa(),  // kernel
+        MatMulSlot::LHS_PACKED,                                                 // lhs input slot
+        format::qai8dxp<sme::VS<4>, 4>(),                                       // lhs format
+        format::qsi8cxp<sme::VS<16>, 4>(),                                      // rhs format
+        format::plain<DataType::BF16>(),                                        // dst format
+        DataType::FP32,                                                         // acc dtype
+        MatMulUkerClampConfig::optional(DataType::FP32),                        // clamp config
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS,                               // bias stage
+        MatMulUkerOutputStageConfig{},                                          // output stage
+        kai_matmul_uker_config{},                                               // kernel config
+        lhs_pack_args);                                                         // lhs pack args
+}
+
 }  // namespace kai::test

@@ -311,6 +311,40 @@ bool is_shape_suitable_rhs_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon(
     return portion_non_empty(shape_n, shape_k, 16 * get_sme_vector_scale(), shape_k, portion);
 }
 
+bool is_shape_suitable_rhs_nxk_qsi8cxp16vsx4_qsi8cx_neon(
+    [[maybe_unused]] size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
+    if (shape_n == 0 || shape_k == 0) {
+        return false;
+    }
+
+    const size_t nr = 16 * get_sme_vector_scale();
+    const size_t rhs_n_step = kai_get_n_step_rhs_pack_nxk_qsi8cxp_qsi8cx_neon(nr);
+
+    return portion_non_empty(shape_n, shape_k, rhs_n_step, shape_k, portion);
+}
+
+MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp16vsx4_qsi8cx_neon() {
+    const MatMulPackRhsQuantI8Interface kernel_interface{
+        kai_get_n_step_rhs_pack_nxk_qsi8cxp_qsi8cx_neon,
+        kai_get_rhs_offset_rhs_pack_nxk_qsi8cxp_qsi8cx_neon,
+        kai_get_rhs_packed_stride_rhs_pack_nxk_qsi8cxp_qsi8cx_neon,
+        kai_get_rhs_packed_offset_rhs_pack_nxk_qsi8cxp_qsi8cx_neon,
+        kai_get_rhs_packed_size_rhs_pack_nxk_qsi8cxp_qsi8cx_neon,
+        kai_run_rhs_pack_nxk_qsi8cxp_qsi8cx_neon,
+    };
+    const MatMulPackArgs pack_args{0, sme::VS<16>(), 4, 1, 0};
+
+    return std::make_unique<MatMulPackRhsQuantI8Wrapper>(
+        "matmul_rhs_pack_nxk_qsi8cxp16vsx4_qsi8cx_neon",    // name
+        kernel_interface,                                   // kernel
+        format::plain<DataType::I8>(),                      // src data format
+        format::plain<DataType::FP32>(),                    // src scale format
+        format::plain<DataType::FP32>(),                    // src bias format
+        format::plain<DataType::I32>(),                     // src sum format
+        format::qsi8cxp_repeat_last_row<sme::VS<16>, 4>(),  // dst format
+        pack_args);                                         // pack args
+}
+
 template <auto BlockHeight>
 MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon() {
     return std::make_unique<MatMulPackRhsBlockwiseQuantTrailingScaleWrapper>(

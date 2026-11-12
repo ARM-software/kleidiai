@@ -288,6 +288,18 @@ bool is_shape_suitable_lhs_qai8dxp2vsx8sf32_qsi4c32p8x8s16s0sbf16bf32_8vsx8_sve_
     return portion_non_empty(shape_m, shape_k, lhs_m_step, shape_k, portion);
 }
 
+bool is_shape_suitable_lhs_qai8dxp4vsx4_f32(
+    size_t shape_m, [[maybe_unused]] size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
+    if (shape_m == 0 || shape_k == 0) {
+        return false;
+    }
+
+    const size_t mr = 4 * get_sme_vector_scale();
+    const size_t lhs_m_step = kai_get_m_step_lhs_quant_pack_qai8dxp_f32(mr);
+
+    return portion_non_empty(shape_m, shape_k, lhs_m_step, shape_k, portion);
+}
+
 template <DataType DType>
 MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme() {
     static_assert(data_type_size_in_bits(DType) == 16);

@@ -114,4 +114,7 @@ namespace kai::test {
 /// Creates the 256-bit SVE per-channel INT4 matmul wrapper.
 MatMulKernelPtr create_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0sf32bf32_8vsx8_sve_i8mm();
 
+/// Creates a wrapper for matmul_clamp_bf16_qai8dxp4vsx4_qsi8cxp16vsx4_4vsx16vs_sme2_mopa kernel.
+[[nodiscard]] MatMulKernelPtr create_matmul_clamp_bf16_qai8dxp4vsx4_qsi8cxp16vsx4_4vsx16vs_sme2_mopa();
+
 }  // namespace kai::test

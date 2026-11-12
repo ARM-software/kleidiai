@@ -647,6 +647,31 @@ struct kai_matmul_uker_api kai_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0
 /// @return The micro-kernel API.
 struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8_qsi8cxp16x4sf32bi32_1x16_neon_dotprod(void);
 
+/// Dynamically quantized INT8 matrix multiplication with BF16 output, using SME2 signed MOPA instruction.
+///
+/// The LHS is packed as QAI8DXP (asymmetric signed INT8 with per-M FP32 scale and per-M I32 zero-point/correction
+/// metadata), the RHS is packed as QSI8CXP (symmetric signed INT8 with per-N reduction sum, FP32 scale and FP32 bias),
+/// and the output is written as dense BF16.
+///
+/// Required CPU features:
+///   * FEAT_SME2
+///
+/// Required operands:
+///   * dst - BF16 output buffer.
+///   * lhs - Packed QAI8DXP LHS buffer.
+///   * rhs - Packed QSI8CXP RHS buffer.
+///
+/// Optional arguments:
+///   * clamp - FP32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
+///
+/// Accumulation: I32, scaled in FP32 and converted to BF16.
+///
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_bf16_qai8dxp4vsx4_qsi8cxp16vsx4_4vsx16vs_sme2_mopa(void);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

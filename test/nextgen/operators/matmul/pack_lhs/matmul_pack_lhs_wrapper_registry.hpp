@@ -180,4 +180,8 @@ template <DataType DType>
 [[nodiscard]] bool is_shape_suitable_lhs_x16p8x4_x16_neon(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
+/// Checks if the portion produces non-empty LHS packing tiles for the qai8dxp4vsx4 LHS packing from FP32.
+[[nodiscard]] bool is_shape_suitable_lhs_qai8dxp4vsx4_f32(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
+
 }  // namespace kai::test

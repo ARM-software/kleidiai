@@ -15,6 +15,7 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 - New SME2 micro-kernels:
   - FP32 softmax using a Taylor exponential approximation, processing four streaming vectors per iteration.
   - Added `kai_imatmul_pack_lhs_mxk_x16p4vsx2_x16_sme2`, an indirect LHS packing micro-kernel.
+  - Matrix multiplication (MxN) for QAI8DXP LHS and QSI8CXP RHS with BF16 output.
 - Update dependencies to the latest version:
   - Google Test: v1.18.0.
   - Google Benchmark: v1.10.0.
