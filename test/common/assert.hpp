@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -10,7 +10,7 @@
 
 #include "kai/kai_common.h"
 
-#if defined(KAI_ERROR_TRAP)
+#if KLEIDIAI_ERROR_TRAP
 #define KAI_TEST_ERROR(msg) __builtin_trap()
 #elif defined(__cpp_exceptions)
 #define KAI_TEST_ERROR(msg) throw std::runtime_error(msg)
