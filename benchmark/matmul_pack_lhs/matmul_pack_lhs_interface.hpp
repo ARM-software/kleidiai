@@ -8,6 +8,7 @@
 
 #include <cstddef>
 
+#include "kai/kai_common.h"
 #include "kai/ukernels/matmul/kai_matmul_pack_lhs_types.h"
 
 namespace kai::benchmark {
@@ -56,6 +57,19 @@ struct MatMulPackLhsBlockwiseFloatInterface {
     void (*run)(
         size_t m, size_t k, size_t bl, size_t mr, size_t kr, size_t sr, size_t m_idx_start, const float* lhs,
         size_t lhs_stride, void* lhs_packed);
+};
+
+/// Interface for packing statically quantized LHS bytes and supplied per-row metadata.
+struct MatMulPackLhsPqInterface {
+    size_t (*get_mr)(void);
+    size_t (*get_kr)(void);
+    size_t (*get_sr)(void);
+    size_t (*get_lhs_packed_size)(size_t m, size_t k, size_t mr, size_t kr, size_t sr);
+    size_t lhs_bias_elem_size = 0;
+    size_t lhs_scale_elem_size = 0;
+    void (*run)(
+        size_t m, size_t k, size_t mr, size_t kr, size_t sr, size_t m_idx_start, const void* lhs, size_t lhs_stride,
+        const struct kai_lhs_pack_qai8dxp_params* params, void* lhs_packed);
 };
 
 /// Interface for an LHS packing micro-kernel using the struct-based API.

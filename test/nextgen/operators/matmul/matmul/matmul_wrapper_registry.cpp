@@ -20,6 +20,8 @@
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa.h"
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod.h"
+#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm.h"
 #include "kai/ukernels/matmul/matmul_clamp_fp32_bf16p_bf16p/kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa.h"
 #include "test/common/data_type.hpp"
 #include "test/common/sme.hpp"
@@ -34,6 +36,56 @@
 namespace kai::test {
 
 using namespace kai::test::matmul;
+
+MatMulKernelPtr create_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod() {
+    const MatMulDqInterface kernel_interface{
+        kai_get_m_step_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod,
+        kai_get_n_step_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod,
+        kai_get_mr_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod,
+        kai_get_nr_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod,
+        kai_get_kr_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod,
+        kai_get_sr_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod,
+        kai_get_lhs_packed_offset_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod,
+        kai_get_rhs_packed_offset_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod,
+        kai_get_dst_offset_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod,
+        kai_get_dst_size_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod,
+        kai_run_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod,
+    };
+
+    return std::make_unique<MatMulDqWrapper>(
+        "matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod",  // name
+        kernel_interface,                                           // kernel
+        quantization::qai8dx(),                                     // lhs quantizer
+        quantization::qsi8cx(),                                     // rhs quantizer
+        format::qax8dxp<DataType::I8, 1, 8>(),                      // lhs format
+        format::qsi8cxp_repeat_last_row<4, 8>(),                    // rhs format
+        format::plain<DataType::FP32>());                           // dst format
+}
+
+MatMulKernelPtr create_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm() {
+    const MatMulDqInterface kernel_interface{
+        kai_get_m_step_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm,
+        kai_get_n_step_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm,
+        kai_get_mr_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm,
+        kai_get_nr_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm,
+        kai_get_kr_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm,
+        kai_get_sr_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm,
+        kai_get_lhs_packed_offset_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm,
+        kai_get_rhs_packed_offset_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm,
+        kai_get_dst_offset_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm,
+        kai_get_dst_size_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm,
+        kai_run_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm,
+    };
+
+    return std::make_unique<MatMulDqWrapper>(
+        "matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm",  // name
+        kernel_interface,                                         // kernel
+        quantization::qai8dx(),                                   // lhs quantizer
+        quantization::qsi8cx(),                                   // rhs quantizer
+        format::qax8dxp<DataType::I8, 4, 8>(),                    // lhs format
+        format::qsi8cxp_repeat_last_row<4, 8>(),                  // rhs format
+        format::plain<DataType::FP32>());                         // dst format
+}
 
 MatMulKernelPtr create_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot() {
     return std::make_unique<MatMulUkerApiWrapper>(

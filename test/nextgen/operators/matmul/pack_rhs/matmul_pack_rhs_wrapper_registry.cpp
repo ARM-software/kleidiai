@@ -290,6 +290,17 @@ bool is_shape_suitable_rhs_nxk_qsi8cxp_qsi8cx_neon(
     return portion_non_empty(shape_n, shape_k, rhs_n_step, shape_k, portion);
 }
 
+bool is_shape_suitable_rhs_nxk_qsi8cxp4x8_qsi8cx_neon(
+    [[maybe_unused]] size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
+    if (shape_n == 0 || shape_k == 0) {
+        return false;
+    }
+
+    const size_t rhs_n_step = kai_get_n_step_rhs_pack_nxk_qsi8cxp_qsi8cx_neon(4);
+
+    return portion_non_empty(shape_n, shape_k, rhs_n_step, shape_k, portion);
+}
+
 bool is_shape_suitable_rhs_kxn_x16p12x4bx32_x16_x32_neon(
     [[maybe_unused]] size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
     return is_shape_suitable_rhs_uker_api(
@@ -379,6 +390,7 @@ MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon() {
 template <size_t BlockHeight, size_t BlockWidth>
 MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon() {
     static_assert(
+        (BlockHeight == 4 && BlockWidth == 8) ||  //
         (BlockHeight == 8 && BlockWidth == 4) ||  //
         (BlockHeight == 8 && BlockWidth == 8) ||  //
         (BlockHeight == 32 && BlockWidth == 4));
@@ -909,6 +921,7 @@ MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4cxp4vlx4s16s0sf32bf32_qsu4cx(
 }
 
 template MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4c32ps4s0sf16_qsu4c32s16s0_neon<sme::VS<16>>();
+template MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon<4, 8>();
 template MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon<8, 4>();
 template MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon<8, 8>();
 template MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon<32, 4>();

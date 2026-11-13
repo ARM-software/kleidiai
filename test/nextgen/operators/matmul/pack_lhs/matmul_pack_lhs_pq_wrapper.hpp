@@ -1,0 +1,65 @@
+//
+// SPDX-FileCopyrightText: Copyright 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+
+#pragma once
+
+#include <cstddef>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
+
+#include "test/nextgen/common/poly.hpp"
+#include "test/nextgen/format/format.hpp"
+#include "test/nextgen/harness/tensor.hpp"
+#include "test/nextgen/operators/matmul/kernel_types.hpp"
+#include "test/nextgen/operators/matmul/matmul_dims.hpp"
+#include "test/nextgen/operators/matmul/matmul_pack_args.hpp"
+#include "test/nextgen/operators/matmul/matmul_slots.hpp"
+#include "test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_interface.hpp"
+
+namespace kai::test {
+
+/// Wrapper for LHS packing kernels with statically quantized inputs and supplied per-row metadata.
+/// Uses LHS_QDATA, LHS_QZP_NEG, and LHS_QSCALE for both execution and reference packing.
+class MatMulPackLhsPqWrapper final : public MatMulPackKernel {
+public:
+    /// Creates a new wrapper.
+    ///
+    /// @param[in] name The micro-kernel name.
+    /// @param[in] kernel The micro-kernel interface.
+    /// @param[in] src_format The input data format.
+    /// @param[in] dst_format The output data format.
+    /// @param[in] fixed_pack_args Fixed packing arguments, if not supplied by a matmul micro-kernel.
+    MatMulPackLhsPqWrapper(
+        std::string_view name, const MatMulPackLhsPqInterface& kernel, Poly<Format>&& src_format,
+        Poly<Format>&& dst_format, std::optional<MatMulPackArgs> fixed_pack_args = std::nullopt) :
+        m_name(name),
+        m_kernel(kernel),
+        m_src_format(std::move(src_format)),
+        m_dst_format(std::move(dst_format)),
+        m_fixed_pack_args(fixed_pack_args) {
+    }
+
+    [[nodiscard]] std::string_view name() const override;
+    [[nodiscard]] std::vector<MatMulSlot> run_inputs(ConstTensorSet tensors) const override;
+    [[nodiscard]] std::vector<MatMulSlot> ref_inputs(ConstTensorSet tensors) const override;
+    [[nodiscard]] std::vector<size_t> steps(MatShape shape, ConstTensorSet tensors) const override;
+    void populate_constant_info(TensorSet tensors) const override;
+    void run(
+        MatShape full_shape, Span<const size_t> tile_coords, MatShape tile_shape, TensorSet tensors) const override;
+    void compute_reference(MatShape shape, TensorSet tensors) const override;
+
+private:
+    std::string m_name;
+    MatMulPackLhsPqInterface m_kernel;
+    Poly<Format> m_src_format;
+    Poly<Format> m_dst_format;
+    std::optional<MatMulPackArgs> m_fixed_pack_args;
+};
+
+}  // namespace kai::test

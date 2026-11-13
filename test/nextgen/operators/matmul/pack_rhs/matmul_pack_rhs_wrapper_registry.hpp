@@ -29,7 +29,7 @@ template <auto BlockHeight>
 ///
 /// @tparam BlockHeight The packed block height.
 /// @tparam BlockWidth The packed block width.
-/// Allowed (block_height, block_width) configurations: (8, 4), (8, 8), and (32, 4).
+/// Allowed (block_height, block_width) configurations: (4, 8), (8, 4), (8, 8), and (32, 4).
 template <size_t BlockHeight, size_t BlockWidth>
 [[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon();
 
@@ -212,6 +212,10 @@ template <DataType DType>
 
 /// Checks if the portion produces non-empty RHS packing tiles for the qsi8cxp_qsi8cx matmul operator.
 [[nodiscard]] bool is_shape_suitable_rhs_nxk_qsi8cxp_qsi8cx_neon(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
+
+/// Checks if the portion produces non-empty RHS packing tiles for the fixed 4x8 INT8 format.
+[[nodiscard]] bool is_shape_suitable_rhs_nxk_qsi8cxp4x8_qsi8cx_neon(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
 /// Creates a wrapper for kai_matmul_pack_rhs_kxn_x16p12x4bx32_x16_x32_neon micro-kernel.

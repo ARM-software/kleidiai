@@ -7,6 +7,8 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
+#include <vector>
 
 #include "matmul_pack_lhs_interface.hpp"
 #include "test/common/data_type.hpp"
@@ -75,6 +77,9 @@ private:
     size_t m_m = 1;
     size_t m_k = 1;
     size_t m_bl = 32;
+
+    std::vector<std::byte> m_lhs_bias;
+    std::vector<std::byte> m_lhs_scales;
 };
 
 /// Prepares auxiliary data required by the packing micro-kernel.
@@ -215,6 +220,44 @@ inline void MatMulPackLhsRunner<MatMulPackLhsBlockwiseFloatInterface>::run(const
 
     m_matmul_pack_lhs_interface.run(
         m_m, m_k, m_bl, mr, kr, sr, 0, static_cast<const float*>(lhs), lhs_stride, lhs_packed);
+}
+
+/// Gets buffer sizes using the statically quantized interface.
+template <>
+inline MatMulPackLhsBufferSizes MatMulPackLhsRunner<MatMulPackLhsPqInterface>::get_buffer_sizes() const {
+    const size_t mr = m_matmul_pack_lhs_interface.get_mr();
+    const size_t kr = m_matmul_pack_lhs_interface.get_kr();
+    const size_t sr = m_matmul_pack_lhs_interface.get_sr();
+
+    return {
+        m_m * data_type_array_size_in_bytes(m_lhs_type, m_k),
+        m_matmul_pack_lhs_interface.get_lhs_packed_size(m_m, m_k, mr, kr, sr),
+    };
+}
+
+/// Prepares zero-initialized per-row metadata for the statically quantized interface.
+template <>
+inline void MatMulPackLhsRunner<MatMulPackLhsPqInterface>::prepare() {
+    m_lhs_bias.clear();
+    m_lhs_scales.clear();
+
+    KAI_ASSUME(m_matmul_pack_lhs_interface.lhs_bias_elem_size != 0);
+    m_lhs_bias.resize(m_m * m_matmul_pack_lhs_interface.lhs_bias_elem_size);
+
+    KAI_ASSUME(m_matmul_pack_lhs_interface.lhs_scale_elem_size != 0);
+    m_lhs_scales.resize(m_m * m_matmul_pack_lhs_interface.lhs_scale_elem_size);
+}
+
+/// Runs the packing micro-kernel using the statically quantized interface.
+template <>
+inline void MatMulPackLhsRunner<MatMulPackLhsPqInterface>::run(const void* lhs, void* lhs_packed) {
+    const size_t mr = m_matmul_pack_lhs_interface.get_mr();
+    const size_t kr = m_matmul_pack_lhs_interface.get_kr();
+    const size_t sr = m_matmul_pack_lhs_interface.get_sr();
+    const size_t lhs_stride = data_type_array_size_in_bytes(m_lhs_type, m_k);
+    const kai_lhs_pack_qai8dxp_params params{m_lhs_bias.data(), m_lhs_scales.data()};
+
+    m_matmul_pack_lhs_interface.run(m_m, m_k, mr, kr, sr, 0, lhs, lhs_stride, &params, lhs_packed);
 }
 
 /// Gets buffer sizes using the ukernel API interface.

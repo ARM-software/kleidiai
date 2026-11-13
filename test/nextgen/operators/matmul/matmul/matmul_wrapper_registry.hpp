@@ -16,6 +16,12 @@
 
 namespace kai::test {
 
+/// Creates a wrapper for kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod.
+[[nodiscard]] MatMulKernelPtr create_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod();
+
+/// Creates a wrapper for kai_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm.
+[[nodiscard]] MatMulKernelPtr create_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm();
+
 /// Creates a wrapper for matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot kernel.
 [[nodiscard]] MatMulKernelPtr create_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot();
 

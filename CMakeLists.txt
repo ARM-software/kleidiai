@@ -252,6 +252,8 @@ set(KLEIDIAI_FILES_NEON_ASM
     kai/ukernels/matmul/matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p16x1b_6x16_neon_mla_cortexa55_asm.S
     kai/ukernels/matmul/matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p8x1biasf32_6x8x4_neon_mla.c
     kai/ukernels/matmul/matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p8x1biasf32_6x8x4_neon_mla_asm.S
+    kai/ukernels/matmul/pack/kai_lhs_pack_qai8dxp1x8sf32_x8_neon.c
+    kai/ukernels/matmul/pack/kai_lhs_pack_qai8dxp4x8sf32_x8_neon.c
     kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp_bf16_neon.c
     kai/ukernels/matmul/pack/kai_lhs_quant_pack_qsi8d32p4x8sb_f32_neon.c
     kai/ukernels/matmul/pack/kai_lhs_quant_pack_qsi8d32p_f32_neon.c

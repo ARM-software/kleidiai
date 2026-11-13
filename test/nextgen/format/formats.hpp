@@ -204,6 +204,24 @@ template <auto BlockHeight, size_t BlockWidth>
     );
 }
 
+/// Creates the qax8dxp packed format with zero padding.
+///
+/// @tparam DType The packed data type.
+/// @tparam BlockHeight The packed block height.
+/// @tparam BlockWidth The packed block width.
+/// @return The format.
+template <DataType DType, auto BlockHeight, size_t BlockWidth>
+[[nodiscard]] inline Poly<Format> qax8dxp() {
+    return make_poly<Block2dRowFormat>(
+        get_block_dimension<BlockHeight>(), BlockWidth,  // Block shape
+        32,                                              // Width alignment
+        false,                                           // Zero pad right
+        DType,                                           // Packed data type
+        std::array<DataType, 0>{},                       // Per-row prefix types
+        std::array{DataType::I32, DataType::FP32}        // Per-row postfix types
+    );
+}
+
 /// Creates the qsi4c32p8x8s16s0sbf16bf32 packed format.
 ///
 /// @return The format.

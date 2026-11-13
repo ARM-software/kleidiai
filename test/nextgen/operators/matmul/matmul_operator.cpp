@@ -1298,6 +1298,64 @@ MatMulOperator create_operator_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2
     return op;
 }
 
+/// Creates an operator for matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod()
+MatMulOperator create_operator_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod() {
+    MatMulOperator op{};
+    op.name = "matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod";
+
+    op.is_cpu_supported = cpu_has_dotprod;
+    op.is_shape_suitable = all_true<                   //
+        is_shape_suitable_lhs_qai8dxp1x8sf32_x8_neon,  //
+        is_shape_suitable_rhs_nxk_qsi8cxp4x8_qsi8cx_neon>;
+    op.supported_bias_mode_sets = {no_bias, acc_bias_per_n};
+    op.clamp_mode = MatMulClampMode::REQUIRED;
+    op.k_alignment = 1;
+
+    op.lhs_quant = quantization::qai8dx();
+    op.rhs_quant = quantization::qsi8cx();
+    op.bias_quant = std::nullopt;
+
+    op.lhs_dtype = DataType::FP32;
+    op.rhs_dtype = DataType::FP32;
+    op.bias_dtype = DataType::FP32;
+    op.acc_dtype = DataType::FP32;
+    op.dst_dtype = DataType::FP32;
+
+    op.pack_lhs = create_matmul_lhs_pack_qai8dxp1x8sf32_x8_neon();
+    op.pack_rhs = create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon<4, 8>();
+    op.matmul = create_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod();
+    return op;
+}
+
+/// Creates an operator for matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm
+MatMulOperator create_operator_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm() {
+    MatMulOperator op{};
+    op.name = "matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm";
+
+    op.is_cpu_supported = cpu_has_i8mm;
+    op.is_shape_suitable = all_true<                   //
+        is_shape_suitable_lhs_qai8dxp4x8sf32_x8_neon,  //
+        is_shape_suitable_rhs_nxk_qsi8cxp4x8_qsi8cx_neon>;
+    op.supported_bias_mode_sets = {no_bias, acc_bias_per_n};
+    op.clamp_mode = MatMulClampMode::REQUIRED;
+    op.k_alignment = 1;
+
+    op.lhs_quant = quantization::qai8dx();
+    op.rhs_quant = quantization::qsi8cx();
+    op.bias_quant = std::nullopt;
+
+    op.lhs_dtype = DataType::FP32;
+    op.rhs_dtype = DataType::FP32;
+    op.bias_dtype = DataType::FP32;
+    op.acc_dtype = DataType::FP32;
+    op.dst_dtype = DataType::FP32;
+
+    op.pack_lhs = create_matmul_lhs_pack_qai8dxp4x8sf32_x8_neon();
+    op.pack_rhs = create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon<4, 8>();
+    op.matmul = create_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm();
+    return op;
+}
+
 /// creates an operator for matmul_clamp_f32_qai8dxp4x8sf32_qsi8cxp4vsx8sf32bf32_16x4vs_sve_i8mm
 MatMulOperator create_operator_matmul_clamp_f32_qai8dxp4x8sf32_qsi8cxp4vsx8sf32bf32_16x4vs_sve_i8mm() {
     MatMulOperator op{};
@@ -1488,11 +1546,13 @@ Span<const MatMulOperator> get_available_matmul_operators() {
         create_operator_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot(),
         create_operator_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dot(),
         create_operator_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot(),
+        create_operator_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod(),
         create_operator_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot(),
         create_operator_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4c32p8x8s16s0sbf16bf32_8vsx8_sve_i8mm(),
         create_operator_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0sf32bf32_8vsx8_sve_i8mm(),
         create_operator_matmul_clamp_f32_qai8dxp4vsx4_qsi4c32p16vsx4_4vsx16vs_sme_mopa_rhs_kxn(),
         create_operator_matmul_clamp_f32_qai8dxp4vsx4_qsi4c32p16vsx4_4vsx16vs_sme_mopa_rhs_nxk(),
+        create_operator_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm(),
         create_operator_matmul_clamp_f32_qai8dxp4x8sf32_qsi8cxp4vsx8sf32bf32_16x4vs_sve_i8mm(),
         create_operator_matmul_clamp_f32_qsi8d32p1x4_qai4c32p16vsx4s1s0sf16_1x16vs_sme2_dot(),
         create_operator_matmul_clamp_f32_u8p4vsx4_u8p4vsx4_i32_i32_f32_f32_8vsx8vs_sme2_mopa_rhs_kxn(),

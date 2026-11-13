@@ -66,6 +66,7 @@ add_library(kleidiai_test_framework
     test/nextgen/operators/matmul/matmul_tb.cpp
     test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_dq_wrapper.cpp
     test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_fp_wrapper.cpp
+    test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_pq_wrapper.cpp
     test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_ukerapi_wrapper.cpp
     test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_wrapper_registry.cpp
     test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_blockwise_quant_trailing_scale_wrapper.cpp

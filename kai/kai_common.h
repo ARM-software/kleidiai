@@ -273,6 +273,12 @@ inline static int8_t kai_ext_sign_i8_i4(int8_t value) {
     return (value ^ 0x8) - 8;  // NOLINT(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
 }
 
+/// Parameter struct for LHS matrix packing (Quantized Asymmetric Integer 8-bit with per-row quantization)
+struct kai_lhs_pack_qai8dxp_params {
+    const void* lhs_zero_point;  ///< LHS matrix quantization zero-point data.
+    const void* lhs_scale;       ///< LHS matrix quantization scale data.
+};
+
 /// Parameter struct for RHS matrix packing (Quantized Symmetric Integer 8-bit with per-channel quantization)
 struct kai_rhs_pack_qsi8cx_params {
     int32_t lhs_zero_point;  ///< LHS Matrix quantization zero-point

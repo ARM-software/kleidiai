@@ -36,6 +36,8 @@ SCALAR_KERNELS = [
 
 # buildifier: keep sorted
 NEON_KERNELS = [
+    "pack/kai_lhs_pack_qai8dxp1x8sf32_x8_neon",
+    "pack/kai_lhs_pack_qai8dxp4x8sf32_x8_neon",
     "pack/kai_lhs_quant_pack_qai8dxp_bf16_neon",
     "pack/kai_lhs_quant_pack_qsi8d32p4x8sb_f32_neon",
     "pack/kai_lhs_quant_pack_qsi8d32p_f32_neon",
