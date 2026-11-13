@@ -47,14 +47,17 @@ public:
     }
 
     bool PrepareB_supports_transpose() const {
-        return false;
+        return true;
     }
 
     template<typename TIn>
     void PrepareB(TWeight *out, const TIn *in, const int stride, const int x0,
                   const int xmax, const int k0, const int kmax, bool transposed) const {
-        assert(!transposed);
-        Transform<transform_width, block, true>(out, in, stride, x0, xmax, k0, kmax);
+        if (transposed) {
+            Transform<transform_width, block, false>(out, in, stride, x0, xmax, k0, kmax);
+        } else {
+            Transform<transform_width, block, true>(out, in, stride, x0, xmax, k0, kmax);
+        }
     }
 
     template<typename TOut>

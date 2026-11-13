@@ -110,8 +110,10 @@ void Transform(
 
 #include "transforms/list.hpp"
 
-template void Transform<12, 1, false, VLType::None>(float *, const __fp16 *, int, int, int, int, int);
-template void Transform<12, 1, false, VLType::None>(float *, const bfloat16 *, int, int, int, int, int);
+template void Transform<12, 1, false, VLType::None>(uint16_t *, const uint16_t *, int, int, int, int, int);
+template void Transform<12, 1, false, VLType::None>(int16_t *, const int16_t *, int, int, int, int, int);
+template void Transform<12, 1, false, VLType::None>(uint16_t *, const uint8_t *, int, int, int, int, int);
+template void Transform<12, 1, false, VLType::None>(int16_t *, const int8_t *, int, int, int, int, int);
 
 }  // namespace ops
 }  // namespace kai

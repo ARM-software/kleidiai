@@ -26,7 +26,6 @@ set(KLEIDIAI_OPS_GEMM_CORE_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/gemm_u8s8fp32.cpp
     ${CMAKE_CURRENT_LIST_DIR}/gemm_uint16.cpp
     ${CMAKE_CURRENT_LIST_DIR}/gemm_uint8.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/interleave-8way.cpp
     ${CMAKE_CURRENT_LIST_DIR}/interleave_indirect.cpp
     ${CMAKE_CURRENT_LIST_DIR}/mergeresults.cpp
     ${CMAKE_CURRENT_LIST_DIR}/misc.cpp
@@ -292,6 +291,12 @@ set(KLEIDIAI_OPS_GEMM_SOURCES_ASM
     ${CMAKE_CURRENT_LIST_DIR}/merges/sve_merge_fp32_fp32_8x3VL.S
     ${CMAKE_CURRENT_LIST_DIR}/merges/sve_merge_s32_s32_8x3VL.S
     ${CMAKE_CURRENT_LIST_DIR}/merges/sve_merge_u32_u32_8x3VL.S
+    ${CMAKE_CURRENT_LIST_DIR}/transforms/a64_interleave_2_1x8.S
+    ${CMAKE_CURRENT_LIST_DIR}/transforms/a64_interleave_2_2x4_fp32bf16.S
+    ${CMAKE_CURRENT_LIST_DIR}/transforms/a64_interleave_4_1x4.S
+    ${CMAKE_CURRENT_LIST_DIR}/transforms/a64_interleave_4_4x1_bf16fp32.S
+    ${CMAKE_CURRENT_LIST_DIR}/transforms/a64_interleave_4_4x1_fp16fp32.S
+    ${CMAKE_CURRENT_LIST_DIR}/transforms/a64_interleave_8_2x1.S
     ${CMAKE_CURRENT_LIST_DIR}/transforms/a64_transpose_interleave_12_1x4.S
     ${CMAKE_CURRENT_LIST_DIR}/transforms/a64_transpose_interleave_12_1x8.S
     ${CMAKE_CURRENT_LIST_DIR}/transforms/a64_transpose_interleave_12_2x2.S

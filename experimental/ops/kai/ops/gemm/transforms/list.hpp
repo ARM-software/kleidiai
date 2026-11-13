@@ -3,6 +3,12 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 //
+#include "a64_interleave_2_1x8.hpp"
+#include "a64_interleave_2_2x4_fp32bf16.hpp"
+#include "a64_interleave_4_1x4.hpp"
+#include "a64_interleave_4_4x1_bf16fp32.hpp"
+#include "a64_interleave_4_4x1_fp16fp32.hpp"
+#include "a64_interleave_8_2x1.hpp"
 #include "a64_transpose_interleave_12_1x4.hpp"
 #include "a64_transpose_interleave_12_1x8.hpp"
 #include "a64_transpose_interleave_12_2x2.hpp"
