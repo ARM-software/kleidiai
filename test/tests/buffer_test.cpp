@@ -18,8 +18,10 @@
 #include <optional>
 #include <random>
 #include <string>
+#include <utility>
 
 #include "kai/kai_common.h"
+#include "test/common/scalar.hpp"
 #include "test/common/seed.hpp"
 
 namespace kai::test {
@@ -98,6 +100,49 @@ TEST_F(BufferTest, NonePolicy) {
         ASSERT_FALSE(buffer.protects_underflow());
         ASSERT_FALSE(buffer.protects_overflow());
     }
+}
+
+TEST(Scalar, StoresOneValueInTheConfiguredDataType) {
+    for (const DataType dtype :
+         {DataType::FP32, DataType::FP16, DataType::BF16, DataType::I32, DataType::I8, DataType::U8, DataType::I4,
+          DataType::U4, DataType::I2, DataType::U2}) {
+        SCOPED_TRACE(to_cstring(dtype));
+        Scalar scalar(dtype, 1);
+        EXPECT_EQ(scalar.dtype(), dtype);
+        EXPECT_EQ(scalar.size(), data_type_array_size_in_bytes(dtype, 1));
+        EXPECT_EQ(scalar.value(), 1);
+        scalar.set_value(0);
+        EXPECT_EQ(scalar.value(), 0);
+    }
+
+    Scalar scalar(DataType::FP16, 1.25);
+    EXPECT_EQ(scalar.value(), 1.25);
+    scalar.set_value(-0.75);
+    EXPECT_EQ(scalar.value(), -0.75);
+}
+
+TEST(Scalar, PreservesBufferAndSpanCompatibilityWhenMoved) {
+    Scalar scalar;
+    EXPECT_EQ(scalar.dtype(), DataType::UNKNOWN);
+    EXPECT_EQ(scalar.size(), 0);
+    scalar = Scalar(DataType::I32, -17);
+    Scalar moved(std::move(scalar));
+    EXPECT_EQ(moved.dtype(), DataType::I32);
+    EXPECT_EQ(moved.value(), -17);
+
+    Buffer& buffer = moved;
+    Span<std::byte> writable = moved;
+    write_array<int32_t>(writable, 0, 23);
+    EXPECT_EQ(moved.value(), 23);
+
+    const Scalar& const_scalar = moved;
+    const Span<const std::byte> readable = const_scalar;
+    EXPECT_EQ(read_array<int32_t>(readable, 0), 23);
+    EXPECT_EQ(buffer.data(), readable.data());
+    EXPECT_EQ(buffer.size(), sizeof(int32_t));
+
+    Buffer owned(std::move(moved));
+    EXPECT_EQ(read_array<int32_t>(owned.data(), 0), 23);
 }
 
 TEST_F(BufferDeathTest, InvalidPolicy) {
