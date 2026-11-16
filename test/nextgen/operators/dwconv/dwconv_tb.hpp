@@ -90,8 +90,6 @@ private:
     void generate_rhs_data(Rng& rng);                        ///< Generates the RHS data.
     void generate_acc_bias_c_data(Rng& rng, bool required);  ///< Generates the per-channel accumulator bias data.
 
-    void compute_rhs_t_data(bool required);  ///< Computes the transposed RHS data.
-
     void compute_ref_acc_dwconv_data(
         bool required);  ///< Computes depthwise convolution accumulator without pre- or post-processing.
 

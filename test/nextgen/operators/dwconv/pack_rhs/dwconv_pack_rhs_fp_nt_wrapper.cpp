@@ -12,8 +12,10 @@
 
 #include "test/common/abi_checker.hpp"
 #include "test/common/assert.hpp"
+#include "test/common/buffer.hpp"
 #include "test/common/span.hpp"
 #include "test/nextgen/harness/tensor.hpp"
+#include "test/reference/transpose.hpp"
 
 namespace kai::test {
 
@@ -26,7 +28,7 @@ std::vector<DwConvSlot> DwConvPackRhsFpNtWrapper::run_inputs([[maybe_unused]] Co
 }
 
 std::vector<DwConvSlot> DwConvPackRhsFpNtWrapper::ref_inputs([[maybe_unused]] ConstTensorSet tensors) const {
-    return {DwConvSlot::RHS_T_DATA, DwConvSlot::ACC_BIAS_C_DATA};
+    return {DwConvSlot::RHS_DATA, DwConvSlot::ACC_BIAS_C_DATA};
 }
 
 std::vector<size_t> DwConvPackRhsFpNtWrapper::steps(
@@ -101,13 +103,14 @@ void DwConvPackRhsFpNtWrapper::compute_reference(DwConvPackShape shape, TensorSe
     const size_t channels = shape.at(DwConvDim::C);
     const size_t filter_size = shape.at(DwConvDim::H) * shape.at(DwConvDim::W);
     const std::array packed_shape{channels, filter_size};
-    const Tensor& rhs_t_data = tensors.at(DwConvSlot::RHS_T_DATA);
+    const Tensor& rhs_data = tensors.at(DwConvSlot::RHS_DATA);
     const Tensor& bias_data = tensors.at(DwConvSlot::ACC_BIAS_C_DATA);
     Tensor& ref_packed_rhs = tensors.at(DwConvSlot::RHS_PACKED);
 
+    const Buffer rhs_t = transpose(rhs_data.data_ptr(), rhs_data.format()->dtype(), filter_size, channels);
     ref_packed_rhs.set_shape(packed_shape)
         .set_format(m_dst_format)
-        .set_data(m_dst_format->pack(packed_shape, std::array{bias_data.data(), rhs_t_data.data()}));
+        .set_data(m_dst_format->pack(packed_shape, std::array{bias_data.data(), rhs_t.view()}));
 }
 
 }  // namespace kai::test

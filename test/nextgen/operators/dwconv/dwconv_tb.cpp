@@ -29,7 +29,6 @@
 #include "test/reference/cast.hpp"
 #include "test/reference/clamp.hpp"
 #include "test/reference/dwconv.hpp"
-#include "test/reference/transpose.hpp"
 
 namespace kai::test {
 
@@ -67,9 +66,6 @@ void DwConvTb::generate_test_data(Rng& rng) {
     generate_lhs_data(rng);
     generate_rhs_data(rng);
     generate_acc_bias_c_data(rng, false);
-
-    // Computes any derived inputs requested by the wrappers.
-    compute_rhs_t_data(false);
 
     // Generates reference output.
     if (m_op->pack_rhs.has_value()) {
@@ -202,27 +198,6 @@ void DwConvTb::generate_acc_bias_c_data(Rng& rng, bool required) {
     id += ",{" + std::to_string(m_channels);
     id += "}, " + std::to_string(seed) + ")";
     tensor.set_shape(shape).set_format(format).set_data(format->generate(shape, fill_bias), id);
-}
-
-void DwConvTb::compute_rhs_t_data(bool required) {
-    if (!required && !is_tensor_required(DwConvSlot::RHS_T_DATA)) {
-        return;
-    }
-    if (is_tensor_generated(DwConvSlot::RHS_T_DATA)) {
-        return;
-    }
-
-    const size_t filter_size = m_filter_height * m_filter_width;
-    const std::array shape{m_channels, filter_size};
-    const Poly<Format> format(std::in_place_type<PlainFormat>, m_op->dtype);
-    Tensor& rhs_t_data = get_tensor(DwConvSlot::RHS_T_DATA);
-    const Tensor& rhs_data = get_tensor(DwConvSlot::RHS_DATA);
-
-    const std::string uid = "transpose(" + std::string(rhs_data.id()) + ")";
-
-    // Flatten the filter dimensions, then transpose from [filter_size, channels] to [channels, filter_size].
-    rhs_t_data.set_shape(shape).set_format(format).set_data(
-        transpose(rhs_data.data_ptr(), m_op->dtype, filter_size, m_channels), uid);
 }
 
 void DwConvTb::compute_ref_packed_rhs() {

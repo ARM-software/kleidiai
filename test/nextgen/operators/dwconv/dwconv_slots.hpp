@@ -21,8 +21,6 @@ enum class DwConvSlot : size_t {
     RHS_PACKED,      ///< Packed filter and bias reference data.
     RHS_PACKED_IMP,  ///< Packed filter and bias data from the micro-kernel.
 
-    RHS_T_DATA,  ///< Filter data transposed into channel-major order.
-
     ACC_BIAS_C_DATA,  ///< Per-channel accumulator bias data.
 
     REF_ACC_DWCONV_DATA,  ///< Depthwise convolution accumulator without pre- or post-processing.
