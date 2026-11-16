@@ -1013,6 +1013,34 @@ MatMulOperator create_operator_matmul_clamp_qai8_qai8_qsi8cxp16x4sf32bi32_1x16_n
     return op;
 }
 
+/// Creates an operator for kai_matmul_clamp_qai8_qai8_qsi8cxp16x4sf32bi32_4x16_neon_dotprod.
+MatMulOperator create_operator_matmul_clamp_qai8_qai8_qsi8cxp16x4sf32bi32_4x16_neon_dotprod() {
+    MatMulOperator op{};
+    op.name = "matmul_clamp_qai8_qai8_qsi8cxp16x4sf32bi32_4x16_neon_dotprod";
+
+    // The fixed 16-column Advanced SIMD panels match this SME packer only at vscale 4 (512-bit).
+    // The GEMM kernel does not require SME, but the corresponding packing kernel does.
+    op.is_cpu_supported = []() { return cpu_has_dotprod() && cpu_has_sme() && get_sme_vector_scale() == 4; };
+    op.is_shape_suitable = is_shape_suitable_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme;
+    op.supported_bias_mode_sets = {acc_bias_per_n};
+    op.clamp_mode = MatMulClampMode::OPTIONAL;
+    op.lhs_quant = quantization::qai8();
+    op.rhs_quant = quantization::qsi8cx();
+    op.bias_quant = quantization::qsi32c1sf32();
+    op.dst_quant = quantization::qai8();
+    op.bias_quant_info_source = MatMulBiasQuantInfoSource::STATIC_FROM_INPUT_AND_OUTPUT_QUANT;
+    op.lhs_dtype = DataType::FP32;
+    op.rhs_dtype = DataType::FP32;
+    op.bias_dtype = DataType::FP32;
+    op.acc_dtype = DataType::I32;
+    op.dst_dtype = DataType::I8;
+
+    op.pack_lhs = std::nullopt;
+    op.pack_rhs = create_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme();
+    op.matmul = create_matmul_clamp_qai8_qai8_qsi8cxp16x4sf32bi32_4x16_neon_dotprod();
+    return op;
+}
+
 /// Creates an operator for kai_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx8vs_sme2_mopa.
 MatMulOperator create_operator_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx8vs_sme2_mopa() {
     MatMulOperator op{};
@@ -1560,6 +1588,7 @@ Span<const MatMulOperator> get_available_matmul_operators() {
         create_operator_matmul_clamp_qai8_qai8_qsi4cxp8vsx4sf32bi32_1x64vs_sme2_dot_rhs_kxn(),
         create_operator_matmul_clamp_qai8_qai8_qsi4cxp8vsx4sf32bi32_1x64vs_sme2_dot_rhs_nxk(),
         create_operator_matmul_clamp_qai8_qai8_qsi8cxp16x4sf32bi32_1x16_neon_dotprod(),
+        create_operator_matmul_clamp_qai8_qai8_qsi8cxp16x4sf32bi32_4x16_neon_dotprod(),
         create_operator_matmul_clamp_qai8_qai8_qsu2cxp16vsx4sf32bi32_1x64vs_sme2_dot_rhs_kxn(),
         create_operator_matmul_clamp_qai8_qai8_qsu2cxp16vsx4sf32bi32_1x64vs_sme2_dot_rhs_nxk(),
         create_operator_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx8vs_sme2_mopa(),

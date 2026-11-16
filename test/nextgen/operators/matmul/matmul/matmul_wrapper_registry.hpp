@@ -97,6 +97,9 @@ namespace kai::test {
 /// Creates a wrapper for matmul_clamp_qai8_qai8_qsi8cxp16x4sf32bi32_1x16_neon_dotprod micro-kernel.
 [[nodiscard]] MatMulKernelPtr create_matmul_clamp_qai8_qai8_qsi8cxp16x4sf32bi32_1x16_neon_dotprod();
 
+/// Creates a wrapper for matmul_clamp_qai8_qai8_qsi8cxp16x4sf32bi32_4x16_neon_dotprod micro-kernel.
+[[nodiscard]] MatMulKernelPtr create_matmul_clamp_qai8_qai8_qsi8cxp16x4sf32bi32_4x16_neon_dotprod();
+
 /// Creates a wrapper for matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx8vs_sme2_mopa kernel.
 [[nodiscard]] MatMulKernelPtr create_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx8vs_sme2_mopa();
 

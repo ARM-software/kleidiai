@@ -13,6 +13,7 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 ## Upcoming Release
 
 - New Advanced SIMD micro-kernels:
+  - Statically quantized INT8 4x16 GEMM with unpacked LHS using Advanced SIMD dot-product instructions.
   - LHS packing micro-kernels `kai_lhs_pack_qai8dxp1x8sf32_x8_neon` and `kai_lhs_pack_qai8dxp4x8sf32_x8_neon` to reorder 8-bit quantized elements with supplied metadata and arbitrary K. Delivery for work items request #40.
 - New SME2 micro-kernels:
   - FP32 softmax using a Taylor exponential approximation, processing four streaming vectors per iteration.
