@@ -62,7 +62,7 @@ std::vector<MatMulSlot> MatMulUkerApiWrapper::run_inputs(ConstTensorSet tensors)
 
     std::vector<MatMulSlot> inputs = {MatMulSlot::CONFIG, m_lhs_input_slot, MatMulSlot::RHS_PACKED};
 
-    if (m_clamp_config.support() != MatMulUkerClampConfig::Support::UNSUPPORTED) {
+    if (m_clamp_config.support() != ClampConfig::Support::UNSUPPORTED) {
         inputs.emplace_back(MatMulSlot::MATMUL_ARGS);
     }
 
@@ -192,7 +192,7 @@ void MatMulUkerApiWrapper::run(
     args.operand.dst.ptr = dst_tile.data();
     args.operand.dst.stride = imp_dst_stride;
 
-    if (m_clamp_config.support() != MatMulUkerClampConfig::Support::UNSUPPORTED) {
+    if (m_clamp_config.support() != ClampConfig::Support::UNSUPPORTED) {
         const std::optional<DataType> clamp_data_type = m_clamp_config.data_type();
         KAI_TEST_ASSERT_MSG(clamp_data_type.has_value(), "Clamping argument data type is required.");
 
@@ -201,7 +201,7 @@ void MatMulUkerApiWrapper::run(
         if (clamp_data_type.value() == DataType::FP32) {
             const auto& clamp_args = kernel_args.value<std::optional<MatMulClampArgsF32>>();
             KAI_TEST_ASSERT_MSG(
-                m_clamp_config.support() != MatMulUkerClampConfig::Support::REQUIRED || clamp_args.has_value(),
+                m_clamp_config.support() != ClampConfig::Support::REQUIRED || clamp_args.has_value(),
                 "Clamping arguments are required.");
 
             if (clamp_args.has_value()) {
@@ -212,7 +212,7 @@ void MatMulUkerApiWrapper::run(
         } else if (clamp_data_type.value() == DataType::I32) {
             const auto& clamp_args = kernel_args.value<std::optional<MatMulClampArgsI32>>();
             KAI_TEST_ASSERT_MSG(
-                m_clamp_config.support() != MatMulUkerClampConfig::Support::REQUIRED || clamp_args.has_value(),
+                m_clamp_config.support() != ClampConfig::Support::REQUIRED || clamp_args.has_value(),
                 "Clamping arguments are required.");
 
             if (clamp_args.has_value()) {

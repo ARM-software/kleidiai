@@ -15,6 +15,7 @@
 #include "kai/ukernels/matmul/kai_matmul_types.h"
 #include "test/common/data_type.hpp"
 #include "test/common/enum_utils.hpp"
+#include "test/nextgen/common/clamp_config.hpp"
 #include "test/nextgen/common/poly.hpp"
 #include "test/nextgen/format/format.hpp"
 #include "test/nextgen/operators/matmul/kernel_types.hpp"
@@ -24,50 +25,6 @@
 #include "test/nextgen/operators/matmul/matmul_slots.hpp"
 
 namespace kai::test {
-
-/// Clamping configuration for a matrix multiplication micro-kernel using the ukernel API.
-class MatMulUkerClampConfig {
-public:
-    /// Clamping support.
-    enum class Support : uint8_t {
-        UNSUPPORTED,  ///< Clamping is not supported.
-        OPTIONAL,     ///< Clamping parameters are supported but not required.
-        REQUIRED,     ///< Clamping parameters are required.
-    };
-
-    /// Creates a configuration for a micro-kernel that does not support clamping.
-    [[nodiscard]] static MatMulUkerClampConfig unsupported() {
-        return MatMulUkerClampConfig(Support::UNSUPPORTED, std::nullopt);
-    }
-
-    /// Creates a configuration for a micro-kernel with optional clamping arguments.
-    [[nodiscard]] static MatMulUkerClampConfig optional(DataType data_type) {
-        return MatMulUkerClampConfig(Support::OPTIONAL, data_type);
-    }
-
-    /// Creates a configuration for a micro-kernel with required clamping arguments.
-    [[nodiscard]] static MatMulUkerClampConfig required(DataType data_type) {
-        return MatMulUkerClampConfig(Support::REQUIRED, data_type);
-    }
-
-    /// Gets the clamping support.
-    [[nodiscard]] Support support() const {
-        return m_support;
-    }
-
-    /// Gets the clamping argument data type, if clamping is supported.
-    [[nodiscard]] std::optional<DataType> data_type() const {
-        return m_data_type;
-    }
-
-private:
-    MatMulUkerClampConfig(Support support, std::optional<DataType> data_type) :
-        m_support(support), m_data_type(data_type) {
-    }
-
-    Support m_support;                    ///< Clamping support.
-    std::optional<DataType> m_data_type;  ///< Clamping argument data type.
-};
 
 /// Stage parameter layout for a matrix multiplication micro-kernel using the ukernel API.
 enum class MatMulUkerStageParameterLayout : uint8_t {
@@ -100,10 +57,9 @@ public:
     /// Creates a new wrapper.
     MatMulUkerApiWrapper(
         std::string_view name, kai_matmul_uker_api api, MatMulSlot lhs_input_slot, const Poly<Format>& lhs_format,
-        const Poly<Format>& rhs_format, const Poly<Format>& dst_format, DataType acc_dtype,
-        MatMulUkerClampConfig clamp_config, MatMulUkerApiBiasDeliveryStage bias_delivery_stage,
-        MatMulUkerOutputStageConfig output_stage_config = {}, kai_matmul_uker_config uker_config = {},
-        std::optional<MatMulPackArgs> lhs_pack_args = std::nullopt) :
+        const Poly<Format>& rhs_format, const Poly<Format>& dst_format, DataType acc_dtype, ClampConfig clamp_config,
+        MatMulUkerApiBiasDeliveryStage bias_delivery_stage, MatMulUkerOutputStageConfig output_stage_config = {},
+        kai_matmul_uker_config uker_config = {}, std::optional<MatMulPackArgs> lhs_pack_args = std::nullopt) :
         m_name(name),
         m_uker_config(uker_config),
         m_ukernel(api),
@@ -136,7 +92,7 @@ private:
     Poly<Format> m_rhs_format;                             ///< RHS packed data format consumed by the micro-kernel.
     Poly<Format> m_dst_format;                             ///< Destination data format produced by the micro-kernel.
     DataType m_acc_dtype;                                  ///< Accumulation data type.
-    MatMulUkerClampConfig m_clamp_config;                  ///< Clamp argument configuration.
+    ClampConfig m_clamp_config;                            ///< Clamp argument configuration.
     MatMulUkerApiBiasDeliveryStage m_bias_delivery_stage;  ///< Stage where bias is delivered to the micro-kernel.
     MatMulUkerOutputStageConfig m_output_stage_config;     ///< Output stage configuration.
     std::optional<MatMulPackArgs> m_lhs_pack_args;         ///< Packing arguments for a legacy-API LHS packing kernel.

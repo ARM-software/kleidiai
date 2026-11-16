@@ -44,7 +44,7 @@ MatMulKernelPtr create_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot() {
         format::qsi8cxp<8, 4>(),                                   // rhs format
         format::plain<DataType::FP32>(),                           // dst format
         DataType::FP32,                                            // acc dtype
-        MatMulUkerClampConfig::optional(DataType::FP32),           // clamp config
+        ClampConfig::optional(DataType::FP32),                     // clamp config
         MatMulUkerApiBiasDeliveryStage::PACK_RHS);                 // bias stage
 }
 
@@ -57,7 +57,7 @@ MatMulKernelPtr create_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dot() {
         format::qsi8cxp<32, 4>(),                                    // rhs format
         format::plain<DataType::FP32>(),                             // dst format
         DataType::FP32,                                              // acc dtype
-        MatMulUkerClampConfig::optional(DataType::FP32),             // clamp config
+        ClampConfig::optional(DataType::FP32),                       // clamp config
         MatMulUkerApiBiasDeliveryStage::PACK_RHS);                   // bias stage
 }
 
@@ -70,7 +70,7 @@ MatMulKernelPtr create_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot() {
         format::qsi8cxp<8, 8>(),                                   // rhs format
         format::plain<DataType::FP32>(),                           // dst format
         DataType::FP32,                                            // acc dtype
-        MatMulUkerClampConfig::optional(DataType::FP32),           // clamp config
+        ClampConfig::optional(DataType::FP32),                     // clamp config
         MatMulUkerApiBiasDeliveryStage::PACK_RHS);                 // bias stage
 }
 
@@ -106,7 +106,7 @@ MatMulKernelPtr create_matmul_clamp_f16_f16_f16p4vsx2bf16_1x32vs_sme2_dot() {
         format::x16pbx16<DataType::FP16, sme::VS<4>, 2>(),         // rhs format
         format::plain<DataType::FP16>(),                           // dst format
         DataType::FP32,                                            // acc dtype
-        MatMulUkerClampConfig::optional(DataType::FP32),           // clamp config
+        ClampConfig::optional(DataType::FP32),                     // clamp config
         MatMulUkerApiBiasDeliveryStage::PACK_RHS);                 // bias stage
 }
 
@@ -119,7 +119,7 @@ MatMulKernelPtr create_matmul_clamp_f16_f16p4vsx2_f16p4vsx2bf16_8vsx8vs_sme2_mop
         format::x16pbx16<DataType::FP16, sme::VS<4>, 2>(),                 // rhs format
         format::plain<DataType::FP16>(),                                   // dst format
         DataType::FP32,                                                    // acc dtype
-        MatMulUkerClampConfig::optional(DataType::FP32),                   // clamp config
+        ClampConfig::optional(DataType::FP32),                             // clamp config
         MatMulUkerApiBiasDeliveryStage::PACK_RHS);                         // bias stage
 }
 
@@ -132,7 +132,7 @@ MatMulKernelPtr create_matmul_clamp_f32_f16p4vsx2_qai4c32p16vsx4s1s0sf16_4vsx16v
         format::sme::qai4c32p16vsx4s1s0sf16(),                                       // rhs format
         format::plain<DataType::FP32>(),                                             // dst_format
         DataType::FP32,                                                              // acc_dtype
-        MatMulUkerClampConfig::optional(DataType::FP32),                             // clamp_config
+        ClampConfig::optional(DataType::FP32),                                       // clamp_config
         MatMulUkerApiBiasDeliveryStage::PACK_RHS,                                    // bias_delivery_stage
         MatMulUkerOutputStageConfig{},                                               // output_stage_config
         kai_matmul_uker_config{{qai4c32k256_format_config.block_length}});           // uker_config
@@ -147,7 +147,7 @@ MatMulKernelPtr create_matmul_clamp_f32_f16p4vsx2_qsi4c32p16vsx4s4s0sf16_4vsx16v
         format::qsi4c32ps4s0sf16<sme::VS<16>, 8>(),                                 // rhs format
         format::plain<DataType::FP32>(),                                            // dst format
         DataType::FP32,                                                             // acc dtype
-        MatMulUkerClampConfig::optional(DataType::FP32),                            // clamp config
+        ClampConfig::optional(DataType::FP32),                                      // clamp config
         MatMulUkerApiBiasDeliveryStage::PACK_RHS,                                   // bias delivery stage
         MatMulUkerOutputStageConfig{},                                              // output stage config
         kai_matmul_uker_config{{32}});                                              // uker config
@@ -162,7 +162,7 @@ MatMulKernelPtr create_matmul_clamp_f32_qsi8d32p1x4_qai4c32p16vsx4s1s0sf16_1x16v
         format::sme::qai4c32p16vsx4s1s0sf16(),                                      // rhs format
         format::plain<DataType::FP32>(),                                            // dst_format
         DataType::FP32,                                                             // acc_dtype
-        MatMulUkerClampConfig::optional(DataType::FP32),                            // clamp_config
+        ClampConfig::optional(DataType::FP32),                                      // clamp_config
         MatMulUkerApiBiasDeliveryStage::PACK_RHS,                                   // bias_delivery_stage
         MatMulUkerOutputStageConfig{},                                              // output_stage_config
         kai_matmul_uker_config{{qai4c32k256_format_config.block_length}});          // uker_config
@@ -179,7 +179,7 @@ MatMulKernelPtr create_matmul_clamp_f32_qai8dxp4x8sf32_qsi8cxp4vsx8sf32bf32_16x4
         format::qsi8cxp<sve::VS<4>, 8>(),                                            // rhs format
         format::plain<DataType::FP32>(),                                             // dst format
         DataType::I32,                                                               // acc dtype
-        MatMulUkerClampConfig::optional(DataType::FP32),                             // clamp config
+        ClampConfig::optional(DataType::FP32),                                       // clamp config
         MatMulUkerApiBiasDeliveryStage::PACK_RHS,                                    // bias stage
         output_stage_config);                                                        // output stage
 }
@@ -318,7 +318,7 @@ MatMulKernelPtr create_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4c32p8x8s16s0sbf16bf
         format::qsi4c32p8x8s16s0sbf16bf32(),                                               // rhs format
         format::plain<DataType::FP32>(),                                                   // dst format
         DataType::FP32,                                                                    // acc dtype
-        MatMulUkerClampConfig::optional(DataType::FP32),                                   // clamp config
+        ClampConfig::optional(DataType::FP32),                                             // clamp config
         MatMulUkerApiBiasDeliveryStage::PACK_RHS,                                          // bias stage
         MatMulUkerOutputStageConfig{},                                                     // output stage
         kai_matmul_uker_config{{block_length}});                                           // kernel config
@@ -333,7 +333,7 @@ MatMulKernelPtr create_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0sf32bf32
         format::qsi4cxps16s0sf32bf32<8, 16>(),                                           // rhs format
         format::plain<DataType::FP32>(),                                                 // dst format
         DataType::FP32,                                                                  // acc dtype
-        MatMulUkerClampConfig::optional(DataType::FP32),                                 // clamp config
+        ClampConfig::optional(DataType::FP32),                                           // clamp config
         MatMulUkerApiBiasDeliveryStage::PACK_RHS);                                       // bias stage
 }
 
@@ -369,7 +369,7 @@ MatMulKernelPtr create_matmul_clamp_f16_f16_f16p16vsx2bf16_6x16vs_sve2p1_dot() {
         format::x16pbx16<DataType::FP16, sve::VS<16>, 2>(),           // rhs format
         format::plain<DataType::FP16>(),                              // dst format
         DataType::FP32,                                               // acc dtype
-        MatMulUkerClampConfig::optional(DataType::FP32),              // clamp config
+        ClampConfig::optional(DataType::FP32),                        // clamp config
         MatMulUkerApiBiasDeliveryStage::PACK_RHS);                    // bias stage
 }
 
@@ -382,7 +382,7 @@ MatMulKernelPtr create_matmul_clamp_f32_f32p4vsx1_f32p4vsx1b_8vsx8vs_elastic_sme
         format::sme::x32p4vsx1bx32<DataType::FP32>(),                      // rhs format
         format::plain<DataType::FP32>(),                                   // dst format
         DataType::FP32,                                                    // acc dtype
-        MatMulUkerClampConfig::optional(DataType::FP32),                   // clamp config
+        ClampConfig::optional(DataType::FP32),                             // clamp config
         MatMulUkerApiBiasDeliveryStage::PACK_RHS);                         // bias stage
 }
 
@@ -395,7 +395,7 @@ MatMulKernelPtr create_matmul_clamp_f32_f32p4vsx1_f32p4vsx1bf32_8vsx8vs_sme2p1_m
         format::sme::x32p4vsx1bx32<DataType::FP32>(),                             // rhs format
         format::plain<DataType::FP32>(),                                          // dst format
         DataType::FP32,                                                           // acc dtype
-        MatMulUkerClampConfig::optional(DataType::FP32),                          // clamp config
+        ClampConfig::optional(DataType::FP32),                                    // clamp config
         MatMulUkerApiBiasDeliveryStage::PACK_RHS);                                // bias stage
 }
 
@@ -408,7 +408,7 @@ MatMulKernelPtr create_matmul_i32_u8p4vsx4_u8p4vsx4_i32_i32_8vsx8vs_sme2_mopa() 
         format::x8p<DataType::U8, sme::VS<4>, 4>(),                    // rhs format
         format::plain<DataType::I32>(),                                // dst format
         DataType::I32,                                                 // acc dtype
-        MatMulUkerClampConfig::unsupported(),                          // clamp config
+        ClampConfig::unsupported(),                                    // clamp config
         MatMulUkerApiBiasDeliveryStage::MATMUL);                       // bias stage
 }
 
@@ -425,7 +425,7 @@ MatMulKernelPtr create_matmul_clamp_f32_u8p4vsx4_u8p4vsx4_i32_i32_f32_f32_8vsx8v
         format::x8p<DataType::U8, sme::VS<4>, 4>(),                                  // rhs format
         format::plain<DataType::FP32>(),                                             // dst format
         DataType::I32,                                                               // acc dtype
-        MatMulUkerClampConfig::optional(DataType::FP32),                             // clamp config
+        ClampConfig::optional(DataType::FP32),                                       // clamp config
         MatMulUkerApiBiasDeliveryStage::MATMUL,                                      // bias stage
         output_stage_config);                                                        // output stage
 }
@@ -439,7 +439,7 @@ MatMulKernelPtr create_matmul_clamp_f32_f32_f32p4vsx1bf32_1x32vs_sme2_mla() {
         format::sme::x32p4vsx1bx32<DataType::FP32>(),              // rhs format
         format::plain<DataType::FP32>(),                           // dst format
         DataType::FP32,                                            // acc dtype
-        MatMulUkerClampConfig::optional(DataType::FP32),           // clamp config
+        ClampConfig::optional(DataType::FP32),                     // clamp config
         MatMulUkerApiBiasDeliveryStage::PACK_RHS);                 // bias stage
 }
 
@@ -461,7 +461,7 @@ MatMulKernelPtr create_matmul_clamp_qai8_qai8_qsi8cxp16x4sf32bi32_1x16_neon_dotp
         format::qsi8cxp16x4sf32bi32(),                                       // rhs format
         format::plain<DataType::I8>(),                                       // dst format
         DataType::I32,                                                       // acc dtype
-        MatMulUkerClampConfig::optional(DataType::I32),                      // clamp config
+        ClampConfig::optional(DataType::I32),                                // clamp config
         MatMulUkerApiBiasDeliveryStage::PACK_RHS,                            // bias stage
         output_stage_config);                                                // output stage
 }
@@ -484,7 +484,7 @@ MatMulKernelPtr create_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx8vs
         format::sme::qsi8cxp4vsx4sf32bi32(),                                        // rhs format
         format::plain<DataType::I8>(),                                              // dst format
         DataType::I32,                                                              // acc dtype
-        MatMulUkerClampConfig::optional(DataType::I32),                             // clamp config
+        ClampConfig::optional(DataType::I32),                                       // clamp config
         MatMulUkerApiBiasDeliveryStage::PACK_RHS,                                   // bias stage
         output_stage_config);                                                       // output stage
 }
@@ -507,7 +507,7 @@ MatMulKernelPtr create_matmul_clamp_qai8_qai8p8vsx4_qsi4cxp8vsx4sf32bi32_8vsx8vs
         format::sme::qsi4cxp8vsx4sf32bi32(),                                        // rhs format
         format::plain<DataType::I8>(),                                              // dst format
         DataType::I32,                                                              // acc dtype
-        MatMulUkerClampConfig::optional(DataType::I32),                             // clamp config
+        ClampConfig::optional(DataType::I32),                                       // clamp config
         MatMulUkerApiBiasDeliveryStage::PACK_RHS,                                   // bias stage
         output_stage_config);                                                       // output stage
 }
@@ -530,7 +530,7 @@ MatMulKernelPtr create_matmul_clamp_qai8_qai8_qsi4cxp8vsx4sf32bi32_1x64vs_sme2_d
         format::sme::qsi4cxp8vsx4sf32bi32(),                                // rhs format
         format::plain<DataType::I8>(),                                      // dst format
         DataType::I32,                                                      // acc dtype
-        MatMulUkerClampConfig::optional(DataType::I32),                     // clamp config
+        ClampConfig::optional(DataType::I32),                               // clamp config
         MatMulUkerApiBiasDeliveryStage::PACK_RHS,                           // bias stage
         output_stage_config);                                               // output stage
 }
@@ -553,7 +553,7 @@ MatMulKernelPtr create_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4sf32bi32_8vsx8vs
         format::sme::qsi8cxp4vsx4sf32bi32(),                                               // rhs format
         format::plain<DataType::I8>(),                                                     // dst format
         DataType::I32,                                                                     // acc dtype
-        MatMulUkerClampConfig::optional(DataType::I32),                                    // clamp config
+        ClampConfig::optional(DataType::I32),                                              // clamp config
         MatMulUkerApiBiasDeliveryStage::PACK_RHS,                                          // bias stage
         output_stage_config);                                                              // output stage
 }
@@ -576,7 +576,7 @@ MatMulKernelPtr create_matmul_clamp_qai8_qai8p8vsx4_qsu2cxp16vsx4sf32bi32_8vsx16
         format::sme::qsu2cxp16vsx4sf32bi32(),                                         // rhs format
         format::plain<DataType::I8>(),                                                // dst format
         DataType::I32,                                                                // acc dtype
-        MatMulUkerClampConfig::optional(DataType::I32),                               // clamp config
+        ClampConfig::optional(DataType::I32),                                         // clamp config
         MatMulUkerApiBiasDeliveryStage::PACK_RHS,                                     // bias stage
         output_stage_config);                                                         // output stage
 }
@@ -599,7 +599,7 @@ MatMulKernelPtr create_matmul_clamp_qai8_qai8_qsu2cxp16vsx4sf32bi32_1x64vs_sme2_
         format::sme::qsu2cxp16vsx4sf32bi32(),                                // rhs format
         format::plain<DataType::I8>(),                                       // dst format
         DataType::I32,                                                       // acc dtype
-        MatMulUkerClampConfig::optional(DataType::I32),                      // clamp config
+        ClampConfig::optional(DataType::I32),                                // clamp config
         MatMulUkerApiBiasDeliveryStage::PACK_RHS,                            // bias stage
         output_stage_config);                                                // output stage
 }
@@ -615,7 +615,7 @@ MatMulKernelPtr create_matmul_clamp_f32_qai8dxp1x4_qsi4c32p16vsx4_1x16vs_sme_dot
         format::sme::qsi4c32p16vsx4s4s0(),                                // rhs format
         format::plain<DataType::FP32>(),                                  // dst format
         DataType::FP32,                                                   // acc dtype
-        MatMulUkerClampConfig::optional(DataType::FP32),                  // clamp config
+        ClampConfig::optional(DataType::FP32),                            // clamp config
         MatMulUkerApiBiasDeliveryStage::PACK_RHS,                         // bias stage
         MatMulUkerOutputStageConfig{},                                    // output stage
         kai_matmul_uker_config{{32}},                                     // kernel config
@@ -633,7 +633,7 @@ MatMulKernelPtr create_matmul_clamp_f32_qai8dxp4vsx4_qsi4c32p16vsx4_4vsx16vs_sme
         format::sme::qsi4c32p16vsx4s4s0(),                                     // rhs format
         format::plain<DataType::FP32>(),                                       // dst format
         DataType::FP32,                                                        // acc dtype
-        MatMulUkerClampConfig::optional(DataType::FP32),                       // clamp config
+        ClampConfig::optional(DataType::FP32),                                 // clamp config
         MatMulUkerApiBiasDeliveryStage::PACK_RHS,                              // bias stage
         MatMulUkerOutputStageConfig{},                                         // output stage
         kai_matmul_uker_config{{32}},                                          // kernel config
