@@ -7,15 +7,26 @@
 #pragma once
 
 #include <fcntl.h>
+#ifdef __linux__
 #include <sched.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #ifdef __APPLE__
 #include <sys/sysctl.h>
+#endif
+
+#if defined(_WIN32) && !defined(BARE_METAL)
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <Windows.h>
 #endif
 
 #include <fstream>
@@ -288,6 +299,7 @@ private:
         }
     }
 
+#ifdef BARE_METAL
     void populate_models_baremetal() {
         // Assume single CPU in bare metal mode.  Just read the ID register and feature bits directly.
         uint64_t fr0, pfr0, fr1, midr, pfr1, fpfr0;
@@ -417,6 +429,7 @@ private:
         _percpu[0].model = midr_to_model(midr);
         _percpu[0].model_set = true;
     }
+#endif // BARE_METAL
 
     /* If "long-form" cpuinfo is present, parse that to populate models. */
     void populate_models_cpuinfo() {
@@ -540,6 +553,33 @@ private:
 public:
     CPUInfo() {
         _percpu.resize(get_max_cpus());
+
+#if defined(_WIN32) && !defined(BARE_METAL)
+        // Numeric IsProcessorFeaturePresent IDs also work with older SDKs.
+        // Unsupported queries return false; features without queries stay disabled.
+        _dotprod = IsProcessorFeaturePresent(43) != 0;  // PF_ARM_V82_DP_INSTRUCTIONS_AVAILABLE
+        _fp16 = IsProcessorFeaturePresent(67) != 0;     // PF_ARM_V82_FP16_INSTRUCTIONS_AVAILABLE
+        _i8mm = IsProcessorFeaturePresent(66) != 0;     // PF_ARM_V82_I8MM_INSTRUCTIONS_AVAILABLE
+        _bf16 = IsProcessorFeaturePresent(68) != 0;     // PF_ARM_V86_BF16_INSTRUCTIONS_AVAILABLE
+        _sve = IsProcessorFeaturePresent(46) != 0;      // PF_ARM_SVE_INSTRUCTIONS_AVAILABLE
+        _sve2 = _sve && IsProcessorFeaturePresent(47) != 0;     // PF_ARM_SVE2_INSTRUCTIONS_AVAILABLE
+        _svei8mm = _sve && IsProcessorFeaturePresent(57) != 0;  // PF_ARM_SVE_I8MM_INSTRUCTIONS_AVAILABLE
+        _svef32mm = _sve && IsProcessorFeaturePresent(58) != 0; // PF_ARM_SVE_F32MM_INSTRUCTIONS_AVAILABLE
+        _svebf16 = _sve && IsProcessorFeaturePresent(52) != 0;  // PF_ARM_SVE_BF16_INSTRUCTIONS_AVAILABLE
+        _sme = IsProcessorFeaturePresent(70) != 0;             // PF_ARM_SME_INSTRUCTIONS_AVAILABLE
+        _sme2 = _sme && IsProcessorFeaturePresent(71) != 0;     // PF_ARM_SME2_INSTRUCTIONS_AVAILABLE
+        _sme_f16f16 = _sme && IsProcessorFeaturePresent(83) != 0;  // PF_ARM_SME_F16F16_INSTRUCTIONS_AVAILABLE
+        _sme_b16b16 = _sme && IsProcessorFeaturePresent(84) != 0;  // PF_ARM_SME_B16B16_INSTRUCTIONS_AVAILABLE
+        _sme_f64f64 = _sme && IsProcessorFeaturePresent(85) != 0;  // PF_ARM_SME_F64F64_INSTRUCTIONS_AVAILABLE
+        _sme_f8f32 = _sme && IsProcessorFeaturePresent(81) != 0;   // PF_ARM_SME_F8F32_INSTRUCTIONS_AVAILABLE
+
+        // Enable FEAT_SME data type combinations
+        _sme_i8i32 = _sme;
+        _sme_f16f32 = _sme;
+        _sme_b16f32 = _sme;
+        _sme_f32f32 = _sme;
+        return;
+#endif
 
 #ifdef __APPLE__
         _fp16       = sysctl_feature_supported("hw.optional.arm.FEAT_FP16");

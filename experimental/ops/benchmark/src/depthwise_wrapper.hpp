@@ -275,7 +275,7 @@ class depthwise_wrapper {
     );
   }
 
-  __attribute__ ((noinline)) void Run(const unsigned int thread_id)
+  KAI_OPS_NOINLINE void Run(const unsigned int thread_id)
   {
     depthwise_operator->execute(
       input->data, input->stride, input->stride * p->input_width, input->batch_stride,

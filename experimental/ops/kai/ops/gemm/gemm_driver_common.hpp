@@ -132,9 +132,8 @@ protected:
 
     // Selects column-sum computation by output stage so non-quantized drivers
     // do not instantiate unsupported row- or column-sum calls.
-    void requantize_bias_impl(void *, const Tro *, int, int, bool, const Nothing &) {}
-
-    void requantize_bias_impl(void *, const Tro *, int, int, bool, const DequantizeFloat &) {}
+    template<class Stage>
+    void requantize_bias_impl(void *, const Tro *, int, int, bool, const Stage &) {}
 
     void requantize_bias_impl(void *in_buffer, const Tro *B, int ldb, int B_multi_stride,
                               bool transposed, const Requantize32 &qp) {

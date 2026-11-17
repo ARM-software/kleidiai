@@ -13,7 +13,10 @@ add_library(kleidiai_ops STATIC)
 # Each subdirectory compiles its sources into object libraries and adds their
 # objects to kleidiai_ops. The final library's public interface is defined below.
 add_subdirectory(common_internal)
-add_subdirectory(conv)
+# Can't handle depthwise/winograd yet with MSVC as they still have inline assembly
+if(NOT MSVC)
+    add_subdirectory(conv)
+endif()
 add_subdirectory(gemm)
 
 # Public include directories for the kleidiai_ops library. Handle both build and install interfaces

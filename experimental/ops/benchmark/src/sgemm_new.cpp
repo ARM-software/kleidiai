@@ -13,6 +13,7 @@ template void benchmark<sgemm_new, false, QuantizationType::NONE, false>(GemmPro
 template void test<gemm_transposeB<float, float>, sgemm_new, false>(GemmProblem *, int, int, const char *, FILE *);
 template void print_kernels<sgemm_new, false>(GemmProblem *, unsigned int);
 
+#if !defined(_MSC_VER)
 template void benchmark<winograd_fp32, false, QuantizationType::NONE, false>(GemmProblem *, int, int, int, mapfn, const char *);
 template void test<gemm_transposeB<float, float>, winograd_fp32, false>(GemmProblem *, int, int, const char *, FILE *);
 template void print_kernels<winograd_fp32, false>(GemmProblem *, unsigned int);
@@ -20,3 +21,4 @@ template void print_kernels<winograd_fp32, false>(GemmProblem *, unsigned int);
 template void benchmark<depthwise_fp32, false, QuantizationType::NONE, false>(GemmProblem *, int, int, int, mapfn, const char *);
 template void test<gemm_transposeB<float, float>, depthwise_fp32, false>(GemmProblem *, int, int, const char *, FILE *);
 template void print_kernels<depthwise_fp32, false>(GemmProblem *, unsigned int);
+#endif

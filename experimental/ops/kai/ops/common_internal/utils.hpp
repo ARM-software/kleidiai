@@ -11,7 +11,11 @@
 #include <cstddef>
 
 // Macro for unreachable code (e.g. impossible default cases on switch)
-#define UNREACHABLE(why)  __builtin_unreachable()
+#if defined(_MSC_VER)
+#define UNREACHABLE(why) __assume(0)
+#else
+#define UNREACHABLE(why) __builtin_unreachable()
+#endif
 
 // Paranoid option for the above with assert
 // #define UNREACHABLE(why)   assert(0 && why)

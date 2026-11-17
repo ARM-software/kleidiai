@@ -9,6 +9,7 @@
 
 #include "scheduler.hpp"
 #include "gemm_lib.hpp"
+#include "utils.hpp"
 
 /*
  * Helper function to handle 2D work splitting.  This takes two parameters - a thread count and an ndrange_t.
@@ -66,7 +67,7 @@ unsigned int granulator::split_2d(const unsigned int max_threads, const kai::ops
 
     // We can't get here - 'round_down' will become 1 before the loop terminates.
     assert(false);
-    __builtin_unreachable();
+    UNREACHABLE("No valid work split found.");
 }
 
 void granulator::run_granule(unsigned int granule_id, unsigned int threadid) {

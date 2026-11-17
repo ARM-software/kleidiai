@@ -4,8 +4,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-// To date, only AArch64 has these 16-bit kernels.
-
 #include "gemm-wrappers.hpp"
 
 #include "kai_ops_kernels.hpp"

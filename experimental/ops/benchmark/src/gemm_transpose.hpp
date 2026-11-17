@@ -10,6 +10,7 @@
 
 #include "gemm_lib.hpp" // for transpose_matrix()
 #include "kai/ops/bfloat.hpp"
+#include "kai/ops/float16.hpp"
 
 /*
  * Type to use for accumulation - for some type combinations, we need to

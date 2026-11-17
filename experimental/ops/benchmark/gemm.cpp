@@ -6,7 +6,6 @@
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
-#define NO_LONG_OPT
 #endif
 
 #include <inttypes.h>
@@ -14,13 +13,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/time.h>
-
-#ifndef NO_LONG_OPT
-#include <getopt.h>
-#else
-#include <unistd.h>  // for standard getopt()
-#endif
 
 #include <algorithm>
 #include <atomic>
@@ -43,6 +35,7 @@
 #endif
 
 #include "src/gemm_lib.hpp"
+#include "src/command_line.hpp"
 
 // Test mode for the teams code - not normally needed.
 #undef TEST_TEAMS
@@ -96,7 +89,7 @@ void print_kernels(GemmProblem* p, unsigned int nthreads);
 
 // Reference GEMM class
 template <typename To, typename Tr>
-class gemm_transposeB;
+struct gemm_transposeB;
 
 // kai_ops wrapper classes
 template <typename Tlop, typename Trop, typename Tret, enum QuantizationType quantized = QuantizationType::NONE>
@@ -104,10 +97,12 @@ class kai_ops_wrapper;
 template <typename Tlop, typename Trop, typename Tret>
 using kai_ops_quantized = kai_ops_wrapper<Tlop, Trop, Tret, QuantizationType::INTEGER>;
 
+#if !defined(_MSC_VER)
 template <typename Ta, typename Tb, typename Tref, enum QuantizationType quantized = QuantizationType::NONE>
 class depthwise_wrapper;
 template <typename Top, typename Tret>
 class winograd_wrapper;
+#endif
 
 // Instantiations of kai_ops wrapper classes.
 // FP types.
@@ -116,10 +111,12 @@ typedef kai_ops_wrapper<__fp16, __fp16, __fp16> hgemm_new;
 typedef kai_ops_wrapper<bfloat16, bfloat16, float> gemm_bf16_new;
 typedef kai_ops_wrapper<bfloat16, bfloat16, bfloat16> gemm_bf16bf16;
 typedef kai_ops_wrapper<__fp16, __fp16, float> gemm_fp16fp32;
+#if !defined(_MSC_VER)
 typedef depthwise_wrapper<float, float, float> depthwise_fp32;
 typedef depthwise_wrapper<__fp16, __fp16, __fp16> depthwise_fp16;
 typedef winograd_wrapper<float, float> winograd_fp32;
 typedef winograd_wrapper<__fp16, __fp16> winograd_fp16;
+#endif
 
 // int types.
 typedef kai_ops_wrapper<uint16_t, uint16_t, uint32_t> gemm_u16;
@@ -132,9 +129,11 @@ typedef kai_ops_wrapper<uint8_t, int8_t, float, QuantizationType::FLOAT> gemm_u8
 typedef kai_ops_quantized<uint8_t, uint8_t, uint8_t> gemm_u8_quant;
 typedef kai_ops_quantized<int8_t, int8_t, int8_t> gemm_s8_quant;
 typedef kai_ops_quantized<uint8_t, int8_t, uint8_t> gemm_u8s8_quant;
+#if !defined(_MSC_VER)
 typedef depthwise_wrapper<int8_t, int8_t, int8_t, QuantizationType::INTEGER> depthwise_s8q;
 typedef depthwise_wrapper<uint8_t, uint8_t, uint8_t, QuantizationType::INTEGER> depthwise_u8q;
 typedef depthwise_wrapper<uint8_t, int8_t, uint8_t, QuantizationType::INTEGER> depthwise_u8s8u8q;
+#endif
 
 /*
  * Infrastructure to allow the kernel to be tested to be selected.
@@ -211,16 +210,20 @@ KERN(sgemm_new, float, float, KERN_WGOK | KERN_ACTOK | KERN_CONV )
 KERN(gemm_bf16_new, bfloat16, float, KERN_WGOK | KERN_ACTOK | KERN_CONV)
 KERN(gemm_bf16bf16, bfloat16, bfloat16, KERN_WGOK | KERN_ACTOK | KERN_CONV)
 
+#if !defined(_MSC_VER)
 KERN(winograd_fp32, float, float, KERN_CONV | KERN_CONV_ONLY | KERN_ACTOK | KERN_NOACC )
+#endif
 
 KERN(gemm_fp16fp32, __fp16, float, KERN_WGOK | KERN_ACTOK | KERN_CONV)
 
 KERN(hgemm_new, __fp16, __fp16, KERN_ACTOK | KERN_CONV )
 
+#if !defined(_MSC_VER)
 KERN(winograd_fp16, __fp16, __fp16, KERN_CONV | KERN_CONV_ONLY | KERN_ACTOK | KERN_NOACC )
 
 KERN(depthwise_fp32, float, float, KERN_CONV | KERN_CONV_ONLY | KERN_ACTOK | KERN_DEPTHWISE)
 KERN(depthwise_fp16, __fp16, __fp16, KERN_CONV | KERN_CONV_ONLY | KERN_ACTOK | KERN_DEPTHWISE | KERN_FAST_ONLY )
+#endif
 
 KERN(gemm_s16, int16_t, int32_t, KERN_CONV)
 KERN(gemm_u16, uint16_t, uint32_t, KERN_CONV)
@@ -234,12 +237,14 @@ KERN_QUANT(gemm_s8_quant,KERN_CONV)
 KERN_QUANT(gemm_u8s8_quant,KERN_CONV)
 KERN_QUANT_PERCHANNEL(gemm_s8_quant,KERN_CONV)
 
+#if !defined(_MSC_VER)
 KERN_QUANT_COMP(depthwise_s8q, depthwise_fp32, KERN_CONV | KERN_CONV_ONLY | KERN_ACTOK | KERN_DEPTHWISE)
 KERN_QUANT_PERCHANNEL_COMP(depthwise_s8q, depthwise_fp32, KERN_CONV | KERN_CONV_ONLY | KERN_ACTOK | KERN_DEPTHWISE)
 KERN_QUANT_COMP(depthwise_u8q, depthwise_fp32, KERN_CONV | KERN_CONV_ONLY | KERN_ACTOK | KERN_DEPTHWISE)
 KERN_QUANT_PERCHANNEL_COMP(depthwise_u8q, depthwise_fp32, KERN_CONV | KERN_CONV_ONLY | KERN_ACTOK | KERN_DEPTHWISE)
 KERN_QUANT_COMP(depthwise_u8s8u8q, depthwise_fp32, KERN_CONV | KERN_CONV_ONLY | KERN_ACTOK | KERN_DEPTHWISE)
 KERN_QUANT_PERCHANNEL_COMP(depthwise_u8s8u8q, depthwise_fp32, KERN_CONV | KERN_CONV_ONLY | KERN_ACTOK | KERN_DEPTHWISE)
+#endif
 /* END OF KERNEL LIST */
 { "", nullptr, nullptr, nullptr, 0 } };
 
@@ -442,24 +447,23 @@ int main(int argc, char **argv) {
     printf("gemm-linux: %s (%s)\n", git_branch, git_revision);
 #endif
 
-#ifndef NO_LONG_OPT
-    struct option longopts[] = {
-      { "winograd-output-rows", 1, nullptr, 128 },
-      { "winograd-output-cols", 1, nullptr, 129 },
-      { "winograd-input-transform", 1, nullptr, 130 },
-      { "winograd-weight-transform", 1, nullptr, 131 },
-      { "winograd-output-transform", 1, nullptr, 132 },
-      { "weight-format", 1, nullptr, 133 },
-      { nullptr, 0, nullptr, 0 },  // Last element sentinel
+    const command_line::long_option long_options[] = {
+        { "winograd-output-rows", 128 },
+        { "winograd-output-cols", 129 },
+        { "winograd-input-transform", 130 },
+        { "winograd-weight-transform", 131 },
+        { "winograd-output-transform", 132 },
+        { "weight-format", 133 },
+        { nullptr, 0 },
     };
-#endif
+    command_line options(
+        argc, argv,
+        "M:N:K:a:bcd:t:T:m:i:s:S:l:L:C:y:z:n:D:I:fhF:j:k:G:w:V:r:WABu:U:p:X:PqO:o:QZ",
+        long_options);
 
     int opt;
-#ifndef NO_LONG_OPT
-    while ((opt = getopt_long(argc, argv, "M:N:K:a:bcd:t:T:m:i:s:S:l:L:C:y:z:n:D:I:fhF:j:k:G:w:V:r:WABu:U:p:X:PqO:o:QZ", longopts, nullptr)) >= 0) {
-#else
-    while ((opt = getopt(argc, argv, "M:N:K:a:bcd:t:T:m:i:s:S:l:L:C:y:z:n:D:I:fhF:j:k:G:w:V:r:WABu:U:p:X:PqO:o:QZ")) >= 0) {
-#endif
+    while ((opt = options.next()) >= 0) {
+        char *optarg = options.argument();
         switch(opt) {
             case 'M':
                 p.input_width=p.output_width=strtol(optarg, NULL, 0);
@@ -722,7 +726,12 @@ int main(int argc, char **argv) {
                 break;
 
             case 'Q':
+#ifdef __linux__
                 p.cache_stats = true;
+#else
+                fprintf(stderr, "Cache statistics require Linux perf events.\n");
+                return 1;
+#endif
                 break;
 
             case 'X':
@@ -780,13 +789,14 @@ int main(int argc, char **argv) {
                 return 0;
 
             case '?':
+                fprintf(stderr, "%s\n", options.error());
                 printhelp(argv[0]);
                 return 1;
 
             default:
                 fprintf(stderr,
-                        "Internal error: getopt returned unhandled option %d. "
-                        "The getopt option list and switch cases are out of sync.\n",
+                        "Internal error: parser returned unhandled option %d. "
+                        "The parser option list and switch cases are out of sync.\n",
                         opt);
                 return 1;
         }
@@ -794,19 +804,20 @@ int main(int argc, char **argv) {
 
     kernentry *mykern = NULL;
 
-    if (optind==argc) {
+    const char *kernel_name = options.kernel();
+    if (!kernel_name) {
         /* No kernel name specified. */
         printf("Error: No kernel name specified.\n");
     } else {
         for (int i=0; thekerns[i].name[0]; i++) {
-            if (!strcmp(thekerns[i].name, argv[optind])) {
+            if (!strcmp(thekerns[i].name, kernel_name)) {
                 mykern = &(thekerns[i]);
                 break;
             }
         }
 
         if (!mykern) {
-            printf("Unknown kernel: %s\n", argv[optind]);
+            printf("Unknown kernel: %s\n", kernel_name);
         }
     }
 

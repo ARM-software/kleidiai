@@ -15,8 +15,6 @@
 #include <cstring>
 #include <vector>
 
-#include <unistd.h>
-
 #define NUM_EVENTS 6
 
 // PMU event IDs for L1D fill, L1D access, L2 fill, L2 access, LLC fill, LLC access.
@@ -28,6 +26,7 @@ static const uint32_t event_ids[] = { 0x3, 0x4, 0x17, 0x16, 0x37, 0x36 };
 #include <linux/perf_event.h>
 #include <sys/ioctl.h>
 #include <syscall.h>
+#include <unistd.h>
 
 namespace {
 
@@ -79,11 +78,13 @@ public:
         }
 
         ~cache_stats_thread() {
+#ifdef __linux__
             for (unsigned int i=0; i<NUM_EVENTS; i++) {
                 if (m_fds[i] >= 0) {
                     close(m_fds[i]);
                 }
             }
+#endif
         }
 
         // Initialise counters: this is not included in the constructor to allow construction en-masse and

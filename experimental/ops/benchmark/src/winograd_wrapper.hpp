@@ -189,7 +189,7 @@ public:
         sched = std::unique_ptr<scheduler> (new static_scheduler(gemm.get(), nthreads, p->schedule_shape_override));
     }
 
-    __attribute__ ((noinline)) void Run(unsigned int threadid) {
+    KAI_OPS_NOINLINE void Run(unsigned int threadid) {
         {
             // Input transform
             winograd_impl.input_transform->execute(

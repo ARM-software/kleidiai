@@ -31,7 +31,7 @@ BINARY = "./gemm"
 LAST_ERROR = 0
 TESTS_RUN = 0
 TESTS_PASSED = 0
-time_id = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+time_id = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 SOAKDIR = f"soak-{time_id}"
 
 # Test Plan

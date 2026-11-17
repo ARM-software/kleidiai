@@ -878,11 +878,6 @@ if(NOT DEFINED KLEIDIAI_BUILD_EXPERIMENTAL_OPS)
     endif()
 endif()
 
-if(MSVC AND KLEIDIAI_BUILD_EXPERIMENTAL_OPS)
-    message(STATUS "Disabling KLEIDIAI_BUILD_EXPERIMENTAL_OPS: MSVC is not supported yet")
-    set(KLEIDIAI_BUILD_EXPERIMENTAL_OPS OFF CACHE BOOL "Build experimental ops library." FORCE)
-endif()
-
 if(KLEIDIAI_BUILD_EXPERIMENTAL_OPS)
     add_subdirectory(experimental/ops)
 endif()
