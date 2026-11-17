@@ -13,21 +13,9 @@
 #include <test/common/cpu_info.hpp>
 #include <vector>
 
-#include "benchmark/cycle_counter.hpp"
-#include "imatmul_interface.hpp"
+#include "benchmark/kai_benchmark.hpp"
 #include "imatmul_runner.hpp"
 #include "kai/kai_common.h"
-
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wswitch-default"
-#endif  // __GNUC__
-
-#include <benchmark/benchmark.h>
-
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif  // __GNUC__
 
 namespace kai::benchmark {
 using Buffer = std::vector<uint8_t>;
@@ -42,7 +30,7 @@ using CpuRequirement = std::function<bool()>;
 /// @param is_cpu_supported Function that checks the CPU feature requirement to run this benchmark.
 template <typename ImatmulInterface>
 void kai_benchmark_imatmul(
-    ::benchmark::State& state, const ImatmulInterface imatmul_interface, const DataType dst_type,
+    BMState& state, const ImatmulInterface imatmul_interface, const DataType dst_type,
     const CpuRequirement& is_cpu_supported) {
     if (!is_cpu_supported()) {
         state.SkipWithMessage("Unsupported CPU feature");
@@ -88,36 +76,13 @@ void kai_benchmark_imatmul(
     const auto m_step = imatmul_interface.takes_indirection ? imatmul_interface.get_m_step() : 1;
     std::vector<const float*> indirection_buffer(k_chunk_count * kai_roundup(m, m_step), dummy_buffer.data());
 
-    const bool cycle_counter_available = cycle_counter_init();
-    uint64_t total_cycles = 0;
-    uint64_t start_cycles = 0;
-    bool cycle_measurement_valid = false;
-    if (cycle_counter_available) {
-        cycle_counter_start();
-        cycle_measurement_valid = cycle_counter_read(start_cycles);
-    }
-
-    for (auto _ : state) {
+    state.run([&] {
         if (imatmul_interface.takes_indirection) {
             imatmul_runner.run((const void*)indirection_buffer.data(), rhs.data(), dst.data());
         } else {
             imatmul_runner.run((const void*)lhs.data(), rhs.data(), dst.data());
         }
-    }
-
-    if (cycle_counter_available) {
-        uint64_t end_cycles = 0;
-        cycle_measurement_valid =
-            cycle_measurement_valid && cycle_counter_read(end_cycles) && end_cycles >= start_cycles;
-        cycle_counter_stop();
-        if (cycle_measurement_valid) {
-            total_cycles += (end_cycles - start_cycles);
-        }
-        cycle_counter_shutdown();
-    }
-
-    state.counters["cpu_cycles"] = ::benchmark::Counter(
-        static_cast<double>(total_cycles), ::benchmark::Counter::kAvgIterations, ::benchmark::Counter::OneK::kIs1000);
+    });
 }
 
 }  // namespace kai::benchmark

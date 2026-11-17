@@ -12,3 +12,8 @@ build --jobs 8
 
 # Explicitly sets the C++ standard for external dependencies.
 build --cxxopt=-std=c++17
+
+# Treats headers from all external dependencies as system headers so warning
+# checks focus on KleidiAI code.
+build --features=external_include_paths
+build --host_features=external_include_paths

@@ -134,7 +134,7 @@ enum {
 ///
 /// @return Project version as a string literal.
 inline const char* kai_get_version(void) {
-    return "1.32.0";
+    return "1.34.0";
 }
 
 /// KleidiAI data types
@@ -223,7 +223,6 @@ inline static size_t kai_roundup(size_t a, size_t b) {
     return kai_div_ceil(a, b) * b;
 }
 
-#if defined(__ARM_FEATURE_SVE2) || defined(_M_ARM64)
 /// Gets the SME vector length for 8-bit elements.
 uint64_t kai_get_sme_vector_length_u8(void);
 
@@ -244,7 +243,6 @@ inline static uint64_t kai_get_sme_vscale(void) {
 
 /// Commit ZA to lazy save buffer
 void kai_commit_za(void);
-#endif  // defined(__ARM_FEATURE_SVE2) || defined(_M_ARM64)
 
 /// Gets the SVE vector length for 8-bit elements.
 uint64_t kai_get_sve_vector_length_u8(void);
@@ -274,6 +272,12 @@ inline static int8_t kai_ext_sign_i8_i4(int8_t value) {
 
     return (value ^ 0x8) - 8;  // NOLINT(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
 }
+
+/// Parameter struct for LHS matrix packing (Quantized Asymmetric Integer 8-bit with per-row quantization)
+struct kai_lhs_pack_qai8dxp_params {
+    const void* lhs_zero_point;  ///< LHS matrix quantization zero-point data.
+    const void* lhs_scale;       ///< LHS matrix quantization scale data.
+};
 
 /// Parameter struct for RHS matrix packing (Quantized Symmetric Integer 8-bit with per-channel quantization)
 struct kai_rhs_pack_qsi8cx_params {

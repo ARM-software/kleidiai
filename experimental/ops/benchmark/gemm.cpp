@@ -30,6 +30,7 @@
 #include <vector>
 
 #include "kai/ops/bfloat.hpp"
+#include "kai/ops/float16.hpp"
 
 #define restrict __restrict
 
@@ -133,6 +134,7 @@ typedef kai_ops_quantized<int8_t, int8_t, int8_t> gemm_s8_quant;
 typedef kai_ops_quantized<uint8_t, int8_t, uint8_t> gemm_u8s8_quant;
 typedef depthwise_wrapper<int8_t, int8_t, int8_t, QuantizationType::INTEGER> depthwise_s8q;
 typedef depthwise_wrapper<uint8_t, uint8_t, uint8_t, QuantizationType::INTEGER> depthwise_u8q;
+typedef depthwise_wrapper<uint8_t, int8_t, uint8_t, QuantizationType::INTEGER> depthwise_u8s8u8q;
 
 /*
  * Infrastructure to allow the kernel to be tested to be selected.
@@ -211,7 +213,6 @@ KERN(gemm_bf16bf16, bfloat16, bfloat16, KERN_WGOK | KERN_ACTOK | KERN_CONV)
 
 KERN(winograd_fp32, float, float, KERN_CONV | KERN_CONV_ONLY | KERN_ACTOK | KERN_NOACC )
 
-#ifdef __aarch64__
 KERN(gemm_fp16fp32, __fp16, float, KERN_WGOK | KERN_ACTOK | KERN_CONV)
 
 KERN(hgemm_new, __fp16, __fp16, KERN_ACTOK | KERN_CONV )
@@ -237,7 +238,8 @@ KERN_QUANT_COMP(depthwise_s8q, depthwise_fp32, KERN_CONV | KERN_CONV_ONLY | KERN
 KERN_QUANT_PERCHANNEL_COMP(depthwise_s8q, depthwise_fp32, KERN_CONV | KERN_CONV_ONLY | KERN_ACTOK | KERN_DEPTHWISE)
 KERN_QUANT_COMP(depthwise_u8q, depthwise_fp32, KERN_CONV | KERN_CONV_ONLY | KERN_ACTOK | KERN_DEPTHWISE)
 KERN_QUANT_PERCHANNEL_COMP(depthwise_u8q, depthwise_fp32, KERN_CONV | KERN_CONV_ONLY | KERN_ACTOK | KERN_DEPTHWISE)
-#endif
+KERN_QUANT_COMP(depthwise_u8s8u8q, depthwise_fp32, KERN_CONV | KERN_CONV_ONLY | KERN_ACTOK | KERN_DEPTHWISE)
+KERN_QUANT_PERCHANNEL_COMP(depthwise_u8s8u8q, depthwise_fp32, KERN_CONV | KERN_CONV_ONLY | KERN_ACTOK | KERN_DEPTHWISE)
 /* END OF KERNEL LIST */
 { "", nullptr, nullptr, nullptr, 0 } };
 

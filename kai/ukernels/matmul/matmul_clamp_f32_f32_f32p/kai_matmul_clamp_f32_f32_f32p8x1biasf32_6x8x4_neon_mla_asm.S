@@ -4,51 +4,44 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-#if defined(_MSC_VER) && !defined(__clang__)
+#if defined(_MSC_VER)
+    #define KAI_ASM_GLOBAL(name) GLOBAL name
+    #define KAI_ASM_FUNCTION_TYPE(name)
+    #define KAI_ASM_FUNCTION_LABEL(name) name PROC
+    #define KAI_ASM_FUNCTION_END(name) ENDP
 
-#define KAI_ASM_HEADER AREA |.text|, CODE, READONLY, ALIGN=4
-#define KAI_ASM_LABEL(label) |label|
-#define KAI_ASM_FUNCTION(label) |label|
-#define KAI_ASM_EXPORT(label) global label
-#define KAI_ASM_FOOTER end
-#define KAI_ASM_INST(num) dcd num
+    #define KAI_ASM_CODE(name) AREA name, CODE, READONLY
+    #define KAI_ASM_ALIGN
+    #define KAI_ASM_LABEL(name) name
+    #define KAI_ASM_INST(hex) DCD hex
+    #define KAI_ASM_END END
+#else
+    #if defined(__APPLE__)
+        #define KAI_ASM_GLOBAL(name) .globl _##name
+        #define KAI_ASM_FUNCTION_TYPE(name)
+        #define KAI_ASM_FUNCTION_LABEL(name) _##name:
+        #define KAI_ASM_FUNCTION_END(name)
+    #else
+        #define KAI_ASM_GLOBAL(name) .global name
+        #define KAI_ASM_FUNCTION_TYPE(name) .type name, %function
+        #define KAI_ASM_FUNCTION_LABEL(name) name:
+        #define KAI_ASM_FUNCTION_END(name) .size name, .-name
+    #endif
 
-#elif defined(_MSC_VER) && defined(__clang__)
+    #define KAI_ASM_CODE(name) .text
+    #define KAI_ASM_ALIGN .p2align 4,,11
+    #define KAI_ASM_LABEL(name) name:
+    #define KAI_ASM_INST(hex) .inst hex
+    #define KAI_ASM_END
+#endif
 
-#define KAI_ASM_HEADER        .text
-#define KAI_ASM_LABEL(label)  label:
-#define KAI_ASM_FUNCTION(label) label:
-#define KAI_ASM_EXPORT(label) .globl label
-#define KAI_ASM_FOOTER
-#define KAI_ASM_INST(num)     .inst num
+    KAI_ASM_CODE(matmul_clamp_f32_f32_f32p8x1biasf32_6x8x4_neon_mla)
+    KAI_ASM_ALIGN
 
-#else  // _MSC_VER
+    KAI_ASM_GLOBAL(kai_matmul_clamp_f32_f32_f32p8x1biasf32_6x8x4_neon_mla)
 
-#define KAI_ASM_HEADER .text
-#define KAI_ASM_LABEL(label) label:
-
-#ifdef __APPLE__
-#define KAI_ASM_FUNCTION(label) _##label:
-#define KAI_ASM_EXPORT(label) \
-    .global _##label;         \
-    .type _##label, %function
-#else  // __APPLE__
-#define KAI_ASM_FUNCTION(label) label:
-#define KAI_ASM_EXPORT(label) \
-    .global label;            \
-    .type label, %function
-#endif  // __APPLE__
-
-#define KAI_ASM_FOOTER
-#define KAI_ASM_INST(num) .inst num
-
-#endif  // _MSC_VER
-
-    KAI_ASM_HEADER
-
-    KAI_ASM_EXPORT(kai_matmul_clamp_f32_f32_f32p8x1biasf32_6x8x4_neon_mla_impl)
-
-KAI_ASM_FUNCTION(kai_matmul_clamp_f32_f32_f32p8x1biasf32_6x8x4_neon_mla_impl)
+KAI_ASM_FUNCTION_TYPE(kai_matmul_clamp_f32_f32_f32p8x1biasf32_6x8x4_neon_mla)
+KAI_ASM_FUNCTION_LABEL(kai_matmul_clamp_f32_f32_f32p8x1biasf32_6x8x4_neon_mla)
     stp x20, x21, [sp, -144]!
     stp x22, x23, [sp, 16]
     stp x24, x25, [sp, 32]
@@ -1988,5 +1981,6 @@ KAI_ASM_LABEL(label_152)  // Exit
     ldp d8, d9, [sp, 120]
     ldp x20, x21, [sp], 144
     ret
+    KAI_ASM_FUNCTION_END(kai_matmul_clamp_f32_f32_f32p8x1biasf32_6x8x4_neon_mla)
 
-    KAI_ASM_FOOTER
+    KAI_ASM_END

@@ -33,7 +33,7 @@ using safe_math_value_t = std::conditional_t<(sizeof(T) < sizeof(int32_t)), int3
 /// @param[in] b Second operand.
 /// @return The result, or `std::nullopt` if invalid.
 template <typename T>
-[[nodiscard]] inline std::optional<T> safe_add(T a, T b) noexcept {
+[[nodiscard]] constexpr std::optional<T> safe_add(T a, T b) noexcept {
     static_assert(is_integral_v<T>);
     using V = detail::safe_math_value_t<T>;
     const V lhs = static_cast<V>(a);
@@ -87,7 +87,7 @@ template <typename T>
 /// @param[in] b Second operand.
 /// @return The result, or `std::nullopt` if invalid.
 template <typename T>
-[[nodiscard]] inline std::optional<T> safe_mul(T a, T b) noexcept {
+[[nodiscard]] constexpr std::optional<T> safe_mul(T a, T b) noexcept {
     static_assert(is_integral_v<T>);
     using V = detail::safe_math_value_t<T>;
     const V lhs = static_cast<V>(a);
@@ -127,7 +127,7 @@ template <typename T>
 /// @param[in] b Divisor.
 /// @return The result, or `std::nullopt` if invalid.
 template <typename T>
-[[nodiscard]] inline std::optional<T> safe_div(T a, T b) noexcept {
+[[nodiscard]] constexpr std::optional<T> safe_div(T a, T b) noexcept {
     static_assert(is_integral_v<T>);
     using V = detail::safe_math_value_t<T>;
     const V lhs = static_cast<V>(a);
@@ -152,7 +152,7 @@ template <typename T>
 /// @param[in] b Divisor.
 /// @return The result, or `std::nullopt` if invalid.
 template <typename T>
-[[nodiscard]] inline std::optional<T> safe_mod(T a, T b) noexcept {
+[[nodiscard]] constexpr std::optional<T> safe_mod(T a, T b) noexcept {
     static_assert(is_integral_v<T>);
     using V = detail::safe_math_value_t<T>;
     const V lhs = static_cast<V>(a);
@@ -177,7 +177,7 @@ template <typename T>
 /// @param[in] b Divisor.
 /// @return The result, or `std::nullopt` if invalid.
 template <typename T>
-[[nodiscard]] inline std::optional<T> safe_div_ceil(T a, T b) noexcept {
+[[nodiscard]] constexpr std::optional<T> safe_div_ceil(T a, T b) noexcept {
     static_assert(is_integral_v<T>);
     using V = detail::safe_math_value_t<T>;
     const V rhs = static_cast<V>(b);

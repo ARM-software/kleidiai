@@ -244,11 +244,18 @@ set(KLEIDIAI_OPS_CONV_DEPTHWISE_FP16_SOURCES
 
 # -------------------------------------------------------------------------------------------------
 
+# Add extracted kernel .S files to this shared assembly list. All assembly
+# sources use the combined SVE architecture settings; enabling these extensions
+# does not insert additional instructions into functions that do not use them.
+set(KLEIDIAI_OPS_CONV_SOURCES_ASM)
+
+# -------------------------------------------------------------------------------------------------
+
 set(KLEIDIAI_OPS_CONV_PRIVATE_INCLUDES
     # Internal sources
-    ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../
+    ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/../
     # Public headers
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../include)
+    ${CMAKE_CURRENT_LIST_DIR}/../../../include)
 
 # -------------------------------------------------------------------------------------------------
 
@@ -276,7 +283,11 @@ function(arm_add_obj_lib OBJ_NAME)
     add_library(${OBJ_NAME} OBJECT ${${PREFIX}_SOURCES})
     target_include_directories(${OBJ_NAME} PRIVATE ${KLEIDIAI_OPS_CONV_PRIVATE_INCLUDES})
     target_compile_definitions(${OBJ_NAME} PRIVATE ${KLEIDIAI_OPS_COMPILE_DEFINES})
-    target_compile_options(${OBJ_NAME} PRIVATE ${KLEIDIAI_OPS_CCXX_FLAGS})
+    # Keep C/C++ options scoped to these languages. Extracted assembly is compiled
+    # separately with the combined SVE architecture settings below.
+    target_compile_options(
+        ${OBJ_NAME} PRIVATE
+        "$<$<OR:$<COMPILE_LANGUAGE:C>,$<COMPILE_LANGUAGE:CXX>>:${KLEIDIAI_OPS_CCXX_FLAGS}>")
 
     if(${PREFIX}_ARCH)
         target_compile_options(${OBJ_NAME} PRIVATE ${${PREFIX}_ARCH})
@@ -304,40 +315,51 @@ arm_add_obj_lib(
     ARCH ${KLEIDIAI_OPS_ARCH})
 
 # Winograd sources; AArch64-only buckets
-if(NOT KLEIDIAI_OPS_ENABLE_AARCH32)
-    arm_add_obj_lib(
-        conv_winograd_sve
-        SOURCES ${KLEIDIAI_OPS_CONV_WINOGRAD_SVE_SOURCES}
-        ARCH ${KLEIDIAI_OPS_SVE_ARCH})
+arm_add_obj_lib(
+    conv_winograd_sve
+    SOURCES ${KLEIDIAI_OPS_CONV_WINOGRAD_SVE_SOURCES}
+    ARCH ${KLEIDIAI_OPS_SVE_ARCH})
 
-    arm_add_obj_lib(
-        conv_winograd_fp16
-        SOURCES ${KLEIDIAI_OPS_CONV_WINOGRAD_FP16_SOURCES}
-        ARCH ${KLEIDIAI_OPS_FP16_ARCH})
-endif()
+arm_add_obj_lib(
+    conv_winograd_fp16
+    SOURCES ${KLEIDIAI_OPS_CONV_WINOGRAD_FP16_SOURCES}
+    ARCH ${KLEIDIAI_OPS_FP16_ARCH})
 
-# Depthwise sources; only on non-AArch32 systems
-if(NOT KLEIDIAI_OPS_ENABLE_AARCH32)
-    # Depthwise sources; non-SVE, non-FP16
-    arm_add_obj_lib(
-        conv_depthwise_core
-        SOURCES ${KLEIDIAI_OPS_CONV_DEPTHWISE_CORE_SOURCES}
-        ARCH ${KLEIDIAI_OPS_ARCH})
+# Depthwise sources
+# Depthwise sources; non-SVE, non-FP16
+arm_add_obj_lib(
+    conv_depthwise_core
+    SOURCES ${KLEIDIAI_OPS_CONV_DEPTHWISE_CORE_SOURCES}
+    ARCH ${KLEIDIAI_OPS_ARCH})
 
-    # Depthwise sources; combined SVE/SME/SME2 bucket
-    arm_add_obj_lib(
-        conv_depthwise_sve
-        SOURCES ${KLEIDIAI_OPS_CONV_DEPTHWISE_SVE_SOURCES}
-        ARCH ${KLEIDIAI_OPS_SVE_ARCH})
+# Depthwise sources; combined SVE/SME/SME2 bucket
+arm_add_obj_lib(
+    conv_depthwise_sve
+    SOURCES ${KLEIDIAI_OPS_CONV_DEPTHWISE_SVE_SOURCES}
+    ARCH ${KLEIDIAI_OPS_SVE_ARCH})
 
-    # Depthwise sources; FP16
-    arm_add_obj_lib(
-        conv_depthwise_fp16
-        SOURCES ${KLEIDIAI_OPS_CONV_DEPTHWISE_FP16_SOURCES}
-        ARCH ${KLEIDIAI_OPS_FP16_ARCH})
-endif()
+# Depthwise sources; FP16
+arm_add_obj_lib(
+    conv_depthwise_fp16
+    SOURCES ${KLEIDIAI_OPS_CONV_DEPTHWISE_FP16_SOURCES}
+    ARCH ${KLEIDIAI_OPS_FP16_ARCH})
 
 # -------------------------------------------------------------------------------------------------
+
+# Source properties are set beside the target that compiles these files.
+# No object library is needed until this directory contains assembly sources.
+if(KLEIDIAI_OPS_CONV_SOURCES_ASM)
+    if(MSVC)
+        set_source_files_properties(${KLEIDIAI_OPS_CONV_SOURCES_ASM} PROPERTIES LANGUAGE ASM_MARMASM)
+    endif()
+
+    add_library(conv_asm OBJECT ${KLEIDIAI_OPS_CONV_SOURCES_ASM})
+    target_include_directories(conv_asm PRIVATE ${KLEIDIAI_OPS_CONV_PRIVATE_INCLUDES})
+    target_compile_definitions(conv_asm PRIVATE ${KLEIDIAI_OPS_COMPILE_DEFINES})
+    target_compile_options(conv_asm PRIVATE ${KLEIDIAI_OPS_SVE_ARCH})
+    set_target_properties(conv_asm PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    target_sources(kleidiai_ops PRIVATE $<TARGET_OBJECTS:conv_asm>)
+endif()
 
 target_sources(
     kleidiai_ops
@@ -345,12 +367,10 @@ target_sources(
             $<$<TARGET_EXISTS:conv_winograd_sve>:$<TARGET_OBJECTS:conv_winograd_sve>>
             $<$<TARGET_EXISTS:conv_winograd_fp16>:$<TARGET_OBJECTS:conv_winograd_fp16>>)
 
-if(NOT KLEIDIAI_OPS_ENABLE_AARCH32)
-    target_sources(
-        kleidiai_ops
-        PRIVATE $<TARGET_OBJECTS:conv_depthwise_core> $<TARGET_OBJECTS:conv_depthwise_sve>
-                $<TARGET_OBJECTS:conv_depthwise_fp16>)
-endif()
+target_sources(
+    kleidiai_ops
+    PRIVATE $<TARGET_OBJECTS:conv_depthwise_core> $<TARGET_OBJECTS:conv_depthwise_sve>
+            $<TARGET_OBJECTS:conv_depthwise_fp16>)
 
 message(STATUS "Leaving conv directory")
 # -------------------------------------------------------------------------------------------------

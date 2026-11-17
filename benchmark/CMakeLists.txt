@@ -14,10 +14,9 @@ set(BENCHMARK_DOWNLOAD_DEPENDENCIES "OFF")
 set(BENCHMARK_ENABLE_TESTING "OFF")
 set(BENCHMARK_ENABLE_GTEST_TESTS "OFF")
 
-include(FetchGBench)
-
 # Single benchmark binary combining all suites
 add_executable(kleidiai_benchmark
+    # kai-keep-sorted-begin
     benchmark/dwconv/dwconv_main.cpp
     benchmark/dwconv/dwconv_registry.cpp
     benchmark/imatmul/imatmul_main.cpp
@@ -31,6 +30,8 @@ add_executable(kleidiai_benchmark
     benchmark/matmul_pack_lhs/matmul_pack_lhs_registry.cpp
     benchmark/pack_matmul/pack_matmul_main.cpp
     benchmark/pack_matmul/pack_matmul_registry.cpp
+    benchmark/softmax/softmax_main.cpp
+    benchmark/softmax/softmax_registry.cpp
     test/common/bfloat16_asm.S
     test/common/buffer.cpp
     test/common/cpu_info.cpp
@@ -39,6 +40,7 @@ add_executable(kleidiai_benchmark
     test/common/int2.cpp
     test/common/int4.cpp
     test/common/memory.cpp
+    # kai-keep-sorted-end
 )
 
 set_source_files_properties(benchmark/imatmul/imatmul_registry.cpp
@@ -54,38 +56,59 @@ set_source_files_properties(benchmark/pack_matmul/pack_matmul_registry.cpp
 
 if(MSVC)
     set_source_files_properties(
+        # kai-keep-sorted-begin
         test/common/bfloat16_asm.S
         test/common/float16_asm.S
+        # kai-keep-sorted-end
         PROPERTIES LANGUAGE ASM_MARMASM)
 else()
     set_source_files_properties(test/common/float16_asm.S PROPERTIES COMPILE_OPTIONS "-march=armv8.2-a+fp16${KLEIDIAI_INTERNAL_EXTRA_ARCH}")
     set_source_files_properties(test/common/bfloat16_asm.S PROPERTIES COMPILE_OPTIONS "-march=armv8.2-a+fp16+bf16${KLEIDIAI_INTERNAL_EXTRA_ARCH}")
 endif()
 
-target_link_libraries(kleidiai_benchmark
-    PRIVATE
-        kleidiai
-        benchmark::benchmark
-)
 
-if(APPLE)
-    find_library(KPERF_FRAMEWORK kperf
-        PATHS /System/Library/PrivateFrameworks
-        NO_DEFAULT_PATH
+if(KLEIDIAI_SEMIHOSTED)
+    target_compile_definitions(kleidiai_benchmark
+        PRIVATE
+            KAI_SEMIHOSTED=1
     )
-    find_library(KPERFDATA_FRAMEWORK kperfdata
-        PATHS /System/Library/PrivateFrameworks
-        NO_DEFAULT_PATH
+    target_link_libraries(kleidiai_benchmark
+        PRIVATE
+            kleidiai
     )
+    target_link_options(kleidiai_benchmark
+        PRIVATE
+            --specs=${KLEIDIAI_SEMIHOSTING_SPECS}
+    )
+else()
+    include(FetchGBench)
 
-    if(KPERF_FRAMEWORK AND KPERFDATA_FRAMEWORK)
-        target_link_libraries(kleidiai_benchmark
-            PRIVATE
-                "${KPERF_FRAMEWORK}"
-                "${KPERFDATA_FRAMEWORK}"
+    target_link_libraries(kleidiai_benchmark
+        PRIVATE
+            kleidiai
+            benchmark::benchmark
+
+    )
+    if(APPLE)
+        find_library(KPERF_FRAMEWORK kperf
+            PATHS /System/Library/PrivateFrameworks
+            NO_DEFAULT_PATH
         )
-        target_compile_definitions(kleidiai_benchmark PRIVATE KAI_BENCHMARK_KPERF=1)
-    else()
-        target_compile_definitions(kleidiai_benchmark PRIVATE KAI_BENCHMARK_KPERF=0)
+        find_library(KPERFDATA_FRAMEWORK kperfdata
+            PATHS /System/Library/PrivateFrameworks
+            NO_DEFAULT_PATH
+        )
+
+        if(KPERF_FRAMEWORK AND KPERFDATA_FRAMEWORK)
+            target_link_libraries(kleidiai_benchmark
+                PRIVATE
+                    "${KPERF_FRAMEWORK}"
+                    "${KPERFDATA_FRAMEWORK}"
+            )
+            target_compile_definitions(kleidiai_benchmark PRIVATE KAI_BENCHMARK_KPERF=1)
+        else()
+            target_compile_definitions(kleidiai_benchmark PRIVATE KAI_BENCHMARK_KPERF=0)
+        endif()
     endif()
 endif()
+

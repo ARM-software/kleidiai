@@ -265,7 +265,8 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi8cxp, EndToEnd_RHS_nxk_qsi8cx) {
     auto lhs_offset = kai_get_lhs_offset_lhs_quant_pack_qai8dxp_f32(lhs_start_row, lhs_stride);
     auto lhs_packed_offset = kai_get_lhs_packed_offset_lhs_quant_pack_qai8dxp_f32(lhs_start_row, K, mr, kr, sr);
 
-    kai_run_lhs_quant_pack_qai8dxp_f32(
+    abi_check(
+        kai_run_lhs_quant_pack_qai8dxp_f32,  //
         rect.height(), K, mr, kr, sr, 0, reinterpret_cast<const float*>(ref_lhs.data() + lhs_offset), lhs_stride,
         imp_packed_lhs.data() + lhs_packed_offset);
 
@@ -276,7 +277,8 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi8cxp, EndToEnd_RHS_nxk_qsi8cx) {
 
     Buffer imp_packed_rhs(imp_packed_rhs_size);
     const kai_rhs_pack_qsi8cx_params params{1, 1.0f};
-    kai_run_rhs_pack_nxk_qsi8cxp_qsi8cx_neon(
+    abi_check(
+        kai_run_rhs_pack_nxk_qsi8cxp_qsi8cx_neon,  //
         1, N, K, nr, kr, sr, reinterpret_cast<const int8_t*>(ref_rhs_qsi8.data()),
         reinterpret_cast<const float*>(ref_bias.data()), reinterpret_cast<const float*>(ref_rhs_scales.data()),
         imp_packed_rhs.data(), 0, &params);
@@ -361,7 +363,8 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi8cxp, EndToEnd_RHS_kxn_qsi8cx) {
     // Runs the LHS packing micro-kernel.
     const auto imp_packed_lhs_size = kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp_f32(M, K, mr, kr, sr);
     Buffer imp_packed_lhs(imp_packed_lhs_size);
-    kai_run_lhs_quant_pack_qai8dxp_f32(
+    abi_check(
+        kai_run_lhs_quant_pack_qai8dxp_f32,  //
         rect.height(), K, mr, kr, sr, 0, reinterpret_cast<const float*>(ref_lhs.data() + lhs_offset), K * sizeof(float),
         imp_packed_lhs.data() + lhs_packed_offset);
 
@@ -372,7 +375,8 @@ TEST_P(MatMulTest_f32_qai8dxp_qsi8cxp, EndToEnd_RHS_kxn_qsi8cx) {
 
     Buffer imp_packed_rhs(imp_packed_rhs_size);
     const kai_rhs_pack_qsi8cx_params params{1, 1.0f};
-    kai_run_rhs_pack_kxn_qsi8cxp_qsi8cx_neon(
+    abi_check(
+        kai_run_rhs_pack_kxn_qsi8cxp_qsi8cx_neon,  //
         1, N, K, nr, kr, sr, reinterpret_cast<const int8_t*>(ref_rhs_qsi8.data()),
         reinterpret_cast<const float*>(ref_bias.data()), reinterpret_cast<const float*>(ref_rhs_scales.data()),
         imp_packed_rhs.data(), 0, &params);
@@ -413,6 +417,14 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Combine(
         testing::Range<size_t>(0, variants_kai_matmul_clamp_f32_qai8dxp_qsi8cxp.size()),
         testing::Values(
+            // Multiple of 8 K values
+            MatMulShape{5, 17, 24},  //
+
+            // Non-multiple-of-8 K values used by existing integrations
+            MatMulShape{1, 33, 23},   //
+            MatMulShape{5, 17, 101},  //
+
+            // Representative shapes
             MatMulShape{17, 33, 67},  //
             MatMulShape{19, 35, 63},  //
             MatMulShape{1, 27, 31},   //
@@ -426,13 +438,13 @@ INSTANTIATE_TEST_SUITE_P(
             MatMulShape{17, 63, 15},  //
             MatMulShape{20, 130, 15}),
         testing::Values(
-            MatrixPortion(0, 0, 1, 1),         // Full matrix.
-            MatrixPortion(0, 0, 1, 0.25),      // Leftmost portion.
-            MatrixPortion(0, 0.75, 1, 1),      // Rightmost portion.
-            MatrixPortion(0, 0.5, 1, 0.8),     // Somewhere Middle
-            MatrixPortion(0.75, 0.75, 1, 1),   // Bottom-right corner.
-            MatrixPortion(0.75, 0, 1, 1),      // Partial rows
-            MatrixPortion(0.4, 0.5, 0.6, 0.8)  // Somewhere Middle
+            MatrixPortion(0, 0, 1, 1),              // Full matrix.
+            MatrixPortion(0, 0, 1, 0.25),           // Leftmost portion.
+            MatrixPortion(0, 0.75, 1, 0.25),        // Rightmost portion.
+            MatrixPortion(0, 0.5, 1, 0.3),          // Middle columns (full height).
+            MatrixPortion(0.75, 0.75, 0.25, 0.25),  // Bottom-right corner.
+            MatrixPortion(0.75, 0, 0.25, 1),        // Bottom rows (full width).
+            MatrixPortion(0.4, 0.5, 0.2, 0.3)       // Middle block.
             ),
         testing::ValuesIn(std::initializer_list<std::optional<float>>{
             std::nullopt,  // Disable clamping

@@ -241,7 +241,8 @@ TEST_P(MatMulTest_f16_qai8dxp_qsi4cxp, EndToEnd) {
 
     ASSERT_EQ(lhs_packed_offset, lhs_matmul_offset);
 
-    kai_run_lhs_quant_pack_qai8dxp_f16_neon(
+    abi_check(
+        kai_run_lhs_quant_pack_qai8dxp_f16_neon,  //
         rect.height() /* m */, K, mr, kr, sr, 0, ref_lhs_f16.data() + lhs_offset, lhs_stride,
         imp_packed_lhs.data() + lhs_packed_offset);
 
@@ -260,7 +261,8 @@ TEST_P(MatMulTest_f16_qai8dxp_qsi4cxp, EndToEnd) {
     params.lhs_zero_point = 1;
     params.rhs_zero_point = 0;
 
-    ukernel_variant.run_rhs_pack(
+    abi_check(
+        ukernel_variant.run_rhs_pack,  //
         1, N, K, nr, kr, sr, reinterpret_cast<const uint8_t*>(ref_rhs_qsi4_padded.data()),
         has_bias ? reinterpret_cast<const float*>(ref_biases.data()) : nullptr,
         reinterpret_cast<const float*>(ref_rhs_scales.data()), imp_packed_rhs.data(), 0, &params);
@@ -359,13 +361,13 @@ static constexpr std::array<MatMulShape, 17> all_shapes = {{
 }};
 
 static const std::array<MatrixPortion, 7> portions = {{
-    MatrixPortion(0, 0, 1, 1),         // Full matrix.
-    MatrixPortion(0, 0, 1, 0.25),      // Leftmost portion.
-    MatrixPortion(0, 0.75, 1, 1),      // Rightmost portion.
-    MatrixPortion(0, 0.5, 1, 0.8),     // Somewhere Middle
-    MatrixPortion(0.75, 0.75, 1, 1),   // Bottom-right corner.
-    MatrixPortion(0.75, 0, 1, 1),      // Partial rows
-    MatrixPortion(0.4, 0.5, 0.6, 0.8)  // Somewhere Middle
+    MatrixPortion(0, 0, 1, 1),              // Full matrix.
+    MatrixPortion(0, 0, 1, 0.25),           // Leftmost portion.
+    MatrixPortion(0, 0.75, 1, 0.25),        // Rightmost portion.
+    MatrixPortion(0, 0.5, 1, 0.3),          // Middle columns (full height).
+    MatrixPortion(0.75, 0.75, 0.25, 0.25),  // Bottom-right corner.
+    MatrixPortion(0.75, 0, 0.25, 1),        // Bottom rows (full width).
+    MatrixPortion(0.4, 0.5, 0.2, 0.3)       // Middle block.
 }};
 
 static const auto test_name = [](const auto& info) {

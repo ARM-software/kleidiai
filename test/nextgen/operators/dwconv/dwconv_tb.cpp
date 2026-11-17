@@ -365,7 +365,8 @@ void DwConvTb::test_dwconv(size_t start_row, size_t start_col, size_t tile_rows,
     const Tensor& imp_dst_data = get_tensor(DwConvSlot::DST_DATA_IMP);
     const Format& format = *ref_dst_data.format();
 
-    DefaultMismatchHandler handler = make_compute_mismatch_handler(format.dtype(), m_op->acc_dtype);
+    DefaultMismatchHandler handler =
+        make_compute_mismatch_handler(format.dtype(), m_op->acc_dtype, m_op->ref_dtype, m_op->ref_acc_dtype);
     const bool ok = format.compare(
         dst_full_shape, dst_tile_coords, dst_tile_shape, imp_dst_data.data(), ref_dst_data.data(), handler);
     KAI_TEST_ASSERT(ok);

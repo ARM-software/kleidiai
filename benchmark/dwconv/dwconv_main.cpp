@@ -20,18 +20,8 @@
 #include <string_view>
 
 #include "benchmark/dwconv/dwconv_registry.hpp"
+#include "benchmark/kai_benchmark.hpp"
 #include "test/nextgen/common/text_utils.hpp"
-
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wswitch-default"
-#endif  // __GNUC__
-
-#include <benchmark/benchmark.h>
-
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif  // __GNUC__
 
 namespace kai::benchmark {
 
@@ -78,18 +68,8 @@ std::optional<std::array<T, N>> parse_num_list(std::string_view text) {
     return values;
 }
 
-/// Validates the depthwise convolution configuration and prints its details.
-bool validate_and_print_dwconv_config(const DwConvShape& shape) {
-    const auto inferred_dims = InferDwConvOutputDims(shape);
-    if (!inferred_dims) {
-        std::cerr << "Invalid DWConv configuration: inferred output dimensions are non-positive. "
-                  << "Check stride, padding, and dilation relative to the kernel size.\n";
-        return false;
-    }
-
-    const size_t inferred_out_h = inferred_dims->height;
-    const size_t inferred_out_w = inferred_dims->width;
-
+/// Prints the depthwise convolution configuration.
+void print_dwconv_config(const DwConvShape& shape) {
     const auto format_array = [](const auto& values) {
         std::ostringstream oss;
         oss << '[';
@@ -103,18 +83,9 @@ bool validate_and_print_dwconv_config(const DwConvShape& shape) {
         return oss.str();
     };
 
-    if (!supports_unit_stride_and_dilation(shape)) {
-        std::cerr << "Configured stride=" << format_array(shape.stride) << " dilation=" << format_array(shape.dilation)
-                  << " is not supported by current DWConv micro-kernels. "
-                  << "Only stride=1 and dilation=1 are available.\n";
-        return false;
-    }
-
     std::cerr << "Running dwconv benchmarks with input=" << shape.input_height << 'x' << shape.input_width
-              << ", output=" << inferred_out_h << 'x' << inferred_out_w << ", channels=" << shape.num_channels
-              << ", stride=" << format_array(shape.stride) << ", padding=" << format_array(shape.padding)
-              << ", dilation=" << format_array(shape.dilation) << "\n";
-    return true;
+              << ", channels=" << shape.num_channels << ", stride=" << format_array(shape.stride)
+              << ", padding=" << format_array(shape.padding) << ", dilation=" << format_array(shape.dilation) << "\n";
 }
 
 }  // namespace
@@ -134,7 +105,6 @@ int run_dwconv(int argc, char** argv, const std::optional<std::string>& user_fil
     std::optional<std::array<size_t, 4>> padding = std::array<size_t, 4>{0, 0, 0, 0};
     std::optional<std::array<size_t, 2>> dilation = std::array<size_t, 2>{1, 1};
 
-    optind = 1;
     static const struct option long_options[] = {
         {"channels", required_argument, nullptr, OPT_CHANNELS},
         {"input_height", required_argument, nullptr, OPT_INPUT_HEIGHT},
@@ -195,16 +165,14 @@ int run_dwconv(int argc, char** argv, const std::optional<std::string>& user_fil
     shape.padding = *padding;
     shape.dilation = *dilation;
 
-    if (!validate_and_print_dwconv_config(shape)) {
-        return EXIT_FAILURE;
-    }
+    print_dwconv_config(shape);
 
     RegisterDwConvBenchmarks(shape);
 
     const std::string spec = user_filter_opt.value_or("");
-    ::benchmark::RunSpecifiedBenchmarks(nullptr, nullptr, spec);
-    ::benchmark::Shutdown();
-    return 0;
+    const int result = BMFramework::RunSpecifiedBenchmarks(spec);
+    BMFramework::Shutdown();
+    return result;
 }
 
 }  // namespace kai::benchmark

@@ -43,5 +43,6 @@ kai_c_library(
     deps = [
         "//kai/ukernels/dwconv",
         "//kai/ukernels/matmul",
+        "//kai/ukernels/softmax",
     ],
 )

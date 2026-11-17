@@ -64,6 +64,12 @@ std::string TwoLevelAsymBlockQuantizer::uid() const {
         ",superblock_length=" + std::to_string(m_config.superblock_length) + ">";
 }
 
+DefaultMismatchHandler TwoLevelAsymBlockQuantizer::make_mismatch_handler(
+    [[maybe_unused]] DataType accumulator_dtype, [[maybe_unused]] DataType reference_dtype,
+    [[maybe_unused]] DataType reference_accumulator_dtype, [[maybe_unused]] DataType dequant_dtype) const {
+    return DefaultMismatchHandler(0.0F, 0.0F, 0, 0.0F);
+}
+
 void TwoLevelAsymBlockQuantizer::determine_qinfo(
     DataType fp_dtype, Shape shape, Span<const std::byte> fp_data, [[maybe_unused]] Tensor& qscale,
     [[maybe_unused]] Tensor& qzp) const {

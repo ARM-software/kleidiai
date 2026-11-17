@@ -17,19 +17,9 @@
 #include <string>
 #include <string_view>
 
+#include "benchmark/kai_benchmark.hpp"
 #include "benchmark/matmul/matmul_registry.hpp"
 #include "test/nextgen/common/text_utils.hpp"
-
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wswitch-default"
-#endif  // __GNUC__
-
-#include <benchmark/benchmark.h>
-
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif  // __GNUC__
 
 namespace kai::benchmark {
 
@@ -54,7 +44,6 @@ namespace {
 int run_matmul_common(int argc, char** argv, bool compat_mode, const std::optional<std::string>& user_filter_opt) {
     std::optional<size_t> m, n, k, bl = 32;
 
-    optind = 1;
     int opt;
     while ((opt = getopt(argc, argv, "m:n:k:b:")) != -1) {
         switch (opt) {
@@ -76,7 +65,7 @@ int run_matmul_common(int argc, char** argv, bool compat_mode, const std::option
         }
     }
 
-    if (!m || !n || !k || !bl) {
+    if (!m || !n || !k || !bl || *m == 0 || *n == 0 || *k == 0 || *bl == 0) {
         print_matmul_usage(argv[0]);
         return EXIT_FAILURE;
     }
@@ -84,9 +73,9 @@ int run_matmul_common(int argc, char** argv, bool compat_mode, const std::option
     RegisterMatMulBenchmarks({*m, *n, *k}, *bl);
     const std::string spec = user_filter_opt.value_or("");
 
-    ::benchmark::RunSpecifiedBenchmarks(nullptr, nullptr, spec);
-    ::benchmark::Shutdown();
-    return 0;
+    const int result = BMFramework::RunSpecifiedBenchmarks(spec);
+    BMFramework::Shutdown();
+    return result;
 }
 
 }  // namespace

@@ -12,6 +12,47 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+## v1.34.0
+
+- New Advanced SIMD micro-kernels:
+  - Statically quantized INT8 4x16 GEMM with unpacked LHS using Advanced SIMD dot-product instructions.
+  - LHS packing micro-kernels `kai_lhs_pack_qai8dxp1x8sf32_x8_neon` and `kai_lhs_pack_qai8dxp4x8sf32_x8_neon` to reorder 8-bit quantized elements with supplied metadata and arbitrary K. Delivery for work items request #40.
+- New SME2 micro-kernels:
+  - FP32 softmax using a Taylor exponential approximation, processing four streaming vectors per iteration.
+  - Added `kai_imatmul_pack_lhs_mxk_x16p4vsx2_x16_sme2`, an indirect LHS packing micro-kernel.
+  - Matrix multiplication (MxN) for QAI8DXP LHS and QSI8CXP RHS with BF16 output.
+- Update dependencies to the latest version:
+  - Google Test: v1.18.0.
+  - Google Benchmark: v1.10.0.
+  - Bazel: 9.x.
+- Optimizations:
+  - Improve performance of the SVE and SME2.1 Fexpa FP32 softmax micro-kernels.
+- Fixes:
+  - Align SVE and SME helper functions
+  - Compile kernels using only SME VL getters as generic aarch64 + corresponding feature flags.
+  - Fix zero padding in `kai_rhs_pack_nxk_x16p32x1bx16_x16_x16_neon` when N is not a multiple of 32.
+  - Correct interpretation of `MatrixPortion` height and width parameters in tests to refer to lengths.
+
+## v1.33.0
+
+- New Advanced SIMD micro-kernels:
+  - Statically quantized INT8 GEMV using Advanced SIMD dot-product instructions, with the struct-based API.
+- Optimizations:
+  - Improve FP32-to-QAI8DXP LHS quantisation and packing performance in `kai_lhs_quant_pack_qai8dxp_f32` by shortening Advanced SIMD reduction dependencies and reducing redundant clamping and padding work.
+- Fixes:
+  - Correct the documented K requirement for `kai_lhs_quant_pack_qai8dxp_f32`: input K has no divisibility requirement; only the packed K dimension is rounded up to a multiple of 32.
+- New SME micro-kernels:
+  - Native MxN SME MOPA matrix multiplication for FP16 x signed QSI4C32P with F32 output and the s4s0sf16 RHS packing format.
+  - F32 to QAI8DXP LHS quant and pack kernel `kai_lhs_quant_pack_qai8dxp1vlx4_f32_sme` optimized with SME
+- New SME2 micro-kernels:
+  - F32 to QAI8DXP LHS quant and pack kernel `kai_lhs_quant_pack_qai8dxp1vlx4_f32_sme2` optimized with SME2
+- New SME2.1 micro-kernels:
+  - New SME2.1 Fexpa micro-kernel for FP32 datatype.
+- New SVE micro-kernels:
+  - New SVE Fexpa Softmax FP32 micro-kernel
+  - FP32 matrix multiplication using MOP4A instructions for small-M and small-N cases.
+- New SVE micro-kernel: per-channel INT4 matrix multiplication with FP32 output, `kai_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0sf32bf32_8vsx8_sve_i8mm`, requiring SVE I8MM and exactly 256-bit vectors.
+
 ## v1.32.0
 
 - Optimizations:

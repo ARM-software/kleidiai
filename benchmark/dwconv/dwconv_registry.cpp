@@ -9,23 +9,12 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <optional>
 #include <test/common/cpu_info.hpp>
 #include <test/common/data_type.hpp>
 
+#include "benchmark/kai_benchmark.hpp"
 #include "dwconv_benchmark_logic.hpp"
 #include "dwconv_interface.hpp"
-
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wswitch-default"
-#endif  // __GNUC__
-
-#include <benchmark/benchmark.h>
-
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif  // __GNUC__
 
 // Micro-kernels to register for benchmarking
 #include "kai/ukernels/dwconv/dwconv_f16_f16_f16p/kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla.h"
@@ -34,124 +23,57 @@
 #include "kai/ukernels/dwconv/pack/kai_rhs_dwconv_pack_x32p1vlx1b_x32_x32_sme.h"
 
 namespace kai::benchmark {
-using DataType = test::DataType;
+using test::DataType;
 
 inline constexpr DwConvPackedDepthfirstFloatInterface kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla_iface{
+    .get_filter_height = kai_get_filter_height_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla,
+    .get_filter_width = kai_get_filter_width_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla,
+    .get_dst_size = kai_get_dst_size_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla,
+    .get_packed_rhs_size = kai_rhs_get_dst_size_dwconv_pack_x16p1vlx1b_x16_x16_sme,
+    .supports_configuration =
+        [](size_t stride_height, size_t stride_width, size_t dilation_height, size_t dilation_width) {
+            return stride_height == 1 && stride_width == 1 && dilation_height == 1 && dilation_width == 1;
+        },
     .run_dwconv = kai_run_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla,
 };
 
 inline constexpr DwConvPackedFloatInterface kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla_iface{
+    .get_m_step = kai_get_m_step_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
+    .get_filter_height = kai_get_filter_height_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
+    .get_filter_width = kai_get_filter_width_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
+    .get_dst_size = kai_get_dst_size_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
+    .get_dst_offset = kai_get_dst_offset_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
+    .get_src_offset = kai_get_src_offset_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
+    .get_packed_rhs_size = kai_rhs_get_dst_size_dwconv_pack_x32p1vlx1b_x32_x32_sme,
+    .supports_configuration =
+        [](size_t stride_height, size_t stride_width, size_t dilation_height, size_t dilation_width) {
+            return stride_height == 1 && stride_width == 1 && dilation_height == 1 && dilation_width == 1;
+        },
     .run_dwconv = kai_run_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
 };
-
-struct DwConvBenchmarkCase {
-    ::benchmark::internal::Benchmark* benchmark;
-    const DwConvTraits* traits;
-};
-
-inline constexpr DwConvRhsConfig kai_dwconv_packed_fp16_rhs_cfg{
-    .layout = DwConvRhsLayout::Packed,
-    .weights_elem_bits = 16,
-    .bias_elem_bits = 16,
-    .get_packed_rhs_size = kai_rhs_get_dst_size_dwconv_pack_x16p1vlx1b_x16_x16_sme,
-};
-
-inline constexpr DwConvRhsConfig kai_dwconv_packed_fp32_rhs_cfg{
-    .layout = DwConvRhsLayout::Packed,
-    .weights_elem_bits = 32,
-    .bias_elem_bits = 32,
-    .get_packed_rhs_size = kai_rhs_get_dst_size_dwconv_pack_x32p1vlx1b_x32_x32_sme,
-};
-
-// Helper function to bundle traits
-template <
-    typename GetMStep, typename GetFilterHeight, typename GetFilterWidth, typename GetKr, typename GetDstSize,
-    typename GetDstOffset, typename GetSrcOffset>
-constexpr DwConvTraits BundleTraits(
-    GetMStep get_m_step, GetFilterHeight get_filter_height, GetFilterWidth get_filter_width, GetKr get_kr,
-    GetDstSize get_dst_size, GetDstOffset get_dst_offset, GetSrcOffset get_src_offset) {
-    DwConvTraits traits{};
-    traits.get_m_step = get_m_step;
-    traits.get_filter_height = get_filter_height;
-    traits.get_filter_width = get_filter_width;
-    traits.get_kr = get_kr;
-    traits.get_dst_size = get_dst_size;
-    traits.get_dst_offset = get_dst_offset;
-    traits.get_src_offset = get_src_offset;
-    return traits;
-}
-
-template <typename GetFilterHeight, typename GetFilterWidth, typename GetDstSize>
-constexpr DwConvTraits BundleDepthfirstTraits(
-    GetFilterHeight get_filter_height, GetFilterWidth get_filter_width, GetDstSize get_dst_size) {
-    DwConvTraits traits{};
-    traits.get_filter_height = get_filter_height;
-    traits.get_filter_width = get_filter_width;
-    traits.get_dst_size = get_dst_size;
-    return traits;
-}
-
-inline constexpr DwConvTraits kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla_traits = BundleDepthfirstTraits(
-    kai_get_filter_height_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla,
-    kai_get_filter_width_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla,
-    kai_get_dst_size_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla);
-
-inline constexpr DwConvTraits kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla_traits = BundleTraits(
-    kai_get_m_step_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
-    kai_get_filter_height_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
-    kai_get_filter_width_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
-    kai_get_kr_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
-    kai_get_dst_size_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
-    kai_get_dst_offset_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
-    kai_get_src_offset_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla);
 
 /// Returns the lazily registered dwconv benchmarks.
 ///
 /// @return Registered dwconv benchmarks.
-const auto& get_dwconv_benchmarks() {
-    static const std::array<DwConvBenchmarkCase, 2> dwconv_benchmarks{{
-        {
-            ::benchmark::RegisterBenchmark(
-                "kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla", kai_benchmark_dwconv,
-                RunnerFactory{[](const DwConvTraits& tr, DataType sdt, DataType ddt) {
-                    return std::make_unique<DwConvPackedFloatRunner>(
-                        kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla_iface, tr, sdt, ddt);
-                }},
-                kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla_traits, DataType::FP32, DataType::FP32,
-                kai_dwconv_packed_fp32_rhs_cfg, test::cpu_has_sme2),
-            &kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla_traits,
-        },
-        {
-            ::benchmark::RegisterBenchmark(
-                "kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla", kai_benchmark_dwconv,
-                RunnerFactory{[](const DwConvTraits& tr, DataType sdt, DataType ddt) {
-                    return std::make_unique<DwConvPackedDepthfirstFloatRunner>(
-                        kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla_iface, tr, sdt, ddt);
-                }},
-                kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla_traits, DataType::FP16, DataType::FP16,
-                kai_dwconv_packed_fp16_rhs_cfg, test::cpu_has_sme2),
-            &kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla_traits,
-        },
-    }};
+static const auto& get_dwconv_benchmarks() {
+    static const std::array dwconv_benchmarks{
+        BMFramework::RegisterBenchmark(
+            "kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla", kai_benchmark_dwconv<DwConvPackedFloatInterface>,
+            kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla_iface, DataType::FP32, DataType::FP32,
+            test::cpu_has_sme2),
+        BMFramework::RegisterBenchmark(
+            "kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla",
+            kai_benchmark_dwconv<DwConvPackedDepthfirstFloatInterface>,
+            kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla_iface, DataType::FP16, DataType::FP16,
+            test::cpu_has_sme2),
+    };
 
     return dwconv_benchmarks;
 }
 
 void RegisterDwConvBenchmarks(const DwConvShape& shape) {
-    if (!supports_unit_stride_and_dilation(shape)) {
-        return;
-    }
-
-    for (const auto& entry : get_dwconv_benchmarks()) {
-        const size_t filter_height = entry.traits->get_filter_height();
-        const size_t filter_width = entry.traits->get_filter_width();
-
-        const auto [out_h, out_w] = compute_dwconv_output_dims(shape, filter_height, filter_width);
-        if (out_h == 0 || out_w == 0) {
-            continue;
-        }
-
-        entry.benchmark
+    for (const auto& benchmark : get_dwconv_benchmarks()) {
+        benchmark
             ->Args({
                 static_cast<int64_t>(shape.num_channels),
                 static_cast<int64_t>(shape.input_height),
@@ -179,28 +101,6 @@ void RegisterDwConvBenchmarks(const DwConvShape& shape) {
                 "dilation_w",
             });
     }
-}
-
-std::optional<DwConvOutputShape> InferDwConvOutputDims(const DwConvShape& shape) {
-    const auto& benchmarks = get_dwconv_benchmarks();
-    if (benchmarks.empty()) {
-        return std::nullopt;
-    }
-
-    if (!supports_unit_stride_and_dilation(shape)) {
-        return std::nullopt;
-    }
-
-    const DwConvTraits* traits = benchmarks.front().traits;
-    const size_t filter_height = traits->get_filter_height();
-    const size_t filter_width = traits->get_filter_width();
-
-    const auto dims = compute_dwconv_output_dims(shape, filter_height, filter_width);
-    if (dims.height == 0 || dims.width == 0) {
-        return std::nullopt;
-    }
-
-    return dims;
 }
 
 }  // namespace kai::benchmark

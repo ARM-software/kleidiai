@@ -18,18 +18,8 @@
 #include <string_view>
 
 #include "benchmark/imatmul_pack_lhs/imatmul_pack_lhs_registry.hpp"
+#include "benchmark/kai_benchmark.hpp"
 #include "test/nextgen/common/text_utils.hpp"
-
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wswitch-default"
-#endif  // __GNUC__
-
-#include <benchmark/benchmark.h>
-
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif  // __GNUC__
 
 namespace kai::benchmark {
 
@@ -55,7 +45,6 @@ int run_imatmul_pack_lhs(int argc, char** argv, const std::optional<std::string>
         {"benchmark_filter", required_argument, nullptr, OPT_BENCHMARK_FILTER},
         {nullptr, 0, nullptr, 0},
     };
-    optind = 1;
     int opt;
     while ((opt = getopt_long(argc, argv, "m:c:l:", long_options, nullptr)) != -1) {
         switch (opt) {
@@ -82,12 +71,12 @@ int run_imatmul_pack_lhs(int argc, char** argv, const std::optional<std::string>
     }
 
     // Restricts user filters to indirect matmul LHS packing despite other modes' static registrations.
-    ::benchmark::ClearRegisteredBenchmarks();
+    BMFramework::ClearRegisteredBenchmarks();
     RegisterImatmulPackLhsBenchmarks(*m, *k_chunk_count, *k_chunk_length);
     const std::string spec = user_filter_opt.value_or("");
-    ::benchmark::RunSpecifiedBenchmarks(nullptr, nullptr, spec);
-    ::benchmark::Shutdown();
-    return 0;
+    const int result = BMFramework::RunSpecifiedBenchmarks(spec);
+    BMFramework::Shutdown();
+    return result;
 }
 
 }  // namespace kai::benchmark

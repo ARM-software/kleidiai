@@ -28,23 +28,6 @@ namespace kai::test {
 
 namespace {
 
-/// Calculates the absolute and relative errors.
-///
-/// @param[in] imp Value under test.
-/// @param[in] ref Reference value.
-///
-/// @return The absolute error and relative error.
-template <typename T>
-std::tuple<float, float> calculate_error(T imp, T ref) {
-    const auto imp_f = static_cast<float>(imp);
-    const auto ref_f = static_cast<float>(ref);
-
-    const auto abs_error = std::abs(imp_f - ref_f);
-    const auto rel_error = ref_f != 0 ? abs_error / std::abs(ref_f) : 0.0F;
-
-    return {abs_error, rel_error};
-}
-
 template <typename T>
 size_t compare_plain_2d(
     Shape shape, Span<const size_t> tile_coords, Shape tile_shape, Span<const std::byte> imp_buffer,

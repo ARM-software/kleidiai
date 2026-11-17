@@ -59,6 +59,15 @@ def has_local_changes(
     return bool(output.strip())
 
 
+def get_versioned_files(root_dir: Path | None = None) -> list[Path]:
+    """Return sorted tracked file paths relative to the repository root."""
+    cwd = root_dir or repo_root()
+    return_code, output = git_run(["ls-files", "-z"], cwd=cwd)
+    if return_code != 0:
+        raise RuntimeError("Unable to list versioned files")
+    return [Path(name) for name in sorted(filter(None, output.split("\0")))]
+
+
 def get_commits(
     start_ref: str,
     end_ref: str = "HEAD",

@@ -12,6 +12,7 @@
 
 #include "imatmul_pack_lhs_benchmark_logic.hpp"
 #include "imatmul_pack_lhs_interface.hpp"
+#include "kai/ukernels/matmul/kai_imatmul_pack_lhs.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_imatmul_pack_x16p2vlx2_x16p_sme.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_imatmul_pack_x32p2vlx1_x32p_sme.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_imatmul_pack_x8p2vlx4_x8p_sme.h"
@@ -38,6 +39,11 @@ inline constexpr ImatmulPackLhsBaseInterface kai_lhs_imatmul_pack_x8p2vlx4_x8p_s
     .run = kai_run_lhs_imatmul_pack_x8p2vlx4_x8p_sme,
 };
 
+inline constexpr ImatmulPackLhsUkernelApiInterface kai_imatmul_pack_lhs_mxk_x16p4vsx2_x16_sme2_interface{
+    .get_config = [] { return kai_imatmul_pack_lhs_uker_config{}; },
+    .get_api = kai_imatmul_pack_lhs_mxk_x16p4vsx2_x16_sme2,
+};
+
 /// Returns the lazily registered indirect matmul LHS packing benchmarks.
 ///
 /// @return Registered indirect matmul LHS packing benchmarks.
@@ -55,6 +61,10 @@ const auto& get_imatmul_pack_lhs_benchmarks() {
             "kai_imatmul_pack_lhs/kai_lhs_imatmul_pack_x8p2vlx4_x8p_sme",
             kai_benchmark_imatmul_pack_lhs<ImatmulPackLhsBaseInterface>,
             kai_lhs_imatmul_pack_x8p2vlx4_x8p_sme_interface, DataType::QAI8, test::cpu_has_sme),
+        RegisterBenchmark(
+            "kai_imatmul_pack_lhs/kai_imatmul_pack_lhs_mxk_x16p4vsx2_x16_sme2",
+            kai_benchmark_imatmul_pack_lhs<ImatmulPackLhsUkernelApiInterface>,
+            kai_imatmul_pack_lhs_mxk_x16p4vsx2_x16_sme2_interface, DataType::FP16, test::cpu_has_sme2),
     };
 
     return imatmul_pack_lhs_benchmarks;

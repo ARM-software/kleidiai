@@ -8,6 +8,8 @@
 
 #include <cstddef>
 
+#include "kai/kai_common.h"
+
 namespace kai::test {
 
 /// Interface for LHS packing kernel with dynamic quantization.
@@ -30,6 +32,17 @@ struct MatMulPackLhsFpInterface {
     void (*run)(
         size_t m, size_t k, size_t bl, size_t mr, size_t kr, size_t sr, size_t m_idx_start, const void* lhs,
         size_t lhs_stride, void* lhs_packed);
+};
+
+/// Interface for LHS packing kernels with statically quantized inputs and supplied metadata.
+struct MatMulPackLhsPqInterface {
+    size_t (*get_m_step)(size_t mr);
+    size_t (*get_lhs_offset)(size_t m_idx, size_t lhs_stride);
+    size_t (*get_lhs_packed_offset)(size_t m_idx, size_t k, size_t mr, size_t kr, size_t sr);
+    size_t (*get_lhs_packed_size)(size_t m, size_t k, size_t mr, size_t kr, size_t sr);
+    void (*run)(
+        size_t m, size_t k, size_t mr, size_t kr, size_t sr, size_t m_idx_start, const void* lhs, size_t lhs_stride,
+        const struct kai_lhs_pack_qai8dxp_params* params, void* lhs_packed);
 };
 
 }  // namespace kai::test

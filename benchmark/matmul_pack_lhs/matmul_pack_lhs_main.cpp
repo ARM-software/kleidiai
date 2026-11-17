@@ -17,19 +17,9 @@
 #include <string>
 #include <string_view>
 
+#include "benchmark/kai_benchmark.hpp"
 #include "benchmark/matmul_pack_lhs/matmul_pack_lhs_registry.hpp"
 #include "test/nextgen/common/text_utils.hpp"
-
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wswitch-default"
-#endif  // __GNUC__
-
-#include <benchmark/benchmark.h>
-
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif  // __GNUC__
 
 namespace kai::benchmark {
 
@@ -54,7 +44,6 @@ int run_matmul_pack_lhs(int argc, char** argv, const std::optional<std::string>&
         {"benchmark_filter", required_argument, nullptr, OPT_BENCHMARK_FILTER},
         {nullptr, 0, nullptr, 0},
     };
-    optind = 1;
     int opt;
     while ((opt = getopt_long(argc, argv, "m:k:b:", long_options, nullptr)) != -1) {
         switch (opt) {
@@ -76,18 +65,18 @@ int run_matmul_pack_lhs(int argc, char** argv, const std::optional<std::string>&
         }
     }
 
-    if (!m || !k || !bl) {
+    if (!m || !k || !bl || *m == 0 || *k == 0 || *bl == 0) {
         print_matmul_pack_lhs_usage(argv[0]);
         return EXIT_FAILURE;
     }
 
     // Restricts user filters to LHS packing despite other modes' static registrations.
-    ::benchmark::ClearRegisteredBenchmarks();
+    BMFramework::ClearRegisteredBenchmarks();
     RegisterMatMulPackLhsBenchmarks(*m, *k, *bl);
     const std::string spec = user_filter_opt.value_or("");
-    ::benchmark::RunSpecifiedBenchmarks(nullptr, nullptr, spec);
-    ::benchmark::Shutdown();
-    return 0;
+    const int result = BMFramework::RunSpecifiedBenchmarks(spec);
+    BMFramework::Shutdown();
+    return result;
 }
 
 }  // namespace kai::benchmark

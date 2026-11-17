@@ -29,7 +29,7 @@ typedef struct {
     const void* bias;
 } kai_matmul_clamp_f32_f32_f32p8x1biasf32_6x8x4_neon_mla_impl_args_t;
 
-extern void kai_matmul_clamp_f32_f32_f32p8x1biasf32_6x8x4_neon_mla_impl(
+extern void kai_matmul_clamp_f32_f32_f32p8x1biasf32_6x8x4_neon_mla(
     const void* input_ptr, size_t m, kai_matmul_clamp_f32_f32_f32p8x1biasf32_6x8x4_neon_mla_impl_args_t* args_ptr,
     unsigned long flags);
 
@@ -115,7 +115,7 @@ void kai_run_matmul_clamp_f32_f32_f32p8x1biasf32_6x8x4_neon_mla(
     ka.maxval = clamp_max;
     ka.minval = clamp_min;
 
-    kai_matmul_clamp_f32_f32_f32p8x1biasf32_6x8x4_neon_mla_impl(input_ptr, m, &ka, flags);
+    kai_matmul_clamp_f32_f32_f32p8x1biasf32_6x8x4_neon_mla(input_ptr, m, &ka, flags);
 }
 
 #endif  // Architectural features check.

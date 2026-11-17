@@ -8,21 +8,37 @@
 
 #pragma once
 
-#include <memory>
-
 #include "test/common/data_type.hpp"
 #include "test/common/matrix_portion.hpp"
-#include "test/nextgen/harness/kernel_wrapper.hpp"
 #include "test/nextgen/operators/matmul/kernel_types.hpp"
-#include "test/nextgen/operators/matmul/matmul_dims.hpp"
 
 namespace kai::test {
 
 /// Creates a wrapper for kai_lhs_pack_f16pmrx2_f32_neon micro-kernel.
-[[nodiscard]] MatMulPackKernelPtr create_matmul_lhs_pack_f16p4vsx2_f32_neon();
+///
+/// @param[in] block_length The block length used in the fixed packing arguments.
+///
+/// @return The micro-kernel wrapper.
+[[nodiscard]] MatMulPackKernelPtr create_matmul_lhs_pack_f16p4vsx2_f32_neon(size_t block_length);
+
+/// Creates a wrapper for kai_lhs_pack_qai8dxp1x8sf32_x8_neon.
+///
+/// @return The micro-kernel wrapper.
+[[nodiscard]] MatMulPackKernelPtr create_matmul_lhs_pack_qai8dxp1x8sf32_x8_neon();
+
+/// Creates a wrapper for kai_lhs_pack_qai8dxp4x8sf32_x8_neon.
+///
+/// @return The micro-kernel wrapper.
+[[nodiscard]] MatMulPackKernelPtr create_matmul_lhs_pack_qai8dxp4x8sf32_x8_neon();
 
 /// Creates a wrapper for kai_lhs_quant_pack_qai8dxp_f32 micro-kernel.
 [[nodiscard]] MatMulPackKernelPtr create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32();
+
+/// Creates a wrapper for kai_lhs_quant_pack_qai8dxp1vlx4_f32_sme micro-kernel.
+[[nodiscard]] MatMulPackKernelPtr create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32_sme();
+
+/// Creates a wrapper for kai_lhs_quant_pack_qai8dxp1vlx4_f32_sme2 micro-kernel.
+[[nodiscard]] MatMulPackKernelPtr create_matmul_lhs_quant_pack_qai8dxp1vlx4_f32_sme2();
 
 /// Creates a wrapper for kai_lhs_quant_pack_qai8dxp_f32 micro-kernel.
 [[nodiscard]] MatMulPackKernelPtr create_matmul_lhs_quant_pack_qai8dxp1x4_f32();
@@ -36,30 +52,48 @@ namespace kai::test {
 /// Creates a wrapper for kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon micro-kernel.
 [[nodiscard]] MatMulPackKernelPtr create_matmul_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon();
 
-/// Creates a wrapper for kai_lhs_quant_pack_qai8dxp_f32 micro-kernel (qai8dxp4vsx4 tile shape).
-[[nodiscard]] MatMulPackKernelPtr create_matmul_lhs_quant_pack_qai8dxp4vsx4_f32();
-
 /// Creates a wrapper for kai_lhs_pack_f32p2vlx1_f32_sme micro-kernel.
 [[nodiscard]] MatMulPackKernelPtr create_matmul_lhs_pack_f32p2vlx1_f32_sme();
 
 /// Creates a wrapper for kai_lhs_pack_x16p2vlx2_x16_sme micro-kernel.
 ///
-/// @param[in] data_type The input and packed data type. Must be 16 bits.
-///
+/// @tparam DType The 16-bit input and packed data type.
 /// @return The micro-kernel wrapper.
-[[nodiscard]] MatMulPackKernelPtr create_matmul_lhs_pack_x16p2vlx2_x16_sme(DataType data_type);
+template <DataType DType>
+[[nodiscard]] MatMulPackKernelPtr create_matmul_lhs_pack_x16p2vlx2_x16_sme();
 
 /// Creates a wrapper for kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme.
+///
+/// @tparam DType The 16-bit LHS and packed data type.
+template <DataType DType>
 [[nodiscard]] MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme();
 
 /// Creates a wrapper for kai_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2.
+///
+/// @tparam DType The 16-bit LHS and packed data type.
+template <DataType DType>
 [[nodiscard]] MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme2();
 
 /// Creates a wrapper for kai_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme.
+///
+/// @tparam DType The 32-bit LHS and packed data type.
+template <DataType DType>
 [[nodiscard]] MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x32p4vsx1_x32_sme();
 
 /// Creates a wrapper for kai_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme.
-[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme();
+///
+/// @tparam DType The 8-bit LHS and packed data type.
+/// @param[in] src_slot The LHS tensor consumed by the micro-kernel.
+template <DataType DType>
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme(MatMulSlot src_slot);
+
+/// Checks if the portion produces non-empty tiles for the one-row statically quantized qai8dxp packer.
+[[nodiscard]] bool is_shape_suitable_lhs_qai8dxp1x8sf32_x8_neon(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
+
+/// Checks if the portion produces non-empty tiles for the four-row statically quantized qai8dxp packer.
+[[nodiscard]] bool is_shape_suitable_lhs_qai8dxp4x8sf32_x8_neon(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
 /// Checks if the portion produces non-empty LHS packing tiles for the qai8dxp1x4/qsi8cxp8x4 matmul operator.
 [[nodiscard]] bool is_shape_suitable_lhs_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot(
@@ -73,13 +107,19 @@ namespace kai::test {
 [[nodiscard]] bool is_shape_suitable_lhs_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
-/// Creates a wrapper for kai_matmul_pack_lhs_mxk_x8p4vsx4_x8_sme with I8 quantized input.
-[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x8p4vsx4_i8_sme();
-
-[[nodiscard]] MatMulPackKernelPtr create_matmul_lhs_pack_x8p8vsx4_i8_sme();
+/// Creates a wrapper for kai_lhs_pack_x8p2vlx4_x8_sme with 8vsx4 packed blocks.
+///
+/// @tparam DType The 8-bit input and packed data type.
+/// @param[in] src_slot The LHS tensor consumed by the micro-kernel.
+template <DataType DType>
+[[nodiscard]] MatMulPackKernelPtr create_matmul_lhs_pack_x8p8vsx4_x8_sme(MatMulSlot src_slot);
 
 /// Checks if the portion produces non-empty LHS packing tiles for the f16p4vsx2/qai4c32p16vsx4 matmul operator.
 [[nodiscard]] bool is_shape_suitable_lhs_f16p4vsx2_qai4c32p16vsx4s1s0sf16_4vsx16vs_sme2_mopa(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
+
+/// Checks if the portion produces non-empty LHS packing tiles for the native s4s0 FP16 matmul operator.
+[[nodiscard]] bool is_shape_suitable_lhs_f16p4vsx2_qsi4c32p16vsx4s4s0sf16_4vsx16vs_sme_mopa(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
 /// Checks if the portion produces non-empty LHS packing tiles for the qsi8d32p1x4/qai4c32p16vsx4 matmul operator.
@@ -121,6 +161,10 @@ namespace kai::test {
 [[nodiscard]] bool is_shape_suitable_lhs_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
+/// Checks if the portion produces non-empty LHS packing tiles for the QAI8DXP2VSX8SF32 format.
+[[nodiscard]] bool is_shape_suitable_lhs_qai8dxp2vsx8sf32_f32(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
+
 /// Checks if the portion produces non-empty LHS packing tiles for the SVE I8MM QAI8DXP/QSI4C32P operator.
 [[nodiscard]] bool is_shape_suitable_lhs_qai8dxp2vsx8sf32_qsi4c32p8x8s16s0sbf16bf32_8vsx8_sve_i8mm(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
@@ -145,13 +189,17 @@ namespace kai::test {
 
 /// Creates a wrapper for kai_matmul_pack_lhs_mxk_x16p8x4_x16_neon micro-kernel.
 ///
-/// @param[in] data_type The input and packed data type. Must be 16 bits.
-///
+/// @tparam DType The 16-bit input and packed data type.
 /// @return The micro-kernel wrapper.
-[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p8x4_x16_neon(DataType data_type);
+template <DataType DType>
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p8x4_x16_neon();
 
 /// Checks if the portion produces non-empty LHS packing tiles for the x16p8x4 matmul operator.
 [[nodiscard]] bool is_shape_suitable_lhs_x16p8x4_x16_neon(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
+
+/// Checks if the portion produces non-empty LHS packing tiles for the qai8dxp4vsx4 LHS packing from FP32.
+[[nodiscard]] bool is_shape_suitable_lhs_qai8dxp4vsx4_f32(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
 }  // namespace kai::test

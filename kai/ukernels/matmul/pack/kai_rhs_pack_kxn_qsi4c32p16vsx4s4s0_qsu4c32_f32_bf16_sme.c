@@ -9,8 +9,8 @@
 // This micro-kernel is fixed to RHS zero point 8, LHS zero point 1 and BF16 block scales (qsu4c32s1s0 convention) --
 // the equivalent of the legacy free-function API's kai_rhs_pack_kxn_qsi4c32p_qsu4c32s1s0_params{8, 1, kai_dt_bf16}.
 
-#if (!defined(__aarch64__) || !defined(__ARM_FEATURE_SVE2)) && !defined(_M_ARM64)
-#error This file must be compiled for AArch64, FEAT_SVE2.
+#if (!defined(__aarch64__) || !defined(__ARM_FEATURE_BF16_SCALAR_ARITHMETIC)) && !defined(_M_ARM64)
+#error This file must be compiled for AArch64, FEAT_BF16.
 #else  // Architectural features check.
 
 #include <arm_neon.h>

@@ -29,6 +29,8 @@ namespace kai::test {
 /// Component input buffers follow packed order: outer prefixes, block prefixes,
 /// data, block postfixes, then outer postfixes. Outer components have one value
 /// per logical row; block components have one value per row and K block.
+/// When trailing block components are enabled, all K blocks of data in a block
+/// row are stored first, followed by the postfix components of every K block.
 ///
 /// Example:
 ///   Shape: (5, 8)
@@ -88,12 +90,14 @@ public:
     /// @param[in] interleave_width Distance between the two source nibbles packed into each byte.
     ///                             A value of 1 preserves adjacent nibbles. Other values require I4 data.
     /// @param[in] pad_bottom_same Bottom padding repeats the last row, including all components, instead of 0.
+    /// @param[in] trailing_block_components Whether the block postfix components of all K blocks follow
+    ///                                      all K blocks of data in each block row.
     Block2dRowFormat(
         size_t block_height, size_t block_width, size_t width_align, bool pad_right_same, DataType dtype,
         Span<const DataType> pre_dtypes, Span<const DataType> post_dtypes, size_t block_length = 0,
         std::optional<double> pad_value = std::nullopt, bool pad_bottom_first = false,
         Span<const DataType> row_pre_dtypes = {}, Span<const DataType> row_post_dtypes = {},
-        size_t interleave_width = 1, bool pad_bottom_same = false) :
+        size_t interleave_width = 1, bool pad_bottom_same = false, bool trailing_block_components = false) :
         m_block_height(block_height),
         m_block_width(block_width),
         m_width_align(width_align),
@@ -107,7 +111,8 @@ public:
         m_row_pre_dtypes(row_pre_dtypes.begin(), row_pre_dtypes.end()),
         m_row_post_dtypes(row_post_dtypes.begin(), row_post_dtypes.end()),
         m_interleave_width(interleave_width),
-        m_pad_bottom_same(pad_bottom_same) {
+        m_pad_bottom_same(pad_bottom_same),
+        m_trailing_block_components(trailing_block_components) {
         KAI_TEST_ASSERT(width_align % block_width == 0);
         KAI_TEST_ASSERT(block_height * block_width * data_type_size_in_bits(dtype) % 8 == 0);
         KAI_TEST_ASSERT(block_length == 0 || block_length % block_width == 0);
@@ -118,6 +123,7 @@ public:
         KAI_TEST_ASSERT(interleave_width == 1 || dtype == DataType::I4);
         KAI_TEST_ASSERT(interleave_width == 1 || width_align % (2 * interleave_width) == 0);
         KAI_TEST_ASSERT(interleave_width == 1 || block_length == 0 || block_length % (2 * interleave_width) == 0);
+        KAI_TEST_ASSERT(!trailing_block_components || (block_length != 0 && pre_dtypes.empty()));
 
         for (const DataType pre_dtype : pre_dtypes) {
             KAI_TEST_ASSERT(data_type_size_in_bits(pre_dtype) % 8 == 0);
@@ -160,6 +166,7 @@ private:
     std::vector<DataType> m_row_post_dtypes;
     size_t m_interleave_width;
     bool m_pad_bottom_same;
+    bool m_trailing_block_components;
 };
 
 }  // namespace kai::test

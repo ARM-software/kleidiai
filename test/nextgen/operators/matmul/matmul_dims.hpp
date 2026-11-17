@@ -8,7 +8,6 @@
 
 #include <cstddef>
 
-#include "test/common/assert.hpp"
 #include "test/common/enum_utils.hpp"
 #include "test/nextgen/common/shape.hpp"
 
@@ -43,8 +42,8 @@ public:
         return Span<const size_t>::at(static_cast<size_t>(as_idx(dim)));
     }
 
-    [[nodiscard]] constexpr size_t at(size_t) const = delete;
-    [[nodiscard]] constexpr size_t operator[](size_t) const = delete;
+private:
+    using Shape::operator[];
 };
 
 /// Helper class for allowing MatDim to be used as index for 2D matrix shapes.
@@ -61,8 +60,8 @@ public:
         return Span<const size_t>::at(static_cast<size_t>(as_idx(dim)));
     }
 
-    [[nodiscard]] constexpr size_t at(size_t) const = delete;
-    [[nodiscard]] constexpr size_t operator[](size_t) const = delete;
+private:
+    using Shape::operator[];
 };
 
 }  // namespace kai::test

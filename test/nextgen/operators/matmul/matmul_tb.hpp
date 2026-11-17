@@ -11,6 +11,7 @@
 #include <optional>
 #include <tuple>
 
+#include "test/common/compare.hpp"
 #include "test/nextgen/common/random.hpp"
 #include "test/nextgen/harness/tensor.hpp"
 #include "test/nextgen/operators/matmul/matmul_bias_mode.hpp"
@@ -82,6 +83,9 @@ public:
     void test_matmul(size_t start_m, size_t start_n, size_t size_m, size_t size_n);
 
 private:
+    /// Creates the compute-output comparison handler.
+    [[nodiscard]] DefaultMismatchHandler make_mismatch_handler(DataType output_dtype) const;
+
     void populate_config();  ///< Populates the operator configuration.
 
     /// Determines each tensor whether it is required to run the micro-kernel

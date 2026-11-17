@@ -6,33 +6,21 @@
 
 #pragma once
 
-#include <cfloat>
 #include <cstddef>
 #include <cstdint>
 #include <vector>
 
-#include "benchmark/cycle_counter.hpp"
+#include "benchmark/kai_benchmark.hpp"
 #include "kai/kai_common.h"
 #include "pack_matmul_interface.hpp"
 #include "test/common/cpu_info.hpp"
 #include "test/common/data_type.hpp"
 
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wswitch-default"
-#endif  // __GNUC__
-
-#include <benchmark/benchmark.h>
-
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif  // __GNUC__
-
 namespace kai::benchmark {
 using Buffer = std::vector<uint8_t>;
 
 /// Benchmarks LHS packing followed by a matrix multiplication micro-kernel.
-inline void kai_benchmark_pack_matmul(::benchmark::State& state, const PackMatMulEntry* entry) {
+inline void kai_benchmark_pack_matmul(BMState& state, const PackMatMulEntry* entry) {
     if (!entry->is_cpu_supported()) {
         state.SkipWithMessage("Unsupported CPU feature");
         return;
@@ -88,33 +76,10 @@ inline void kai_benchmark_pack_matmul(::benchmark::State& state, const PackMatMu
     const Buffer rhs(rhs_size);
     Buffer dst(dst_size);
 
-    const bool cycle_counter_available = cycle_counter_init();
-    uint64_t total_cycles = 0;
-    uint64_t start_cycles = 0;
-    bool cycle_measurement_valid = false;
-    if (cycle_counter_available) {
-        cycle_counter_start();
-        cycle_measurement_valid = cycle_counter_read(start_cycles);
-    }
-
-    for (auto _ : state) {
+    state.run([&] {
         entry->run_pack_matmul(
             m, n, k, bl, mr, kr, sr, 0, lhs.data() + lhs_offset, lhs_stride, rhs.data(),
             lhs_packed.data() + lhs_packed_offset, dst.data(), dst_stride_row, dst_stride_col);
-    }
-
-    if (cycle_counter_available) {
-        uint64_t end_cycles = 0;
-        cycle_measurement_valid =
-            cycle_measurement_valid && cycle_counter_read(end_cycles) && end_cycles >= start_cycles;
-        cycle_counter_stop();
-        if (cycle_measurement_valid) {
-            total_cycles += (end_cycles - start_cycles);
-        }
-        cycle_counter_shutdown();
-    }
-
-    state.counters["cpu_cycles"] = ::benchmark::Counter(
-        static_cast<double>(total_cycles), ::benchmark::Counter::kAvgIterations, ::benchmark::Counter::OneK::kIs1000);
+    });
 }
 }  // namespace kai::benchmark

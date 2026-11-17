@@ -23,6 +23,7 @@
 #include "kai/ukernels/matmul/matmul_clamp_f16_qai8dxp_qsi8cxp/kai_matmul_clamp_f16_qai8dxp_qsi8cxp_interface.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp_f16_neon.h"
 #include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon.h"
+#include "test/common/abi_checker.hpp"
 #include "test/common/buffer.hpp"
 #include "test/common/cache.hpp"
 #include "test/common/compare.hpp"
@@ -191,7 +192,8 @@ TEST_P(MatMulTest_f16_qai8dxp_qsi8cxp, EndToEnd) {
 
     ASSERT_EQ(lhs_packed_offset, lhs_matmul_offset);
 
-    kai_run_lhs_quant_pack_qai8dxp_f16_neon(
+    abi_check(
+        kai_run_lhs_quant_pack_qai8dxp_f16_neon,  //
         rect.height() /* m */, K, mr, kr, sr, 0, ref_lhs_f16.data() + lhs_offset, lhs_stride,
         imp_packed_lhs.data() + lhs_packed_offset);
 
@@ -204,7 +206,8 @@ TEST_P(MatMulTest_f16_qai8dxp_qsi8cxp, EndToEnd) {
 
     // Runs the RHS packing micro-kernel.
     const kai_rhs_pack_qsi8cx_params params{.lhs_zero_point = 1, .scale_multiplier = 1.0f};
-    kai_run_rhs_pack_nxk_qsi8cxp_qsi8cx_neon(
+    abi_check(
+        kai_run_rhs_pack_nxk_qsi8cxp_qsi8cx_neon,  //
         1, N, K, nr, kr, sr, reinterpret_cast<const int8_t*>(ref_rhs_qsi8.data()),
         has_bias ? reinterpret_cast<const float*>(ref_biases.data()) : nullptr,
         reinterpret_cast<const float*>(ref_rhs_scales.data()), imp_packed_rhs.data(), 0, &params);
@@ -220,7 +223,8 @@ TEST_P(MatMulTest_f16_qai8dxp_qsi8cxp, EndToEnd) {
     const auto imp_dst_size = ukernel_variant.interface.get_dst_size(M, N);
     ASSERT_EQ(imp_dst_size, ref_dst.size());
     Buffer imp_dst(imp_dst_size);
-    ukernel_variant.interface.run_matmul(
+    abi_check(
+        ukernel_variant.interface.run_matmul,  //
         rect.height(), rect.width(), K, imp_packed_lhs.data() + lhs_matmul_offset,
         imp_packed_rhs.data() + rhs_matmul_offset, imp_dst.data() + dst_offset, dst_stride_row, dst_stride_col,
         clamp_min, clamp_max);
@@ -305,13 +309,13 @@ static constexpr std::array<MatMulShape, 18> all_shapes = {{
 }};
 
 static const std::array<MatrixPortion, 7> portions = {{
-    MatrixPortion(0, 0, 1, 1),         // Full matrix.
-    MatrixPortion(0, 0, 1, 0.25),      // Leftmost portion.
-    MatrixPortion(0, 0.75, 1, 1),      // Rightmost portion.
-    MatrixPortion(0, 0.5, 1, 0.8),     // Somewhere Middle
-    MatrixPortion(0.75, 0.75, 1, 1),   // Bottom-right corner.
-    MatrixPortion(0.75, 0, 1, 1),      // Partial rows
-    MatrixPortion(0.4, 0.5, 0.6, 0.8)  // Somewhere Middle
+    MatrixPortion(0, 0, 1, 1),              // Full matrix.
+    MatrixPortion(0, 0, 1, 0.25),           // Leftmost portion.
+    MatrixPortion(0, 0.75, 1, 0.25),        // Rightmost portion.
+    MatrixPortion(0, 0.5, 1, 0.3),          // Middle columns (full height).
+    MatrixPortion(0.75, 0.75, 0.25, 0.25),  // Bottom-right corner.
+    MatrixPortion(0.75, 0, 0.25, 1),        // Bottom rows (full width).
+    MatrixPortion(0.4, 0.5, 0.2, 0.3)       // Middle block.
 }};
 
 static const auto test_name = [](const auto& info) {

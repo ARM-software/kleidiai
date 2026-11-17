@@ -1478,12 +1478,11 @@ KAI_ASM_LABEL(label_30)  // Odds skip
     sub x25, x25, x0
     mov x24, x23
     mov x23, x22
-    mov x22, #0
 KAI_ASM_LABEL(label_31)  // Zero padded rows: Column loop
     add x21, x23, x0, LSL #1
     mov x20, x25
 KAI_ASM_LABEL(label_32)  // Zero padded rows: Row loop
-    str h22, [x21]
+    strh wzr, [x21]
     add x21, x21, #0x2
     subs x20, x20, #0x1
     bgt label_32

@@ -11,6 +11,7 @@
 #include <optional>
 #include <tuple>
 
+#include "test/common/compare.hpp"
 #include "test/common/enum_utils.hpp"
 #include "test/nextgen/common/random.hpp"
 #include "test/nextgen/harness/tensor.hpp"

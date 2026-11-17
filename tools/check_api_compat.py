@@ -86,9 +86,18 @@ def main() -> int:
     print(f"Checking out test/ and benchmark/ from {latest_tag}.")
     # CI job only: this intentionally mutates the workspace for the remainder of the script;
     # the job workspace is ephemeral and cleaned up by CI.
-    for path in (ROOT_DIR / "test", ROOT_DIR / "benchmark"):
-        if path.exists():
-            shutil.rmtree(path)
+
+    checkout_paths = [
+        "test",
+        "benchmark",
+        "cmake/Fetch*.cmake",
+        "third_party/*.zip",
+    ]
+
+    for path in checkout_paths:
+        full_path = ROOT_DIR / path
+        if (full_path).exists():
+            shutil.rmtree(full_path)
     run(
         [
             "git",
@@ -96,9 +105,8 @@ def main() -> int:
             "-q",
             latest_tag,
             "--",
-            "test",
-            "benchmark",
         ]
+        + checkout_paths
     )
 
     build_path = ROOT_DIR / BUILD_DIR

@@ -8,6 +8,8 @@
 
 #include <cstddef>
 
+#include "kai/ukernels/matmul/kai_imatmul_pack_lhs_types.h"
+
 namespace kai::benchmark {
 
 /// Interface for an indirect matmul LHS packing micro-kernel using the function-based API.
@@ -17,6 +19,12 @@ struct ImatmulPackLhsBaseInterface {
     void (*run)(
         size_t m, size_t k_chunk_count, size_t k_chunk_length, const void* const* lhs_ptrs, size_t lhs_ptr_offset,
         const void* pad_ptr, void* lhs_packed);
+};
+
+/// Interface for an indirect matmul LHS packing micro-kernel using the struct-based API.
+struct ImatmulPackLhsUkernelApiInterface {
+    kai_imatmul_pack_lhs_uker_config (*get_config)(void);
+    kai_imatmul_pack_lhs_uker_api (*get_api)(void);
 };
 
 }  // namespace kai::benchmark
