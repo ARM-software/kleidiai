@@ -12,6 +12,8 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+## v1.34.0
+
 - New Advanced SIMD micro-kernels:
   - Statically quantized INT8 4x16 GEMM with unpacked LHS using Advanced SIMD dot-product instructions.
   - LHS packing micro-kernels `kai_lhs_pack_qai8dxp1x8sf32_x8_neon` and `kai_lhs_pack_qai8dxp4x8sf32_x8_neon` to reorder 8-bit quantized elements with supplied metadata and arbitrary K. Delivery for work items request #40.
@@ -23,7 +25,10 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
   - Google Test: v1.18.0.
   - Google Benchmark: v1.10.0.
   - Bazel: 9.x.
+- Optimizations:
+  - Improve performance of the SVE and SME2.1 Fexpa FP32 softmax micro-kernels.
 - Fixes:
+  - Align SVE and SME helper functions
   - Compile kernels using only SME VL getters as generic aarch64 + corresponding feature flags.
   - Fix zero padding in `kai_rhs_pack_nxk_x16p32x1bx16_x16_x16_neon` when N is not a multiple of 32.
   - Correct interpretation of `MatrixPortion` height and width parameters in tests to refer to lengths.
