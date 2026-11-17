@@ -123,6 +123,7 @@ New micro-kernels must:
   [docs/microkernel_testing.md](docs/microkernel_testing.md).
 - Include benchmark test.
 - Be added to the micro-kernel tables in [docs/microkernel_tables.md](docs/microkernel_tables.md).
+  Note that this only applies to micro-kernels that are made available through the public API.
 
 # Getting access and submitting a merge request
 
