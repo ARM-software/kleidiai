@@ -222,9 +222,5 @@ target_link_libraries(kleidiai_test
 )
 
 # Cross-compiling is a common use case which creates a conflict if DISCOVERY_MODE is set to POST_BUILD (by default)
-# since the host platform does not match the target. Setting the mode to PRE_TEST avoids this conflict. This feature
-# was added in CMake 3.18
-if(CMAKE_CROSSCOMPILING)
-    cmake_minimum_required(VERSION 3.18)
-endif()
+# since the host platform does not match the target. Setting the mode to PRE_TEST avoids this conflict.
 gtest_discover_tests(kleidiai_test DISCOVERY_MODE PRE_TEST)

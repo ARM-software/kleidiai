@@ -12,6 +12,9 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+- Update dependencies to the latest version:
+  - CMake: 3.22
+
 ## v1.34.0
 
 - New Advanced SIMD micro-kernels:
