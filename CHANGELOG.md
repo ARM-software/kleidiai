@@ -14,6 +14,8 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 - Update dependencies to the latest version:
   - CMake: 3.22
+- New micro-kernels
+  - INT8 matmul using SMOP4A instruction for small-N case.
 
 ## v1.34.0
 
