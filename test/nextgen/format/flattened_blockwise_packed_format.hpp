@@ -1,5 +1,6 @@
 //
 // SPDX-FileCopyrightText: Copyright 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -10,6 +11,7 @@
 #include <string>
 
 #include "test/nextgen/format/format.hpp"
+#include "test/nextgen/format/packing_layout.hpp"
 #include "test/nextgen/format/two_level_blockwise_format.hpp"
 
 namespace kai::test {
@@ -45,7 +47,10 @@ public:
     ///
     /// @param[in] source_config Configuration of the native two-level blockwise source.
     /// @param[in] nr Number of rows in each packed panel.
-    FlattenedBlockwisePackedFormat(const TwoLevelBlockConfig& source_config, size_t nr);
+    /// @param[in] pack_order Ordering of rows and nibbles in the packed quantized data.
+    /// @param[in] metadata_order Ordering of rows in the packed offset and scale arrays.
+    FlattenedBlockwisePackedFormat(
+        const TwoLevelBlockConfig& source_config, size_t nr, PackOrder pack_order, MetadataOrder metadata_order);
 
     [[nodiscard]] std::string uid() const override;
     [[nodiscard]] size_t compute_offset(Shape shape, Span<const size_t> indices) const override;
@@ -63,6 +68,8 @@ private:
 
     TwoLevelBlockConfig m_source_config;
     size_t m_nr;
+    PackOrder m_pack_order;
+    MetadataOrder m_metadata_order;
 };
 
 }  // namespace kai::test

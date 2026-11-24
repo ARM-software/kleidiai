@@ -1,5 +1,6 @@
 //
 // SPDX-FileCopyrightText: Copyright 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+// SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -90,24 +91,120 @@ template <typename Byte>
     };
 }
 
+/// Packs two quantized 4-bit values into one byte.
+///
+/// @param[in] source_pair Packed quantized data for a pair of source blocks.
+/// @param[in] source_block Block index within the source super-block.
+/// @param[in] byte Byte index within one row of the packed block.
+/// @param[in] qdata_row_size Number of quantized data bytes in each row of the packed block.
+/// @param[in] pack_order Ordering of rows and nibbles in the packed quantized data.
+///
+/// @return Byte containing two packed 4-bit values.
+[[nodiscard]] uint8_t pack_qdata_byte(
+    Span<const std::byte> source_pair, size_t source_block, size_t byte, size_t qdata_row_size, PackOrder pack_order) {
+    switch (pack_order) {
+        case PackOrder::S1S0: {
+            const auto [first_even, second_even] = UInt4::unpack_u8(std::to_integer<uint8_t>(source_pair[2 * byte]));
+            const auto [first_odd, second_odd] = UInt4::unpack_u8(std::to_integer<uint8_t>(source_pair[2 * byte + 1]));
+
+            return source_block % 2 == 0 ? UInt4::pack_u8(first_even, first_odd)
+                                         : UInt4::pack_u8(second_even, second_odd);
+        }
+        case PackOrder::S16S0: {
+            const auto [first_low, second_low] = UInt4::unpack_u8(std::to_integer<uint8_t>(source_pair[byte]));
+            const auto [first_high, second_high] =
+                UInt4::unpack_u8(std::to_integer<uint8_t>(source_pair[byte + qdata_row_size]));
+
+            return source_block % 2 == 0 ? UInt4::pack_u8(first_low, first_high)
+                                         : UInt4::pack_u8(second_low, second_high);
+        }
+        default:
+            KAI_TEST_ERROR("Unsupported quantized data order.");
+    }
+}
+
 /// Gets the packed byte index for a row and byte within a quantization block.
 ///
 /// @param[in] row Row index within the packed panel.
 /// @param[in] byte Byte index within the quantization block.
 /// @param[in] nr Number of rows in each packed panel.
+/// @param[in] pack_order Ordering of rows and nibbles in the packed quantized data.
 ///
 /// @return Byte index within the packed quantized data region.
-[[nodiscard]] size_t packed_qdata_index(size_t row, size_t byte, size_t nr) {
-    const size_t row_group = (row / 4) * 4;
-    const size_t lane = row % 4;
-    const size_t chunk = (byte / 8) * 8;
-    const size_t pair = (byte % 8) / 2;
-    return chunk * nr + row_group * 2 + pair * nr * 2 + lane * 2 + (byte & 1U);
+[[nodiscard]] size_t packed_qdata_index(size_t row, size_t byte, size_t nr, PackOrder pack_order) {
+    switch (pack_order) {
+        case PackOrder::S1S0: {
+            const size_t row_group = (row / 4) * 4;
+            const size_t lane = row % 4;
+            const size_t chunk = (byte / 8) * 8;
+            const size_t pair = (byte % 8) / 2;
+            return chunk * nr + row_group * 2 + pair * nr * 2 + lane * 2 + (byte & 1U);
+        }
+        case PackOrder::S16S0:
+            return (byte / 8) * nr * 8 + row * 8 + byte % 8;
+        default:
+            KAI_TEST_ERROR("Unsupported quantized data order.");
+    }
 }
 
-size_t metadata_index(size_t row, size_t nr) {
-    const size_t half_nr = nr / 2;
-    return row < half_nr ? 2 * row : 2 * (row - half_nr) + 1;
+/// Gets the packed metadata index for a row within a packed panel.
+///
+/// @param[in] row Row index within the packed panel.
+/// @param[in] nr Number of rows in each packed panel.
+/// @param[in] metadata_order Ordering of rows in the packed metadata.
+///
+/// @return Element index within the packed metadata region.
+[[nodiscard]] size_t packed_metadata_index(size_t row, size_t nr, MetadataOrder metadata_order) {
+    switch (metadata_order) {
+        case MetadataOrder::INTERLEAVED_HALVES: {
+            const size_t half_nr = nr / 2;
+            return row < half_nr ? 2 * row : 2 * (row - half_nr) + 1;
+        }
+        case MetadataOrder::CONTIGUOUS:
+            return row;
+        default:
+            KAI_TEST_ERROR("Unsupported metadata order.");
+    }
+}
+
+/// Gets the block-relative column offsets of two packed quantized values.
+///
+/// @param[in] byte Byte index within one row of the block.
+/// @param[in] qdata_row_size Number of quantized data bytes in each row of the packed block.
+/// @param[in] pack_order Ordering of rows and nibbles in the packed quantized data.
+///
+/// @return Column offsets for the low and high nibbles.
+[[nodiscard]] std::array<size_t, 2> qdata_column_offsets(size_t byte, size_t qdata_row_size, PackOrder pack_order) {
+    switch (pack_order) {
+        case PackOrder::S1S0:
+            return {2 * byte, 2 * byte + 1};
+        case PackOrder::S16S0:
+            return {byte, byte + qdata_row_size};
+        default:
+            KAI_TEST_ERROR("Unsupported quantized data order.");
+    }
+}
+
+[[nodiscard]] const char* pack_order_name(PackOrder pack_order) {
+    switch (pack_order) {
+        case PackOrder::S1S0:
+            return "s1s0";
+        case PackOrder::S16S0:
+            return "s16s0";
+        default:
+            KAI_TEST_ERROR("Unsupported quantized data order.");
+    }
+}
+
+[[nodiscard]] const char* metadata_order_name(MetadataOrder metadata_order) {
+    switch (metadata_order) {
+        case MetadataOrder::INTERLEAVED_HALVES:
+            return "interleaved_halves";
+        case MetadataOrder::CONTIGUOUS:
+            return "contiguous";
+        default:
+            KAI_TEST_ERROR("Unsupported metadata order.");
+    }
 }
 
 bool compare_panel_bytes(
@@ -162,8 +259,9 @@ void print_component(
 
 }  // namespace
 
-FlattenedBlockwisePackedFormat::FlattenedBlockwisePackedFormat(const TwoLevelBlockConfig& source_config, size_t nr) :
-    m_source_config(source_config), m_nr(nr) {
+FlattenedBlockwisePackedFormat::FlattenedBlockwisePackedFormat(
+    const TwoLevelBlockConfig& source_config, size_t nr, PackOrder pack_order, MetadataOrder metadata_order) :
+    m_source_config(source_config), m_nr(nr), m_pack_order(pack_order), m_metadata_order(metadata_order) {
     validate_two_level_block_config(source_config);
     KAI_TEST_ASSERT(source_config.block_length % 16 == 0);
     KAI_TEST_ASSERT(nr > 0 && nr % 4 == 0);
@@ -171,7 +269,9 @@ FlattenedBlockwisePackedFormat::FlattenedBlockwisePackedFormat(const TwoLevelBlo
 
 std::string FlattenedBlockwisePackedFormat::uid() const {
     return "flattened_blockwise_packed<block_length=" + std::to_string(m_source_config.block_length) +
-        ",superblock_length=" + std::to_string(m_source_config.superblock_length) + ",nr=" + std::to_string(m_nr) + ">";
+        ",superblock_length=" + std::to_string(m_source_config.superblock_length) + ",nr=" + std::to_string(m_nr) +
+        ",pack_order=" + pack_order_name(m_pack_order) + ",metadata_order=" + metadata_order_name(m_metadata_order) +
+        ">";
 }
 
 size_t FlattenedBlockwisePackedFormat::panel_size(size_t k) const {
@@ -234,20 +334,16 @@ Buffer FlattenedBlockwisePackedFormat::pack(Shape shape, Span<const Span<const s
                 const Span<const std::byte> source_pair = source_qdata.subspan(
                     source_block_pair * m_source_config.block_length, m_source_config.block_length);
 
-                for (size_t byte_idx = 0; byte_idx < layout.qdata_row_size; ++byte_idx) {
-                    const auto [first_even, second_even] =
-                        UInt4::unpack_u8(std::to_integer<uint8_t>(source_pair[2 * byte_idx]));
-                    const auto [first_odd, second_odd] =
-                        UInt4::unpack_u8(std::to_integer<uint8_t>(source_pair[2 * byte_idx + 1]));
-                    const uint8_t packed_values = source_block % 2 == 0 ? UInt4::pack_u8(first_even, first_odd)
-                                                                        : UInt4::pack_u8(second_even, second_odd);
-                    packed_block.qdata[packed_qdata_index(row_in_panel, byte_idx, m_nr)] =
+                for (size_t byte = 0; byte < layout.qdata_row_size; ++byte) {
+                    const uint8_t packed_values =
+                        pack_qdata_byte(source_pair, source_block, byte, layout.qdata_row_size, m_pack_order);
+                    packed_block.qdata[packed_qdata_index(row_in_panel, byte, m_nr, m_pack_order)] =
                         static_cast<std::byte>(packed_values);
                 }
 
                 const TwoLevelBlockwiseBlockMetadata metadata =
                     native_format.get_block_metadata(shape, buffers.at(0), source_row, block);
-                const size_t meta_index = metadata_index(row_in_panel, m_nr);
+                const size_t meta_index = packed_metadata_index(row_in_panel, m_nr, m_metadata_order);
                 write_array<Float16>(packed_block.offsets, meta_index, metadata.offset);
                 write_array<Float16>(packed_block.scales, meta_index, metadata.scale);
             }
@@ -287,14 +383,18 @@ void FlattenedBlockwisePackedFormat::print(std::ostream& os, Shape shape, Span<c
             for (size_t row_in_panel = 0; row_in_panel < m_nr; ++row_in_panel) {
                 const size_t row = panel * m_nr + row_in_panel;
                 for (size_t byte = 0; byte < layout.qdata_row_size; ++byte) {
-                    const uint8_t packed_value =
-                        std::to_integer<uint8_t>(packed_block.qdata[packed_qdata_index(row_in_panel, byte, m_nr)]);
-                    const size_t col = block * m_source_config.block_length + 2 * byte;
-                    write_2d<UInt4>(qdata, k, row, col, UInt4(packed_value & nibble_mask));
-                    write_2d<UInt4>(qdata, k, row, col + 1, UInt4(packed_value >> 4));
+                    const uint8_t packed_value = std::to_integer<uint8_t>(
+                        packed_block.qdata[packed_qdata_index(row_in_panel, byte, m_nr, m_pack_order)]);
+                    const size_t block_col = block * m_source_config.block_length;
+                    const auto [low_offset, high_offset] =
+                        qdata_column_offsets(byte, layout.qdata_row_size, m_pack_order);
+                    const size_t low_col = block_col + low_offset;
+                    const size_t high_col = block_col + high_offset;
+                    write_2d<UInt4>(qdata, k, row, low_col, UInt4(packed_value & nibble_mask));
+                    write_2d<UInt4>(qdata, k, row, high_col, UInt4(packed_value >> 4));
                 }
 
-                const size_t meta_index = metadata_index(row_in_panel, m_nr);
+                const size_t meta_index = packed_metadata_index(row_in_panel, m_nr, m_metadata_order);
                 write_2d<Float16>(
                     offsets, layout.num_blocks, row, block, read_array<Float16>(packed_block.offsets, meta_index));
                 write_2d<Float16>(
@@ -314,7 +414,8 @@ void FlattenedBlockwisePackedFormat::print(std::ostream& os, Shape shape, Span<c
 
 bool FlattenedBlockwisePackedFormat::operator==(const Format& other) const {
     const auto* rhs = dynamic_cast<const FlattenedBlockwisePackedFormat*>(&other);
-    return rhs != nullptr && m_source_config == rhs->m_source_config && m_nr == rhs->m_nr;
+    return rhs != nullptr && m_source_config == rhs->m_source_config && m_nr == rhs->m_nr &&
+        m_pack_order == rhs->m_pack_order && m_metadata_order == rhs->m_metadata_order;
 }
 
 }  // namespace kai::test

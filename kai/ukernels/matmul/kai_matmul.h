@@ -508,6 +508,29 @@ struct kai_matmul_uker_api kai_matmul_clamp_f32_f16p4vsx2_qai4c32p16vsx4s1s0sf16
 /// @return The micro-kernel API.
 struct kai_matmul_uker_api kai_matmul_clamp_f32_qsi8d32p1x4_qai4c32p16vsx4s1s0sf16_1x16vs_sme2_dot(void);
 
+/// Vector-matrix multiplication with dynamically quantized INT8 packed LHS and QAU4C32P RHS packed inputs with FP32
+/// output using SVE DOT.
+///
+/// Required CPU features:
+///   * FEAT_SVE with a 256-bit vector length
+///
+/// Configuration parameters:
+///   * format.bl - Block length. Must be 32.
+///
+/// Required operands:
+///   * lhs - qsi8d32p1x8sf16 data packed with per-block FP16 sum and scale.
+///   * rhs - qau4c32p8x8s16s0sf16 packed with per-block FP16 offset and scale.
+///   * dst - FP32 output matrix.
+///
+/// Optional arguments:
+///   * clamp - FP32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP is set.
+///
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_f32_qsi8d32p1x8sf16_qau4c32p8x8s16s0sf16_1x8_sve_dot(void);
+
 /// Single-precision floating-point matrix multiplication with statically-blockwise quantized unsigned INT4 RHS,
 /// using SME MOPA instruction.
 ///

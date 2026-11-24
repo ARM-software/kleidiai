@@ -74,6 +74,7 @@ NEON_KERNELS_NOHDR = [
     "pack/kai_matmul_pack_lhs_mxk_x16p8x4_x16_neon",
     "pack/kai_matmul_pack_rhs_kxn_qsu2cxp16vsx4sf32bi32_qsu2cx_f32_i32_sme",
     "pack/kai_matmul_pack_rhs_kxn_x16p12x4bx32_x16_x32_neon",
+    "pack/kai_matmul_pack_rhs_nxk_qax4c32p8x8s16s0sf16_qax4c32k256sf16s32s0_neon",
     "pack/kai_matmul_pack_rhs_nxk_qsu2cxp16vsx4sf32bi32_qsu2cx_f32_i32_sme",
     "pack/kai_matmul_pack_rhs_nxk_x16p12x4bx32_x16_x32_neon",
     "pack/kai_rhs_pack_kxn_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme",
@@ -248,6 +249,7 @@ SVE_KERNELS_ASM_NOHDR = [
     "matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp32x4_1x32_sve_dot",
     "matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot",
     "matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot",
+    "matmul_clamp_f32_qsi8d32p_qau4c32p/kai_matmul_clamp_f32_qsi8d32p1x8sf16_qau4c32p8x8s16s0sf16_1x8_sve_dot",
     "pack/kai_rhs_pack_kxn_x16p16vsx2bx16_x16_x16_sve",
 ]
 

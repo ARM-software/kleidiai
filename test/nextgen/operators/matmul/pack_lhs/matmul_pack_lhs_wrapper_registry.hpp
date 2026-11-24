@@ -122,8 +122,8 @@ template <DataType DType>
 [[nodiscard]] bool is_shape_suitable_lhs_f16p4vsx2_qsi4c32p16vsx4s4s0sf16_4vsx16vs_sme_mopa(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
-/// Checks if the portion produces non-empty LHS packing tiles for the qsi8d32p1x4/qai4c32p16vsx4 matmul operator.
-[[nodiscard]] bool is_shape_suitable_lhs_qsi8d32p1x4_qai4c32p16vsx4s1s0sf16_1x16vs_sme2_dot(
+/// Checks if the portion produces non-empty LHS packing tiles for the qsi8d32p1x4sf16 matmul operator.
+[[nodiscard]] bool is_shape_suitable_lhs_qsi8d32p1x4sf16_f32_neon(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
 /// Creates a wrapper for kai_matmul_lhs_quant_pack_qai8dxp4x8_f32.

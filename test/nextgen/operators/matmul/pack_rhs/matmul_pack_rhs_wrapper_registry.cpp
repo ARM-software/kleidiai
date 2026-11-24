@@ -247,6 +247,16 @@ bool is_shape_suitable_rhs_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme(
         shape_n, shape_k, portion, kai_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme());
 }
 
+bool is_shape_suitable_rhs_qax4c32p8x8s16s0sf16_qax4c32k256sf16s32s0_neon(
+    [[maybe_unused]] size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
+    if (shape_k % qai4c32k256_format_config.superblock_length != 0) {
+        return false;
+    }
+
+    return is_shape_suitable_rhs_uker_api(
+        shape_n, shape_k, portion, kai_matmul_pack_rhs_nxk_qax4c32p8x8s16s0sf16_qax4c32k256sf16s32s0_neon());
+}
+
 bool is_shape_suitable_rhs_kxn_x8p4vsx4_x8_sme(
     [[maybe_unused]] size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
     return is_shape_suitable_rhs_uker_api(shape_n, shape_k, portion, kai_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme());
@@ -649,6 +659,21 @@ MatMulPackKernelPtr create_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k25
         MatMulPackRhsOperandSlots{},                                            // operand_slots
         std::vector{MatMulSlot::RHS_T_QDATA},                                   // reference_component_slots
         MatMulSlot::RHS_T_QDATA);                                               // run_rhs_slot
+}
+
+MatMulPackKernelPtr create_matmul_pack_rhs_nxk_qax4c32p8x8s16s0sf16_qax4c32k256sf16s32s0_neon() {
+    const kai_matmul_pack_rhs_uker_api api = kai_matmul_pack_rhs_nxk_qax4c32p8x8s16s0sf16_qax4c32k256sf16s32s0_neon();
+
+    return std::make_unique<MatMulPackRhsUkerApiTWrapper>(
+        "matmul_pack_rhs_nxk_qax4c32p8x8s16s0sf16_qax4c32k256sf16s32s0_neon",  // name
+        api,                                                                   // api
+        format::qai4c32k256sf16s32s0(),                                        // src_data_format
+        format::plain<DataType::UNKNOWN>(),                                    // src_bias_format (unused)
+        format::qax4c32p8x8s16s0sf16(),                                        // dst_format
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS,                              // bias_delivery_stage
+        MatMulPackRhsOperandSlots{},                                           // operand_slots
+        std::vector{MatMulSlot::RHS_T_QDATA},                                  // reference_component_slots
+        MatMulSlot::RHS_T_QDATA);                                              // run_rhs_slot
 }
 
 template <DataType DType>

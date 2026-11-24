@@ -220,6 +220,22 @@ MatMulKernelPtr create_matmul_clamp_f32_qsi8d32p1x4_qai4c32p16vsx4s1s0sf16_1x16v
         kai_matmul_uker_config{{qai4c32k256_format_config.block_length}});          // uker_config
 }
 
+MatMulKernelPtr create_matmul_clamp_f32_qsi8d32p1x8sf16_qau4c32p8x8s16s0sf16_1x8_sve_dot() {
+    return std::make_unique<MatMulUkerApiWrapper>(
+        "matmul_clamp_f32_qsi8d32p1x8sf16_qau4c32p8x8s16s0sf16_1x8_sve_dot",      // name
+        kai_matmul_clamp_f32_qsi8d32p1x8sf16_qau4c32p8x8s16s0sf16_1x8_sve_dot(),  // api
+        MatMulSlot::LHS_PACKED,                                                   // lhs_input_slot
+        format::qsi8d32p1x4sf16(),                                                // lhs format
+        format::qax4c32p8x8s16s0sf16(),                                           // rhs format
+        format::plain<DataType::FP32>(),                                          // dst_format
+        DataType::FP32,                                                           // acc_dtype
+        MatMulUkerClampConfig::optional(DataType::FP32),                          // clamp_config
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS,                                 // bias_delivery_stage
+        MatMulUkerOutputStageConfig{},                                            // output_stage_config
+        kai_matmul_uker_config{{qai4c32k256_format_config.block_length}}          // uker_config
+    );
+}
+
 MatMulKernelPtr create_matmul_clamp_f32_qai8dxp4x8sf32_qsi8cxp4vsx8sf32bf32_16x4vs_sve_i8mm() {
     MatMulUkerOutputStageConfig output_stage_config{};
 

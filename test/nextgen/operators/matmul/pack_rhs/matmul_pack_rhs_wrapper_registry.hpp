@@ -83,6 +83,9 @@ template <DataType DType>
 /// Creates a wrapper for kai_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme micro-kernel.
 [[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme();
 
+/// Creates a wrapper for kai_matmul_pack_rhs_nxk_qax4c32p8x8s16s0sf16_qax4c32k256sf16s32s0_neon micro-kernel.
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_nxk_qax4c32p8x8s16s0sf16_qax4c32k256sf16s32s0_neon();
+
 /// Creates a wrapper for kai_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme kernel.
 ///
 /// @tparam DType The 8-bit RHS and packed data type.
@@ -154,6 +157,10 @@ template <DataType DType>
 
 /// Checks if the portion produces non-empty RHS packing tiles for the qai4c32p16vsx4s1s0sf16 NxK matmul operator.
 [[nodiscard]] bool is_shape_suitable_rhs_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
+
+/// Checks if the portion produces non-empty RHS packing tiles for the qax4c32p8x8s16s0sf16 NxK matmul operator.
+[[nodiscard]] bool is_shape_suitable_rhs_qax4c32p8x8s16s0sf16_qax4c32k256sf16s32s0_neon(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
 /// Checks if the portion produces non-empty RHS packing tiles for the x8p4vsx4 KxN matmul operator.

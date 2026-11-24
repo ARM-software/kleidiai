@@ -192,7 +192,7 @@ bool is_shape_suitable_lhs_f16p4vsx2_qsi4c32p16vsx4s4s0sf16_4vsx16vs_sme_mopa(
     return portion_non_empty(shape_m, shape_k, 4 * get_sme_vector_scale(), shape_k, portion);
 }
 
-bool is_shape_suitable_lhs_qsi8d32p1x4_qai4c32p16vsx4s1s0sf16_1x16vs_sme2_dot(
+bool is_shape_suitable_lhs_qsi8d32p1x4sf16_f32_neon(
     size_t shape_m, [[maybe_unused]] size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
     return is_shape_suitable_lhs_uker_api(
         shape_m, shape_k, portion, kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon());
