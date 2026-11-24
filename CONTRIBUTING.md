@@ -111,7 +111,7 @@ should cover:
 New micro-kernels must:
 
 - Follow the established naming convention or explicitly justify an extension to
-  it.
+  it. See [micro-kernel naming grammar](docs/microkernel_names.md) for details.
 - Use the [current micro-kernel API](kai/ukernels/matmul/kai_matmul.h) style
   unless maintainers explicitly agree to a different interface.
 - Provide matching interface headers where required.
@@ -119,8 +119,9 @@ New micro-kernels must:
 - Use ACLE feature test macros for CPU-feature-dependent code where applicable.
 - Maintain the advertised behavior, including clamp behavior and partial-output
   behavior.
-- Include unit tests. Must use the NextGen test framework which is described in
-  [docs/microkernel_testing.md](docs/microkernel_testing.md).
+- Be tested using the NextGen test framework described in
+  [docs/microkernel_testing.md](docs/microkernel_testing.md). New micro-kernels
+  do not need duplicate coverage in the legacy test framework.
 - Include benchmark test.
 - Be added to the micro-kernel tables in [docs/microkernel_tables.md](docs/microkernel_tables.md).
   Note that this only applies to micro-kernels that are made available through the public API.
@@ -142,8 +143,12 @@ The MR title and description must comply with:
 
 - MR title has the format `type`: `description`.
   `type` describes the type of contribution and must be one of: major, feat, fix, docs or chore.
-  `description` is brief one-line summary of the change.
+  `description` is brief one-line summary of the change. For example:
+  `feat: Add an F16 matmul micro-kernel`.
 - MR description contains a summary of the change and must include a Signed-off-by line, as per DCO.
+
+Edit the MR title and description directly in GitLab when correcting these
+fields.
 
 Please keep the MR description short and concise as the MR title and description become
 the Git commit message once the MR is merged. Any additional information such as:
@@ -154,6 +159,10 @@ the Git commit message once the MR is merged. Any additional information such as
 - Performance figures.
 
 shall be provided as comments in the MR or in a separate GitLab issue.
+
+Contributions coming from forked repositories should wait for a maintainer to
+trigger the CI pipeline. Only project maintainers have permission to trigger
+pipelines on external contributions.
 
 # Testing requirements
 
