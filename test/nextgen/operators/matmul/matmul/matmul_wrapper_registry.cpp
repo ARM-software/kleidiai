@@ -405,6 +405,19 @@ MatMulKernelPtr create_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0sf32bf32
         MatMulUkerApiBiasDeliveryStage::PACK_RHS);                                       // bias stage
 }
 
+MatMulKernelPtr create_matmul_clamp_bf16_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0sf32bf32_8vsx8_sve_i8mm() {
+    return std::make_unique<MatMulUkerApiWrapper>(
+        "matmul_clamp_bf16_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0sf32bf32_8vsx8_sve_i8mm",      // name
+        kai_matmul_clamp_bf16_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0sf32bf32_8vsx8_sve_i8mm(),  // kernel
+        MatMulSlot::LHS_PACKED,                                                           // lhs input slot
+        format::qai8dxp<4, 8>(),                                                          // lhs format
+        format::qsi4cxps16s0sf32bf32<8, 16>(),                                            // rhs format
+        format::plain<DataType::BF16>(),                                                  // dst format
+        DataType::FP32,                                                                   // acc dtype
+        MatMulUkerClampConfig::optional(DataType::FP32),                                  // clamp config
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS);                                        // bias stage
+}
+
 MatMulKernelPtr create_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa() {
     const MatMulFpInterface kernel_interface{
         kai_get_m_step_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa,

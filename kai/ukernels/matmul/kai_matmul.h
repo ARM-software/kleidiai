@@ -648,6 +648,31 @@ struct kai_matmul_uker_api kai_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4c32p8x8s16s
 /// @return The micro-kernel API.
 struct kai_matmul_uker_api kai_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0sf32bf32_8vsx8_sve_i8mm(void);
 
+/// Dynamically quantized matrix multiplication with channelwise INT4 RHS and BF16 output using SVE I8MM instructions.
+///
+/// This implementation requires a 256-bit vector length, with LHS panels of 4 rows and an output block of 16x8.
+///
+/// Required CPU features:
+///   * FEAT_SVE with a vector length of exactly 256 bits
+///   * SVE FEAT_I8MM instructions
+///   * SVE FEAT_BF16 instructions
+///
+/// Required operands:
+///   * dst - BF16 output matrix.
+///   * lhs - Packed QAI8DXP data with per-M zero point and scale.
+///   * rhs - Packed QSI4CXP data with I32 per-N row sums, F32 per-N scales, and F32 per-N bias.
+///
+/// Optional arguments:
+///   * clamp - F32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
+///
+/// Accumulation: I32, then converted to F32 with per-M and per-N scales and per-N bias, clamped, and converted to BF16.
+///
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_bf16_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0sf32bf32_8vsx8_sve_i8mm(void);
+
 /// Statically quantized INT8 vector-matrix multiplication using Advanced SIMD dot-product instructions.
 ///
 /// Required CPU features:

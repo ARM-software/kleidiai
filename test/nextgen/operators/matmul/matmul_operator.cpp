@@ -1543,6 +1543,33 @@ MatMulOperator create_operator_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0
     return op;
 }
 
+/// Creates an operator for kai_matmul_clamp_bf16_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0sf32bf32_8vsx8_sve_i8mm.
+MatMulOperator create_operator_matmul_clamp_bf16_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0sf32bf32_8vsx8_sve_i8mm() {
+    MatMulOperator op{};
+    op.name = "matmul_clamp_bf16_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0sf32bf32_8vsx8_sve_i8mm";
+
+    op.is_cpu_supported = cpu_check<cpu_has_sve_vl256, cpu_has_svei8mm, cpu_has_svebf16>;
+    op.is_shape_suitable = all_true<                 //
+        is_shape_suitable_lhs_qai8dxp2vsx8sf32_f32,  //
+        is_shape_suitable_rhs_nxk_qsi4cxp8x8s16s0sf32bf32_qsu4cx>;
+    op.supported_bias_mode_sets = {no_bias, acc_bias_per_n};
+    op.clamp_mode = MatMulClampMode::OPTIONAL;
+
+    op.lhs_quant = quantization::qai8dx();
+    op.rhs_quant = quantization::qsu4cx();
+    op.bias_quant = std::nullopt;
+    op.lhs_dtype = DataType::FP32;
+    op.rhs_dtype = DataType::FP32;
+    op.bias_dtype = DataType::FP32;
+    op.acc_dtype = DataType::FP32;
+    op.dst_dtype = DataType::BF16;
+
+    op.pack_lhs = create_matmul_lhs_quant_pack_qai8dxp2vsx8sf32_f32();
+    op.pack_rhs = create_matmul_rhs_pack_nxk_qsi4cxp8x8s16s0sf32bf32_qsu4cx();
+    op.matmul = create_matmul_clamp_bf16_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0sf32bf32_8vsx8_sve_i8mm();
+    return op;
+}
+
 /// Creates an operator for kai_matmul_clamp_bf16_qai8dxp4vsx4_qsi8cxp16vsx4_4vsx16vs_sme2_mopa.
 MatMulOperator create_operator_matmul_clamp_bf16_qai8dxp4vsx4_qsi8cxp16vsx4_4vsx16vs_sme2_mopa() {
     MatMulOperator op{};
@@ -1574,6 +1601,7 @@ MatMulOperator create_operator_matmul_clamp_bf16_qai8dxp4vsx4_qsi8cxp16vsx4_4vsx
 Span<const MatMulOperator> get_available_matmul_operators() {
     const static std::array operators{
         // kai-keep-sorted-begin
+        create_operator_matmul_clamp_bf16_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0sf32bf32_8vsx8_sve_i8mm(),
         create_operator_matmul_clamp_bf16_qai8dxp4vsx4_qsi8cxp16vsx4_4vsx16vs_sme2_mopa(),
         create_operator_matmul_clamp_f16_f16_f16p16vsx2bf16_6x16vs_sve2p1_dot(),
         create_operator_matmul_clamp_f16_f16_f16p4vsx2bf16_1x32vs_sme2_dot(),
