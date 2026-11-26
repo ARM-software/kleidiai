@@ -717,12 +717,13 @@ MatMulPackKernelPtr create_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32
 }
 
 MatMulPackKernelPtr create_matmul_pack_rhs_kxn_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme() {
-    MatMulPackRhsOperandSlots slots{};
-    slots.bias_n = MatMulSlot::ACC_BIAS_N_QDATA;
-    slots.k_sum_scale_global = MatMulSlot::LHS_QZP_NEG;
-    slots.scale_n = MatMulSlot::RHS_T_QSCALE;
-    slots.scale_global = MatMulSlot::LHS_QSCALE_DIV_DST_QSCALE;
-    const std::vector refs{
+    MatMulPackRhsOperandSlots operand_slots{};
+    operand_slots.bias_n = MatMulSlot::ACC_BIAS_N_QDATA;
+    operand_slots.k_sum_scale_global = MatMulSlot::LHS_QZP_NEG;
+    operand_slots.scale_n = MatMulSlot::RHS_T_QSCALE;
+    operand_slots.scale_global = MatMulSlot::LHS_QSCALE_DIV_DST_QSCALE;
+
+    auto reference_slots = std::vector{
         MatMulSlot::ACC_BIAS_N_QDATA_MINUS_LHS_QZP_MUL_RHS_T_QDATA_ROW_SUM,
         MatMulSlot::RHS_T_QDATA,
         MatMulSlot::RHS_T_QSCALE_MUL_LHS_QSCALE_DIV_DST_QSCALE,
@@ -730,23 +731,49 @@ MatMulPackKernelPtr create_matmul_pack_rhs_kxn_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i
 
     return std::make_unique<MatMulPackRhsUkerApiWrapper>(
         "matmul_pack_rhs_kxn_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme",      // name
-        kai_matmul_pack_rhs_kxn_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme(),  // kernel
+        kai_matmul_pack_rhs_kxn_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme(),  // micro-kernel
         format::plain<DataType::I4>(),                                      // src data format
         format::plain<DataType::I32>(),                                     // src bias format
         format::sme::qsi4cxp8vsx4sf32bi32(),                                // dst format
         MatMulUkerApiBiasDeliveryStage::PACK_RHS,                           // bias stage
         MatMulSlot::RHS_QDATA,                                              // rhs slot
-        slots,                                                              // operand slots
-        refs);                                                              // reference slots
+        operand_slots,                                                      // operand slots
+        std::move(reference_slots));                                        // reference slots
+}
+
+MatMulPackKernelPtr create_matmul_pack_rhs_kxn_qsi4cxp8vsx4sf32bi32_qsu4cx_f32_i32_sme() {
+    MatMulPackRhsOperandSlots operand_slots{};
+    operand_slots.bias_n = MatMulSlot::ACC_BIAS_N_QDATA;
+    operand_slots.k_sum_scale_global = MatMulSlot::LHS_QZP_NEG;
+    operand_slots.scale_n = MatMulSlot::RHS_T_QSCALE;
+    operand_slots.scale_global = MatMulSlot::LHS_QSCALE_DIV_DST_QSCALE;
+
+    auto reference_slots = std::vector{
+        MatMulSlot::ACC_BIAS_N_QDATA_MINUS_LHS_QZP_MUL_RHS_T_QDATA_ROW_SUM,
+        MatMulSlot::RHS_T_QDATA,
+        MatMulSlot::RHS_T_QSCALE_MUL_LHS_QSCALE_DIV_DST_QSCALE,
+    };
+
+    return std::make_unique<MatMulPackRhsUkerApiWrapper>(
+        "matmul_pack_rhs_kxn_qsi4cxp8vsx4sf32bi32_qsu4cx_f32_i32_sme",      // name
+        kai_matmul_pack_rhs_kxn_qsi4cxp8vsx4sf32bi32_qsu4cx_f32_i32_sme(),  // micro-kernel
+        format::plain<DataType::U4>(),                                      // src data format
+        format::plain<DataType::I32>(),                                     // src bias format
+        format::sme::qsi4cxp8vsx4sf32bi32(),                                // dst format
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS,                           // bias stage
+        MatMulSlot::RHS_T_QDATA_SIGN_T,                                     // rhs slot
+        operand_slots,                                                      // operand slots
+        std::move(reference_slots));                                        // reference slots
 }
 
 MatMulPackKernelPtr create_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme() {
-    MatMulPackRhsOperandSlots slots{};
-    slots.bias_n = MatMulSlot::ACC_BIAS_N_QDATA;
-    slots.k_sum_scale_global = MatMulSlot::LHS_QZP_NEG;
-    slots.scale_n = MatMulSlot::RHS_T_QSCALE;
-    slots.scale_global = MatMulSlot::LHS_QSCALE_DIV_DST_QSCALE;
-    const std::vector refs{
+    MatMulPackRhsOperandSlots operand_slots{};
+    operand_slots.bias_n = MatMulSlot::ACC_BIAS_N_QDATA;
+    operand_slots.k_sum_scale_global = MatMulSlot::LHS_QZP_NEG;
+    operand_slots.scale_n = MatMulSlot::RHS_T_QSCALE;
+    operand_slots.scale_global = MatMulSlot::LHS_QSCALE_DIV_DST_QSCALE;
+
+    auto reference_slots = std::vector{
         MatMulSlot::ACC_BIAS_N_QDATA_MINUS_LHS_QZP_MUL_RHS_T_QDATA_ROW_SUM,
         MatMulSlot::RHS_T_QDATA,
         MatMulSlot::RHS_T_QSCALE_MUL_LHS_QSCALE_DIV_DST_QSCALE,
@@ -754,14 +781,39 @@ MatMulPackKernelPtr create_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i
 
     return std::make_unique<MatMulPackRhsUkerApiTWrapper>(
         "matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme",      // name
-        kai_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme(),  // kernel
+        kai_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme(),  // micro-kernel
         format::plain<DataType::I4>(),                                      // src data format
         format::plain<DataType::I32>(),                                     // src bias format
         format::sme::qsi4cxp8vsx4sf32bi32(),                                // dst format
         MatMulUkerApiBiasDeliveryStage::PACK_RHS,                           // bias stage
-        slots,                                                              // operand slots
-        refs,                                                               // reference slots
+        operand_slots,                                                      // operand slots
+        std::move(reference_slots),                                         // reference slots
         MatMulSlot::RHS_T_QDATA);                                           // rhs slot
+}
+
+MatMulPackKernelPtr create_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsu4cx_f32_i32_sme() {
+    MatMulPackRhsOperandSlots operand_slots{};
+    operand_slots.bias_n = MatMulSlot::ACC_BIAS_N_QDATA;
+    operand_slots.k_sum_scale_global = MatMulSlot::LHS_QZP_NEG;
+    operand_slots.scale_n = MatMulSlot::RHS_T_QSCALE;
+    operand_slots.scale_global = MatMulSlot::LHS_QSCALE_DIV_DST_QSCALE;
+
+    auto reference_slots = std::vector{
+        MatMulSlot::ACC_BIAS_N_QDATA_MINUS_LHS_QZP_MUL_RHS_T_QDATA_ROW_SUM,
+        MatMulSlot::RHS_T_QDATA,
+        MatMulSlot::RHS_T_QSCALE_MUL_LHS_QSCALE_DIV_DST_QSCALE,
+    };
+
+    return std::make_unique<MatMulPackRhsUkerApiTWrapper>(
+        "matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsu4cx_f32_i32_sme",      // name
+        kai_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsu4cx_f32_i32_sme(),  // micro-kernel
+        format::plain<DataType::U4>(),                                      // src data format
+        format::plain<DataType::I32>(),                                     // src bias format
+        format::sme::qsi4cxp8vsx4sf32bi32(),                                // dst format
+        MatMulUkerApiBiasDeliveryStage::PACK_RHS,                           // bias stage
+        operand_slots,                                                      // operand slots
+        std::move(reference_slots),                                         // reference slots
+        MatMulSlot::RHS_T_QDATA_SIGN);                                      // rhs slot
 }
 
 MatMulPackKernelPtr create_matmul_pack_rhs_kxn_qsu2cxp16vsx4sf32bi32_qsu2cx_f32_i32_sme() {

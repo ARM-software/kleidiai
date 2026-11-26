@@ -12,6 +12,8 @@ KleidiAI follows the [Semantic Versioning](https://semver.org/) specification fo
 
 ## Upcoming Release
 
+- Fixes:
+  - Add NextGen coverage for the SME qsu4cx kxn and nxk RHS packers with corresponding SME2 matmul micro-kernels.
 - New SVE micro-kernels:
   - Matrix multiplication (MxN) for QAI8DXP LHS and QSI4CXP RHS with BF16 output, `kai_matmul_clamp_bf16_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0sf32bf32_8vsx8_sve_i8mm`, requiring SVE I8MM, SVE BF16 and exactly 256-bit vectors.
 - Update dependencies to the latest version:
