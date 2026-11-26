@@ -14,6 +14,11 @@
 namespace kai::test {
 
 /// Owns a single value with a runtime data type, using Buffer's storage and protection.
+///
+/// Intended usage is storage of standalone parameter values, such as clamp
+/// bounds. The `Scalar` class allows detection of OOB access, but is otherwise
+/// extremely wasteful for single scalars.
+///
 /// A default-constructed scalar is empty until assigned a typed scalar.
 class Scalar : public Buffer {
 public:
