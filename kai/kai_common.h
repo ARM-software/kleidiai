@@ -178,9 +178,9 @@ inline static float kai_cast_f32_f16(uint16_t f16) {
 ///
 /// @return the f32 value
 inline static float kai_cast_f32_bf16(uint16_t bf16) {
-    const uint32_t i32 = (bf16 << 16);
+    const uint32_t u32 = (uint32_t)bf16 << 16;
     float f32 = 0;
-    memcpy(&f32, &i32, sizeof(i32));
+    memcpy(&f32, &u32, sizeof(u32));
     return f32;
 }
 
