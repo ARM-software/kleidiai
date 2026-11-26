@@ -11,7 +11,6 @@
 #include "kai/ops/gemm/gemm_common.hpp"
 #include "kai/ops/gemm/kai_ops.hpp"
 
-#ifdef __aarch64__
 #include "kernels/a64_ffhybrid_fp32_mla_6x16.hpp"
 #include "kernels/a64_ffhybrid_fp32bf16fp32_mmla_4x24.hpp"
 #include "kernels/a64_ffhybrid_fp32bf16fp32_mmla_6x16.hpp"
@@ -52,7 +51,6 @@
 #include "kernels/sve_interleaved_bf16fp32_mmla_8x3VL.hpp"
 #include "kernels/sve_interleaved_fp32_mla_8x3VL.hpp"
 #include "kernels/sve_interleaved_fp32_mmla_8x3VL.hpp"
-#endif // __aarch64__
 
 namespace kai {
 namespace ops {
@@ -65,7 +63,6 @@ static const GemmImplementation<float, float, float> gemm_fp32_methods[] =
     nullptr,
     [](const GemmArgs &args) { return new GemvBatched<float, float>(args); }
 },
-#ifdef __aarch64__
 GemmImplementation<float, float, float>::with_estimate(
     "a64_interleaved_bf16fp32_mmla_8x12",
     [](const GemmArgs &args) { return args._fast_mode && args._ci->has_bf16(); },
@@ -323,7 +320,6 @@ GemmImplementation<float, float, float>::with_estimate(
     [](const GemmArgs &args) { return GemmHybridIndirectFixedFormat<cls_a64_ffhybrid_fp32_mla_6x16, float, float>::estimate_cycles<float>(args); },
     [](const GemmArgs &args) { return new GemmHybridIndirectFixedFormat<cls_a64_ffhybrid_fp32_mla_6x16, float, float>(args); }
 ),
-#endif // __aarch64__
 {
     "",
     nullptr,

@@ -108,7 +108,7 @@ For example, all the matrix-multiplication micro-kernels are held in the `matmul
 KleidiAI requires the following dependencies, obtainable via your preferred package manager, to be installed and available on your system to be able to build the project.
 
 - `build-essential`
-- `cmake >= 3.18`
+- `cmake >= 3.22`
 
 In addition, you may choose to use the following toolchains:
 

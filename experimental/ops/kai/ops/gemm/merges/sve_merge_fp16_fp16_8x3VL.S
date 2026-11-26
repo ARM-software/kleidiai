@@ -56,8 +56,8 @@ KAI_ASM_FUNCTION_LABEL(kai_ops_sve_merge_fp16_fp16_8x3VL)
     ldr x3, [x0, #0x60]
     add x2, x0, #0xa4
     add x1, x0, #0xa0
-    ld1rh { z12.h }, p3/Z, [x2]
-    ld1rh { z11.h }, p3/Z, [x1]
+    KAI_ASM_INST(0x84c0ac4c)  // ld1rh { z12.h }, p3/Z, [x2]
+    KAI_ASM_INST(0x84c0ac2b)  // ld1rh { z11.h }, p3/Z, [x1]
     mul x28, x27, x28
     cbnz x3, label_34
     ldr x26, [x0, #0]

@@ -622,7 +622,11 @@ public:
         }
 
         if (seed == 0) {
-            seed = (uint32_t) random();
+#if defined(_MSC_VER)
+            seed = static_cast<uint32_t>(rand());
+#else
+            seed = static_cast<uint32_t>(random());
+#endif
         }
 
         // Store parameters - if this Matrix is later dumped we will store
@@ -926,7 +930,7 @@ public:
                                 compare_ok = 0;
                             }
                         } else {
-                            if (delta > threshold || std::isnan(test)) {
+                            if (delta > threshold || std::isnan(static_cast<double>(test))) {
                                 compare_ok = 0;
                             }
                         }

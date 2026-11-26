@@ -13,14 +13,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef VICIOUS_PAGE_SIZE
+#if defined(VICIOUS_PAGE_SIZE) && !defined(_WIN32)
 #include <sys/mman.h>
 #endif
 
 #include "utils.hpp"
 
 void *allocate_aligned_memory(size_t alignment, size_t size) {
-#ifdef __APPLE__
+#if defined(_WIN32)
+    // Allocator rejects zero-byte requests.
+    void *r = _aligned_malloc(size == 0 ? 1 : size, alignment);
+#elif defined(__APPLE__)
     size_t real_size = roundup(size, alignment);
 
     void *r=aligned_alloc(alignment, real_size);
@@ -50,7 +53,7 @@ void *allocate_aligned_memory(size_t alignment, size_t size) {
 #else
     void *r=memalign(alignment, size);
 #endif // VICIOUS_PAGE_SIZE
-#endif // ! __APPLE__
+#endif // _WIN32 / __APPLE__
 
     if (r == nullptr) {
         printf("Memory allocation error.\n");
@@ -61,7 +64,9 @@ void *allocate_aligned_memory(size_t alignment, size_t size) {
 }
 
 void free_aligned_memory(void *ptr) {
-#ifdef VICIOUS_PAGE_SIZE
+#if defined(_WIN32)
+    _aligned_free(ptr);
+#elif defined(VICIOUS_PAGE_SIZE)
     // Leak for now - would need a table to do this properly.
 #else
     free(ptr);

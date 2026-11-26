@@ -3,7 +3,6 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 //
-#ifdef __aarch64__
 
 #include "kai/ops/gemm/kai_ops.hpp"
 #include "common_internal/utils.hpp"
@@ -1010,4 +1009,3 @@ void dequantize_block_32<float>(const DequantizeFloat &qp, unsigned int width, u
 }  // namespace ops
 }  // namespace kai
 
-#endif // __aarch64__

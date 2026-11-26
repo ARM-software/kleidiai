@@ -126,7 +126,7 @@ KAI_ASM_LABEL(label_8)  // Height 1: input setup done
     cmp x7, #0x4
     ble label_10
 KAI_ASM_LABEL(label_9)  // Height 1: Multiply loop: Main loop
-    ld1rw { z0.s }, p5/Z, [x8]
+    KAI_ASM_INST(0x8540d500)  // ld1rw { z0.s }, p5/Z, [x8]
     ld1b { z6.b }, p5/Z, [x21]
     sub x7, x7, #0x4
     add x8, x8, #0x4
@@ -242,8 +242,8 @@ KAI_ASM_LABEL(label_20)  // Height 2: input setup done
     cmp x7, #0x4
     ble label_22
 KAI_ASM_LABEL(label_21)  // Height 2: Multiply loop: Main loop
-    ld1rw { z0.s }, p5/Z, [x8]
-    ld1rw { z1.s }, p5/Z, [x6]
+    KAI_ASM_INST(0x8540d500)  // ld1rw { z0.s }, p5/Z, [x8]
+    KAI_ASM_INST(0x8540d4c1)  // ld1rw { z1.s }, p5/Z, [x6]
     sub x7, x7, #0x4
     add x8, x8, #0x4
     ld1b { z6.b }, p5/Z, [x21]
@@ -392,11 +392,11 @@ KAI_ASM_LABEL(label_32)  // Height 3: input setup done
     cmp x7, #0x4
     ble label_34
 KAI_ASM_LABEL(label_33)  // Height 3: Multiply loop: Main loop
-    ld1rw { z0.s }, p5/Z, [x8]
-    ld1rw { z1.s }, p5/Z, [x6]
+    KAI_ASM_INST(0x8540d500)  // ld1rw { z0.s }, p5/Z, [x8]
+    KAI_ASM_INST(0x8540d4c1)  // ld1rw { z1.s }, p5/Z, [x6]
     sub x7, x7, #0x4
     add x8, x8, #0x4
-    ld1rw { z2.s }, p5/Z, [x5]
+    KAI_ASM_INST(0x8540d4a2)  // ld1rw { z2.s }, p5/Z, [x5]
     ld1b { z6.b }, p5/Z, [x21]
     cmp x7, #0x4
     add x6, x6, #0x4
@@ -575,12 +575,12 @@ KAI_ASM_LABEL(label_44)  // Height 4: input setup done
     cmp x7, #0x4
     ble label_46
 KAI_ASM_LABEL(label_45)  // Height 4: Multiply loop: Main loop
-    ld1rw { z0.s }, p5/Z, [x8]
-    ld1rw { z1.s }, p5/Z, [x6]
+    KAI_ASM_INST(0x8540d500)  // ld1rw { z0.s }, p5/Z, [x8]
+    KAI_ASM_INST(0x8540d4c1)  // ld1rw { z1.s }, p5/Z, [x6]
     sub x7, x7, #0x4
     add x8, x8, #0x4
-    ld1rw { z2.s }, p5/Z, [x5]
-    ld1rw { z3.s }, p5/Z, [x4]
+    KAI_ASM_INST(0x8540d4a2)  // ld1rw { z2.s }, p5/Z, [x5]
+    KAI_ASM_INST(0x8540d483)  // ld1rw { z3.s }, p5/Z, [x4]
     cmp x7, #0x4
     add x6, x6, #0x4
     ld1b { z6.b }, p5/Z, [x21]
@@ -791,15 +791,15 @@ KAI_ASM_LABEL(label_56)  // Height 5: input setup done
     cmp x7, #0x4
     ble label_58
 KAI_ASM_LABEL(label_57)  // Height 5: Multiply loop: Main loop
-    ld1rw { z0.s }, p5/Z, [x8]
-    ld1rw { z1.s }, p5/Z, [x6]
+    KAI_ASM_INST(0x8540d500)  // ld1rw { z0.s }, p5/Z, [x8]
+    KAI_ASM_INST(0x8540d4c1)  // ld1rw { z1.s }, p5/Z, [x6]
     sub x7, x7, #0x4
     add x8, x8, #0x4
-    ld1rw { z2.s }, p5/Z, [x5]
-    ld1rw { z3.s }, p5/Z, [x4]
+    KAI_ASM_INST(0x8540d4a2)  // ld1rw { z2.s }, p5/Z, [x5]
+    KAI_ASM_INST(0x8540d483)  // ld1rw { z3.s }, p5/Z, [x4]
     cmp x7, #0x4
     add x6, x6, #0x4
-    ld1rw { z4.s }, p5/Z, [x2]
+    KAI_ASM_INST(0x8540d444)  // ld1rw { z4.s }, p5/Z, [x2]
     ld1b { z6.b }, p5/Z, [x21]
     add x5, x5, #0x4
     add x4, x4, #0x4
@@ -1040,16 +1040,16 @@ KAI_ASM_LABEL(label_68)  // Height 6: input setup done
     cmp x7, #0x4
     ble label_70
 KAI_ASM_LABEL(label_69)  // Height 6: Multiply loop: Main loop
-    ld1rw { z0.s }, p5/Z, [x8]
-    ld1rw { z1.s }, p5/Z, [x6]
+    KAI_ASM_INST(0x8540d500)  // ld1rw { z0.s }, p5/Z, [x8]
+    KAI_ASM_INST(0x8540d4c1)  // ld1rw { z1.s }, p5/Z, [x6]
     sub x7, x7, #0x4
     add x8, x8, #0x4
-    ld1rw { z2.s }, p5/Z, [x5]
-    ld1rw { z3.s }, p5/Z, [x4]
+    KAI_ASM_INST(0x8540d4a2)  // ld1rw { z2.s }, p5/Z, [x5]
+    KAI_ASM_INST(0x8540d483)  // ld1rw { z3.s }, p5/Z, [x4]
     cmp x7, #0x4
     add x6, x6, #0x4
-    ld1rw { z4.s }, p5/Z, [x2]
-    ld1rw { z5.s }, p5/Z, [x1]
+    KAI_ASM_INST(0x8540d444)  // ld1rw { z4.s }, p5/Z, [x2]
+    KAI_ASM_INST(0x8540d425)  // ld1rw { z5.s }, p5/Z, [x1]
     add x5, x5, #0x4
     add x4, x4, #0x4
     ld1b { z6.b }, p5/Z, [x21]

@@ -876,8 +876,10 @@ void MatMulTb::compute_rhs_t_qdata_sign(bool required) {
     DataType dst_dtype = DataType::UNKNOWN;
     switch (src_dtype) {
         case DataType::U4:
-        case DataType::I4:
             dst_dtype = DataType::I4;
+            break;
+        case DataType::I4:
+            dst_dtype = DataType::U4;
             break;
         case DataType::I2:
             dst_dtype = DataType::U2;

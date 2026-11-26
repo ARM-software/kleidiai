@@ -4,9 +4,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-// To date, only AArch64 has these 8-bit kernels.
-#ifdef __aarch64__
-
 #include "gemm-wrappers.hpp"
 
 #include "kai_ops_kernels.hpp"
@@ -34,14 +31,15 @@ template void benchmark<gemm_s8_quant, false, QuantizationType::INTEGER, false>(
 template void test_quantized<sgemm_new, gemm_s8_quant>(GemmProblem *, int, int, const char *, FILE *);
 template void print_kernels<gemm_s8_quant, false>(GemmProblem *, unsigned int);
 
+#if !defined(_MSC_VER)
 template void benchmark<depthwise_s8q, false, QuantizationType::INTEGER, false>(GemmProblem *, int, int, int, mapfn, const char *);
 template void benchmark<depthwise_s8q, false, QuantizationType::INTEGER, true>(GemmProblem *, int, int, int, mapfn, const char *);
 template void test_quantized<depthwise_fp32, depthwise_s8q>(GemmProblem *, int, int, const char *, FILE *);
 template void test_quantized<depthwise_fp32, depthwise_s8q, true>(GemmProblem *, int, int, const char *, FILE *);
 template void print_kernels<depthwise_s8q, false>(GemmProblem *, unsigned int);
+#endif
 
 // gemm_s8_quant_perchannel - requantizing (per channel) GEMM
 template void benchmark<gemm_s8_quant, false, QuantizationType::INTEGER, true>(GemmProblem *, int, int, int, mapfn, const char *);
 template void test_quantized<sgemm_new, gemm_s8_quant, true>(GemmProblem *, int, int, const char *, FILE *);
 
-#endif  // aarch64

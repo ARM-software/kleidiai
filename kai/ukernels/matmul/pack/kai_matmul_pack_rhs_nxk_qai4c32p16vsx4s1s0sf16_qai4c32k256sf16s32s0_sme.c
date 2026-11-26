@@ -4,8 +4,8 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-#if (!defined(__aarch64__) || !defined(__ARM_FEATURE_SVE2)) && !defined(_M_ARM64)
-#error This file must be compiled for AArch64 and FEAT_SVE2.
+#if (!defined(__aarch64__) || !defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)) && !defined(_M_ARM64)
+#error This file must be compiled for AArch64 and FEAT_FP16.
 #else  // Architectural features check.
 
 #include <arm_neon.h>

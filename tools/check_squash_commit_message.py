@@ -34,12 +34,21 @@ def main() -> int:
         print("- Merge request title must match '<type>: <description>'.")
         print(f"- Allowed types: {ALLOWED_TYPES}.")
         print(f"- Received title: {title!r}")
+        print(
+            "- Edit the merge request title in GitLab, "
+            "e.g. 'feat: Add an F16 matmul micro-kernel'."
+        )
+        print("- Updating a commit message does not update the merge request title.")
         validation_failed = True
 
     if not SIGNED_OFF_BY_RE.search(description.strip()):
         print("Merge request squash-commit validation failed:")
         print("- Merge request description must include a 'Signed-off-by' line.")
         print(f"- Received description: {description!r}")
+        print(
+            "- Edit the merge request description in GitLab to add "
+            "'Signed-off-by: Name <name@example.com>'."
+        )
         validation_failed = True
 
     if validation_failed:

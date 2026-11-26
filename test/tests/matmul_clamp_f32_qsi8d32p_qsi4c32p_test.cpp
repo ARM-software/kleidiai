@@ -713,10 +713,10 @@ static constexpr std::array fixed_shapes{
 };
 
 static const std::array fixed_portions{
-    MatrixPortion(0, 0, 1, 1),     // Full matrix.
-    MatrixPortion(0, 0, 1, 0.25),  // Leftmost portion.
-    MatrixPortion(0, 0.75, 1, 1),  // Rightmost portion.
-    MatrixPortion(0, 0.5, 1, 0.8)  // Somewhere Middle
+    MatrixPortion(0, 0, 1, 1),        // Full matrix.
+    MatrixPortion(0, 0, 1, 0.25),     // Leftmost portion.
+    MatrixPortion(0, 0.75, 1, 0.25),  // Rightmost portion.
+    MatrixPortion(0, 0.5, 1, 0.3)     // Middle columns (full height).
 };
 
 static const auto fixed_test_name = [](const auto& info) {
@@ -837,10 +837,10 @@ static constexpr std::array shapes_k256{
     MatMulShape{77, 99, 256},
 };
 static constexpr std::array portions{
-    MatrixPortion(0, 0, 1, 1),     // Full matrix.
-    MatrixPortion(0, 0, 1, 0.25),  // Leftmost portion.
-    MatrixPortion(0, 0.75, 1, 1),  // Rightmost portion.
-    MatrixPortion(0, 0.5, 1, 0.8)  // Somewhere Middle
+    MatrixPortion(0, 0, 1, 1),        // Full matrix.
+    MatrixPortion(0, 0, 1, 0.25),     // Leftmost portion.
+    MatrixPortion(0, 0.75, 1, 0.25),  // Rightmost portion.
+    MatrixPortion(0, 0.5, 1, 0.3)     // Middle columns (full height).
 };
 INSTANTIATE_TEST_SUITE_P(
     MatMulVariableBL_bl32, MatMulTest_f32_qsi8d32p_qsi4c32p_Offset,

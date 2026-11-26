@@ -1424,7 +1424,7 @@ TEST_P(MatMulOutputTest, Output) {
 const std::vector<MatrixPortion> MatrixPortions = {
     {0, 0, 1, 1},
     {0, 0, 0.25, 0.25},
-    {0.75, 0.75, 1, 1},
+    {0.75, 0.75, 0.25, 0.25},
 };
 const std::vector<MatMulShape> MatMulShapes = {
     {1, 16, 16},   //

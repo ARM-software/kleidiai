@@ -64,8 +64,7 @@ struct KernelArgs {
 };
 
 // Check that the layout used by the compiler matches the layout assumed by
-// the AArch64 assembler code.
-#ifdef __aarch64__
+// the assembler code.
 static_assert(offsetof(KernelArgs, M) == 0, "KernelArgs offset mismatch (M)");
 static_assert(offsetof(KernelArgs, N) == 8, "KernelArgs offset mismatch (N)");
 static_assert(offsetof(KernelArgs, K) == 16, "KernelArgs offset mismatch (K)");
@@ -90,4 +89,3 @@ static_assert(offsetof(KernelArgs, scale_tensor_mul) == 152, "KernelArgs offset 
 static_assert(offsetof(KernelArgs, scale_tensor_shift) == 156, "KernelArgs offset mismatch (scale_tensor_shift)");
 static_assert(offsetof(KernelArgs, clamp_min) == 160, "KernelArgs offset mismatch (clamp_min)");
 static_assert(offsetof(KernelArgs, clamp_max) == 164, "KernelArgs offset mismatch (clamp_max)");
-#endif // __aarch64__

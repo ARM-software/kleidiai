@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.22)
 
 project(matmul_clamp_f32_qsi8d32p_qsi4c32p LANGUAGES C CXX ASM)
 

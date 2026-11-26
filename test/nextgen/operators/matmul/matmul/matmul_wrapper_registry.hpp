@@ -16,6 +16,12 @@
 
 namespace kai::test {
 
+/// Creates a wrapper for kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod.
+[[nodiscard]] MatMulKernelPtr create_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod();
+
+/// Creates a wrapper for kai_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm.
+[[nodiscard]] MatMulKernelPtr create_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm();
+
 /// Creates a wrapper for matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot kernel.
 [[nodiscard]] MatMulKernelPtr create_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot();
 
@@ -42,6 +48,9 @@ namespace kai::test {
 
 /// Creates a wrapper for matmul_clamp_f32_qsi8d32p1x4_qai4c32p16vsx4s1s0sf16_1x16vs_sme2_dot micro-kernel.
 [[nodiscard]] MatMulKernelPtr create_matmul_clamp_f32_qsi8d32p1x4_qai4c32p16vsx4s1s0sf16_1x16vs_sme2_dot();
+
+/// Creates a wrapper for matmul_clamp_f32_qsi8d32p1x8sf16_qau4c32p8x8s16s0sf16_1x8_sve_dot micro-kernel.
+[[nodiscard]] MatMulKernelPtr create_matmul_clamp_f32_qsi8d32p1x8sf16_qau4c32p8x8s16s0sf16_1x8_sve_dot();
 
 /// Creates a wrapper for matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa kernel.
 [[nodiscard]] MatMulKernelPtr create_matmul_clamp_f32_qai8dxp1vlx8_qsi4cxp4vlx8_1vlx4vl_sme2_mopa();
@@ -91,6 +100,9 @@ namespace kai::test {
 /// Creates a wrapper for matmul_clamp_qai8_qai8_qsi8cxp16x4sf32bi32_1x16_neon_dotprod micro-kernel.
 [[nodiscard]] MatMulKernelPtr create_matmul_clamp_qai8_qai8_qsi8cxp16x4sf32bi32_1x16_neon_dotprod();
 
+/// Creates a wrapper for matmul_clamp_qai8_qai8_qsi8cxp16x4sf32bi32_4x16_neon_dotprod micro-kernel.
+[[nodiscard]] MatMulKernelPtr create_matmul_clamp_qai8_qai8_qsi8cxp16x4sf32bi32_4x16_neon_dotprod();
+
 /// Creates a wrapper for matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx8vs_sme2_mopa kernel.
 [[nodiscard]] MatMulKernelPtr create_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_8vsx8vs_sme2_mopa();
 
@@ -113,5 +125,11 @@ namespace kai::test {
 
 /// Creates the 256-bit SVE per-channel INT4 matmul wrapper.
 MatMulKernelPtr create_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0sf32bf32_8vsx8_sve_i8mm();
+
+/// Creates a wrapper for matmul_clamp_bf16_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0sf32bf32_8vsx8_sve_i8mm kernel.
+[[nodiscard]] MatMulKernelPtr create_matmul_clamp_bf16_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0sf32bf32_8vsx8_sve_i8mm();
+
+/// Creates a wrapper for matmul_clamp_bf16_qai8dxp4vsx4_qsi8cxp16vsx4_4vsx16vs_sme2_mopa kernel.
+[[nodiscard]] MatMulKernelPtr create_matmul_clamp_bf16_qai8dxp4vsx4_qsi8cxp16vsx4_4vsx16vs_sme2_mopa();
 
 }  // namespace kai::test

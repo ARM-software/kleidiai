@@ -10,7 +10,6 @@
 
 extern "C" void kai_ops_sme_interleave_1VL_2x1(__fp16 *out, const __fp16 *in, size_t height, size_t width, size_t in_stride, size_t num_blocks);
 
-#ifdef __aarch64__
 
 template<>
 void Transform<1, 1, false, VLType::SME>(
@@ -109,5 +108,3 @@ void Transform<16, 1, false, VLType::SME>(
         16
     );
 }
-
-#endif // __aarch64__

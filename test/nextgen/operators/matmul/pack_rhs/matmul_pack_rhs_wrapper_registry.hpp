@@ -29,7 +29,7 @@ template <auto BlockHeight>
 ///
 /// @tparam BlockHeight The packed block height.
 /// @tparam BlockWidth The packed block width.
-/// Allowed (block_height, block_width) configurations: (8, 4), (8, 8), and (32, 4).
+/// Allowed (block_height, block_width) configurations: (4, 8), (8, 4), (8, 8), and (32, 4).
 template <size_t BlockHeight, size_t BlockWidth>
 [[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp_qsi8cx_neon();
 
@@ -83,6 +83,9 @@ template <DataType DType>
 /// Creates a wrapper for kai_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme micro-kernel.
 [[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme();
 
+/// Creates a wrapper for kai_matmul_pack_rhs_nxk_qax4c32p8x8s16s0sf16_qax4c32k256sf16s32s0_neon micro-kernel.
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_nxk_qax4c32p8x8s16s0sf16_qax4c32k256sf16s32s0_neon();
+
 /// Creates a wrapper for kai_matmul_pack_rhs_kxn_x8p4vsx4_x8_sme kernel.
 ///
 /// @tparam DType The 8-bit RHS and packed data type.
@@ -92,9 +95,17 @@ template <DataType DType>
 /// Creates a wrapper for kai_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme kernel.
 [[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_kxn_qsi8cxp4vsx4bi32sf32_qsi8_i32_f32_sme();
 
+/// Creates a wrapper for kai_matmul_pack_rhs_kxn_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme micro-kernel.
 [[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_kxn_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme();
 
+/// Creates a wrapper for kai_matmul_pack_rhs_kxn_qsi4cxp8vsx4sf32bi32_qsu4cx_f32_i32_sme micro-kernel.
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_kxn_qsi4cxp8vsx4sf32bi32_qsu4cx_f32_i32_sme();
+
+/// Creates a wrapper for kai_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme micro-kernel.
 [[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsi4cx_f32_i32_sme();
+
+/// Creates a wrapper for kai_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsu4cx_f32_i32_sme micro-kernel.
+[[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsu4cx_f32_i32_sme();
 
 [[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_kxn_qsu2cxp16vsx4sf32bi32_qsu2cx_f32_i32_sme();
 
@@ -105,6 +116,9 @@ template <DataType DType>
 
 /// Creates a wrapper for kai_matmul_pack_rhs_nxk_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme kernel.
 [[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4c32p16vsx4s4s0_qsu4c32_f32_bf16_sme();
+
+/// Creates a wrapper for kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon kernel with NR = 16vs and KR = 4.
+[[nodiscard]] MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi8cxp16vsx4_qsi8cx_neon();
 
 /// Checks if the portion produces non-empty RHS packing tiles for the qai8dxp1x4/qsi8cxp8x4 matmul operator.
 [[nodiscard]] bool is_shape_suitable_rhs_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot(
@@ -151,6 +165,10 @@ template <DataType DType>
 
 /// Checks if the portion produces non-empty RHS packing tiles for the qai4c32p16vsx4s1s0sf16 NxK matmul operator.
 [[nodiscard]] bool is_shape_suitable_rhs_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
+
+/// Checks if the portion produces non-empty RHS packing tiles for the qax4c32p8x8s16s0sf16 NxK matmul operator.
+[[nodiscard]] bool is_shape_suitable_rhs_qax4c32p8x8s16s0sf16_qax4c32k256sf16s32s0_neon(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
 /// Checks if the portion produces non-empty RHS packing tiles for the x8p4vsx4 KxN matmul operator.
@@ -211,6 +229,10 @@ template <DataType DType>
 [[nodiscard]] bool is_shape_suitable_rhs_nxk_qsi8cxp_qsi8cx_neon(
     size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
+/// Checks if the portion produces non-empty RHS packing tiles for the fixed 4x8 INT8 format.
+[[nodiscard]] bool is_shape_suitable_rhs_nxk_qsi8cxp4x8_qsi8cx_neon(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
+
 /// Creates a wrapper for kai_matmul_pack_rhs_kxn_x16p12x4bx32_x16_x32_neon micro-kernel.
 [[nodiscard]] MatMulPackKernelPtr create_matmul_pack_rhs_kxn_bf16p12x4bf32_bf16_f32_neon();
 
@@ -230,5 +252,9 @@ MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4cxp8x8s16s0sf32bf32_qsu4cx();
 
 /// Creates the 4VL per-channel INT4 RHS packer with interleaved nibbles.
 MatMulPackKernelPtr create_matmul_rhs_pack_nxk_qsi4cxp4vlx4s16s0sf32bf32_qsu4cx();
+
+/// Checks if the portion produces non-empty RHS packing tiles for the qsi8cxp16vsx4 RHS packing.
+[[nodiscard]] bool is_shape_suitable_rhs_nxk_qsi8cxp16vsx4_qsi8cx_neon(
+    size_t shape_m, size_t shape_n, size_t shape_k, const MatrixPortion& portion);
 
 }  // namespace kai::test

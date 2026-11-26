@@ -11,6 +11,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "kai/ukernels/matmul/kai_matmul.h"
 #include "kai/ukernels/matmul/kai_matmul_pack_lhs.h"
@@ -20,6 +21,8 @@
 #include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi4cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi4cxp4vlx4_1x4vl_sme2_sdot.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_pack_f16pmrx2_f32_neon.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_pack_f32p2vlx1_f32_sme.h"
+#include "kai/ukernels/matmul/pack/kai_lhs_pack_qai8dxp1x8sf32_x8_neon.h"
+#include "kai/ukernels/matmul/pack/kai_lhs_pack_qai8dxp4x8sf32_x8_neon.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_pack_x16p2vlx2_x16_sme.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_pack_x8p2vlx4_x8_sme.h"
 #include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp1vlx4_f32_sme.h"
@@ -34,6 +37,7 @@
 #include "test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_dq_wrapper.hpp"
 #include "test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_fp_wrapper.hpp"
 #include "test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_interface.hpp"
+#include "test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_pq_wrapper.hpp"
 #include "test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_ukerapi_wrapper.hpp"
 
 namespace kai::test {
@@ -82,6 +86,26 @@ bool is_shape_suitable_lhs_uker_api(
 }
 
 }  // namespace
+
+bool is_shape_suitable_lhs_qai8dxp1x8sf32_x8_neon(
+    size_t shape_m, [[maybe_unused]] size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
+    if (shape_m == 0 || shape_k == 0) {
+        return false;
+    }
+
+    const size_t m_step = kai_get_m_step_lhs_pack_qai8dxp1x8sf32_x8_neon(1);
+    return portion_non_empty(shape_m, shape_k, m_step, shape_k, portion);
+}
+
+bool is_shape_suitable_lhs_qai8dxp4x8sf32_x8_neon(
+    size_t shape_m, [[maybe_unused]] size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
+    if (shape_m == 0 || shape_k == 0) {
+        return false;
+    }
+
+    const size_t m_step = kai_get_m_step_lhs_pack_qai8dxp4x8sf32_x8_neon(4);
+    return portion_non_empty(shape_m, shape_k, m_step, shape_k, portion);
+}
 
 bool is_shape_suitable_lhs_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot(
     size_t shape_m, [[maybe_unused]] size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
@@ -168,7 +192,7 @@ bool is_shape_suitable_lhs_f16p4vsx2_qsi4c32p16vsx4s4s0sf16_4vsx16vs_sme_mopa(
     return portion_non_empty(shape_m, shape_k, 4 * get_sme_vector_scale(), shape_k, portion);
 }
 
-bool is_shape_suitable_lhs_qsi8d32p1x4_qai4c32p16vsx4s1s0sf16_1x16vs_sme2_dot(
+bool is_shape_suitable_lhs_qsi8d32p1x4sf16_f32_neon(
     size_t shape_m, [[maybe_unused]] size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
     return is_shape_suitable_lhs_uker_api(
         shape_m, shape_k, portion, kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon());
@@ -288,6 +312,18 @@ bool is_shape_suitable_lhs_qai8dxp2vsx8sf32_qsi4c32p8x8s16s0sbf16bf32_8vsx8_sve_
     return portion_non_empty(shape_m, shape_k, lhs_m_step, shape_k, portion);
 }
 
+bool is_shape_suitable_lhs_qai8dxp4vsx4_f32(
+    size_t shape_m, [[maybe_unused]] size_t shape_n, size_t shape_k, const MatrixPortion& portion) {
+    if (shape_m == 0 || shape_k == 0) {
+        return false;
+    }
+
+    const size_t mr = 4 * get_sme_vector_scale();
+    const size_t lhs_m_step = kai_get_m_step_lhs_quant_pack_qai8dxp_f32(mr);
+
+    return portion_non_empty(shape_m, shape_k, lhs_m_step, shape_k, portion);
+}
+
 template <DataType DType>
 MatMulPackKernelPtr create_matmul_pack_lhs_mxk_x16p4vsx2_x16_sme() {
     static_assert(data_type_size_in_bits(DType) == 16);
@@ -332,6 +368,42 @@ MatMulPackKernelPtr create_matmul_lhs_pack_f16p4vsx2_f32_neon(size_t block_lengt
         MatMulSlot::LHS_DATA,                           // src_slot
         pack_args,                                      // fixed_pack_args
         MatMulSlot::LHS_CVT_DATA);                      // reference_lhs_slot
+}
+
+MatMulPackKernelPtr create_matmul_lhs_pack_qai8dxp1x8sf32_x8_neon() {
+    constexpr MatMulPackArgs pack_args{1, 0, 8, 1, 0};
+    const MatMulPackLhsPqInterface kernel_interface{
+        kai_get_m_step_lhs_pack_qai8dxp1x8sf32_x8_neon,
+        kai_get_lhs_offset_lhs_pack_qai8dxp1x8sf32_x8_neon,
+        kai_get_lhs_packed_offset_lhs_pack_qai8dxp1x8sf32_x8_neon,
+        kai_get_lhs_packed_size_lhs_pack_qai8dxp1x8sf32_x8_neon,
+        kai_run_lhs_pack_qai8dxp1x8sf32_x8_neon,
+    };
+
+    return std::make_unique<MatMulPackLhsPqWrapper>(
+        "matmul_lhs_pack_qai8dxp1x8sf32_x8_neon",                     // name
+        kernel_interface,                                             // kernel
+        format::plain<DataType::I8>(),                                // src format
+        format::qax8dxp<DataType::I8, pack_args.mr, pack_args.kr>(),  // dst format
+        pack_args);                                                   // pack args
+}
+
+MatMulPackKernelPtr create_matmul_lhs_pack_qai8dxp4x8sf32_x8_neon() {
+    constexpr MatMulPackArgs pack_args{4, 0, 8, 1, 0};
+    const MatMulPackLhsPqInterface kernel_interface{
+        kai_get_m_step_lhs_pack_qai8dxp4x8sf32_x8_neon,
+        kai_get_lhs_offset_lhs_pack_qai8dxp4x8sf32_x8_neon,
+        kai_get_lhs_packed_offset_lhs_pack_qai8dxp4x8sf32_x8_neon,
+        kai_get_lhs_packed_size_lhs_pack_qai8dxp4x8sf32_x8_neon,
+        kai_run_lhs_pack_qai8dxp4x8sf32_x8_neon,
+    };
+
+    return std::make_unique<MatMulPackLhsPqWrapper>(
+        "matmul_lhs_pack_qai8dxp4x8sf32_x8_neon",                     // name
+        kernel_interface,                                             // kernel
+        format::plain<DataType::I8>(),                                // src format
+        format::qax8dxp<DataType::I8, pack_args.mr, pack_args.kr>(),  // dst format
+        pack_args);                                                   // pack args
 }
 
 template <DataType DType>

@@ -18,6 +18,7 @@
 #include "convolver.hpp"
 #include "kernel_weight_format.hpp"
 #include "kai/ops/gemm/ndrange.hpp"
+#include "kai/ops/float16.hpp"
 #include "performance_parameters.hpp"
 #include "common_internal/quantized.hpp"
 #include "common_internal/utils.hpp"

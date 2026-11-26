@@ -299,9 +299,9 @@ private:
 /// @return An array containing full and corner portions.
 std::array<MatrixPortion, 3> make_output_portions() {
     return {
-        MatrixPortion(0, 0, 1, 1),        // Full matrix.
-        MatrixPortion(0, 0, 0.25, 0.25),  // Top-left corner.
-        MatrixPortion(0.75, 0.75, 1, 1),  // Bottom-right corner.
+        MatrixPortion(0, 0, 1, 1),              // Full matrix.
+        MatrixPortion(0, 0, 0.25, 0.25),        // Top-left corner.
+        MatrixPortion(0.75, 0.75, 0.25, 0.25),  // Bottom-right corner.
     };
 }
 

@@ -508,6 +508,29 @@ struct kai_matmul_uker_api kai_matmul_clamp_f32_f16p4vsx2_qai4c32p16vsx4s1s0sf16
 /// @return The micro-kernel API.
 struct kai_matmul_uker_api kai_matmul_clamp_f32_qsi8d32p1x4_qai4c32p16vsx4s1s0sf16_1x16vs_sme2_dot(void);
 
+/// Vector-matrix multiplication with dynamically quantized INT8 packed LHS and QAU4C32P RHS packed inputs with FP32
+/// output using SVE DOT.
+///
+/// Required CPU features:
+///   * FEAT_SVE with a 256-bit vector length
+///
+/// Configuration parameters:
+///   * format.bl - Block length. Must be 32.
+///
+/// Required operands:
+///   * lhs - qsi8d32p1x8sf16 data packed with per-block FP16 sum and scale.
+///   * rhs - qau4c32p8x8s16s0sf16 packed with per-block FP16 offset and scale.
+///   * dst - FP32 output matrix.
+///
+/// Optional arguments:
+///   * clamp - FP32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP is set.
+///
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_f32_qsi8d32p1x8sf16_qau4c32p8x8s16s0sf16_1x8_sve_dot(void);
+
 /// Single-precision floating-point matrix multiplication with statically-blockwise quantized unsigned INT4 RHS,
 /// using SME MOPA instruction.
 ///
@@ -625,6 +648,31 @@ struct kai_matmul_uker_api kai_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4c32p8x8s16s
 /// @return The micro-kernel API.
 struct kai_matmul_uker_api kai_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0sf32bf32_8vsx8_sve_i8mm(void);
 
+/// Dynamically quantized matrix multiplication with channelwise INT4 RHS and BF16 output using SVE I8MM instructions.
+///
+/// This implementation requires a 256-bit vector length, with LHS panels of 4 rows and an output block of 16x8.
+///
+/// Required CPU features:
+///   * FEAT_SVE with a vector length of exactly 256 bits
+///   * SVE FEAT_I8MM instructions
+///   * SVE FEAT_BF16 instructions
+///
+/// Required operands:
+///   * dst - BF16 output matrix.
+///   * lhs - Packed QAI8DXP data with per-M zero point and scale.
+///   * rhs - Packed QSI4CXP data with I32 per-N row sums, F32 per-N scales, and F32 per-N bias.
+///
+/// Optional arguments:
+///   * clamp - F32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
+///
+/// Accumulation: I32, then converted to F32 with per-M and per-N scales and per-N bias, clamped, and converted to BF16.
+///
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_bf16_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0sf32bf32_8vsx8_sve_i8mm(void);
+
 /// Statically quantized INT8 vector-matrix multiplication using Advanced SIMD dot-product instructions.
 ///
 /// Required CPU features:
@@ -634,7 +682,8 @@ struct kai_matmul_uker_api kai_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0
 ///   * dst
 ///   * lhs - M must be 1
 ///   * rhs - RHS matrix with per-N bias and per-N scale.
-///   * dst_bias_global
+///   * bias
+///     * scale_bias_global - Output zero point as an I32 scalar.
 ///
 /// Optional arguments:
 ///   * clamp - INT32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
@@ -646,6 +695,54 @@ struct kai_matmul_uker_api kai_matmul_clamp_f32_qai8dxp2vsx8sf32_qsi4cxp8x8s16s0
 ///
 /// @return The micro-kernel API.
 struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8_qsi8cxp16x4sf32bi32_1x16_neon_dotprod(void);
+
+/// Statically quantized INT8 matrix-matrix multiplication using Advanced SIMD dot-product instructions.
+///
+/// Required CPU features:
+///   * FEAT_DotProd
+///
+/// Required operands:
+///   * dst
+///   * lhs
+///   * rhs - RHS matrix with per-N bias and per-N scale.
+///   * bias
+///     * scale_bias_global - Output zero point as an I32 scalar.
+///
+/// Optional arguments:
+///   * clamp - INT32 output clamp values within INT8 range if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
+///
+/// Accumulation: I32, scaled in FP32 and rounded to nearest with ties to even before adding the output zero point.
+///
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_qai8_qai8_qsi8cxp16x4sf32bi32_4x16_neon_dotprod(void);
+
+/// Dynamically quantized INT8 matrix multiplication with BF16 output, using SME2 signed MOPA instruction.
+///
+/// The LHS is packed as QAI8DXP (asymmetric signed INT8 with per-M FP32 scale and per-M I32 zero-point/correction
+/// metadata), the RHS is packed as QSI8CXP (symmetric signed INT8 with per-N reduction sum, FP32 scale and FP32 bias),
+/// and the output is written as dense BF16.
+///
+/// Required CPU features:
+///   * FEAT_SME2
+///
+/// Required operands:
+///   * dst - BF16 output buffer.
+///   * lhs - Packed QAI8DXP LHS buffer.
+///   * rhs - Packed QSI8CXP RHS buffer.
+///
+/// Optional arguments:
+///   * clamp - FP32 output clamp values if KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP flag is set.
+///
+/// Accumulation: I32, scaled in FP32 and converted to BF16.
+///
+/// Supported flags:
+///   * KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP - Clamp output data.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_uker_api kai_matmul_clamp_bf16_qai8dxp4vsx4_qsi8cxp16vsx4_4vsx16vs_sme2_mopa(void);
 
 #ifdef __cplusplus
 }  // extern "C"

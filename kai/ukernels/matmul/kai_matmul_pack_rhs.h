@@ -1,6 +1,7 @@
 //
 // SPDX-FileCopyrightText: Copyright 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 // SPDX-FileCopyrightText: Copyright 2026 Meta Platforms, Inc. and affiliates.
+// SPDX-FileCopyrightText: Copyright 2026 Fujitsu Limited
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -273,8 +274,8 @@ struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32
 /// @return The micro-kernel API.
 struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32_qsu4cx_f32_i32_sme(void);
 
-/// Transposed RHS packing micro-kernel for static quantized int4 data with block-wise quantization and super block meta
-/// data.
+/// Transposed RHS packing micro-kernel for sign-agnostic 4-bit data with block-wise quantization and super-block
+/// metadata.
 ///
 /// Required CPU features:
 ///   * FEAT_SME
@@ -288,6 +289,22 @@ struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_nxk_qsi4cxp8vsx4sf32bi32
 ///
 /// @return The micro-kernel API.
 struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme(void);
+
+/// Transposed RHS packing micro-kernel for static quantized int4 data with block-wise quantization and super block meta
+/// data.
+///
+/// Required CPU features:
+///   * FEAT_AdvSIMD
+///
+/// Required operands:
+///   * rhs_packed - The packed RHS matrix.
+///     * RHS matrix: qax4c32p8x8s16s0sf16 data with separate 8x8-ordered per-block FP16 scale and offset metadata.
+///   * rhs - The RHS matrix.
+///     * RHS matrix: qax4c32k256sf16s32s0 4-bit data in NxK layout, stored as 256-value super-blocks. K must be a
+///     multiple of 256.
+///
+/// @return The micro-kernel API.
+struct kai_matmul_pack_rhs_uker_api kai_matmul_pack_rhs_nxk_qax4c32p8x8s16s0sf16_qax4c32k256sf16s32s0_neon(void);
 
 /// Non-transposed RHS packing micro-kernel for static quantized UINT2 data.
 ///

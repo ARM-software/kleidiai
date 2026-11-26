@@ -58,6 +58,8 @@ struct kai_matmul_uker_args_internal {
 
 void kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4sf32bi32_2vsx32vs_sme2p1_mop4(
     const struct kai_matmul_uker_args_internal* args);
+void kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4sf32bi32_32vsx2vs_sme2p1_mop4(
+    const struct kai_matmul_uker_args_internal* args);
 void kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_4vsx4vs_sme2_mopa(
     const struct kai_matmul_uker_args_internal* args);
 void kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32sf32_4vsx8vs_sme2_mopa(
@@ -245,6 +247,31 @@ static void run(const struct kai_matmul_uker_config* config, const struct kai_ma
         const uint8_t* const rhs_ptr =
             (const uint8_t*)args->operand.rhs.ptr + main_n / acc_vl * args->operand.rhs.stride.n;
         uint8_t* dst_ptr = (uint8_t*)args->operand.dst.ptr + main_n * DST_ELEM_BYTES;
+
+        // MOP4 consumes complete groups of four LHS panels at widths up to half a vector.
+        const size_t shape_m_mop4 = leftover_n <= acc_vl / 2 ? kai_rounddown(leftover_m, 4 * acc_vl) : 0;
+
+        if (shape_m_mop4 > 0) {
+            struct kai_matmul_uker_args_internal uker_args = {0};
+            uker_args.flags = flags;
+            uker_args.m = shape_m_mop4;
+            uker_args.n = leftover_n;
+            uker_args.k = args->shape.k;
+            uker_args.lhs_ptr = lhs_ptr;
+            uker_args.lhs_stride_row = args->operand.lhs.stride.m;
+            uker_args.rhs_ptr = rhs_ptr;
+            uker_args.rhs_stride_row = args->operand.rhs.stride.n;
+            uker_args.dst_ptr = dst_ptr;
+            uker_args.dst_stride_row = args->operand.dst.stride.m;
+            uker_args.dst_bias_n_ptr = args->operand.bias.scale_bias_global.ptr;
+            uker_args.clamp_args_ptr = clamp_min_max;
+            // Processes 32vs row blocks with 16vs tail.
+            kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4sf32bi32_32vsx2vs_sme2p1_mop4(&uker_args);
+
+            leftover_m -= shape_m_mop4;
+            lhs_ptr += shape_m_mop4 / acc_vl * args->operand.lhs.stride.m;
+            dst_ptr += shape_m_mop4 * args->operand.dst.stride.m;
+        }
 
         // Processes the right edge of the output using 16vsx4vs variant.
         const size_t shape_m_16vs = KAI_MIN(leftover_m, kai_rounddown(kai_roundup(leftover_m, acc_vl), 4 * acc_vl));

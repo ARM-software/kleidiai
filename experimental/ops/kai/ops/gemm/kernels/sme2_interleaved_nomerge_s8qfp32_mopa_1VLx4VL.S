@@ -235,7 +235,7 @@ KAI_ASM_LABEL(label_14)  // Store to partial result buffer: Store only: Loop
 KAI_ASM_LABEL(label_15)  // Store to output array
     ldr x6, [x0, #0x50]
     sub x5, x22, x24
-    ld1rw { z18.s }, p0/Z, [x0, #152]
+    KAI_ASM_INST(0x8566c012)  // ld1rw { z18.s }, p0/Z, [x0, #152]
     mov z20.s, #0
     ldr x4, [x0, #0x58]
     mov z21.s, #0

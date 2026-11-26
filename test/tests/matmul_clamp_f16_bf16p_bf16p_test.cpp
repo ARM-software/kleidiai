@@ -350,11 +350,11 @@ const auto matmul_tests_setup = kai::test::TestRegistry::register_setup([]() {
     MatMulShapeGenerator gen({1, 256}, {1, 256}, {1, 256}, feed);
     const auto shapes = gen.generate(256);
     const std::array portions = {
-        MatrixPortion(0, 0, 1, 1),          // Full matrix.
-        MatrixPortion(0, 0, 0.25, 0.25),    // Top-left corner.
-        MatrixPortion(0.75, 0.75, 1, 1),    // Bottom-right corner.
-        MatrixPortion(0.75, 0, 1, 1),       // Bottom-left corner.
-        MatrixPortion(0.4, 0.5, 0.6, 0.8),  // Middle portion.
+        MatrixPortion(0, 0, 1, 1),              // Full matrix.
+        MatrixPortion(0, 0, 0.25, 0.25),        // Top-left corner.
+        MatrixPortion(0.75, 0.75, 0.25, 0.25),  // Bottom-right corner.
+        MatrixPortion(0.75, 0, 0.25, 0.25),     // Bottom-left corner.
+        MatrixPortion(0.4, 0.5, 0.2, 0.3),      // Middle portion.
     };
     const std::array<std::optional<float>, 4> clamp = {std::nullopt, 1.0f, 0.9f, 0.5f};
     for (const auto& method : get_matmul_methods()) {

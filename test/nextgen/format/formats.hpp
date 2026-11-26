@@ -20,6 +20,7 @@
 #include "test/nextgen/format/block2d_row_format.hpp"
 #include "test/nextgen/format/block_group_row_format.hpp"
 #include "test/nextgen/format/flattened_blockwise_packed_format.hpp"
+#include "test/nextgen/format/packing_layout.hpp"
 #include "test/nextgen/format/plain_format.hpp"
 #include "test/nextgen/format/two_level_blockwise_format.hpp"
 
@@ -187,6 +188,18 @@ template <DataType DType>
     return make_poly<TwoLevelBlockwiseFormat>(qai4c32k256_format_config);
 }
 
+/// Creates the qax4c32p8x8s16s0sf16 packed format.
+///
+/// @return The format.
+[[nodiscard]] inline Poly<Format> qax4c32p8x8s16s0sf16() {
+    return make_poly<FlattenedBlockwisePackedFormat>(
+        qai4c32k256_format_config,  // Source format config
+        8,                          // Rows per packed panel
+        PackOrder::S16S0,           // Quantized data row and nibble order
+        MetadataOrder::CONTIGUOUS   // Offset and scale row order
+    );
+}
+
 /// Creates the qai8dxp packed format for the specified block shape.
 ///
 /// @tparam BlockHeight The packed block height.
@@ -199,6 +212,24 @@ template <auto BlockHeight, size_t BlockWidth>
         32,                                              // Width alignment
         true,                                            // Repeat right edge
         DataType::I8,                                    // Packed data type
+        std::array<DataType, 0>{},                       // Per-row prefix types
+        std::array{DataType::I32, DataType::FP32}        // Per-row postfix types
+    );
+}
+
+/// Creates the qax8dxp packed format with zero padding.
+///
+/// @tparam DType The packed data type.
+/// @tparam BlockHeight The packed block height.
+/// @tparam BlockWidth The packed block width.
+/// @return The format.
+template <DataType DType, auto BlockHeight, size_t BlockWidth>
+[[nodiscard]] inline Poly<Format> qax8dxp() {
+    return make_poly<Block2dRowFormat>(
+        get_block_dimension<BlockHeight>(), BlockWidth,  // Block shape
+        32,                                              // Width alignment
+        false,                                           // Zero pad right
+        DType,                                           // Packed data type
         std::array<DataType, 0>{},                       // Per-row prefix types
         std::array{DataType::I32, DataType::FP32}        // Per-row postfix types
     );
@@ -469,8 +500,10 @@ using kai::test::sme::VS;
 /// @return The format.
 [[nodiscard]] inline Poly<Format> qai4c32p16vsx4s1s0sf16() {
     return make_poly<FlattenedBlockwisePackedFormat>(
-        qai4c32k256_format_config,  // Source format config
-        VS<16>()                    // Rows per packed panel
+        qai4c32k256_format_config,         // Source format config
+        VS<16>(),                          // Rows per packed panel
+        PackOrder::S1S0,                   // Quantized data row and nibble order
+        MetadataOrder::INTERLEAVED_HALVES  // Offset and scale row order
     );
 }
 

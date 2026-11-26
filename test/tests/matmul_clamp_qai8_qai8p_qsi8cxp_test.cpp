@@ -1453,6 +1453,7 @@ static constexpr std::array shapes{
     MatMulShape{ 16,   16,  4},
     MatMulShape{ 20,   30, 40},
     MatMulShape{ 23,    1, 43},
+    MatMulShape{ 260,   8, 32},
     MatMulShape{ 32,   14,  1},
     MatMulShape{ 32,   16, 27},
     MatMulShape{ 32,   32,  3},
@@ -1489,7 +1490,7 @@ INSTANTIATE_TEST_SUITE_P(
             // clang-format off
             MatrixPortion(   0,    0,    1,    1), // Full matrix.
             MatrixPortion(   0,    0, 0.25, 0.25), // Top-left corner.
-            MatrixPortion(0.75, 0.75,    1,    1), // Bottom-right corner.
+            MatrixPortion(0.75, 0.75, 0.25, 0.25), // Bottom-right corner.
             // clang-format on
         }),
         testing::ValuesIn(std::initializer_list<float>{

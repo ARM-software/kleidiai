@@ -69,6 +69,7 @@ add_library(kleidiai_test_framework
     test/nextgen/operators/matmul/matmul_tb.cpp
     test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_dq_wrapper.cpp
     test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_fp_wrapper.cpp
+    test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_pq_wrapper.cpp
     test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_ukerapi_wrapper.cpp
     test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_wrapper_registry.cpp
     test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_blockwise_quant_trailing_scale_wrapper.cpp
@@ -224,9 +225,5 @@ target_link_libraries(kleidiai_test
 )
 
 # Cross-compiling is a common use case which creates a conflict if DISCOVERY_MODE is set to POST_BUILD (by default)
-# since the host platform does not match the target. Setting the mode to PRE_TEST avoids this conflict. This feature
-# was added in CMake 3.18
-if(CMAKE_CROSSCOMPILING)
-    cmake_minimum_required(VERSION 3.18)
-endif()
+# since the host platform does not match the target. Setting the mode to PRE_TEST avoids this conflict.
 gtest_discover_tests(kleidiai_test DISCOVERY_MODE PRE_TEST)

@@ -6,9 +6,8 @@
 
 #pragma once
 
-#include <time.h>
-
 #include <cassert>
+#include <chrono>
 #include <cstring>
 #include <type_traits>
 
@@ -524,12 +523,14 @@ public:
             pretransposed_data = std::unique_ptr<void, free_delete>(allocate_aligned_memory(64, gemm->get_B_pretransposed_array_size()));
             if (!p->time_weight_transform) {
 #ifndef BARE_METAL
-                struct timespec ts1, ts2;
-                clock_gettime(CLOCK_MONOTONIC, &ts1);
-                gemm->pretranspose_B_array(pretransposed_data.get(), B_pt->data, B_pt->stride, B_pt->multi_stride, B_pt_is_transposed);
-                clock_gettime(CLOCK_MONOTONIC, &ts2);
 #ifndef SILENT
-                int64_t res=(ts2.tv_sec - ts1.tv_sec) * 1000000000 + (ts2.tv_nsec - ts1.tv_nsec);
+                const auto start = std::chrono::steady_clock::now();
+#endif
+                gemm->pretranspose_B_array(pretransposed_data.get(), B_pt->data, B_pt->stride, B_pt->multi_stride, B_pt_is_transposed);
+#ifndef SILENT
+                const auto end = std::chrono::steady_clock::now();
+                const int64_t res =
+                    std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
                 printf("Pretranspose: %" PRId64 " ns.\n", res);
 #endif
 #else // BARE_METAL
@@ -573,7 +574,7 @@ public:
         }
     }
 
-    __attribute__ ((noinline)) void Run(unsigned int threadid) {
+    KAI_OPS_NOINLINE void Run(unsigned int threadid) {
         if (gemm->B_is_pretransposed() && p->time_weight_transform) {
             const size_t wsize = gemm->get_B_pretranspose_window_size();
             const size_t start = (threadid * wsize) / nthreads;

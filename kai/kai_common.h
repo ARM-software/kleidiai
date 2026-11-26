@@ -134,7 +134,7 @@ enum {
 ///
 /// @return Project version as a string literal.
 inline const char* kai_get_version(void) {
-    return "1.33.0";
+    return "1.34.0";
 }
 
 /// KleidiAI data types
@@ -178,9 +178,9 @@ inline static float kai_cast_f32_f16(uint16_t f16) {
 ///
 /// @return the f32 value
 inline static float kai_cast_f32_bf16(uint16_t bf16) {
-    const uint32_t i32 = (bf16 << 16);
+    const uint32_t u32 = (uint32_t)bf16 << 16;
     float f32 = 0;
-    memcpy(&f32, &i32, sizeof(i32));
+    memcpy(&f32, &u32, sizeof(u32));
     return f32;
 }
 
@@ -272,6 +272,12 @@ inline static int8_t kai_ext_sign_i8_i4(int8_t value) {
 
     return (value ^ 0x8) - 8;  // NOLINT(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
 }
+
+/// Parameter struct for LHS matrix packing (Quantized Asymmetric Integer 8-bit with per-row quantization)
+struct kai_lhs_pack_qai8dxp_params {
+    const void* lhs_zero_point;  ///< LHS matrix quantization zero-point data.
+    const void* lhs_scale;       ///< LHS matrix quantization scale data.
+};
 
 /// Parameter struct for RHS matrix packing (Quantized Symmetric Integer 8-bit with per-channel quantization)
 struct kai_rhs_pack_qsi8cx_params {

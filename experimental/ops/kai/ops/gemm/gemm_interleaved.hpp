@@ -11,6 +11,7 @@
 
 #include "gemm_driver_common.hpp"
 #include "kai/ops/bfloat.hpp"
+#include "kai/ops/float16.hpp"
 #include "convolver.hpp"
 #include "kernel_traits.hpp"
 #include "kernel_weight_format.hpp"

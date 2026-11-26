@@ -1428,7 +1428,7 @@ TEST_P(QMatMulClampBF16Test, EndToEnd) {
 /// Portion categories (GEMM/GEMV)
 static constexpr std::array gemm_portions{
     MatrixPortion(0,    0,    1, 1),      // Full matrix
-    MatrixPortion(0.4,  0.5,  0.6, 0.8),  // Middle block
+    MatrixPortion(0.4,  0.5,  0.2, 0.3),  // Middle block
 };
 static constexpr std::array gemv_portions{
     MatrixPortion(0, 0,   1,   1),    // Full width

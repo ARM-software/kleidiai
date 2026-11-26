@@ -7,28 +7,29 @@
 #pragma once
 
 #include <atomic>
+#include <chrono>
 #include <cinttypes>
 #include <cstdint>
 #include <cstdio>
 
-#include <time.h>
+#ifndef BARE_METAL
+#include <thread>
+#endif
 
 #include "cache_stats.hpp"
 
 #include "gemm_lib.hpp"
+#include "utils.hpp"
 #include "kai/ops/bfloat.hpp"
+#include "kai/ops/float16.hpp"
 
 #ifndef _GNU_SOURCE
 # define _GNU_SOURCE
 #endif
 
 #ifdef BARE_METAL
-#ifndef __aarch64__
-static unsigned int s;
-#endif // __aarch64__
 
 static void enable_cyclecounter() {
-#ifdef __aarch64__
     uint64_t tmp;
 
     __asm __volatile (
@@ -40,13 +41,9 @@ static void enable_cyclecounter() {
         "msr    pmcntenset_el0, %[tmp]\n"
         : [tmp] "=r" (tmp)
     );
-#else
-    s = clock();
-#endif
 }
 
 static void disable_cyclecounter() {
-#ifdef __aarch64__
     uint64_t tmp;
 
     __asm __volatile (
@@ -55,11 +52,9 @@ static void disable_cyclecounter() {
             "msr    pmcntenclr_el0, %[tmp]\n"
             : [tmp] "=r" (tmp)
             );
-#endif
 }
 
 static inline uint64_t get_cyclecounter() {
-#ifdef __aarch64__
     uint64_t retval;
 
     __asm __volatile (
@@ -67,9 +62,6 @@ static inline uint64_t get_cyclecounter() {
     : [retval] "=r" (retval));
 
     return retval;
-#else
-    return clock()-s;
-#endif
 }
 #else
 
@@ -193,32 +185,24 @@ public:
         res=stop_counter(cyclefd);
 
         // If run_delay is defined, wait for a bit here.
-        sleep(run_delay);
+        std::this_thread::sleep_for(std::chrono::seconds(run_delay));
 
         close(cyclefd);
 #endif
 #else
-        struct timespec ts1, ts2;
-
-#ifdef __APPLE__
-        clock_gettime(CLOCK_MONOTONIC_RAW, &ts1);
+        const auto start = std::chrono::steady_clock::now();
         func();
-        clock_gettime(CLOCK_MONOTONIC_RAW, &ts2);
-#else
-        clock_gettime(CLOCK_MONOTONIC, &ts1);
-        func();
-        clock_gettime(CLOCK_MONOTONIC, &ts2);
-#endif // __APPLE__
+        const auto end = std::chrono::steady_clock::now();
 
-        res=(ts2.tv_sec - ts1.tv_sec) * 1000000000 + (ts2.tv_nsec - ts1.tv_nsec);
+        res = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
         // If run_delay is defined, wait for a bit here.
-        sleep(run_delay);
+        std::this_thread::sleep_for(std::chrono::seconds(run_delay));
 #endif
         total += res;
         if (first==0) {
             first = res;
         }
-        if (best==0 or res < best) {
+        if (best==0 || res < best) {
             best = res;
         }
         runs++;
@@ -518,7 +502,7 @@ void benchmark(GemmProblem *p, int iterations, int nthreads, int run_delay, mapf
                 for (;;) {
                     completed[myid * COMPLETER_STRIDE] = 0;
 
-                    __asm __volatile ("dsb sy");
+                    data_sync_barrier();
 
                     waiters++;
 
@@ -570,7 +554,7 @@ void benchmark(GemmProblem *p, int iterations, int nthreads, int run_delay, mapf
 
                 reset=0;
                 waiters=0;
-                __asm __volatile ("dsb sy");
+                data_sync_barrier();
 
 
                 thetimer("Benchmark", mac_count, [&](void) {
@@ -595,7 +579,7 @@ void benchmark(GemmProblem *p, int iterations, int nthreads, int run_delay, mapf
                 csd->stop_count();
 
                 go=0;
-                __asm __volatile ("dsb sy");
+                data_sync_barrier();
 
                 reset=1;
             }
@@ -607,7 +591,7 @@ void benchmark(GemmProblem *p, int iterations, int nthreads, int run_delay, mapf
         /* Make the worked threads exit */
         {
             finished=1;
-            __asm __volatile ("dsb sy");
+            data_sync_barrier();
             go=1;
         }
 

@@ -76,7 +76,7 @@ KAI_ASM_LABEL(label_2)  // Width loop
     ld1b { z2.b }, p0/Z, [x3, #2, MUL VL]
     mov z19.s, #0
     mov z20.s, #0
-    ld1rw { z3.s }, p0/Z, [x6]
+    KAI_ASM_INST(0x8540c0c3)  // ld1rw { z3.s }, p0/Z, [x6]
     sub x1, x1, #0x1
     mov z21.s, #0
     mov z22.s, #0
@@ -85,13 +85,13 @@ KAI_ASM_LABEL(label_2)  // Width loop
     mov z24.s, #0
     mov z25.s, #0
     mov z26.s, #0
-    ld1rw { z4.s }, p0/Z, [x6, #4]
+    KAI_ASM_INST(0x8541c0c4)  // ld1rw { z4.s }, p0/Z, [x6, #4]
     mov z27.s, #0
     mov z28.s, #0
-    ld1rw { z5.s }, p0/Z, [x6, #8]
+    KAI_ASM_INST(0x8542c0c5)  // ld1rw { z5.s }, p0/Z, [x6, #8]
     mov z29.s, #0
     mov z30.s, #0
-    ld1rw { z6.s }, p0/Z, [x6, #12]
+    KAI_ASM_INST(0x8543c0c6)  // ld1rw { z6.s }, p0/Z, [x6, #12]
     mov z31.s, #0
     blt label_4
 KAI_ASM_LABEL(label_3)  // main loop head
@@ -99,32 +99,32 @@ KAI_ASM_LABEL(label_3)  // main loop head
     udot z9.s, z1.b, z3.b
     sub x1, x1, #0x2
     udot z10.s, z2.b, z3.b
-    ld1rw { z3.s }, p0/Z, [x6, #16]
+    KAI_ASM_INST(0x8544c0c3)  // ld1rw { z3.s }, p0/Z, [x6, #16]
     udot z11.s, z0.b, z4.b
     udot z12.s, z1.b, z4.b
     udot z13.s, z2.b, z4.b
-    ld1rw { z4.s }, p0/Z, [x6, #20]
+    KAI_ASM_INST(0x8545c0c4)  // ld1rw { z4.s }, p0/Z, [x6, #20]
     udot z14.s, z0.b, z5.b
     udot z15.s, z1.b, z5.b
     cmp x1, #0x2
     udot z16.s, z2.b, z5.b
-    ld1rw { z5.s }, p0/Z, [x6, #24]
+    KAI_ASM_INST(0x8546c0c5)  // ld1rw { z5.s }, p0/Z, [x6, #24]
     udot z17.s, z0.b, z6.b
     udot z18.s, z1.b, z6.b
     udot z19.s, z2.b, z6.b
-    ld1rw { z6.s }, p0/Z, [x6, #28]
+    KAI_ASM_INST(0x8547c0c6)  // ld1rw { z6.s }, p0/Z, [x6, #28]
     udot z20.s, z0.b, z3.b
     udot z21.s, z1.b, z3.b
     udot z22.s, z2.b, z3.b
-    ld1rw { z3.s }, p0/Z, [x6, #32]
+    KAI_ASM_INST(0x8548c0c3)  // ld1rw { z3.s }, p0/Z, [x6, #32]
     udot z23.s, z0.b, z4.b
     udot z24.s, z1.b, z4.b
     udot z25.s, z2.b, z4.b
-    ld1rw { z4.s }, p0/Z, [x6, #36]
+    KAI_ASM_INST(0x8549c0c4)  // ld1rw { z4.s }, p0/Z, [x6, #36]
     udot z26.s, z0.b, z5.b
     udot z27.s, z1.b, z5.b
     udot z28.s, z2.b, z5.b
-    ld1rw { z5.s }, p0/Z, [x6, #40]
+    KAI_ASM_INST(0x854ac0c5)  // ld1rw { z5.s }, p0/Z, [x6, #40]
     udot z29.s, z0.b, z6.b
     ld1b { z0.b }, p0/Z, [x3, #3, MUL VL]
     udot z30.s, z1.b, z6.b
@@ -132,32 +132,32 @@ KAI_ASM_LABEL(label_3)  // main loop head
     ld1b { z1.b }, p0/Z, [x3, #4, MUL VL]
     ld1b { z2.b }, p0/Z, [x3, #5, MUL VL]
     addvl x3, x3, #6
-    ld1rw { z6.s }, p0/Z, [x6, #44]
+    KAI_ASM_INST(0x854bc0c6)  // ld1rw { z6.s }, p0/Z, [x6, #44]
     udot z8.s, z0.b, z3.b
     udot z11.s, z0.b, z4.b
     udot z9.s, z1.b, z3.b
     udot z12.s, z1.b, z4.b
     udot z10.s, z2.b, z3.b
     udot z13.s, z2.b, z4.b
-    ld1rw { z3.s }, p0/Z, [x6, #48]
+    KAI_ASM_INST(0x854cc0c3)  // ld1rw { z3.s }, p0/Z, [x6, #48]
     udot z14.s, z0.b, z5.b
     udot z15.s, z1.b, z5.b
-    ld1rw { z4.s }, p0/Z, [x6, #52]
+    KAI_ASM_INST(0x854dc0c4)  // ld1rw { z4.s }, p0/Z, [x6, #52]
     udot z16.s, z2.b, z5.b
     udot z17.s, z0.b, z6.b
-    ld1rw { z5.s }, p0/Z, [x6, #56]
+    KAI_ASM_INST(0x854ec0c5)  // ld1rw { z5.s }, p0/Z, [x6, #56]
     udot z18.s, z1.b, z6.b
     udot z19.s, z2.b, z6.b
-    ld1rw { z6.s }, p0/Z, [x6, #60]
+    KAI_ASM_INST(0x854fc0c6)  // ld1rw { z6.s }, p0/Z, [x6, #60]
     add x6, x6, #0x40
     udot z20.s, z0.b, z3.b
     udot z21.s, z1.b, z3.b
     udot z22.s, z2.b, z3.b
     udot z23.s, z0.b, z4.b
-    ld1rw { z3.s }, p0/Z, [x6]
+    KAI_ASM_INST(0x8540c0c3)  // ld1rw { z3.s }, p0/Z, [x6]
     udot z24.s, z1.b, z4.b
     udot z25.s, z2.b, z4.b
-    ld1rw { z4.s }, p0/Z, [x6, #4]
+    KAI_ASM_INST(0x8541c0c4)  // ld1rw { z4.s }, p0/Z, [x6, #4]
     udot z26.s, z0.b, z5.b
     udot z27.s, z1.b, z5.b
     udot z28.s, z2.b, z5.b
@@ -167,27 +167,27 @@ KAI_ASM_LABEL(label_3)  // main loop head
     udot z31.s, z2.b, z6.b
     ld1b { z1.b }, p0/Z, [x3, #1, MUL VL]
     ld1b { z2.b }, p0/Z, [x3, #2, MUL VL]
-    ld1rw { z5.s }, p0/Z, [x6, #8]
-    ld1rw { z6.s }, p0/Z, [x6, #12]
+    KAI_ASM_INST(0x8542c0c5)  // ld1rw { z5.s }, p0/Z, [x6, #8]
+    KAI_ASM_INST(0x8543c0c6)  // ld1rw { z6.s }, p0/Z, [x6, #12]
     bge label_3
 KAI_ASM_LABEL(label_4)  // main loop skip
     udot z8.s, z0.b, z3.b
     udot z9.s, z1.b, z3.b
     addvl x3, x3, #3
     udot z10.s, z2.b, z3.b
-    ld1rw { z3.s }, p0/Z, [x6, #16]
+    KAI_ASM_INST(0x8544c0c3)  // ld1rw { z3.s }, p0/Z, [x6, #16]
     udot z11.s, z0.b, z4.b
     udot z12.s, z1.b, z4.b
     udot z13.s, z2.b, z4.b
-    ld1rw { z4.s }, p0/Z, [x6, #20]
+    KAI_ASM_INST(0x8545c0c4)  // ld1rw { z4.s }, p0/Z, [x6, #20]
     udot z14.s, z0.b, z5.b
     udot z15.s, z1.b, z5.b
     udot z16.s, z2.b, z5.b
-    ld1rw { z5.s }, p0/Z, [x6, #24]
+    KAI_ASM_INST(0x8546c0c5)  // ld1rw { z5.s }, p0/Z, [x6, #24]
     udot z17.s, z0.b, z6.b
     udot z18.s, z1.b, z6.b
     udot z19.s, z2.b, z6.b
-    ld1rw { z6.s }, p0/Z, [x6, #28]
+    KAI_ASM_INST(0x8547c0c6)  // ld1rw { z6.s }, p0/Z, [x6, #28]
     udot z20.s, z0.b, z3.b
     udot z21.s, z1.b, z3.b
     add x6, x6, #0x20
@@ -205,27 +205,27 @@ KAI_ASM_LABEL(label_4)  // main loop skip
     ld1b { z0.b }, p0/Z, [x3]
     ld1b { z1.b }, p0/Z, [x3, #1, MUL VL]
     ld1b { z2.b }, p0/Z, [x3, #2, MUL VL]
-    ld1rw { z3.s }, p0/Z, [x6]
+    KAI_ASM_INST(0x8540c0c3)  // ld1rw { z3.s }, p0/Z, [x6]
     addvl x3, x3, #3
-    ld1rw { z4.s }, p0/Z, [x6, #4]
-    ld1rw { z5.s }, p0/Z, [x6, #8]
-    ld1rw { z6.s }, p0/Z, [x6, #12]
+    KAI_ASM_INST(0x8541c0c4)  // ld1rw { z4.s }, p0/Z, [x6, #4]
+    KAI_ASM_INST(0x8542c0c5)  // ld1rw { z5.s }, p0/Z, [x6, #8]
+    KAI_ASM_INST(0x8543c0c6)  // ld1rw { z6.s }, p0/Z, [x6, #12]
     udot z8.s, z0.b, z3.b
     udot z9.s, z1.b, z3.b
     udot z10.s, z2.b, z3.b
     udot z11.s, z0.b, z4.b
-    ld1rw { z3.s }, p0/Z, [x6, #16]
+    KAI_ASM_INST(0x8544c0c3)  // ld1rw { z3.s }, p0/Z, [x6, #16]
     udot z12.s, z1.b, z4.b
     udot z13.s, z2.b, z4.b
-    ld1rw { z4.s }, p0/Z, [x6, #20]
+    KAI_ASM_INST(0x8545c0c4)  // ld1rw { z4.s }, p0/Z, [x6, #20]
     udot z14.s, z0.b, z5.b
     udot z15.s, z1.b, z5.b
     udot z16.s, z2.b, z5.b
     udot z17.s, z0.b, z6.b
-    ld1rw { z5.s }, p0/Z, [x6, #24]
+    KAI_ASM_INST(0x8546c0c5)  // ld1rw { z5.s }, p0/Z, [x6, #24]
     udot z18.s, z1.b, z6.b
     udot z19.s, z2.b, z6.b
-    ld1rw { z6.s }, p0/Z, [x6, #28]
+    KAI_ASM_INST(0x8547c0c6)  // ld1rw { z6.s }, p0/Z, [x6, #28]
     udot z20.s, z0.b, z3.b
     udot z21.s, z1.b, z3.b
     add x6, x6, #0x20

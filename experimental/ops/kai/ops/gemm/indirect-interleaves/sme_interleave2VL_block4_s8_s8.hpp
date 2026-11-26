@@ -6,8 +6,6 @@
 
 // clang-format off
 
-#ifdef __aarch64__
-
 extern "C" void kai_ops_sme_interleave2VL_block4_s8_s8(
   int8_t **out_ptr, const int8_t * const * in, size_t width, size_t height,
   size_t row_offset, bool first, int32_t multiplier
@@ -22,5 +20,3 @@ void interleave_block<2, 4, VLType::SME, false>(
     kai_ops_sme_interleave2VL_block4_s8_s8(out_ptr, in, width, height, row_offset, first, multiplier);
 }
 
-
-#endif // __aarch64__
