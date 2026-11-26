@@ -29,11 +29,9 @@
 #include "test/nextgen/operators/matmul/matmul/matmul_interface.hpp"
 #include "test/nextgen/operators/matmul/matmul/matmul_ukerapi_wrapper.hpp"
 #include "test/nextgen/operators/matmul/matmul_slots.hpp"
-#include "test/nextgen/quantization/matmul_quantizations.hpp"
+#include "test/nextgen/quantization/quantizations.hpp"
 
 namespace kai::test {
-
-using namespace kai::test::matmul;
 
 MatMulKernelPtr create_matmul_clamp_f32_qai8dxp1x4_qsi8cxp8x4_1x8_sve_dot() {
     return std::make_unique<MatMulUkerApiWrapper>(

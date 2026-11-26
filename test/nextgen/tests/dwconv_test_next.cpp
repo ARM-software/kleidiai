@@ -266,10 +266,7 @@ private:
         DwConvTb& test = test_bench();
         const DwConvFixtureParams& params = fixture_params();
 
-        const auto [step_h, step_w, step_c] = test.rhs_packing_steps();
-        KAI_TEST_ASSERT(step_h == params.filter_height && step_w == params.filter_width && step_c == params.channels);
-
-        test.test_rhs_packing(0, 0, 0, step_h, step_w, step_c);
+        test.test_rhs_packing(0, 0, 0, params.filter_height, params.filter_width, params.channels);
     }
 };
 

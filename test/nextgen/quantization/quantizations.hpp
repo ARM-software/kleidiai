@@ -18,7 +18,7 @@
 #include "test/nextgen/quantization/symm_linear_quantizer.hpp"
 #include "test/nextgen/quantization/two_level_asym_block_quantizer.hpp"
 
-namespace kai::test::matmul::quantization {
+namespace kai::test::quantization {
 
 /// Creates the qai8dx per-row asymmetric quantization.
 ///
@@ -151,4 +151,4 @@ namespace kai::test::matmul::quantization {
     return std::make_unique<TwoLevelAsymBlockQuantizer>(qai4c32k256_format_config);
 }
 
-}  // namespace kai::test::matmul::quantization
+}  // namespace kai::test::quantization

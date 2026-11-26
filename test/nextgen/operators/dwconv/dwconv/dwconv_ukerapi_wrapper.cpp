@@ -121,7 +121,7 @@ std::vector<DwConvSlot> DwConvUkerApiWrapper::ref_inputs(ConstTensorSet tensors)
 
 std::vector<size_t> DwConvUkerApiWrapper::steps(DwConvShape shape, ConstTensorSet tensors) const {
     // Uses the full dimension where the API prohibits splitting.
-    kai_dwconv_uker_config uker_config = m_uker_config != nullptr ? *m_uker_config : kai_dwconv_uker_config{};
+    kai_dwconv_uker_config uker_config = m_uker_config;
     const auto& padding = tensors.at(DwConvSlot::CONFIG).value<DwConvConfig>().padding;
     uker_config.padding = {padding.top, padding.left, padding.bottom, padding.right};
     const auto step = m_ukernel.get_step(&uker_config);
@@ -145,7 +145,7 @@ void DwConvUkerApiWrapper::run(
     // Checks tile bounds and alignment against the API's scheduling constraints.
     const auto& config = tensors.at(DwConvSlot::CONFIG).value<DwConvConfig>();
     const auto& padding = config.padding;
-    kai_dwconv_uker_config uker_config = m_uker_config != nullptr ? *m_uker_config : kai_dwconv_uker_config{};
+    kai_dwconv_uker_config uker_config = m_uker_config;
     uker_config.padding = {padding.top, padding.left, padding.bottom, padding.right};
     const auto step = m_ukernel.get_step(&uker_config);
     const std::array steps{step.oh, step.ow, step.c};

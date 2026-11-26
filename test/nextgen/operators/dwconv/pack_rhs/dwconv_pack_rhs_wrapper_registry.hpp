@@ -17,17 +17,19 @@ namespace kai::test {
 
 /// Creates a wrapper for kai_rhs_dwconv_pack_x16p1vlx1b_x16_x16_sme kernel.
 ///
-/// @param[in] dt Data type of the filter, bias, and packed RHS; must be 16 bits wide.
+/// @tparam DType Data type of the filter, bias, and packed RHS; must be 16 bits wide.
 ///
 /// @return A wrapper for the 16-bit RHS packer.
-[[nodiscard]] DwConvPackKernelPtr create_dwconv_pack_rhs_x16p1vlx1b_x16_x16_sme(DataType dt);
+template <DataType DType>
+[[nodiscard]] DwConvPackKernelPtr create_dwconv_pack_rhs_x16p1vlx1b_x16_x16_sme();
 
 /// Creates a wrapper for kai_rhs_dwconv_pack_x32p1vlx1b_x32_x32_sme kernel.
 ///
-/// @param[in] dt Data type of the filter, bias, and packed RHS; must be 32 bits wide.
+/// @tparam DType Data type of the filter, bias, and packed RHS; must be 32 bits wide.
 ///
 /// @return A wrapper for the 32-bit RHS packer.
-[[nodiscard]] DwConvPackKernelPtr create_dwconv_pack_rhs_x32p1vlx1b_x32_x32_sme(DataType dt);
+template <DataType DType>
+[[nodiscard]] DwConvPackKernelPtr create_dwconv_pack_rhs_x32p1vlx1b_x32_x32_sme();
 
 /// Checks whether the 16-bit RHS packer accepts the complete filter shape.
 ///

@@ -22,11 +22,9 @@
 #include "test/nextgen/operators/matmul/matmul_bias_mode.hpp"
 #include "test/nextgen/operators/matmul/pack_lhs/matmul_pack_lhs_wrapper_registry.hpp"
 #include "test/nextgen/operators/matmul/pack_rhs/matmul_pack_rhs_wrapper_registry.hpp"
-#include "test/nextgen/quantization/matmul_quantizations.hpp"
+#include "test/nextgen/quantization/quantizations.hpp"
 
 namespace kai::test {
-
-using namespace kai::test::matmul;
 
 namespace {
 

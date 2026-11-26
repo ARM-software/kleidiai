@@ -6,17 +6,13 @@
 
 #include "test/nextgen/operators/dwconv/dwconv/dwconv_wrapper_registry.hpp"
 
-#include <array>
 #include <memory>
 
 #include "kai/ukernels/dwconv/dwconv_f16_f16_f16p/kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla.h"
 #include "kai/ukernels/dwconv/dwconv_f32_f32_f32p/kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla.h"
 #include "test/common/data_type.hpp"
 #include "test/common/float16.hpp"
-#include "test/common/sme.hpp"
-#include "test/nextgen/common/poly.hpp"
-#include "test/nextgen/format/block2d_row_format.hpp"
-#include "test/nextgen/format/plain_format.hpp"
+#include "test/nextgen/format/formats.hpp"
 #include "test/nextgen/operators/dwconv/dwconv/dwconv_depthfirst_wrapper.hpp"
 #include "test/nextgen/operators/dwconv/dwconv/dwconv_planar_wrapper.hpp"
 
@@ -43,6 +39,38 @@ bool is_shape_suitable(
 }
 
 }  // namespace
+
+DwConvKernelPtr create_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla() {
+    const DwConvDepthfirstInterface kernel_interface{
+        kai_get_dst_size_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla,
+        kai_run_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla,
+    };
+
+    return std::make_unique<DwConvDepthfirstWrapper>(
+        "dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla",   // name
+        kernel_interface,                                        // kernel
+        4, 4,                                                    // output tile size
+        format::plain<DataType::FP16>(),                         // lhs format
+        format::xpbx<DataType::FP16, sme::VL<1, Float16>, 1>(),  // rhs format
+        format::plain<DataType::FP16>());                        // dst format
+}
+
+DwConvKernelPtr create_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla() {
+    const DwConvPlanarInterface kernel_interface{
+        kai_get_m_step_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
+        kai_get_src_offset_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
+        kai_get_dst_offset_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
+        kai_get_dst_size_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
+        kai_run_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
+    };
+
+    return std::make_unique<DwConvPlanarWrapper>(
+        "dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla",  // name
+        kernel_interface,                                       // kernel
+        format::plain<DataType::FP32>(),                        // lhs format
+        format::xpbx<DataType::FP32, sme::VL<1>, 1>(),          // rhs format
+        format::plain<DataType::FP32>());                       // dst format
+}
 
 bool is_shape_suitable_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla(
     size_t in_height, size_t in_width, size_t filter_height, size_t filter_width, size_t channels,
@@ -71,39 +99,6 @@ bool is_shape_suitable_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla(
         return false;
     }
     return portion.start_col() == 0.0F && portion.width() == 1.0F;
-}
-
-DwConvKernelPtr create_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla() {
-    return std::make_unique<DwConvDepthfirstWrapper>(
-        "dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla",
-        DwConvDepthfirstInterface{
-            kai_get_dst_size_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla,
-            kai_run_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla,
-        },
-        4,  // Output tile height.
-        4,  // Output tile width.
-        make_poly<PlainFormat>(DataType::FP16),
-        make_poly<Block2dRowFormat>(
-            get_sme_vector_length<Float16>(), 1, 1, false, DataType::FP16, std::array{DataType::FP16},
-            std::array<DataType, 0>{}),
-        make_poly<PlainFormat>(DataType::FP16));
-}
-
-DwConvKernelPtr create_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla() {
-    return std::make_unique<DwConvPlanarWrapper>(
-        "dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla",
-        DwConvPlanarInterface{
-            kai_get_m_step_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
-            kai_get_src_offset_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
-            kai_get_dst_offset_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
-            kai_get_dst_size_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
-            kai_run_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
-        },
-        make_poly<PlainFormat>(DataType::FP32),
-        make_poly<Block2dRowFormat>(
-            get_sme_vector_length<float>(), 1, 1, false, DataType::FP32, std::array{DataType::FP32},
-            std::array<DataType, 0>{}),
-        make_poly<PlainFormat>(DataType::FP32));
 }
 
 }  // namespace kai::test

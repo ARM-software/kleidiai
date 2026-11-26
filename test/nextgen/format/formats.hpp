@@ -352,6 +352,7 @@ template <auto BlockHeight, size_t BlockWidth>
 /// @return The format.
 template <DataType DType, auto BlockHeight, size_t BlockWidth>
 [[nodiscard]] inline Poly<Format> x16p() {
+    static_assert(data_type_size_in_bits(DType) == 16);
     return make_poly<Block2dRowFormat>(
         get_block_dimension<BlockHeight>(), BlockWidth,  // Block shape
         2,                                               // Width alignment
@@ -368,6 +369,7 @@ template <DataType DType, auto BlockHeight, size_t BlockWidth>
 /// @return The format.
 template <DataType DType>
 [[nodiscard]] inline Poly<Format> x16p8x4() {
+    static_assert(data_type_size_in_bits(DType) == 16);
     return make_poly<Block2dRowFormat>(
         8, 4,                       // Block shape
         4,                          // Width alignment
@@ -387,6 +389,7 @@ template <DataType DType>
 /// @return The format.
 template <DataType DType>
 [[nodiscard]] inline Poly<Format> x16p8x4_repeat_first_row() {
+    static_assert(data_type_size_in_bits(DType) == 16);
     return make_poly<Block2dRowFormat>(
         8, 4,                       // Block shape
         4,                          // Width alignment
@@ -408,9 +411,28 @@ template <DataType DType>
 /// @return The format.
 template <DataType DType, auto BlockHeight, size_t BlockWidth>
 [[nodiscard]] inline Poly<Format> x16pbx16() {
+    static_assert(data_type_size_in_bits(DType) == 16);
     return make_poly<Block2dRowFormat>(
         get_block_dimension<BlockHeight>(), BlockWidth,  // Block shape
         2,                                               // Width alignment
+        false,                                           // Zero pad right
+        DType,                                           // Packed data type
+        std::array{DType},                               // Per-row prefix types
+        std::array<DataType, 0>{}                        // Per-row postfix types
+    );
+}
+
+/// Creates a packed format with a per-row bias prefix of the same data type.
+///
+/// @tparam DType The packed data type.
+/// @tparam BlockHeight The packed block height.
+/// @tparam BlockWidth The packed block width.
+/// @return The format.
+template <DataType DType, auto BlockHeight, size_t BlockWidth>
+[[nodiscard]] inline Poly<Format> xpbx() {
+    return make_poly<Block2dRowFormat>(
+        get_block_dimension<BlockHeight>(), BlockWidth,  // Block shape
+        1,                                               // Width alignment
         false,                                           // Zero pad right
         DType,                                           // Packed data type
         std::array{DType},                               // Per-row prefix types
@@ -426,6 +448,7 @@ template <DataType DType, auto BlockHeight, size_t BlockWidth>
 /// @return The format.
 template <DataType DType, auto BlockHeight, size_t BlockWidth>
 [[nodiscard]] inline Poly<Format> x8p() {
+    static_assert(data_type_size_in_bits(DType) == 8);
     return make_poly<Block2dRowFormat>(
         get_block_dimension<BlockHeight>(), BlockWidth,  // Block shape
         4,                                               // Width alignment
@@ -533,6 +556,7 @@ using kai::test::sme::VS;
 /// @return The format.
 template <DataType DType>
 [[nodiscard]] inline Poly<Format> x32p4vsx1() {
+    static_assert(data_type_size_in_bits(DType) == 32);
     return make_poly<Block2dRowFormat>(
         VS<4>(), 1,                 // Block shape
         1,                          // Width alignment
@@ -549,6 +573,7 @@ template <DataType DType>
 /// @return The format.
 template <DataType DType>
 [[nodiscard]] inline Poly<Format> x32p4vsx1bx32() {
+    static_assert(data_type_size_in_bits(DType) == 32);
     return make_poly<Block2dRowFormat>(
         VS<4>(), 1,                // Block shape
         1,                         // Width alignment

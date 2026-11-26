@@ -52,7 +52,6 @@ struct DwConvUkerOutputStageConfig {
 class DwConvUkerApiWrapper : public DwConvKernel {
 public:
     /// Creates a wrapper with the micro-kernel's formats, clamp, bias delivery, and output stage.
-    /// The optional configuration must remain valid for the lifetime of the wrapper.
     DwConvUkerApiWrapper(
         std::string_view name, kai_dwconv_uker_api api,                  // Micro-kernel identity and API
         const Poly<Format>& lhs_format, const Poly<Format>& rhs_format,  // Input formats
@@ -62,12 +61,13 @@ public:
         DwConvUkerOutputStageConfig output_stage_config = {},            // Output stage
         std::optional<DwConvSlot> padding_value_slot = std::nullopt,     // Padding tensor
         DwConvSlot rhs_input_slot = DwConvSlot::RHS_PACKED,              // RHS tensor
-        const kai_dwconv_uker_config* config = nullptr,                  // Micro-kernel configuration
         DwConvSlot lhs_input_slot = DwConvSlot::LHS_DATA,                // LHS tensor
-        DwConvSlot acc_bias_c_slot = DwConvSlot::ACC_BIAS_C_DATA         // Per-channel accumulator bias tensor
+        DwConvSlot acc_bias_c_slot = DwConvSlot::ACC_BIAS_C_DATA,        // Per-channel accumulator bias tensor
+        kai_dwconv_uker_config uker_config = {}                          // Micro-kernel configuration
         ) :
         m_name(name),
         m_ukernel(api),
+        m_uker_config(uker_config),
         m_lhs_format(lhs_format),
         m_rhs_format(rhs_format),
         m_dst_format(dst_format),
@@ -76,7 +76,6 @@ public:
         m_output_stage_config(output_stage_config),
         m_padding_value_slot(padding_value_slot),
         m_rhs_input_slot(rhs_input_slot),
-        m_uker_config(config),
         m_lhs_input_slot(lhs_input_slot),
         m_acc_bias_c_slot(acc_bias_c_slot) {
     }
@@ -93,6 +92,7 @@ public:
 private:
     std::string m_name;
     kai_dwconv_uker_api m_ukernel;
+    kai_dwconv_uker_config m_uker_config;
     Poly<Format> m_lhs_format;
     Poly<Format> m_rhs_format;
     Poly<Format> m_dst_format;
@@ -101,7 +101,6 @@ private:
     DwConvUkerOutputStageConfig m_output_stage_config;
     std::optional<DwConvSlot> m_padding_value_slot;
     DwConvSlot m_rhs_input_slot;
-    const kai_dwconv_uker_config* m_uker_config;
     DwConvSlot m_lhs_input_slot;
     DwConvSlot m_acc_bias_c_slot;
 };
