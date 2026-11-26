@@ -71,7 +71,7 @@ void DwConvDepthfirstWrapper::run(
     const DwConvConfig& config = tensors.at(DwConvSlot::CONFIG).value<DwConvConfig>();
     Tensor& imp_dst_data = tensors.at(DwConvSlot::DST_DATA_IMP);
 
-    const auto& clamp_args = tensors.at(DwConvSlot::DWCONV_ARGS).value<std::optional<DwConvClampArgsF32>>();
+    const auto& clamp_args = tensors.at(DwConvSlot::DWCONV_ARGS).value<std::optional<DwConvClampArgs>>();
     float clamp_min = std::numeric_limits<float>::lowest();
     float clamp_max = std::numeric_limits<float>::max();
     if (clamp_args.has_value()) {

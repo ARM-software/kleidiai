@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <iterator>
 #include <optional>
 #include <random>
 #include <string>
@@ -21,11 +22,13 @@
 #include "test/common/assert.hpp"
 #include "test/common/enum_utils.hpp"
 #include "test/common/matrix_portion.hpp"
+#include "test/common/rect.hpp"
 #include "test/common/seed.hpp"
 #include "test/common/span.hpp"
 #include "test/nextgen/common/random.hpp"
 #include "test/nextgen/common/test_config.hpp"
 #include "test/nextgen/common/test_registry.hpp"
+#include "test/nextgen/operators/dwconv/dwconv_bias_mode.hpp"
 #include "test/nextgen/operators/dwconv/dwconv_operator.hpp"
 #include "test/nextgen/operators/dwconv/dwconv_tb.hpp"
 
@@ -123,6 +126,7 @@ struct DwConvFixtureParams {
     size_t filter_width;
     size_t channels;
     Padding2D padding;
+    DwConvBiasModeSet bias_formats;
     std::optional<float> clamp_keep_ratio;
 
     const DwConvOperator* op;
@@ -156,6 +160,7 @@ struct DwConvFixtureParams {
         result += ",fh=" + std::to_string(filter_height);
         result += ",fw=" + std::to_string(filter_width);
         result += ",c=" + std::to_string(channels);
+        result += ",bias=" + dwconv_bias_format_set_name(bias_formats);
         result += ",pad_left=" + std::to_string(padding.left);
         result += ",pad_right=" + std::to_string(padding.right);
         result += ",pad_top=" + std::to_string(padding.top);
@@ -227,7 +232,8 @@ protected:
         DwConvTb test(
             m_fixture_params.in_height, m_fixture_params.in_width, out_height, out_width,
             m_fixture_params.filter_height, m_fixture_params.filter_width, m_fixture_params.channels,
-            m_fixture_params.padding, m_fixture_params.clamp_keep_ratio, m_fixture_params.op);
+            m_fixture_params.padding, m_fixture_params.bias_formats, m_fixture_params.clamp_keep_ratio,
+            m_fixture_params.op);
 
         const std::string seed_key = "DwConvNext::testbench:" + name;
         auto& feed = seed_stream(seed_key);
@@ -297,6 +303,66 @@ private:
     }
 
     DwConvTestParams m_test_params;
+};
+
+struct BiasSelector {
+public:
+    /// Builds a bias-format selector for a given operator.
+    ///
+    /// @param[in] op The operator providing supported bias format sets.
+    explicit BiasSelector(const DwConvOperator& op) :
+        has_no_bias_format_set{
+            std::any_of(
+                op.supported_bias_mode_sets.begin(), op.supported_bias_mode_sets.end(),
+                [](DwConvBiasModeSet bias_formats) { return bias_formats.is_empty(); }),
+        } {
+        // Separates with-bias format sets from the list of supported bias format sets.
+        //
+        // Reason: no-bias and with-bias cases are chosen by a distribution,
+        // and if the with-bias case is chosen, each with-bias format set will be
+        // chosen by another distribution.
+
+        std::copy_if(
+            op.supported_bias_mode_sets.begin(), op.supported_bias_mode_sets.end(),
+            std::back_inserter(with_bias_format_sets), dwconv_bias_format_set_has_bias_data);
+        has_with_bias_format_set = !with_bias_format_sets.empty();
+        if (has_with_bias_format_set) {
+            with_bias_dist = std::uniform_int_distribution<size_t>(0, with_bias_format_sets.size() - 1);
+        }
+
+        KAI_TEST_ASSERT_MSG(
+            has_no_bias_format_set || has_with_bias_format_set, "At least one bias format set is needed!");
+    }
+
+    /// Picks a bias format set based on the configured distributions.
+    ///
+    /// @param[in,out] dist_ctx The shared distribution context.
+    ///
+    /// @return The selected bias format set.
+    DwConvBiasModeSet pick(DwConvDistribution& dist_ctx) {
+        // Bias format set:
+        //   * 70% of tests have bias.
+        //   * 30% of tests have no bias.
+        //
+        // If there is no no-bias format set, a with-bias format set is always chosen.
+        // If a with-bias format set is chosen, each format set (except no bias)
+        // will be chosen uniformly.
+        const float bias_prob = dist_ctx.m_probability_dist(dist_ctx.m_rng);
+        const bool with_bias = has_with_bias_format_set && (!has_no_bias_format_set || bias_prob < 0.7F);
+
+        if (with_bias) {
+            const size_t bias_formats_idx = with_bias_dist(dist_ctx.m_rng);
+            return with_bias_format_sets.at(bias_formats_idx);
+        }
+
+        return DwConvBiasModeSet{};
+    }
+
+private:
+    bool has_no_bias_format_set = false;
+    bool has_with_bias_format_set = false;
+    std::vector<DwConvBiasModeSet> with_bias_format_sets;
+    std::uniform_int_distribution<size_t> with_bias_dist;
 };
 
 /// Returns the spatial portions supported by the operator.
@@ -446,11 +512,13 @@ std::tuple<size_t, size_t, size_t> pick_input_shape(
 /// @param[in] iteration_no The shape iteration index.
 /// @param[in] op The operator under test.
 /// @param[in] portion The output portion to validate.
+/// @param[in,out] bias_selector The selector for supported bias format sets.
 /// @param[in, out] dist The shared distribution context.
 ///
 /// @return A populated fixture parameter set.
 DwConvFixtureParams pick_fixture(
-    size_t iteration_no, const DwConvOperator& op, const MatrixPortion& portion, DwConvDistribution& dist) {
+    size_t iteration_no, const DwConvOperator& op, const MatrixPortion& portion, BiasSelector& bias_selector,
+    DwConvDistribution& dist) {
     size_t in_height = 0;
     size_t in_width = 0;
     size_t filter_height = 0;
@@ -477,8 +545,12 @@ DwConvFixtureParams pick_fixture(
         }
     }
 
+    const DwConvBiasModeSet bias_formats = bias_selector.pick(dist);
     const std::optional<float> clamp_keep_ratio = pick_clamp_keep_ratio(op, dist);
-    return {iteration_no, in_height, in_width, filter_height, filter_width, channels, padding, clamp_keep_ratio, &op};
+    return {
+        iteration_no, in_height, in_width,     filter_height,    filter_width,
+        channels,     padding,   bias_formats, clamp_keep_ratio, &op,
+    };
 }
 
 /// Registers packing and compute tests for one fixture.
@@ -539,8 +611,9 @@ const auto dwconv_tests_setup = TestRegistry::register_setup([]() {
 
         // Each operator has its own stream, independent of registration order.
         DwConvDistribution dist(op.name);
+        BiasSelector bias_selector(op);
         for (size_t iteration_no = 0; iteration_no < num_shapes_per_op; ++iteration_no) {
-            const DwConvFixtureParams fixture = pick_fixture(iteration_no, op, full_portion, dist);
+            const DwConvFixtureParams fixture = pick_fixture(iteration_no, op, full_portion, bias_selector, dist);
             register_operator_test(test_suite_name, op, fixture, portions);
         }
     }

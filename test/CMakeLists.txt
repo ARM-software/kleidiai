@@ -48,10 +48,13 @@ add_library(kleidiai_test_framework
     test/nextgen/harness/tensor_cache.cpp
     test/nextgen/operators/dwconv/dwconv/dwconv_depthfirst_wrapper.cpp
     test/nextgen/operators/dwconv/dwconv/dwconv_planar_wrapper.cpp
+    test/nextgen/operators/dwconv/dwconv/dwconv_ukerapi_wrapper.cpp
     test/nextgen/operators/dwconv/dwconv/dwconv_wrapper_registry.cpp
+    test/nextgen/operators/dwconv/dwconv_bias_mode.cpp
     test/nextgen/operators/dwconv/dwconv_operator.cpp
     test/nextgen/operators/dwconv/dwconv_tb.cpp
     test/nextgen/operators/dwconv/pack_rhs/dwconv_pack_rhs_fp_nt_wrapper.cpp
+    test/nextgen/operators/dwconv/pack_rhs/dwconv_pack_rhs_ukerapi_wrapper.cpp
     test/nextgen/operators/dwconv/pack_rhs/dwconv_pack_rhs_wrapper_registry.cpp
     test/nextgen/operators/imatmul/imatmul_operator.cpp
     test/nextgen/operators/imatmul/imatmul_tb.cpp

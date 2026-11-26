@@ -28,14 +28,18 @@ DwConvOperator create_operator_f16_depthfirst() {
     op.is_shape_suitable = all_true<                                            //
         is_shape_suitable_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla,  //
         is_shape_suitable_rhs_dwconv_pack_x16p1vlx1b_x16_x16_sme>;
+    op.supported_bias_mode_sets = {{DwConvBiasMode::ACCUMULATION_PER_C}};
     op.clamp_mode = DwConvClampMode::OPTIONAL;
     op.filter_height = kai_get_filter_height_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla();
     op.filter_width = kai_get_filter_width_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla();
-    op.dtype = DataType::FP16;
+    op.lhs_dtype = DataType::FP16;
+    op.rhs_dtype = DataType::FP16;
+    op.bias_dtype = DataType::FP16;
+    op.dst_dtype = DataType::FP16;
     op.acc_dtype = DataType::FP16;
     op.ref_dtype = DataType::FP16;
     op.planar = false;
-    op.pack_rhs = create_dwconv_pack_rhs_x16p1vlx1b_x16_x16_sme(op.dtype);
+    op.pack_rhs = create_dwconv_pack_rhs_x16p1vlx1b_x16_x16_sme(op.rhs_dtype);
     op.dwconv = create_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla();
     return op;
 }
@@ -48,13 +52,17 @@ DwConvOperator create_operator_f32_planar() {
     op.is_shape_suitable = all_true<                                            //
         is_shape_suitable_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,  //
         is_shape_suitable_rhs_dwconv_pack_x32p1vlx1b_x32_x32_sme>;
+    op.supported_bias_mode_sets = {{DwConvBiasMode::ACCUMULATION_PER_C}};
     op.clamp_mode = DwConvClampMode::OPTIONAL;
     op.filter_height = kai_get_filter_height_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla();
     op.filter_width = kai_get_filter_width_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla();
-    op.dtype = DataType::FP32;
+    op.lhs_dtype = DataType::FP32;
+    op.rhs_dtype = DataType::FP32;
+    op.bias_dtype = DataType::FP32;
+    op.dst_dtype = DataType::FP32;
     op.acc_dtype = DataType::FP32;
     op.planar = true;
-    op.pack_rhs = create_dwconv_pack_rhs_x32p1vlx1b_x32_x32_sme(op.dtype);
+    op.pack_rhs = create_dwconv_pack_rhs_x32p1vlx1b_x32_x32_sme(op.rhs_dtype);
     op.dwconv = create_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla();
     return op;
 }
@@ -66,12 +74,16 @@ DwConvOperator create_operator_pack_rhs_f16() {
     op.is_cpu_supported = cpu_has_sme;
     op.is_shape_suitable = is_shape_suitable_rhs_dwconv_pack_x16p1vlx1b_x16_x16_sme;
     op.clamp_mode = DwConvClampMode::UNSUPPORTED;
+    op.supported_bias_mode_sets = {{DwConvBiasMode::ACCUMULATION_PER_C}};
     op.filter_height = std::nullopt;
     op.filter_width = std::nullopt;
-    op.dtype = DataType::FP16;
+    op.lhs_dtype = DataType::FP16;
+    op.rhs_dtype = DataType::FP16;
+    op.bias_dtype = DataType::FP16;
+    op.dst_dtype = DataType::FP16;
     op.ref_dtype = DataType::FP16;
     op.planar = false;
-    op.pack_rhs = create_dwconv_pack_rhs_x16p1vlx1b_x16_x16_sme(op.dtype);
+    op.pack_rhs = create_dwconv_pack_rhs_x16p1vlx1b_x16_x16_sme(op.rhs_dtype);
     op.dwconv = std::nullopt;
     return op;
 }
@@ -83,11 +95,15 @@ DwConvOperator create_operator_pack_rhs_f32() {
     op.is_cpu_supported = cpu_has_sme;
     op.is_shape_suitable = is_shape_suitable_rhs_dwconv_pack_x32p1vlx1b_x32_x32_sme;
     op.clamp_mode = DwConvClampMode::UNSUPPORTED;
+    op.supported_bias_mode_sets = {{DwConvBiasMode::ACCUMULATION_PER_C}};
     op.filter_height = std::nullopt;
     op.filter_width = std::nullopt;
-    op.dtype = DataType::FP32;
+    op.lhs_dtype = DataType::FP32;
+    op.rhs_dtype = DataType::FP32;
+    op.bias_dtype = DataType::FP32;
+    op.dst_dtype = DataType::FP32;
     op.planar = false;
-    op.pack_rhs = create_dwconv_pack_rhs_x32p1vlx1b_x32_x32_sme(op.dtype);
+    op.pack_rhs = create_dwconv_pack_rhs_x32p1vlx1b_x32_x32_sme(op.rhs_dtype);
     op.dwconv = std::nullopt;
     return op;
 }

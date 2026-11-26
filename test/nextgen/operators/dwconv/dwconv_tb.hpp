@@ -12,9 +12,11 @@
 #include <tuple>
 
 #include "test/common/compare.hpp"
+#include "test/common/data_type.hpp"
 #include "test/common/enum_utils.hpp"
 #include "test/nextgen/common/random.hpp"
 #include "test/nextgen/harness/tensor.hpp"
+#include "test/nextgen/operators/dwconv/dwconv_bias_mode.hpp"
 #include "test/nextgen/operators/dwconv/dwconv_operator.hpp"
 #include "test/nextgen/operators/dwconv/dwconv_slots.hpp"
 #include "test/reference/dwconv.hpp"
@@ -37,12 +39,13 @@ public:
     /// @param[in] filter_width The filter width.
     /// @param[in] channels The input and output channel count.
     /// @param[in] padding The input padding on each spatial edge.
+    /// @param[in] bias_modes The selected bias modes.
     /// @param[in] clamp_keep_ratio The ratio of output range to keep unclamped.
     /// @param[in] op The operator under test.
     DwConvTb(
         size_t in_height, size_t in_width, size_t out_height, size_t out_width, size_t filter_height,
-        size_t filter_width, size_t channels, Padding2D padding, std::optional<float> clamp_keep_ratio,
-        const DwConvOperator* op);
+        size_t filter_width, size_t channels, Padding2D padding, DwConvBiasModeSet bias_modes,
+        std::optional<float> clamp_keep_ratio, const DwConvOperator* op);
 
     /// Generates the test data.
     ///
@@ -86,20 +89,43 @@ private:
     /// or reference implementation.
     void determine_required_tensors();
 
-    void generate_lhs_data(Rng& rng);                        ///< Generates the LHS data.
-    void generate_rhs_data(Rng& rng);                        ///< Generates the RHS data.
-    void generate_acc_bias_c_data(Rng& rng, bool required);  ///< Generates the per-channel accumulator bias data.
+    void generate_lhs_data(Rng& rng);         ///< Generates the LHS data.
+    void generate_rhs_data(Rng& rng);         ///< Generates the RHS data.
+    void generate_acc_bias_c_data(Rng& rng);  ///< Generates the per-channel accumulator bias data.
 
-    void compute_ref_acc_dwconv_data(
-        bool required);  ///< Computes depthwise convolution accumulator without pre- or post-processing.
+    void quantize_lhs();                   ///< Quantizes the LHS source data.
+    void quantize_rhs();                   ///< Quantizes and transposes the filter source data.
+    void quantize_bias_c();                ///< Quantizes per-channel bias using the input quantization scales.
+    void compute_dst_quantization_info();  ///< Determines output quantization parameters.
+
+    void compute_input_bias_lhs_global_data();  ///< Computes the scalar LHS input bias.
+    void compute_padding_value();               ///< Computes the quantized zero-padding value.
+    void compute_scale_bias_global_data();      ///< Computes the scalar output zero-point bias.
+    void compute_acc_scale_c_data();            ///< Computes per-channel accumulator scales.
+
+    /// Computes depthwise convolution accumulator without pre- or post-processing.
+    void compute_ref_acc_dwconv_data();
 
     void compute_ref_packed_rhs();  ///< Computes the reference packed RHS.
     void compute_ref_dwconv();      ///< Computes the reference depthwise convolution.
+
+    /// Creates the output comparison handler for the configured operator.
+    ///
+    /// @param[in] output_dtype The output format's data type.
+    /// @return A handler with the quantizer or compute precision thresholds.
+    [[nodiscard]] DefaultMismatchHandler make_mismatch_handler(DataType output_dtype) const;
 
     void set_tensor_required(DwConvSlot slot);                ///< Marks a tensor as required.
     [[nodiscard]] bool is_tensor_required(DwConvSlot slot);   ///< Checks if a tensor is required.
     [[nodiscard]] bool is_tensor_generated(DwConvSlot slot);  ///< Checks if a tensor is generated.
     [[nodiscard]] Tensor& get_tensor(DwConvSlot slot);        ///< Retrieves a tensor.
+
+    /// Checks whether any listed tensor is required and none have been generated.
+    template <typename... Slots>
+    [[nodiscard]] bool need(DwConvSlot slot, Slots... slots) {
+        return (is_tensor_required(slot) || ... || is_tensor_required(slots)) &&
+            !(is_tensor_generated(slot) || ... || is_tensor_generated(slots));
+    }
 
     size_t m_in_height;
     size_t m_in_width;
@@ -109,6 +135,7 @@ private:
     size_t m_filter_width;
     size_t m_channels;
     Padding2D m_padding;
+    DwConvBiasModeSet m_bias_modes;
     std::optional<float> m_clamp_keep_ratio;
 
     const DwConvOperator* m_op;
