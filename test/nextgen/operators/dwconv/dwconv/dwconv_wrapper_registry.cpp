@@ -10,11 +10,13 @@
 
 #include "kai/ukernels/dwconv/dwconv_f16_f16_f16p/kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla.h"
 #include "kai/ukernels/dwconv/dwconv_f32_f32_f32p/kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla.h"
+#include "kai/ukernels/dwconv/kai_dwconv.h"
 #include "test/common/data_type.hpp"
 #include "test/common/float16.hpp"
 #include "test/nextgen/format/formats.hpp"
 #include "test/nextgen/operators/dwconv/dwconv/dwconv_depthfirst_wrapper.hpp"
 #include "test/nextgen/operators/dwconv/dwconv/dwconv_planar_wrapper.hpp"
+#include "test/nextgen/operators/dwconv/dwconv/dwconv_ukerapi_wrapper.hpp"
 
 namespace kai::test {
 
@@ -72,6 +74,26 @@ DwConvKernelPtr create_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla() {
         format::plain<DataType::FP32>());                       // dst format
 }
 
+DwConvKernelPtr create_dwconv_clamp_qai8_qai8_qai8cxp4vsx1_i32_i32_i32_i32_f32_3x3_s1_4xc_sme2_dot() {
+    DwConvUkerOutputStageConfig output_stage_config{};
+    output_stage_config.acc_scale = {DwConvUkerStageParameterLayout::PER_C};
+    output_stage_config.scale_bias = {DwConvUkerStageParameterLayout::GLOBAL};
+
+    return std::make_unique<DwConvUkerApiWrapper>(
+        "dwconv_clamp_qai8_qai8_qai8cxp4vsx1_i32_i32_i32_i32_f32_3x3_s1_4xc_sme2_dot",      // name
+        kai_dwconv_clamp_qai8_qai8_qai8cxp4vsx1_i32_i32_i32_i32_f32_3x3_s1_4xc_sme2_dot(),  // kernel
+        format::plain<DataType::I8>(),                                                      // lhs format
+        format::sme::x8p4vsx1<DataType::I8>(),                                              // rhs format
+        format::plain<DataType::I8>(),                                                      // dst format
+        ClampConfig::optional(DataType::I32),                                               // clamp config
+        DwConvUkerApiBiasDeliveryStage::DWCONV,                                             // bias stage
+        output_stage_config,                                                                // output stage
+        DwConvSlot::PADDING_VALUE,                                                          // padding value slot
+        DwConvSlot::RHS_PACKED,                                                             // rhs input slot
+        DwConvSlot::LHS_QDATA,                                                              // lhs input slot
+        DwConvSlot::ACC_BIAS_C_QDATA);                                                      // accumulator bias slot
+}
+
 bool is_shape_suitable_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla(
     size_t in_height, size_t in_width, size_t filter_height, size_t filter_width, size_t channels,
     const Padding2D& padding, const MatrixPortion& portion) {
@@ -96,6 +118,21 @@ bool is_shape_suitable_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla(
     const size_t step_height = kai_get_m_step_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla();
     if (!is_shape_suitable(
             in_height, in_width, channels, padding, portion, filter_height, filter_width, step_height, 0)) {
+        return false;
+    }
+    return portion.start_col() == 0.0F && portion.width() == 1.0F;
+}
+
+bool is_shape_suitable_dwconv_clamp_qai8_qai8_qai8cxp4vsx1_i32_i32_i32_i32_f32_3x3_s1_4xc_sme2_dot(
+    size_t in_height, size_t in_width, size_t filter_height, size_t filter_width, size_t channels,
+    const Padding2D& padding, const MatrixPortion& portion) {
+    if (filter_height != 3) {
+        return false;
+    }
+    if (filter_width != 3) {
+        return false;
+    }
+    if (!is_shape_suitable(in_height, in_width, channels, padding, portion, filter_height, filter_width, 4, 0)) {
         return false;
     }
     return portion.start_col() == 0.0F && portion.width() == 1.0F;

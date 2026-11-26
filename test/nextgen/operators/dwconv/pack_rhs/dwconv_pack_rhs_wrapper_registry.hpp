@@ -31,6 +31,14 @@ template <DataType DType>
 template <DataType DType>
 [[nodiscard]] DwConvPackKernelPtr create_dwconv_pack_rhs_x32p1vlx1b_x32_x32_sme();
 
+/// Creates the bitwise 8-bit weights-only packing wrapper.
+///
+/// @tparam DType Data type of the filter and packed RHS; must be 8 bits wide.
+///
+/// @return A wrapper for the 8-bit RHS packer.
+template <DataType DType>
+[[nodiscard]] DwConvPackKernelPtr create_dwconv_pack_rhs_x8p4vsx1_x8_sme();
+
 /// Checks whether the 16-bit RHS packer accepts the complete filter shape.
 ///
 /// Input dimensions, padding, and output portion do not affect suitability.
@@ -62,6 +70,23 @@ template <DataType DType>
 ///
 /// @return `true` if the filter height, filter width, and channel count are all nonzero.
 [[nodiscard]] bool is_shape_suitable_rhs_dwconv_pack_x32p1vlx1b_x32_x32_sme(
+    size_t in_height, size_t in_width, size_t filter_height, size_t filter_width, size_t channels,
+    const Padding2D& padding, const MatrixPortion& portion);
+
+/// Checks whether the 8-bit RHS packer accepts the complete filter shape.
+///
+/// Input dimensions, padding, and output portion do not affect suitability.
+///
+/// @param[in] in_height The input height (ignored).
+/// @param[in] in_width The input width (ignored).
+/// @param[in] filter_height The filter height.
+/// @param[in] filter_width The filter width.
+/// @param[in] channels The number of channels.
+/// @param[in] padding The input padding (ignored).
+/// @param[in] portion The output portion under test (ignored).
+///
+/// @return `true` if the filter height, filter width, and channel count are all nonzero.
+[[nodiscard]] bool is_shape_suitable_rhs_dwconv_pack_x8p4vsx1_x8_sme(
     size_t in_height, size_t in_width, size_t filter_height, size_t filter_width, size_t channels,
     const Padding2D& padding, const MatrixPortion& portion);
 

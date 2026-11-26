@@ -550,6 +550,23 @@ using kai::test::sme::VS;
     );
 }
 
+/// Creates the x8p4vsx1 packed format.
+///
+/// @tparam DType The packed data type.
+/// @return The format.
+template <DataType DType>
+[[nodiscard]] inline Poly<Format> x8p4vsx1() {
+    static_assert(data_type_size_in_bits(DType) == 8);
+    return make_poly<Block2dRowFormat>(
+        VS<4>(), 1,                 // Block shape
+        1,                          // Width alignment
+        false,                      // Zero pad right
+        DType,                      // Packed data type
+        std::array<DataType, 0>{},  // Per-row prefix types
+        std::array<DataType, 0>{}   // Per-row postfix types
+    );
+}
+
 /// Creates the x32p4vsx1 packed format.
 ///
 /// @tparam DType The packed data type.
