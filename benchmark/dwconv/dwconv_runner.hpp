@@ -9,8 +9,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <vector>
 
 #include "dwconv_interface.hpp"
+#include "kai/kai_common.h"
 #include "test/common/data_type.hpp"
 
 namespace kai::benchmark {
@@ -156,6 +158,10 @@ private:
     size_t m_in_stride_col{0};
     size_t m_dst_stride_row{0};
     size_t m_dst_stride_col{0};
+    std::vector<std::byte> m_lhs_bias_global;
+    std::vector<std::byte> m_acc_bias_c;
+    std::vector<std::byte> m_scale_bias_global;
+    std::vector<std::byte> m_acc_scale_c;
 };
 
 template <>
@@ -240,6 +246,129 @@ inline void DwConvRunner<DwConvPackedDepthfirstFloatInterface>::run(const void* 
         src, rhs, dst, m_num_channels, m_input_height, m_input_width, m_output_height, m_output_width, m_pad_left,
         m_pad_top, m_in_stride_row, m_in_stride_col, m_dst_stride_row, m_dst_stride_col,
         -std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
+}
+
+/// Prepares tensor dimensions, strides, and auxiliary data required by the ukernel API interface.
+template <>
+inline void DwConvRunner<DwConvUkerApiInterface>::prepare() {
+    prepare_common(m_interface.get_filter_height(), m_interface.get_filter_width());
+
+    m_lhs_bias_global.clear();
+    m_acc_bias_c.clear();
+    m_scale_bias_global.clear();
+    m_acc_scale_c.clear();
+
+    // Allocate global bias for the LHS
+    if ((m_interface.args_flags & KAI_BENCHMARK_DWCONV_UKER_ARGS_LHS_BIAS_GLOBAL) != 0) {
+        KAI_ASSUME(m_interface.lhs_bias_global_elem_size != 0);
+        m_lhs_bias_global.resize(m_interface.lhs_bias_global_elem_size);
+    }
+
+    // Allocate channel bias for the accumulation stage
+    if ((m_interface.args_flags & KAI_BENCHMARK_DWCONV_UKER_ARGS_ACC_BIAS_C) != 0) {
+        KAI_ASSUME(m_interface.acc_bias_c_elem_size != 0);
+        m_acc_bias_c.resize(m_num_channels * m_interface.acc_bias_c_elem_size);
+    }
+
+    // Allocate global bias for the scaled accumulation stage
+    if ((m_interface.args_flags & KAI_BENCHMARK_DWCONV_UKER_ARGS_SCALE_BIAS_GLOBAL) != 0) {
+        KAI_ASSUME(m_interface.scale_bias_global_elem_size != 0);
+        m_scale_bias_global.resize(m_interface.scale_bias_global_elem_size);
+    }
+
+    // Allocate channel scale for the accumulation stage
+    if ((m_interface.args_flags & KAI_BENCHMARK_DWCONV_UKER_ARGS_ACC_SCALE_C) != 0) {
+        KAI_ASSUME(m_interface.acc_scale_c_elem_size != 0);
+        m_acc_scale_c.resize(m_num_channels * m_interface.acc_scale_c_elem_size);
+    }
+}
+
+template <>
+inline bool DwConvRunner<DwConvUkerApiInterface>::is_valid() const {
+    if (m_interface.supports_configuration == nullptr) {
+        return true;
+    }
+
+    return m_interface.supports_configuration(m_stride_height, m_stride_width, m_dilation_height, m_dilation_width);
+}
+
+template <>
+inline DwConvBufferSizes DwConvRunner<DwConvUkerApiInterface>::get_buffer_sizes() const {
+    const auto api = m_interface.get_api();
+    const kai_dwconv_uker_config config{{m_pad_top, m_pad_left, m_pad_bottom, m_pad_right}};
+    const kai_dwconv_uker_rhs_dim_args rhs_shape{m_num_channels};
+    const auto rhs_stride = api.get_rhs_stride(&config, &rhs_shape);
+    const kai_dwconv_uker_dst_dim_args dst_shape{
+        m_output_height,
+        m_output_width,
+        m_num_channels,
+    };
+    const auto dst_stride = api.get_dst_stride(&config, &dst_shape);
+    const size_t channel_step = api.get_step(&config).c;
+    const kai_dwconv_uker_rhs_dim_args rhs_end{kai_roundup(m_num_channels, channel_step)};
+    const size_t rhs_size = api.get_rhs_offset(&config, &rhs_end, &rhs_stride);
+    return {
+        m_input_height * m_in_stride_row,
+        rhs_size,
+        api.get_dst_size(&config, &dst_shape, &dst_stride),
+    };
+}
+
+/// Runs the depthwise convolution micro-kernel. Specialized on the ukernel API interface.
+///
+/// @param[in] src Input tensor buffer.
+/// @param[in] rhs RHS buffer in the format required by the micro-kernel.
+/// @param[out] dst Output tensor buffer.
+template <>
+inline void DwConvRunner<DwConvUkerApiInterface>::run(const void* src, const void* rhs, void* dst) {
+    struct ClampArgs {
+        alignas(uint64_t) std::byte min[sizeof(uint64_t)];
+        alignas(uint64_t) std::byte max[sizeof(uint64_t)];
+    };
+
+    const auto api = m_interface.get_api();
+    const kai_dwconv_uker_config config{{m_pad_top, m_pad_left, m_pad_bottom, m_pad_right}};
+
+    const ClampArgs clamp_args{};
+    const bool has_clamp = (m_interface.flags & KAI_DWCONV_UKER_FLAGS_ARGS_CLAMP) != 0;
+    const int8_t padding_value = 0;
+
+    const kai_dwconv_uker_lhs_dim_args lhs_shape = {
+        m_input_height,
+        m_input_width,
+        m_num_channels,
+    };
+    const kai_dwconv_uker_rhs_dim_args rhs_shape{m_num_channels};
+    const kai_dwconv_uker_dst_dim_args dst_shape{m_output_height, m_output_width, m_num_channels};
+
+    kai_dwconv_uker_args args = {};
+    args.flags = m_interface.flags;
+
+    args.shape.lhs = lhs_shape;
+
+    args.operand.lhs.ptr = src;
+    args.operand.lhs.stride = api.get_lhs_stride(&config, &lhs_shape);
+
+    args.operand.rhs.ptr = rhs;
+    args.operand.rhs.stride = api.get_rhs_stride(&config, &rhs_shape);
+
+    args.operand.dst.ptr = dst;
+    args.operand.dst.stride = api.get_dst_stride(&config, &dst_shape);
+
+    args.operand.bias.input_bias.lhs.global.ptr = m_lhs_bias_global.empty() ? nullptr : m_lhs_bias_global.data();
+    args.operand.bias.acc_bias.c.ptr = m_acc_bias_c.empty() ? nullptr : m_acc_bias_c.data();
+    args.operand.bias.scale_bias.global.ptr = m_scale_bias_global.empty() ? nullptr : m_scale_bias_global.data();
+
+    args.operand.scale.acc_scale_c.ptr = m_acc_scale_c.empty() ? nullptr : m_acc_scale_c.data();
+
+    args.padding.value_ptr = &padding_value;
+
+    if (has_clamp) {
+        args.activation.clamp.min_ptr = clamp_args.min;
+        args.activation.clamp.max_ptr = clamp_args.max;
+    }
+
+    api.run(&config, &args);
 }
 
 }  // namespace kai::benchmark

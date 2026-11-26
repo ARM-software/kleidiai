@@ -7,8 +7,18 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
+
+#include "kai/ukernels/dwconv/kai_dwconv_types.h"
 
 namespace kai::benchmark {
+
+enum : uint32_t {
+    KAI_BENCHMARK_DWCONV_UKER_ARGS_LHS_BIAS_GLOBAL = 1U << 0,
+    KAI_BENCHMARK_DWCONV_UKER_ARGS_ACC_BIAS_C = 1U << 1,
+    KAI_BENCHMARK_DWCONV_UKER_ARGS_SCALE_BIAS_GLOBAL = 1U << 2,
+    KAI_BENCHMARK_DWCONV_UKER_ARGS_ACC_SCALE_C = 1U << 3,
+};
 
 /// Planar DWConv with packed floating-point weights and clamp.
 struct DwConvPackedFloatInterface {
@@ -55,6 +65,23 @@ struct DwConvSplitFloatInterface {
         const void* src, const float* weights, const float* bias, void* dst, size_t in_stride_row, size_t in_stride_col,
         size_t dst_stride_row, size_t dst_stride_col, size_t valid_input_rows, size_t valid_dst_rows, size_t pad_left,
         size_t pad_top, float pad_value, float clamp_min, float clamp_max);
+};
+
+/// Depthwise convolution API using struct based API.
+struct DwConvUkerApiInterface {
+    size_t (*get_filter_height)();
+    size_t (*get_filter_width)();
+    kai_dwconv_uker_api (*get_api)();
+    /// Optional checks for requirements not exposed by the micro-kernel API.
+    bool (*supports_configuration)(
+        size_t stride_height, size_t stride_width, size_t dilation_height, size_t dilation_width);
+    uint64_t flags = 0;
+    uint32_t args_flags = 0;
+    /// Auxiliary operand element sizes in bytes.
+    size_t lhs_bias_global_elem_size = 0;
+    size_t acc_bias_c_elem_size = 0;
+    size_t scale_bias_global_elem_size = 0;
+    size_t acc_scale_c_elem_size = 0;
 };
 
 }  // namespace kai::benchmark

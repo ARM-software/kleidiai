@@ -19,6 +19,7 @@
 // Micro-kernels to register for benchmarking
 #include "kai/ukernels/dwconv/dwconv_f16_f16_f16p/kai_dwconv_clamp_f16_f16_f16p1vlx1b_3x3_s1_4x4_sme2_mla.h"
 #include "kai/ukernels/dwconv/dwconv_f32_f32_f32p/kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla.h"
+#include "kai/ukernels/dwconv/kai_dwconv.h"
 #include "kai/ukernels/dwconv/pack/kai_rhs_dwconv_pack_x16p1vlx1b_x16_x16_sme.h"
 #include "kai/ukernels/dwconv/pack/kai_rhs_dwconv_pack_x32p1vlx1b_x32_x32_sme.h"
 
@@ -52,11 +53,35 @@ inline constexpr DwConvPackedFloatInterface kai_dwconv_clamp_f32_f32_f32p1vlx1b_
     .run_dwconv = kai_run_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla,
 };
 
+inline constexpr DwConvUkerApiInterface
+    kai_dwconv_clamp_qai8_qai8_qai8cxp4vsx1_i32_i32_i32_i32_f32_3x3_s1_4xc_sme2_dot_iface{
+        .get_filter_height = []() -> size_t { return 3; },
+        .get_filter_width = []() -> size_t { return 3; },
+        .get_api = kai_dwconv_clamp_qai8_qai8_qai8cxp4vsx1_i32_i32_i32_i32_f32_3x3_s1_4xc_sme2_dot,
+        .supports_configuration =
+            [](size_t stride_height, size_t stride_width, size_t dilation_height, size_t dilation_width) {
+                return stride_height == 1 && stride_width == 1 && dilation_height == 1 && dilation_width == 1;
+            },
+        .args_flags = KAI_BENCHMARK_DWCONV_UKER_ARGS_LHS_BIAS_GLOBAL |  //
+            KAI_BENCHMARK_DWCONV_UKER_ARGS_ACC_BIAS_C |                 //
+            KAI_BENCHMARK_DWCONV_UKER_ARGS_SCALE_BIAS_GLOBAL |          //
+            KAI_BENCHMARK_DWCONV_UKER_ARGS_ACC_SCALE_C,
+        .lhs_bias_global_elem_size = sizeof(int32_t),
+        .acc_bias_c_elem_size = sizeof(int32_t),
+        .scale_bias_global_elem_size = sizeof(int32_t),
+        .acc_scale_c_elem_size = sizeof(float),
+    };
+
 /// Returns the lazily registered dwconv benchmarks.
 ///
 /// @return Registered dwconv benchmarks.
 static const auto& get_dwconv_benchmarks() {
     static const std::array dwconv_benchmarks{
+        BMFramework::RegisterBenchmark(
+            "kai_dwconv_clamp_qai8_qai8_qai8cxp4vsx1_i32_i32_i32_i32_f32_3x3_s1_4xc_sme2_dot",
+            kai_benchmark_dwconv<DwConvUkerApiInterface>,
+            kai_dwconv_clamp_qai8_qai8_qai8cxp4vsx1_i32_i32_i32_i32_f32_3x3_s1_4xc_sme2_dot_iface, DataType::I8,
+            DataType::I8, test::cpu_has_sme2),
         BMFramework::RegisterBenchmark(
             "kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla", kai_benchmark_dwconv<DwConvPackedFloatInterface>,
             kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla_iface, DataType::FP32, DataType::FP32,
