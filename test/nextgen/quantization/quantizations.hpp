@@ -84,6 +84,23 @@ namespace kai::test::quantization {
     );
 }
 
+/// Creates the qai8cx per-channel asymmetric quantization.
+///
+/// Expects channels in columns, sharing each channel's scale and zero-point across all rows.
+///
+/// @return The quantizer.
+[[nodiscard]] inline std::unique_ptr<Quantizer> qai8cx() {
+    // Configures one asymmetric quantization block per channel column.
+    return std::make_unique<AsymmLinearQuantizer>(
+        DataType::I8,         // Quantized data type
+        DataType::FP32,       // Scale data type
+        DataType::I32,        // Zero-point data type
+        RoundMode::TIE_AWAY,  // Quantized data rounding mode
+        RoundMode::CURRENT,   // Zero-point rounding mode
+        0, 1                  // Full-height channel column blocks
+    );
+}
+
 /// Creates the qsi8cx per-row symmetric quantization.
 ///
 /// @return The quantizer.

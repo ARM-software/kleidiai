@@ -99,6 +99,7 @@ private:
     void compute_dst_quantization_info();  ///< Determines output quantization parameters.
 
     void compute_input_bias_lhs_global_data();  ///< Computes the scalar LHS input bias.
+    void compute_input_bias_rhs_c_data();       ///< Computes the per-channel RHS input bias.
     void compute_padding_value();               ///< Computes the quantized zero-padding value.
     void compute_scale_bias_global_data();      ///< Computes the scalar output zero-point bias.
     void compute_acc_scale_c_data();            ///< Computes per-channel accumulator scales.

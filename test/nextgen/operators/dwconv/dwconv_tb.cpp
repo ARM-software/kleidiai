@@ -29,6 +29,7 @@
 #include "test/nextgen/harness/tensor_cache.hpp"
 #include "test/nextgen/operators/dwconv/dwconv_config.hpp"
 #include "test/nextgen/operators/dwconv/dwconv_main_args.hpp"
+#include "test/nextgen/reference/unary_elementwise.hpp"
 #include "test/reference/cast.hpp"
 #include "test/reference/clamp.hpp"
 #include "test/reference/dwconv.hpp"
@@ -79,6 +80,7 @@ void DwConvTb::generate_test_data(Rng& rng) {
     quantize_bias_c();
     compute_dst_quantization_info();
     compute_input_bias_lhs_global_data();
+    compute_input_bias_rhs_c_data();
     compute_padding_value();
     compute_scale_bias_global_data();
     compute_acc_scale_c_data();
@@ -152,6 +154,9 @@ void DwConvTb::determine_required_tensors() {
 
     if (is_tensor_required(DwConvSlot::INPUT_BIAS_LHS_GLOBAL_DATA) || is_tensor_required(DwConvSlot::PADDING_VALUE)) {
         set_tensor_required(DwConvSlot::LHS_QZP);
+    }
+    if (is_tensor_required(DwConvSlot::INPUT_BIAS_RHS_C_DATA)) {
+        set_tensor_required(DwConvSlot::RHS_QZP);
     }
     if (is_tensor_required(DwConvSlot::PADDING_VALUE)) {
         set_tensor_required(DwConvSlot::LHS_QDATA);
@@ -294,18 +299,28 @@ void DwConvTb::quantize_rhs() {
     Tensor& qscale = get_tensor(DwConvSlot::RHS_QSCALE);
     Tensor& qzp = get_tensor(DwConvSlot::RHS_QZP);
 
-    // Quantizes one row per channel, preserving the filter's per-channel parameters.
-    const size_t filter_size = m_filter_height * m_filter_width;
-    const Buffer source_t = transpose(source.data_ptr(), m_op->rhs_dtype, filter_size, m_channels);
-    Tensor qdata_t;
+    // Views spatial-major storage with one column per channel.
+    const std::array shape{m_filter_height * m_filter_width, m_channels};
+    Tensor flat_qdata;
     const Quantizer& quantizer = *m_op->rhs_quant.value();
-    quantizer.dynamic_quantize(m_op->rhs_dtype, {m_channels, filter_size}, source_t, qdata_t, qscale, qzp);
-    const DataType dtype = qdata_t.format()->dtype();
-    qdata.set_shape({m_filter_height, m_filter_width, m_channels})
-        .set_format(make_poly<PlainFormat>(dtype))
-        .set_data(transpose(qdata_t.data_ptr(), dtype, m_channels, filter_size));
 
-    const std::string uid = quantizer.uid() + "(" + std::string(source.id()) + ")";
+    // Determines the per-channel RHS quantization parameters.
+    quantizer.determine_qinfo(m_op->rhs_dtype, shape, source.data(), qscale, qzp);
+
+    // Uses zero-centred quantization when RHS correction is absent.
+    const bool has_rhs_bias = m_bias_modes.has(DwConvBiasMode::INPUT_RHS_PER_C);
+    if (!has_rhs_bias) {
+        std::fill(qzp.data().begin(), qzp.data().end(), std::byte{0});
+    }
+
+    // Quantizes the filter directly in spatial-major order.
+    quantizer.quantize(m_op->rhs_dtype, shape, source.data(), qscale.data(), qzp.data(), flat_qdata);
+    qdata.set_shape({m_filter_height, m_filter_width, m_channels}).set_format(flat_qdata.format()).allocate();
+    std::copy(flat_qdata.data().begin(), flat_qdata.data().end(), qdata.data().begin());
+
+    // Identifies the quantized tensors using the effective zero-point policy.
+    const std::string zero_point_policy = has_rhs_bias ? ",rhs_zero_point=per_c)" : ",rhs_zero_point=zero)";
+    const std::string uid = quantizer.uid() + "(" + std::string(source.id()) + zero_point_policy;
     qdata.set_id(uid + ".qdata");
     qscale.set_id(uid + ".qscale");
     qzp.set_id(uid + ".qzp");
@@ -323,27 +338,23 @@ void DwConvTb::quantize_bias_c() {
     Tensor& qdata = get_tensor(DwConvSlot::ACC_BIAS_C_QDATA);
     Tensor& bias_scale = get_tensor(DwConvSlot::ACC_BIAS_C_QSCALE);
 
-    // Requires a single LHS scale with shape {1, 1} and one RHS scale per channel
-    // with shape {m_channels, 1}. Broadcasts the LHS scale across channels so that
-    // bias_scale[c] = lhs_scale[0] * rhs_scale[c], matching the accumulator units
-    // for each channel. Stores the resulting {m_channels, 1} scales using the
-    // operator's bias_scale_dtype.
+    // Broadcasts the scalar LHS scale across the RHS channel scales.
     const DataType dtype = m_op->bias_scale_dtype;
     KAI_TEST_ASSERT(lhs_scale.shape().at(0) == 1 && lhs_scale.shape().at(1) == 1);
-    KAI_TEST_ASSERT(rhs_scale.shape().at(0) == m_channels && rhs_scale.shape().at(1) == 1);
+    KAI_TEST_ASSERT(rhs_scale.shape().at(0) == 1 && rhs_scale.shape().at(1) == m_channels);
     Buffer scales(data_type_array_size_in_bytes(dtype, m_channels));
     const auto lhs_value = read_array(lhs_scale.format()->dtype(), lhs_scale.data_ptr(), 0);
     for (size_t c = 0; c < m_channels; ++c) {
         const auto rhs_value = read_array(rhs_scale.format()->dtype(), rhs_scale.data_ptr(), c);
         write_array(dtype, scales.data(), c, lhs_value * rhs_value);
     }
+
     bias_scale.set_shape({m_channels, 1})
         .set_format(make_poly<PlainFormat>(dtype))
         .set_data(
             std::move(scales), "multiply(" + std::string(lhs_scale.id()) + ", " + std::string(rhs_scale.id()) + ")");
 
-    // Quantizes the {m_channels} bias values using these per-channel scales and
-    // no zero-point, producing bias values in accumulator units.
+    // Quantizes the bias into per-channel accumulator units.
     const Quantizer& quantizer = *m_op->bias_quant.value();
     quantizer.quantize(m_op->bias_dtype, {m_channels}, source.data(), bias_scale.data(), {}, qdata);
 
@@ -386,6 +397,29 @@ void DwConvTb::compute_input_bias_lhs_global_data() {
     Buffer data(data_type_array_size_in_bytes(dtype, 1));
     write_array(dtype, data.data(), 0, -read_array(zp_dtype, lhs_qzp.data_ptr(), 0));
     input_bias.set_shape({1}).set_format(make_poly<PlainFormat>(dtype)).set_data(std::move(data));
+}
+
+void DwConvTb::compute_input_bias_rhs_c_data() {
+    // Checks whether the correction tensor needs to be generated.
+    if (!need(DwConvSlot::INPUT_BIAS_RHS_C_DATA)) {
+        return;
+    }
+
+    // Retrieves and validates the per-channel zero points.
+    const Tensor& rhs_qzp = get_tensor(DwConvSlot::RHS_QZP);
+    Tensor& input_bias = get_tensor(DwConvSlot::INPUT_BIAS_RHS_C_DATA);
+    const DataType dtype = m_op->input_bias_rhs_dtype;
+    KAI_TEST_ASSERT(rhs_qzp.shape().size() == 2);
+    KAI_TEST_ASSERT(rhs_qzp.shape().at(0) == 1 && rhs_qzp.shape().at(1) == m_channels);
+    KAI_TEST_ASSERT(dtype != DataType::UNKNOWN && rhs_qzp.format()->dtype() == dtype);
+
+    // Negates the zero points to obtain additive input corrections.
+    const UnaryElementwiseFn negate = make_negate(dtype);
+    Buffer data = negate({m_channels}, rhs_qzp.data());
+
+    // Stores the correction as a contiguous channel vector.
+    const std::string uid = "neg(" + std::string(rhs_qzp.id()) + ")";
+    input_bias.set_shape({m_channels}).set_format(rhs_qzp.format()).set_data(std::move(data), uid);
 }
 
 void DwConvTb::compute_padding_value() {
@@ -435,7 +469,7 @@ void DwConvTb::compute_acc_scale_c_data() {
     // Converts accumulator units into destination units using the generated quantization scales.
     const DataType dtype = m_op->acc_scale_dtype;
     KAI_TEST_ASSERT(lhs_scale.shape().at(0) == 1 && lhs_scale.shape().at(1) == 1);
-    KAI_TEST_ASSERT(rhs_scale.shape().at(0) == m_channels && rhs_scale.shape().at(1) == 1);
+    KAI_TEST_ASSERT(rhs_scale.shape().at(0) == 1 && rhs_scale.shape().at(1) == m_channels);
     KAI_TEST_ASSERT(dst_scale.shape().at(0) == 1 && dst_scale.shape().at(1) == 1);
     Buffer scales(data_type_array_size_in_bytes(dtype, m_channels));
     const auto lhs_value = read_array(lhs_scale.format()->dtype(), lhs_scale.data_ptr(), 0);
@@ -519,7 +553,7 @@ void DwConvTb::compute_ref_acc_dwconv_data() {
     DataType rhs_dtype = m_op->rhs_dtype;
     std::string rhs_id;
 
-    // Dequantizes quantized inputs; other inputs retain their storage types for the reference.
+    // Dequantizes the LHS when quantization is configured.
     if (m_op->lhs_quant.has_value()) {
         quantize_lhs();
 
@@ -548,10 +582,8 @@ void DwConvTb::compute_ref_acc_dwconv_data() {
         const Tensor& rhs_qzp = get_tensor(DwConvSlot::RHS_QZP);
 
         const Quantizer& rhs_quant = *m_op->rhs_quant.value();
-        const Buffer qdata_t = transpose(rhs_qdata.data_ptr(), rhs_qdata.format()->dtype(), filter_size, m_channels);
-        const Buffer rhs_t =
-            rhs_quant.dequantize(ref_dtype, {m_channels, filter_size}, qdata_t, rhs_qscale.data(), rhs_qzp.data());
-        tmp_rhs = transpose(rhs_t.data(), ref_dtype, m_channels, filter_size);
+        tmp_rhs = rhs_quant.dequantize(
+            ref_dtype, {filter_size, m_channels}, rhs_qdata.data(), rhs_qscale.data(), rhs_qzp.data());
         rhs_view = tmp_rhs.view();
         rhs_dtype = ref_dtype;
 

@@ -81,7 +81,7 @@ DwConvOperator create_operator_dwconv_clamp_qai8_qai8_qai8cxp4vsx1_i32_i32_i32_i
     op.filter_width = 3;
 
     op.lhs_quant = quantization::qai8();
-    op.rhs_quant = quantization::qsi8cx();
+    op.rhs_quant = quantization::qai8cx();
     op.bias_quant = quantization::qsi32c1sf32();
     op.dst_quant = quantization::qai8();
 
@@ -91,14 +91,32 @@ DwConvOperator create_operator_dwconv_clamp_qai8_qai8_qai8cxp4vsx1_i32_i32_i32_i
     op.dst_dtype = DataType::I8;
     op.acc_dtype = DataType::I32;
     op.input_bias_lhs_dtype = DataType::I32;
+    op.input_bias_rhs_dtype = DataType::I32;
     op.scale_bias_dtype = DataType::I32;
     op.bias_scale_dtype = DataType::FP32;
     op.acc_scale_dtype = DataType::FP32;
-    op.supported_bias_mode_sets = {{
-        DwConvBiasMode::INPUT_LHS_GLOBAL,
-        DwConvBiasMode::ACCUMULATION_PER_C,
-        DwConvBiasMode::SCALE_BIAS_GLOBAL,
-    }};
+    op.supported_bias_mode_sets = {
+        {
+            DwConvBiasMode::INPUT_LHS_GLOBAL,
+            DwConvBiasMode::SCALE_BIAS_GLOBAL,
+        },
+        {
+            DwConvBiasMode::INPUT_LHS_GLOBAL,
+            DwConvBiasMode::ACCUMULATION_PER_C,
+            DwConvBiasMode::SCALE_BIAS_GLOBAL,
+        },
+        {
+            DwConvBiasMode::INPUT_LHS_GLOBAL,
+            DwConvBiasMode::INPUT_RHS_PER_C,
+            DwConvBiasMode::SCALE_BIAS_GLOBAL,
+        },
+        {
+            DwConvBiasMode::INPUT_LHS_GLOBAL,
+            DwConvBiasMode::INPUT_RHS_PER_C,
+            DwConvBiasMode::ACCUMULATION_PER_C,
+            DwConvBiasMode::SCALE_BIAS_GLOBAL,
+        },
+    };
     op.planar = true;
 
     op.pack_rhs = create_dwconv_pack_rhs_x8p4vsx1_x8_sme<DataType::I8>();

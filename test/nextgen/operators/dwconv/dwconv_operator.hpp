@@ -57,6 +57,7 @@ struct DwConvOperator {
     DataType ref_dtype = DataType::FP32;                ///< Data type used by the reference implementation.
     DataType ref_acc_dtype = DataType::FP32;            ///< Reference accumulator data type after input dequantization.
     DataType input_bias_lhs_dtype = DataType::UNKNOWN;  ///< Global LHS input bias data type.
+    DataType input_bias_rhs_dtype = DataType::UNKNOWN;  ///< RHS input bias data type.
     DataType scale_bias_dtype = DataType::UNKNOWN;      ///< Global scaled bias data type.
     DataType bias_scale_dtype = DataType::UNKNOWN;      ///< Quantized accumulator bias scale data type.
     DataType acc_scale_dtype = DataType::UNKNOWN;       ///< Accumulator-to-destination scale data type.
