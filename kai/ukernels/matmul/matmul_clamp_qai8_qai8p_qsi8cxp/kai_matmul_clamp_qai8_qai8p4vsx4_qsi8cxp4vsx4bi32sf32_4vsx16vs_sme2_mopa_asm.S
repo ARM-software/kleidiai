@@ -52,308 +52,305 @@ KAI_ASM_FUNCTION_LABEL(kai_kernel_matmul_clamp_qai8_qai8p4vsx4_qsi8cxp4vsx4bi32s
     stp d12, d13, [sp, 104]
     stp d14, d15, [sp, 120]
     KAI_ASM_INST(0xd503477f)  // SMSTART ZA
-    mov x6, #0
-    ldr x7, [x0, #0x18]
+    mov x10, #0
+    ldr x9, [x0, #0x18]
     ptrue p1.b
     KAI_ASM_INST(0x25207810)  // ptrue pn8.b
-    ldr x8, [x0, #0]
-    cntw x17
-    ldr x16, [x0, #0x8]
-    add x7, x7, #0x3
-    ldr x15, [x0, #0x10]
-    ldr x14, [x0, #0x28]
-    lsr x7, x7, #0x2
-    ldr x13, [x0, #0x38]
-    ldr x11, [x0, #0x48]
-    tbz x8, #16, label_1
-    ldr x20, [x0, #0x78]  // args->clamp_args_ptr
-    KAI_ASM_INST(0x8540c686)  // ld1rw { z6.s }, p1/Z, [x20]
-    KAI_ASM_INST(0x8541c69a)  // ld1rw { z26.s }, p1/Z, [x20, #4]
-KAI_ASM_LABEL(label_1)  // m_loop: load_clamp_args: no_clamp
-    ldr x10, [x0, #0x20]
-KAI_ASM_LABEL(label_2)  // m_loop: body
-    mov x9, #0
-    ldr x28, [x0, #0x30]
-KAI_ASM_LABEL(label_3)  // m_loop: n_loop: body
-    mov x27, x28
+    ldr x1, [x0, #0x78]  // args->clamp_args_ptr
+    cntw x28
+    ldr x27, [x0, #0x8]
+    add x9, x9, #0x3
+    ldr x26, [x0, #0x10]
+    ldr x25, [x0, #0x28]
+    lsr x9, x9, #0x2
+    KAI_ASM_INST(0x8540c43c)  // ld1rw { z28.s }, p1/Z, [x1]
+    ldr x24, [x0, #0x38]
+    KAI_ASM_INST(0x8541c43d)  // ld1rw { z29.s }, p1/Z, [x1, #4]
+    ldr x23, [x0, #0x48]
+    ldr x22, [x0, #0x20]
+KAI_ASM_LABEL(label_1)  // m_loop: body
+    mov x21, #0
+    ldr x20, [x0, #0x30]
+KAI_ASM_LABEL(label_2)  // m_loop: n_loop: body
+    mov x8, x20
     KAI_ASM_INST(0xc00800ff)  // zero { zad0, zad1, zad2, zad3, zad4, zad5, zad6, zad7 }
-    mov x22, x10
-    add x26, x27, x13
-    add x25, x27, x13, LSL #1
-    ld1w { z29.s }, p1/Z, [x27]
-    add x24, x26, x13, LSL #1
-    ld1w { z22.s }, p1/Z, [x26]
-    whilelt p0.b, x9, x15
-    ld1w { z9.s }, p1/Z, [x25]
-    addvl x27, x27, #1
-    addvl x26, x26, #1
-    ld1w { z20.s }, p1/Z, [x24]
-    addvl x25, x25, #1
-    addvl x24, x24, #1
-    KAI_ASM_INST(0xc09027a0)  // addha za0.s, p1/M, p1/M, z29.s
-    KAI_ASM_INST(0xc09026c1)  // addha za1.s, p1/M, p1/M, z22.s
-    KAI_ASM_INST(0xc0902522)  // addha za2.s, p1/M, p1/M, z9.s
-    KAI_ASM_INST(0xc0902683)  // addha za3.s, p1/M, p1/M, z20.s
-    mov x21, x7
-    mov x20, #0
-    cmp x21, #0x4
-    mov x23, #0
-    blt label_7
-    sub x21, x21, #0x4
-    KAI_ASM_INST(0xa01482c0)  // ld1b { z0.b-z3.b }, pn8.b/Z, [x22, x20, LSL #0]
-    incb x20, ALL, MUL #4
-    cmp x21, #0x4
-    KAI_ASM_INST(0xa0178370)  // ld1b { z16.b-z19.b }, pn8.b/Z, [x27, x23, LSL #0]
-    KAI_ASM_INST(0xa0178348)  // ld1b { z8.b-z11.b }, pn8.b/Z, [x26, x23, LSL #0]
-    KAI_ASM_INST(0xa017832c)  // ld1b { z12.b-z15.b }, pn8.b/Z, [x25, x23, LSL #0]
-    KAI_ASM_INST(0xa0178314)  // ld1b { z20.b-z23.b }, pn8.b/Z, [x24, x23, LSL #0]
-    incb x23, ALL, MUL #4
+    mov x3, x22
+    add x7, x8, x24
+    add x6, x8, x24, LSL #1
+    ld1w { z31.s }, p1/Z, [x8]
+    add x5, x7, x24, LSL #1
+    ld1w { z0.s }, p1/Z, [x7]
+    whilelt p0.b, x21, x26
+    ld1w { z17.s }, p1/Z, [x6]
+    incw x8, ALL, MUL #4
+    incw x7, ALL, MUL #4
+    ld1w { z10.s }, p1/Z, [x5]
+    incw x6, ALL, MUL #4
+    incw x5, ALL, MUL #4
+    KAI_ASM_INST(0xc09027e0)  // addha za0.s, p1/M, p1/M, z31.s
+    KAI_ASM_INST(0xc0902401)  // addha za1.s, p1/M, p1/M, z0.s
+    KAI_ASM_INST(0xc0902622)  // addha za2.s, p1/M, p1/M, z17.s
+    KAI_ASM_INST(0xc0902543)  // addha za3.s, p1/M, p1/M, z10.s
+    mov x2, x9
+    mov x1, #0
+    cmp x2, #0x4
+    mov x4, #0
     blt label_6
-KAI_ASM_LABEL(label_5)  // m_loop: n_loop: k_loop_x4: body
-    KAI_ASM_INST(0xa0902400)  // smopa za0.s, p1/M, p1/M, z0.b, z16.b
-    sub x21, x21, #0x4
-    KAI_ASM_INST(0xa0882401)  // smopa za1.s, p1/M, p1/M, z0.b, z8.b
-    cmp x21, #0x4
-    KAI_ASM_INST(0xa08c2402)  // smopa za2.s, p1/M, p1/M, z0.b, z12.b
-    KAI_ASM_INST(0xa0942403)  // smopa za3.s, p1/M, p1/M, z0.b, z20.b
-    KAI_ASM_INST(0xa0912420)  // smopa za0.s, p1/M, p1/M, z1.b, z17.b
-    KAI_ASM_INST(0xa0170370)  // ld1b { z16.b-z17.b }, pn8.b/Z, [x27, x23, LSL #0]
-    KAI_ASM_INST(0xa0892421)  // smopa za1.s, p1/M, p1/M, z1.b, z9.b
-    KAI_ASM_INST(0xa0170348)  // ld1b { z8.b-z9.b }, pn8.b/Z, [x26, x23, LSL #0]
-    KAI_ASM_INST(0xa08d2422)  // smopa za2.s, p1/M, p1/M, z1.b, z13.b
-    KAI_ASM_INST(0xa017032c)  // ld1b { z12.b-z13.b }, pn8.b/Z, [x25, x23, LSL #0]
-    KAI_ASM_INST(0xa0952423)  // smopa za3.s, p1/M, p1/M, z1.b, z21.b
-    KAI_ASM_INST(0xa01402c0)  // ld1b { z0.b-z1.b }, pn8.b/Z, [x22, x20, LSL #0]
-    incb x20, ALL, MUL #2
-    KAI_ASM_INST(0xa0922440)  // smopa za0.s, p1/M, p1/M, z2.b, z18.b
-    KAI_ASM_INST(0xa0170314)  // ld1b { z20.b-z21.b }, pn8.b/Z, [x24, x23, LSL #0]
-    incb x23, ALL, MUL #2
-    KAI_ASM_INST(0xa08a2441)  // smopa za1.s, p1/M, p1/M, z2.b, z10.b
-    KAI_ASM_INST(0xa08e2442)  // smopa za2.s, p1/M, p1/M, z2.b, z14.b
-    KAI_ASM_INST(0xa0962443)  // smopa za3.s, p1/M, p1/M, z2.b, z22.b
-    KAI_ASM_INST(0xa0932460)  // smopa za0.s, p1/M, p1/M, z3.b, z19.b
-    KAI_ASM_INST(0xa0170372)  // ld1b { z18.b-z19.b }, pn8.b/Z, [x27, x23, LSL #0]
-    KAI_ASM_INST(0xa08b2461)  // smopa za1.s, p1/M, p1/M, z3.b, z11.b
-    KAI_ASM_INST(0xa017034a)  // ld1b { z10.b-z11.b }, pn8.b/Z, [x26, x23, LSL #0]
-    KAI_ASM_INST(0xa08f2462)  // smopa za2.s, p1/M, p1/M, z3.b, z15.b
-    KAI_ASM_INST(0xa017032e)  // ld1b { z14.b-z15.b }, pn8.b/Z, [x25, x23, LSL #0]
-    KAI_ASM_INST(0xa0972463)  // smopa za3.s, p1/M, p1/M, z3.b, z23.b
-    KAI_ASM_INST(0xa01402c2)  // ld1b { z2.b-z3.b }, pn8.b/Z, [x22, x20, LSL #0]
-    incb x20, ALL, MUL #2
-    KAI_ASM_INST(0xa0170316)  // ld1b { z22.b-z23.b }, pn8.b/Z, [x24, x23, LSL #0]
-    incb x23, ALL, MUL #2
-    bge label_5
-KAI_ASM_LABEL(label_6)  // m_loop: n_loop: k_loop_x4: tail
-    KAI_ASM_INST(0xa0902400)  // smopa za0.s, p1/M, p1/M, z0.b, z16.b
-    KAI_ASM_INST(0xa0882401)  // smopa za1.s, p1/M, p1/M, z0.b, z8.b
-    KAI_ASM_INST(0xa08c2402)  // smopa za2.s, p1/M, p1/M, z0.b, z12.b
-    KAI_ASM_INST(0xa0942403)  // smopa za3.s, p1/M, p1/M, z0.b, z20.b
-    KAI_ASM_INST(0xa0912420)  // smopa za0.s, p1/M, p1/M, z1.b, z17.b
-    KAI_ASM_INST(0xa0892421)  // smopa za1.s, p1/M, p1/M, z1.b, z9.b
-    KAI_ASM_INST(0xa08d2422)  // smopa za2.s, p1/M, p1/M, z1.b, z13.b
-    KAI_ASM_INST(0xa0952423)  // smopa za3.s, p1/M, p1/M, z1.b, z21.b
-    KAI_ASM_INST(0xa0922440)  // smopa za0.s, p1/M, p1/M, z2.b, z18.b
-    KAI_ASM_INST(0xa08a2441)  // smopa za1.s, p1/M, p1/M, z2.b, z10.b
-    KAI_ASM_INST(0xa08e2442)  // smopa za2.s, p1/M, p1/M, z2.b, z14.b
-    KAI_ASM_INST(0xa0962443)  // smopa za3.s, p1/M, p1/M, z2.b, z22.b
-    KAI_ASM_INST(0xa0932460)  // smopa za0.s, p1/M, p1/M, z3.b, z19.b
-    KAI_ASM_INST(0xa08b2461)  // smopa za1.s, p1/M, p1/M, z3.b, z11.b
-    KAI_ASM_INST(0xa08f2462)  // smopa za2.s, p1/M, p1/M, z3.b, z15.b
-    KAI_ASM_INST(0xa0972463)  // smopa za3.s, p1/M, p1/M, z3.b, z23.b
-KAI_ASM_LABEL(label_7)  // m_loop: n_loop: k_loop_x4: done
-    cbz x21, label_10
-    sub x21, x21, #0x1
-    ld1b { z0.b }, p1/Z, [x22, x20]
-    incb x20
-    ld1b { z16.b }, p1/Z, [x27, x23]
-    ld1b { z8.b }, p1/Z, [x26, x23]
-    ld1b { z12.b }, p1/Z, [x25, x23]
-    ld1b { z20.b }, p1/Z, [x24, x23]
-    incb x23
-    cbz x21, label_9
-KAI_ASM_LABEL(label_8)  // m_loop: n_loop: k_loop_x1: body
-    sub x21, x21, #0x1
-    KAI_ASM_INST(0xa0902400)  // smopa za0.s, p1/M, p1/M, z0.b, z16.b
-    ld1b { z16.b }, p1/Z, [x27, x23]
-    KAI_ASM_INST(0xa0882401)  // smopa za1.s, p1/M, p1/M, z0.b, z8.b
-    ld1b { z8.b }, p1/Z, [x26, x23]
-    KAI_ASM_INST(0xa08c2402)  // smopa za2.s, p1/M, p1/M, z0.b, z12.b
-    ld1b { z12.b }, p1/Z, [x25, x23]
-    KAI_ASM_INST(0xa0942403)  // smopa za3.s, p1/M, p1/M, z0.b, z20.b
-    ld1b { z0.b }, p1/Z, [x22, x20]
-    incb x20
-    ld1b { z20.b }, p1/Z, [x24, x23]
-    incb x23
-    cbnz x21, label_8
-KAI_ASM_LABEL(label_9)  // m_loop: n_loop: k_loop_x1: tail
-    KAI_ASM_INST(0xa0902400)  // smopa za0.s, p1/M, p1/M, z0.b, z16.b
-    KAI_ASM_INST(0xa0882401)  // smopa za1.s, p1/M, p1/M, z0.b, z8.b
-    KAI_ASM_INST(0xa08c2402)  // smopa za2.s, p1/M, p1/M, z0.b, z12.b
-    KAI_ASM_INST(0xa0942403)  // smopa za3.s, p1/M, p1/M, z0.b, z20.b
-KAI_ASM_LABEL(label_10)  // m_loop: n_loop: k_loop_x1: done
-    ldr x22, [x0, #0x40]
-    sub x21, x16, x6
-    add x27, x27, x23
-    ldr x20, [x0, #0x68]
-    cmp x21, x17
-    add x26, x26, x23
-    ld1w { z4.s }, p1/Z, [x27]
-    csel x21, x21, x17, LS
-    add x25, x25, x23
-    ld1w { z25.s }, p1/Z, [x26]
-    add x24, x24, x23
-    madd x22, x11, x6, x22
-    ld1w { z27.s }, p1/Z, [x25]
-    cmp x21, #0x4
-    add x22, x22, x9
-    ld1w { z5.s }, p1/Z, [x24]
-    KAI_ASM_INST(0x8540c687)  // ld1rw { z7.s }, p1/Z, [x20]
+    sub x2, x2, #0x4
+    KAI_ASM_INST(0xa0010060)  // ld1b { z0.b-z1.b }, pn8.b/Z, [x3, x1, LSL #0]
+    incb x1, ALL, MUL #2
+    KAI_ASM_INST(0xa0040118)  // ld1b { z24.b-z25.b }, pn8.b/Z, [x8, x4, LSL #0]
+    cmp x2, #0x4
+    KAI_ASM_INST(0xa10400e4)  // ld1b { z4.b, z12.b }, pn8.b/Z, [x7, x4, LSL #0]
+    KAI_ASM_INST(0xa10400d3)  // ld1b { z19.b, z27.b }, pn8.b/Z, [x6, x4, LSL #0]
+    KAI_ASM_INST(0xa00400be)  // ld1b { z30.b-z31.b }, pn8.b/Z, [x5, x4, LSL #0]
+    incb x4, ALL, MUL #2
+    KAI_ASM_INST(0xa1010066)  // ld1b { z6.b, z14.b }, pn8.b/Z, [x3, x1, LSL #0]
+    incb x1, ALL, MUL #2
+    KAI_ASM_INST(0xa0040110)  // ld1b { z16.b-z17.b }, pn8.b/Z, [x8, x4, LSL #0]
+    KAI_ASM_INST(0xa10400f2)  // ld1b { z18.b, z26.b }, pn8.b/Z, [x7, x4, LSL #0]
+    KAI_ASM_INST(0xa10400c5)  // ld1b { z5.b, z13.b }, pn8.b/Z, [x6, x4, LSL #0]
+    KAI_ASM_INST(0xa10400a7)  // ld1b { z7.b, z15.b }, pn8.b/Z, [x5, x4, LSL #0]
+    incb x4, ALL, MUL #2
+    blt label_5
+KAI_ASM_LABEL(label_4)  // m_loop: n_loop: k_loop_x4: body
+    KAI_ASM_INST(0xa0982400)  // smopa za0.s, p1/M, p1/M, z0.b, z24.b
+    sub x2, x2, #0x4
+    KAI_ASM_INST(0xa0842401)  // smopa za1.s, p1/M, p1/M, z0.b, z4.b
+    cmp x2, #0x4
+    KAI_ASM_INST(0xa0932402)  // smopa za2.s, p1/M, p1/M, z0.b, z19.b
+    KAI_ASM_INST(0xa09e2403)  // smopa za3.s, p1/M, p1/M, z0.b, z30.b
+    KAI_ASM_INST(0xa0992420)  // smopa za0.s, p1/M, p1/M, z1.b, z25.b
+    KAI_ASM_INST(0xa0040118)  // ld1b { z24.b-z25.b }, pn8.b/Z, [x8, x4, LSL #0]
+    KAI_ASM_INST(0xa08c2421)  // smopa za1.s, p1/M, p1/M, z1.b, z12.b
+    KAI_ASM_INST(0xa10400e4)  // ld1b { z4.b, z12.b }, pn8.b/Z, [x7, x4, LSL #0]
+    KAI_ASM_INST(0xa09b2422)  // smopa za2.s, p1/M, p1/M, z1.b, z27.b
+    KAI_ASM_INST(0xa10400d3)  // ld1b { z19.b, z27.b }, pn8.b/Z, [x6, x4, LSL #0]
+    KAI_ASM_INST(0xa09f2423)  // smopa za3.s, p1/M, p1/M, z1.b, z31.b
+    KAI_ASM_INST(0xa0010060)  // ld1b { z0.b-z1.b }, pn8.b/Z, [x3, x1, LSL #0]
+    incb x1, ALL, MUL #2
+    KAI_ASM_INST(0xa09024c0)  // smopa za0.s, p1/M, p1/M, z6.b, z16.b
+    KAI_ASM_INST(0xa00400be)  // ld1b { z30.b-z31.b }, pn8.b/Z, [x5, x4, LSL #0]
+    incb x4, ALL, MUL #2
+    KAI_ASM_INST(0xa09224c1)  // smopa za1.s, p1/M, p1/M, z6.b, z18.b
+    KAI_ASM_INST(0xa08524c2)  // smopa za2.s, p1/M, p1/M, z6.b, z5.b
+    KAI_ASM_INST(0xa08724c3)  // smopa za3.s, p1/M, p1/M, z6.b, z7.b
+    KAI_ASM_INST(0xa09125c0)  // smopa za0.s, p1/M, p1/M, z14.b, z17.b
+    KAI_ASM_INST(0xa0040110)  // ld1b { z16.b-z17.b }, pn8.b/Z, [x8, x4, LSL #0]
+    KAI_ASM_INST(0xa09a25c1)  // smopa za1.s, p1/M, p1/M, z14.b, z26.b
+    KAI_ASM_INST(0xa10400f2)  // ld1b { z18.b, z26.b }, pn8.b/Z, [x7, x4, LSL #0]
+    KAI_ASM_INST(0xa08d25c2)  // smopa za2.s, p1/M, p1/M, z14.b, z13.b
+    KAI_ASM_INST(0xa10400c5)  // ld1b { z5.b, z13.b }, pn8.b/Z, [x6, x4, LSL #0]
+    KAI_ASM_INST(0xa08f25c3)  // smopa za3.s, p1/M, p1/M, z14.b, z15.b
+    KAI_ASM_INST(0xa1010066)  // ld1b { z6.b, z14.b }, pn8.b/Z, [x3, x1, LSL #0]
+    incb x1, ALL, MUL #2
+    KAI_ASM_INST(0xa10400a7)  // ld1b { z7.b, z15.b }, pn8.b/Z, [x5, x4, LSL #0]
+    incb x4, ALL, MUL #2
+    bge label_4
+KAI_ASM_LABEL(label_5)  // m_loop: n_loop: k_loop_x4: tail
+    KAI_ASM_INST(0xa0982400)  // smopa za0.s, p1/M, p1/M, z0.b, z24.b
+    KAI_ASM_INST(0xa0842401)  // smopa za1.s, p1/M, p1/M, z0.b, z4.b
+    KAI_ASM_INST(0xa0932402)  // smopa za2.s, p1/M, p1/M, z0.b, z19.b
+    KAI_ASM_INST(0xa09e2403)  // smopa za3.s, p1/M, p1/M, z0.b, z30.b
+    KAI_ASM_INST(0xa0992420)  // smopa za0.s, p1/M, p1/M, z1.b, z25.b
+    KAI_ASM_INST(0xa08c2421)  // smopa za1.s, p1/M, p1/M, z1.b, z12.b
+    KAI_ASM_INST(0xa09b2422)  // smopa za2.s, p1/M, p1/M, z1.b, z27.b
+    KAI_ASM_INST(0xa09f2423)  // smopa za3.s, p1/M, p1/M, z1.b, z31.b
+    KAI_ASM_INST(0xa09024c0)  // smopa za0.s, p1/M, p1/M, z6.b, z16.b
+    KAI_ASM_INST(0xa09224c1)  // smopa za1.s, p1/M, p1/M, z6.b, z18.b
+    KAI_ASM_INST(0xa08524c2)  // smopa za2.s, p1/M, p1/M, z6.b, z5.b
+    KAI_ASM_INST(0xa08724c3)  // smopa za3.s, p1/M, p1/M, z6.b, z7.b
+    KAI_ASM_INST(0xa09125c0)  // smopa za0.s, p1/M, p1/M, z14.b, z17.b
+    KAI_ASM_INST(0xa09a25c1)  // smopa za1.s, p1/M, p1/M, z14.b, z26.b
+    KAI_ASM_INST(0xa08d25c2)  // smopa za2.s, p1/M, p1/M, z14.b, z13.b
+    KAI_ASM_INST(0xa08f25c3)  // smopa za3.s, p1/M, p1/M, z14.b, z15.b
+KAI_ASM_LABEL(label_6)  // m_loop: n_loop: k_loop_x4: done
+    cbz x2, label_9
+    sub x2, x2, #0x1
+    ld1b { z0.b }, p1/Z, [x3, x1]
+    incb x1
+    ld1b { z24.b }, p1/Z, [x8, x4]
+    ld1b { z4.b }, p1/Z, [x7, x4]
+    ld1b { z19.b }, p1/Z, [x6, x4]
+    ld1b { z30.b }, p1/Z, [x5, x4]
+    incb x4
+    cbz x2, label_8
+KAI_ASM_LABEL(label_7)  // m_loop: n_loop: k_loop_x1: body
+    sub x2, x2, #0x1
+    KAI_ASM_INST(0xa0982400)  // smopa za0.s, p1/M, p1/M, z0.b, z24.b
+    ld1b { z24.b }, p1/Z, [x8, x4]
+    KAI_ASM_INST(0xa0842401)  // smopa za1.s, p1/M, p1/M, z0.b, z4.b
+    ld1b { z4.b }, p1/Z, [x7, x4]
+    KAI_ASM_INST(0xa0932402)  // smopa za2.s, p1/M, p1/M, z0.b, z19.b
+    ld1b { z19.b }, p1/Z, [x6, x4]
+    KAI_ASM_INST(0xa09e2403)  // smopa za3.s, p1/M, p1/M, z0.b, z30.b
+    ld1b { z0.b }, p1/Z, [x3, x1]
+    incb x1
+    ld1b { z30.b }, p1/Z, [x5, x4]
+    incb x4
+    cbnz x2, label_7
+KAI_ASM_LABEL(label_8)  // m_loop: n_loop: k_loop_x1: tail
+    KAI_ASM_INST(0xa0982400)  // smopa za0.s, p1/M, p1/M, z0.b, z24.b
+    KAI_ASM_INST(0xa0842401)  // smopa za1.s, p1/M, p1/M, z0.b, z4.b
+    KAI_ASM_INST(0xa0932402)  // smopa za2.s, p1/M, p1/M, z0.b, z19.b
+    KAI_ASM_INST(0xa09e2403)  // smopa za3.s, p1/M, p1/M, z0.b, z30.b
+KAI_ASM_LABEL(label_9)  // m_loop: n_loop: k_loop_x1: done
+    ldr x3, [x0, #0x40]
+    sub x2, x27, x10
+    add x8, x8, x4
+    ldr x1, [x0, #0x68]
+    cmp x2, x28
+    add x7, x7, x4
+    ld1w { z6.s }, p1/Z, [x8]
+    csel x2, x2, x28, LS
+    add x6, x6, x4
+    ld1w { z25.s }, p1/Z, [x7]
+    add x5, x5, x4
+    madd x3, x23, x10, x3
+    ld1w { z24.s }, p1/Z, [x6]
+    cmp x2, #0x4
+    add x3, x3, x21
+    ld1w { z7.s }, p1/Z, [x5]
+    KAI_ASM_INST(0x8540c424)  // ld1rw { z4.s }, p1/Z, [x1]
     mov x12, #0
-    bcc label_13
-KAI_ASM_LABEL(label_11)  // m_loop: n_loop: post_process_tile0 1 2 3: height_4: body
-    KAI_ASM_INST(0xc0060400)  // mova { z0.b-z3.b }, za0h.b[x12, 0:3]
-    KAI_ASM_INST(0xc0060434)  // mova { z20.b-z23.b }, za0h.b[x12, 4:7]
-    KAI_ASM_INST(0xc006045c)  // mova { z28.b-z31.b }, za0h.b[x12, 8:11]
-    KAI_ASM_INST(0xc0060470)  // mova { z16.b-z19.b }, za0h.b[x12, 12:15]
-    KAI_ASM_INST(0xc132e008)  // scvtf { z8.s-z11.s }, { z0.s-z3.s }
-    KAI_ASM_INST(0xc132e280)  // scvtf { z0.s-z3.s }, { z20.s-z23.s }
-    KAI_ASM_INST(0xc132e394)  // scvtf { z20.s-z23.s }, { z28.s-z31.s }
-    KAI_ASM_INST(0xc132e21c)  // scvtf { z28.s-z31.s }, { z16.s-z19.s }
-    fmul z18.s, z8.s, z4.s
-    fmul z12.s, z9.s, z25.s
-    fmul z10.s, z10.s, z27.s
-    fmul z16.s, z11.s, z5.s
-    add x12, x12, #0x10
-    fmul z19.s, z0.s, z4.s
-    fmul z13.s, z1.s, z25.s
-    fmul z11.s, z2.s, z27.s
-    fmul z17.s, z3.s, z5.s
-    fmul z20.s, z20.s, z4.s
-    fmul z14.s, z21.s, z25.s
-    fmul z2.s, z22.s, z27.s
-    fmul z0.s, z23.s, z5.s
-    fmul z21.s, z28.s, z4.s
-    fmul z15.s, z29.s, z25.s
-    KAI_ASM_INST(0xc1a8e248)  // frintn { z8.s-z9.s }, { z18.s-z19.s }
-    KAI_ASM_INST(0xc1a8e19c)  // frintn { z28.s-z29.s }, { z12.s-z13.s }
-    fmul z3.s, z30.s, z27.s
-    fmul z1.s, z31.s, z5.s
-    KAI_ASM_INST(0xc1a8e14c)  // frintn { z12.s-z13.s }, { z10.s-z11.s }
-    KAI_ASM_INST(0xc1a8e210)  // frintn { z16.s-z17.s }, { z16.s-z17.s }
-    KAI_ASM_INST(0xc1a8e28a)  // frintn { z10.s-z11.s }, { z20.s-z21.s }
-    KAI_ASM_INST(0xc1a8e1de)  // frintn { z30.s-z31.s }, { z14.s-z15.s }
-    KAI_ASM_INST(0xc1a8e04e)  // frintn { z14.s-z15.s }, { z2.s-z3.s }
-    KAI_ASM_INST(0xc1a8e012)  // frintn { z18.s-z19.s }, { z0.s-z1.s }
-    KAI_ASM_INST(0xc131e114)  // fcvtzs { z20.s-z23.s }, { z8.s-z11.s }
-    KAI_ASM_INST(0xc131e380)  // fcvtzs { z0.s-z3.s }, { z28.s-z31.s }
-    KAI_ASM_INST(0xc131e19c)  // fcvtzs { z28.s-z31.s }, { z12.s-z15.s }
-    KAI_ASM_INST(0xc131e208)  // fcvtzs { z8.s-z11.s }, { z16.s-z19.s }
-    KAI_ASM_INST(0xc1a7ab14)  // add { z20.s-z23.s }, { z20.s-z23.s }, z7.s
-    KAI_ASM_INST(0xc1a7ab00)  // add { z0.s-z3.s }, { z0.s-z3.s }, z7.s
-    KAI_ASM_INST(0xc1a7ab1c)  // add { z28.s-z31.s }, { z28.s-z31.s }, z7.s
-    KAI_ASM_INST(0xc1a7ab08)  // add { z8.s-z11.s }, { z8.s-z11.s }, z7.s
-    tbz x8, #16, label_12
-    KAI_ASM_INST(0xc1baccd4)  // sclamp { z20.s-z23.s }, z6.s, z26.s
-    KAI_ASM_INST(0xc1baccc0)  // sclamp { z0.s-z3.s }, z6.s, z26.s
-    KAI_ASM_INST(0xc1baccdc)  // sclamp { z28.s-z31.s }, z6.s, z26.s
-    KAI_ASM_INST(0xc1baccc8)  // sclamp { z8.s-z11.s }, z6.s, z26.s
-KAI_ASM_LABEL(label_12)  // m_loop: n_loop: post_process_tile0 1 2 3: height_4: process_and_store_height_4: clamp_output: no_clamp
-    uzp1 z13.h, z20.h, z0.h
-    uzp1 z18.h, z28.h, z8.h
-    sub x21, x21, #0x4
-    uzp1 z16.h, z21.h, z1.h
-    uzp1 z24.h, z29.h, z9.h
-    cmp x21, #0x4
-    uzp1 z21.h, z22.h, z2.h
-    uzp1 z17.h, z30.h, z10.h
-    uzp1 z20.h, z23.h, z3.h
-    uzp1 z15.h, z31.h, z11.h
-    uzp1 z19.b, z13.b, z18.b
-    uzp1 z1.b, z16.b, z24.b
-    uzp1 z10.b, z21.b, z17.b
-    uzp1 z24.b, z20.b, z15.b
-    st1b { z19.b }, p0, [x22]
-    add x22, x22, x11
-    st1b { z1.b }, p0, [x22]
-    add x22, x22, x11
-    st1b { z10.b }, p0, [x22]
-    add x22, x22, x11
-    st1b { z24.b }, p0, [x22]
-    add x22, x22, x11
-    bcs label_11
-KAI_ASM_LABEL(label_13)  // m_loop: n_loop: post_process_tile0 1 2 3: height_4: done
-    cmp x21, #0x2
-    bcc label_16
-    KAI_ASM_INST(0xc0060414)  // mova { z20.b-z23.b }, za0h.b[x12, 0:3]
+    bcc label_11
+KAI_ASM_LABEL(label_10)  // m_loop: n_loop: post_process_tile0 1 2 3: height_4: body
+    KAI_ASM_INST(0xc0060408)  // mova { z8.b-z11.b }, za0h.b[x12, 0:3]
     KAI_ASM_INST(0xc0060420)  // mova { z0.b-z3.b }, za0h.b[x12, 4:7]
-    KAI_ASM_INST(0xc132e288)  // scvtf { z8.s-z11.s }, { z20.s-z23.s }
-    KAI_ASM_INST(0xc132e000)  // scvtf { z0.s-z3.s }, { z0.s-z3.s }
-    fmul z28.s, z8.s, z4.s
-    fmul z30.s, z9.s, z25.s
-    add x12, x12, #0x8
-    fmul z8.s, z10.s, z27.s
-    fmul z12.s, z11.s, z5.s
-    fmul z29.s, z0.s, z4.s
-    fmul z31.s, z1.s, z25.s
-    fmul z9.s, z2.s, z27.s
-    fmul z13.s, z3.s, z5.s
-    KAI_ASM_INST(0xc1a8e390)  // frintn { z16.s-z17.s }, { z28.s-z29.s }
-    KAI_ASM_INST(0xc1a8e3d2)  // frintn { z18.s-z19.s }, { z30.s-z31.s }
-    KAI_ASM_INST(0xc1a8e100)  // frintn { z0.s-z1.s }, { z8.s-z9.s }
-    KAI_ASM_INST(0xc1a8e182)  // frintn { z2.s-z3.s }, { z12.s-z13.s }
-    KAI_ASM_INST(0xc131e210)  // fcvtzs { z16.s-z19.s }, { z16.s-z19.s }
-    KAI_ASM_INST(0xc131e000)  // fcvtzs { z0.s-z3.s }, { z0.s-z3.s }
-    KAI_ASM_INST(0xc1a7a310)  // add { z16.s-z17.s }, { z16.s-z17.s }, z7.s
-    KAI_ASM_INST(0xc1a7a312)  // add { z18.s-z19.s }, { z18.s-z19.s }, z7.s
-    KAI_ASM_INST(0xc1a7a300)  // add { z0.s-z1.s }, { z0.s-z1.s }, z7.s
-    KAI_ASM_INST(0xc1a7a302)  // add { z2.s-z3.s }, { z2.s-z3.s }, z7.s
-    tbz x8, #16, label_15
-    KAI_ASM_INST(0xc1baccd0)  // sclamp { z16.s-z19.s }, z6.s, z26.s
-    KAI_ASM_INST(0xc1baccc0)  // sclamp { z0.s-z3.s }, z6.s, z26.s
-KAI_ASM_LABEL(label_15)  // m_loop: n_loop: post_process_tile0 1 2 3: height_2: process_and_store_height_2: clamp_output: no_clamp
-    uzp1 z11.h, z16.h, z18.h
-    uzp1 z31.h, z0.h, z2.h
-    sub x21, x21, #0x2
-    uzp1 z0.h, z17.h, z19.h
-    uzp1 z15.h, z1.h, z3.h
-    uzp1 z11.b, z11.b, z31.b
-    uzp1 z1.b, z0.b, z15.b
-    st1b { z11.b }, p0, [x22]
-    add x22, x22, x11
-    st1b { z1.b }, p0, [x22]
-    add x22, x22, x11
-KAI_ASM_LABEL(label_16)  // m_loop: n_loop: post_process_tile0 1 2 3: height_2: done
-    cmp x21, #0x1
-    bcc label_19
-    KAI_ASM_INST(0xc0060400)  // mova { z0.b-z3.b }, za0h.b[x12, 0:3]
+    KAI_ASM_INST(0xc006044c)  // mova { z12.b-z15.b }, za0h.b[x12, 8:11]
+    KAI_ASM_INST(0xc0060470)  // mova { z16.b-z19.b }, za0h.b[x12, 12:15]
+    KAI_ASM_INST(0xc132e108)  // scvtf { z8.s-z11.s }, { z8.s-z11.s }
     KAI_ASM_INST(0xc132e014)  // scvtf { z20.s-z23.s }, { z0.s-z3.s }
-    fmul z18.s, z20.s, z4.s
+    KAI_ASM_INST(0xc132e18c)  // scvtf { z12.s-z15.s }, { z12.s-z15.s }
+    KAI_ASM_INST(0xc132e200)  // scvtf { z0.s-z3.s }, { z16.s-z19.s }
+    fmul z26.s, z8.s, z6.s
+    fmul z18.s, z9.s, z25.s
+    fmul z16.s, z10.s, z24.s
+    fmul z8.s, z11.s, z7.s
+    sub x2, x2, #0x4
+    add x12, x12, #0x10
+    fmul z27.s, z20.s, z6.s
     fmul z19.s, z21.s, z25.s
-    fmul z10.s, z22.s, z27.s
-    fmul z11.s, z23.s, z5.s
-    KAI_ASM_INST(0xc1a8e250)  // frintn { z16.s-z17.s }, { z18.s-z19.s }
-    KAI_ASM_INST(0xc1a8e152)  // frintn { z18.s-z19.s }, { z10.s-z11.s }
+    cmp x2, #0x4
+    fmul z17.s, z22.s, z24.s
+    fmul z9.s, z23.s, z7.s
+    fmul z22.s, z12.s, z6.s
+    fmul z12.s, z13.s, z25.s
+    fmul z30.s, z14.s, z24.s
+    fmul z10.s, z15.s, z7.s
+    fmul z23.s, z0.s, z6.s
+    fmul z13.s, z1.s, z25.s
+    KAI_ASM_INST(0xc1a8e340)  // frintn { z0.s-z1.s }, { z26.s-z27.s }
+    KAI_ASM_INST(0xc1a8e254)  // frintn { z20.s-z21.s }, { z18.s-z19.s }
+    fmul z31.s, z2.s, z24.s
+    fmul z11.s, z3.s, z7.s
+    KAI_ASM_INST(0xc1a8e210)  // frintn { z16.s-z17.s }, { z16.s-z17.s }
+    KAI_ASM_INST(0xc1a8e108)  // frintn { z8.s-z9.s }, { z8.s-z9.s }
+    KAI_ASM_INST(0xc1a8e2c2)  // frintn { z2.s-z3.s }, { z22.s-z23.s }
+    KAI_ASM_INST(0xc1a8e196)  // frintn { z22.s-z23.s }, { z12.s-z13.s }
+    KAI_ASM_INST(0xc1a8e3d2)  // frintn { z18.s-z19.s }, { z30.s-z31.s }
+    KAI_ASM_INST(0xc1a8e14a)  // frintn { z10.s-z11.s }, { z10.s-z11.s }
+    KAI_ASM_INST(0xc131e00c)  // fcvtzs { z12.s-z15.s }, { z0.s-z3.s }
+    KAI_ASM_INST(0xc131e294)  // fcvtzs { z20.s-z23.s }, { z20.s-z23.s }
+    KAI_ASM_INST(0xc131e210)  // fcvtzs { z16.s-z19.s }, { z16.s-z19.s }
+    KAI_ASM_INST(0xc131e108)  // fcvtzs { z8.s-z11.s }, { z8.s-z11.s }
+    KAI_ASM_INST(0xc1a4ab0c)  // add { z12.s-z15.s }, { z12.s-z15.s }, z4.s
+    KAI_ASM_INST(0xc1a4ab14)  // add { z20.s-z23.s }, { z20.s-z23.s }, z4.s
+    KAI_ASM_INST(0xc1a4ab10)  // add { z16.s-z19.s }, { z16.s-z19.s }, z4.s
+    KAI_ASM_INST(0xc1a4ab08)  // add { z8.s-z11.s }, { z8.s-z11.s }, z4.s
+    KAI_ASM_INST(0xc1bdcf8c)  // sclamp { z12.s-z15.s }, z28.s, z29.s
+    KAI_ASM_INST(0xc1bdcf94)  // sclamp { z20.s-z23.s }, z28.s, z29.s
+    KAI_ASM_INST(0xc1bdcf90)  // sclamp { z16.s-z19.s }, z28.s, z29.s
+    KAI_ASM_INST(0xc1bdcf88)  // sclamp { z8.s-z11.s }, z28.s, z29.s
+    uzp1 z12.h, z12.h, z20.h
+    uzp1 z2.h, z13.h, z21.h
+    uzp1 z20.h, z14.h, z22.h
+    uzp1 z13.h, z15.h, z23.h
+    uzp1 z1.h, z16.h, z8.h
+    uzp1 z21.h, z17.h, z9.h
+    uzp1 z17.h, z18.h, z10.h
+    uzp1 z16.h, z19.h, z11.h
+    uzp1 z19.b, z12.b, z1.b
+    uzp1 z18.b, z2.b, z21.b
+    uzp1 z17.b, z20.b, z17.b
+    uzp1 z16.b, z13.b, z16.b
+    st1b { z19.b }, p0, [x3]
+    add x3, x3, x23
+    st1b { z18.b }, p0, [x3]
+    add x3, x3, x23
+    st1b { z17.b }, p0, [x3]
+    add x3, x3, x23
+    st1b { z16.b }, p0, [x3]
+    add x3, x3, x23
+    bcs label_10
+KAI_ASM_LABEL(label_11)  // m_loop: n_loop: post_process_tile0 1 2 3: height_4: done
+    cmp x2, #0x2
+    bcc label_13
+    KAI_ASM_INST(0xc006040c)  // mova { z12.b-z15.b }, za0h.b[x12, 0:3]
+    KAI_ASM_INST(0xc0060430)  // mova { z16.b-z19.b }, za0h.b[x12, 4:7]
+    KAI_ASM_INST(0xc132e18c)  // scvtf { z12.s-z15.s }, { z12.s-z15.s }
+    KAI_ASM_INST(0xc132e200)  // scvtf { z0.s-z3.s }, { z16.s-z19.s }
+    fmul z16.s, z12.s, z6.s
+    fmul z20.s, z13.s, z25.s
+    add x12, x12, #0x8
+    sub x2, x2, #0x2
+    fmul z10.s, z14.s, z24.s
+    fmul z22.s, z15.s, z7.s
+    fmul z17.s, z0.s, z6.s
+    fmul z21.s, z1.s, z25.s
+    fmul z11.s, z2.s, z24.s
+    fmul z23.s, z3.s, z7.s
+    KAI_ASM_INST(0xc1a8e20c)  // frintn { z12.s-z13.s }, { z16.s-z17.s }
+    KAI_ASM_INST(0xc1a8e28e)  // frintn { z14.s-z15.s }, { z20.s-z21.s }
+    KAI_ASM_INST(0xc1a8e150)  // frintn { z16.s-z17.s }, { z10.s-z11.s }
+    KAI_ASM_INST(0xc1a8e2d2)  // frintn { z18.s-z19.s }, { z22.s-z23.s }
+    KAI_ASM_INST(0xc131e188)  // fcvtzs { z8.s-z11.s }, { z12.s-z15.s }
+    KAI_ASM_INST(0xc131e20c)  // fcvtzs { z12.s-z15.s }, { z16.s-z19.s }
+    KAI_ASM_INST(0xc1a4a308)  // add { z8.s-z9.s }, { z8.s-z9.s }, z4.s
+    KAI_ASM_INST(0xc1a4a30a)  // add { z10.s-z11.s }, { z10.s-z11.s }, z4.s
+    KAI_ASM_INST(0xc1a4a30c)  // add { z12.s-z13.s }, { z12.s-z13.s }, z4.s
+    KAI_ASM_INST(0xc1a4a30e)  // add { z14.s-z15.s }, { z14.s-z15.s }, z4.s
+    KAI_ASM_INST(0xc1bdcf88)  // sclamp { z8.s-z11.s }, z28.s, z29.s
+    KAI_ASM_INST(0xc1bdcf8c)  // sclamp { z12.s-z15.s }, z28.s, z29.s
+    uzp1 z19.h, z8.h, z10.h
+    uzp1 z18.h, z9.h, z11.h
+    uzp1 z17.h, z12.h, z14.h
+    uzp1 z16.h, z13.h, z15.h
+    uzp1 z17.b, z19.b, z17.b
+    uzp1 z16.b, z18.b, z16.b
+    st1b { z17.b }, p0, [x3]
+    add x3, x3, x23
+    st1b { z16.b }, p0, [x3]
+    add x3, x3, x23
+KAI_ASM_LABEL(label_13)  // m_loop: n_loop: post_process_tile0 1 2 3: height_2: done
+    cbz x2, label_14
+    KAI_ASM_INST(0xc0060410)  // mova { z16.b-z19.b }, za0h.b[x12, 0:3]
+    KAI_ASM_INST(0xc132e210)  // scvtf { z16.s-z19.s }, { z16.s-z19.s }
+    fmul z14.s, z16.s, z6.s
+    fmul z15.s, z17.s, z25.s
+    fmul z18.s, z18.s, z24.s
+    fmul z19.s, z19.s, z7.s
+    KAI_ASM_INST(0xc1a8e1d0)  // frintn { z16.s-z17.s }, { z14.s-z15.s }
+    KAI_ASM_INST(0xc1a8e252)  // frintn { z18.s-z19.s }, { z18.s-z19.s }
     KAI_ASM_INST(0xc131e200)  // fcvtzs { z0.s-z3.s }, { z16.s-z19.s }
-    add z0.s, z0.s, z7.s
-    add z1.s, z1.s, z7.s
-    add z2.s, z2.s, z7.s
-    add z3.s, z3.s, z7.s
-    tbz x8, #16, label_18
-    KAI_ASM_INST(0xc1baccc0)  // sclamp { z0.s-z3.s }, z6.s, z26.s
-KAI_ASM_LABEL(label_18)  // m_loop: n_loop: post_process_tile0 1 2 3: height_1: process_and_store_height_1: clamp_output: no_clamp
-    uzp1 z17.h, z0.h, z1.h
-    uzp1 z16.h, z2.h, z3.h
+    add z12.s, z0.s, z4.s
+    add z13.s, z1.s, z4.s
+    add z14.s, z2.s, z4.s
+    add z15.s, z3.s, z4.s
+    KAI_ASM_INST(0xc1bdcf8c)  // sclamp { z12.s-z15.s }, z28.s, z29.s
+    uzp1 z17.h, z12.h, z13.h
+    uzp1 z16.h, z14.h, z15.h
     uzp1 z16.b, z17.b, z16.b
-    st1b { z16.b }, p0, [x22]
-KAI_ASM_LABEL(label_19)  // m_loop: n_loop: post_process_tile0 1 2 3: height_1: done
-    incw x9, ALL, MUL #4
-    add x28, x28, x13, LSL #2
-    cmp x9, x15
-    blt label_3
-    incw x6
-    add x10, x10, x14
-    cmp x6, x16
+    st1b { z16.b }, p0, [x3]
+KAI_ASM_LABEL(label_14)  // m_loop: n_loop: post_process_tile0 1 2 3: height_2_tail: done
+    incw x21, ALL, MUL #4
+    add x20, x20, x24, LSL #2
+    cmp x21, x26
     blt label_2
+    incw x10
+    add x22, x22, x25
+    cmp x10, x27
+    blt label_1
     KAI_ASM_INST(0xd503467f)  // SMSTOP
     ldp x22, x23, [sp, 16]
     ldp x24, x25, [sp, 32]
