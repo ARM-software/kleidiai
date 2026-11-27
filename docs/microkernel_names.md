@@ -102,7 +102,7 @@ where:
 
 Describes names for depthwise convolution and depthwise RHS packing micro-kernels.
 
-**`dwconv_ukernel_name`** = `"kai_" ("dwconv_clamp" ("_" buffer)+ ("_" filter_size) ("_" dw_stride) ("_" dwconv_output_block_size) ("_" engine) ["_" tech] | "rhs_dwconv_pack" ("_" buffer)+ ("_" engine))`
+**`dwconv_ukernel_name`** = `"kai_" ("dwconv_clamp" ("_" buffer)+ ("_" filter_size) ("_" dw_stride) ("_" dwconv_output_block_size) ("_" engine) ["_" tech] | "dwconv_pack_rhs" ("_" buffer)+ ("_" engine))`
 
 ### Softmax micro-kernel name
 
@@ -318,7 +318,7 @@ directory_name = "pack" | simplified_op
 simplified_op = (matmul_fused_ops | "dwconv" | "softmax") "_" simplified_buffer ("_" simplified_buffer)+
 kernel_name = matmul_ukernel_name | dwconv_ukernel_name | softmax_ukernel_name
 matmul_ukernel_name = "kai_" matmul_fused_ops ("_" buffer) ("_" buffer)+ ["_" tile_size] ("_" engine) ["_" tech] ["_" uarch]
-dwconv_ukernel_name = "kai_" ("dwconv_clamp" ("_" buffer)+ ("_" filter_size) ("_" dw_stride) ("_" dwconv_output_block_size) ("_" engine) ["_" tech] | "rhs_dwconv_pack" ("_" buffer)+ ("_" engine))
+dwconv_ukernel_name = "kai_" ("dwconv_clamp" ("_" buffer)+ ("_" filter_size) ("_" dw_stride) ("_" dwconv_output_block_size) ("_" engine) ["_" tech] | "dwconv_pack_rhs" ("_" buffer)+ ("_" engine))
 softmax_ukernel_name = "kai_softmax" ("_" buffer) ("_" buffer) ("_" dims) ("_" engine) ["_" tech]
 dims = @natural_int "d"
 uarch = "cortexa55"

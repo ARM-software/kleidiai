@@ -64,8 +64,8 @@ template <DataType DType>
 DwConvPackKernelPtr create_dwconv_pack_rhs_x8p4vsx1_x8_sme() {
     static_assert(data_type_size_in_bits(DType) == 8);
     return std::make_unique<DwConvPackRhsUkerApiWrapper>(
-        "rhs_dwconv_pack_x8p4vsx1_x8_sme",       // name
-        kai_rhs_dwconv_pack_x8p4vsx1_x8_sme(),   // kernel
+        "dwconv_pack_rhs_x8p4vsx1_x8_sme",       // name
+        kai_dwconv_pack_rhs_x8p4vsx1_x8_sme(),   // kernel
         format::plain<DType>(),                  // src data format
         format::plain<DataType::I32>(),          // src bias format
         format::sme::x8p4vsx1<DType>(),          // dst format

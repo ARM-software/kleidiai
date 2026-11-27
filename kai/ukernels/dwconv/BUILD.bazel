@@ -41,7 +41,7 @@ kai_c_library(
         "dwconv_qai8_qai8_qai8cxp/kai_dwconv_clamp_qai8_qai8_qai8cxp4vsx1_i32_i32_i32_i32_f32_3x3_s1_4xc_sme2_dot",
     ],
     kernels_nohdr = [
-        "pack/kai_rhs_dwconv_pack_x8p4vsx1_x8_sme",
+        "pack/kai_dwconv_pack_rhs_x8p4vsx1_x8_sme",
     ],
     textual_hdrs = [
         "kai_dwconv.h",

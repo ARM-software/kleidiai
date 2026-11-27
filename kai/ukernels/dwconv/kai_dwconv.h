@@ -37,10 +37,9 @@ extern "C" {
 ///   * padding - Padding dimensions.
 ///
 /// Required operands:
-///   * lhs, dst
+///   * lhs - Asymmetrically quantized signed 8-bit input in HWC layout.
+///   * dst - Asymmetrically quantized signed 8-bit output in HWC layout.
 ///   * rhs - Packed weights.
-///
-/// Required parameters:
 ///   * bias.input_bias.lhs.global - I32 zero-point correction in the range [-127, 128].
 ///   * bias.scale_bias.global - I32 output zero point in the range [-128, 127].
 ///   * scale.acc_scale_c - Per-channel FP32 requantization scales.

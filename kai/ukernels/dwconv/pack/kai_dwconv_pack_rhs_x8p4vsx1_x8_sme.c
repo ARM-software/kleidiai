@@ -144,7 +144,7 @@ static void run(
     }
 }
 
-struct kai_dwconv_pack_rhs_uker_api kai_rhs_dwconv_pack_x8p4vsx1_x8_sme(void) {
+struct kai_dwconv_pack_rhs_uker_api kai_dwconv_pack_rhs_x8p4vsx1_x8_sme(void) {
     const struct kai_dwconv_pack_rhs_uker_api api = {
         .run = run,
         .get_step = get_step,

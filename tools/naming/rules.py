@@ -352,7 +352,7 @@ def dwconv_ukernel_name() -> Expr:
                 Optional(Seq("_", tech)),
             ),
             Seq(
-                "rhs_dwconv_pack",
+                "dwconv_pack_rhs",
                 OneOrMore(Seq("_", buffer)),
                 Seq(
                     "_",

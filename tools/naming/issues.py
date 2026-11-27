@@ -234,6 +234,25 @@ KNOWN_UKERNEL_PROBLEMS.update(
 KNOWN_UKERNEL_PROBLEMS.update(
     _known_issues(
         description=(
+            "Uses the legacy `rhs_dwconv_pack` operation and a bare `b` suffix "
+            "for packed bias. The grammar uses `dwconv_pack_rhs` and `b<type>`."
+        ),
+        issues=(
+            (
+                "kai_rhs_dwconv_pack_x16p1vlx1b_x16_x16_sme",
+                "kai_dwconv_pack_rhs_x16p1vlx1bx16_x16_x16_sme",
+            ),
+            (
+                "kai_rhs_dwconv_pack_x32p1vlx1b_x32_x32_sme",
+                "kai_dwconv_pack_rhs_x32p1vlx1bx32_x32_x32_sme",
+            ),
+        ),
+    )
+)
+
+KNOWN_UKERNEL_PROBLEMS.update(
+    _known_issues(
+        description=(
             "Uses a bare `b` suffix; packed bias should be encoded as "
             "`b<type>` after the packed shape."
         ),
@@ -245,14 +264,6 @@ KNOWN_UKERNEL_PROBLEMS.update(
             (
                 "kai_dwconv_clamp_f32_f32_f32p1vlx1b_3x3_s1_4xc_sme2_mla",
                 "kai_dwconv_clamp_f32_f32_f32p1vlx1bf32_3x3_s1_4xc_sme2_mla",
-            ),
-            (
-                "kai_rhs_dwconv_pack_x16p1vlx1b_x16_x16_sme",
-                "kai_rhs_dwconv_pack_x16p1vlx1bx16_x16_x16_sme",
-            ),
-            (
-                "kai_rhs_dwconv_pack_x32p1vlx1b_x32_x32_sme",
-                "kai_rhs_dwconv_pack_x32p1vlx1bx32_x32_x32_sme",
             ),
             (
                 "kai_imatmul_clamp_f16_f16p2vlx2_f16p2vlx2b_2vlx2vl_sme_mopa",

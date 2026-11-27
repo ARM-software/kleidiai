@@ -17,16 +17,12 @@ extern "C" {
 /// Required CPU features:
 ///   * FEAT_SME
 ///
-/// Configuration parameters: none.
-///
-/// Operands:
+/// Required operands:
 ///   * rhs_packed - Packed filter with 8-bit weights.
 ///   * rhs - Source filter in HWC layout.
 ///
-/// Supported flags: none.
-///
 /// @return The micro-kernel API.
-struct kai_dwconv_pack_rhs_uker_api kai_rhs_dwconv_pack_x8p4vsx1_x8_sme(void);
+struct kai_dwconv_pack_rhs_uker_api kai_dwconv_pack_rhs_x8p4vsx1_x8_sme(void);
 
 #ifdef __cplusplus
 }  // extern "C"
