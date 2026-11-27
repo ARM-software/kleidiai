@@ -160,6 +160,7 @@ static void run(const struct kai_dwconv_uker_config* config, const struct kai_dw
     KAI_ASSUME_MSG(unsupported_flags == 0, "Only supported flags are accepted!");
 
     KAI_ASSUME(run_args->shape.lhs.iw != 0);
+    KAI_ASSUME(config->padding.left != 0 || run_args->shape.lhs.iw >= FILTER_WIDTH - 1);
     KAI_ASSUME(run_args->operand.lhs.stride.ih > 0);
     KAI_ASSUME(run_args->operand.lhs.stride.iw > 0);
     KAI_ASSUME(run_args->operand.lhs.stride.ic == LHS_ELEM_BYTES);

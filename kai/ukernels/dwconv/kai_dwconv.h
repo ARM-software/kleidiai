@@ -38,6 +38,7 @@ extern "C" {
 ///
 /// Required operands:
 ///   * lhs - Asymmetrically quantized signed 8-bit input in HWC layout.
+///     * For nonempty output, the input width must be at least two columns when left padding is zero.
 ///   * dst - Asymmetrically quantized signed 8-bit output in HWC layout.
 ///   * rhs - Packed weights.
 ///   * bias.input_bias.lhs.global - I32 zero-point correction in the range [-127, 128].
