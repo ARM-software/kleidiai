@@ -65,6 +65,7 @@ repos:
       - id: mdformat
         stages: [ pre-commit ]
         name: Markdown Formatter
+        exclude: ^docs/matmul/  # The formatter doesn't recognize math formulas.
   - repo: https://github.com/pre-commit/mirrors-clang-format
     # v17.0.6
     rev: 05241dc3def184dba136e62d54ff57f1c8a497a9
