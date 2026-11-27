@@ -172,13 +172,6 @@ static void run(const struct kai_dwconv_uker_config* config, const struct kai_dw
     KAI_ASSUME(run_args->operand.bias.input_bias.lhs.global.ptr != NULL);
     KAI_ASSUME(run_args->operand.bias.scale_bias.global.ptr != NULL);
 
-    KAI_ASSUME(run_args->operand.bias.acc_bias.global.ptr == NULL);
-    KAI_ASSUME(run_args->operand.bias.acc_bias.h.ptr == NULL);
-    KAI_ASSUME(run_args->operand.bias.acc_bias.w.ptr == NULL);
-    KAI_ASSUME(run_args->operand.scale.acc_scale_global.ptr == NULL);
-    KAI_ASSUME(run_args->operand.scale.acc_scale_h.ptr == NULL);
-    KAI_ASSUME(run_args->operand.scale.acc_scale_w.ptr == NULL);
-
     const int32_t lhs_bias = *(const int32_t*)run_args->operand.bias.input_bias.lhs.global.ptr;
     KAI_ASSUME(lhs_bias >= -INT8_MAX && lhs_bias <= -(int32_t)INT8_MIN);
     const int32_t input_zero_point = -lhs_bias;
