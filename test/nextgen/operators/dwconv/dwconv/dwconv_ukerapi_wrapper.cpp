@@ -126,8 +126,8 @@ std::vector<size_t> DwConvUkerApiWrapper::steps(DwConvShape shape, ConstTensorSe
     uker_config.padding = {padding.top, padding.left, padding.bottom, padding.right};
     const auto step = m_ukernel.get_step(&uker_config);
     return {
-        step.oh != 0 ? step.oh : shape.at(DwConvDim::H),
-        step.ow != 0 ? step.ow : shape.at(DwConvDim::W),
+        step.h != 0 ? step.h : shape.at(DwConvDim::H),
+        step.w != 0 ? step.w : shape.at(DwConvDim::W),
         step.c != 0 ? step.c : shape.at(DwConvDim::C),
     };
 }
@@ -148,7 +148,7 @@ void DwConvUkerApiWrapper::run(
     kai_dwconv_uker_config uker_config = m_uker_config;
     uker_config.padding = {padding.top, padding.left, padding.bottom, padding.right};
     const auto step = m_ukernel.get_step(&uker_config);
-    const std::array steps{step.oh, step.ow, step.c};
+    const std::array steps{step.h, step.w, step.c};
     for (size_t dim = 0; dim < steps.size(); ++dim) {
         const auto axis = static_cast<DwConvDim>(dim);
         KAI_TEST_ASSERT(coords.at(dim) + tile_shape.at(axis) <= full_shape.at(axis));

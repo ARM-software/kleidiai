@@ -14,24 +14,24 @@ extern "C" {
 #endif
 
 /// Dimensions or start coordinates in the destination tensor.
-struct kai_dwconv_uker_dim_args {
-    size_t oh;  ///< Output height
-    size_t ow;  ///< Output width
-    size_t c;   ///< Tensor channels
+struct kai_dwconv_uker_dst_step_args {
+    size_t h;  ///< Output height
+    size_t w;  ///< Output width
+    size_t c;  ///< Tensor channels
 };
 
 /// Dimensions or coordinates in the LHS tensor.
 struct kai_dwconv_uker_lhs_dim_args {
-    size_t ih;  ///< Input height
-    size_t iw;  ///< Input width
-    size_t c;   ///< Tensor channels
+    size_t h;  ///< Input height
+    size_t w;  ///< Input width
+    size_t c;  ///< Tensor channels
 };
 
 /// LHS tensor strides in bytes.
 struct kai_dwconv_uker_lhs_stride_args {
-    size_t ih;  ///< Input height stride
-    size_t iw;  ///< Input width stride
-    size_t ic;  ///< Input channel stride
+    size_t h;  ///< Input height stride
+    size_t w;  ///< Input width stride
+    size_t c;  ///< Input channel stride
 };
 
 /// LHS tensor for a depthwise convolution micro-kernel.
@@ -59,9 +59,9 @@ struct kai_dwconv_uker_rhs_args {
 
 /// Dimensions or coordinates in the destination tensor.
 struct kai_dwconv_uker_dst_dim_args {
-    size_t oh;  ///< Output height
-    size_t ow;  ///< Output width
-    size_t c;   ///< Tensor channels
+    size_t h;  ///< Output height
+    size_t w;  ///< Output width
+    size_t c;  ///< Tensor channels
 };
 
 /// Padding dimensions around the valid LHS region.
@@ -81,9 +81,9 @@ struct kai_dwconv_uker_shape_args {
 
 /// Destination tensor strides in bytes.
 struct kai_dwconv_uker_dst_stride_args {
-    size_t oh;  ///< Output height stride
-    size_t ow;  ///< Output width stride
-    size_t oc;  ///< Output channel stride
+    size_t h;  ///< Output height stride
+    size_t w;  ///< Output width stride
+    size_t c;  ///< Output channel stride
 };
 
 /// Destination tensor for a depthwise convolution micro-kernel.
@@ -269,7 +269,7 @@ struct kai_dwconv_uker_api {
     /// @param[in] config The micro-kernel configuration.
     ///
     /// @return The step in each destination dimension.
-    struct kai_dwconv_uker_dim_args (*get_step)(const struct kai_dwconv_uker_config* config);
+    struct kai_dwconv_uker_dst_step_args (*get_step)(const struct kai_dwconv_uker_config* config);
 
     /// Gets the default LHS strides in bytes for the given shape.
     ///

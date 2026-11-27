@@ -58,12 +58,12 @@ static size_t get_channel_step(void) {
     return CHANNEL_STEP_VSCALE * kai_get_sme_vscale();
 }
 
-static struct kai_dwconv_uker_dim_args get_step(const struct kai_dwconv_uker_config* config) {
+static struct kai_dwconv_uker_dst_step_args get_step(const struct kai_dwconv_uker_config* config) {
     KAI_UNUSED(config);
 
-    const struct kai_dwconv_uker_dim_args step = {
-        .oh = M_STEP,
-        .ow = 0,
+    const struct kai_dwconv_uker_dst_step_args step = {
+        .h = M_STEP,
+        .w = 0,
         .c = get_channel_step(),
     };
 
@@ -75,9 +75,9 @@ static struct kai_dwconv_uker_lhs_stride_args get_lhs_stride(
     KAI_UNUSED(config);
 
     const struct kai_dwconv_uker_lhs_stride_args stride = {
-        .ih = shape->iw * shape->c * LHS_ELEM_BYTES,
-        .iw = shape->c * LHS_ELEM_BYTES,
-        .ic = LHS_ELEM_BYTES,
+        .h = shape->w * shape->c * LHS_ELEM_BYTES,
+        .w = shape->c * LHS_ELEM_BYTES,
+        .c = LHS_ELEM_BYTES,
     };
 
     return stride;
@@ -88,7 +88,7 @@ static size_t get_lhs_offset(
     const struct kai_dwconv_uker_lhs_stride_args* stride) {
     KAI_UNUSED(config);
 
-    return index->ih * stride->ih + index->iw * stride->iw + index->c * stride->ic;
+    return index->h * stride->h + index->w * stride->w + index->c * stride->c;
 }
 
 static struct kai_dwconv_uker_rhs_stride_args get_rhs_stride(
@@ -117,9 +117,9 @@ static struct kai_dwconv_uker_dst_stride_args get_dst_stride(
     KAI_UNUSED(config);
 
     const struct kai_dwconv_uker_dst_stride_args stride = {
-        .oh = shape->ow * shape->c * DST_ELEM_BYTES,
-        .ow = shape->c * DST_ELEM_BYTES,
-        .oc = DST_ELEM_BYTES,
+        .h = shape->w * shape->c * DST_ELEM_BYTES,
+        .w = shape->c * DST_ELEM_BYTES,
+        .c = DST_ELEM_BYTES,
     };
 
     return stride;
@@ -130,7 +130,7 @@ static size_t get_dst_offset(
     const struct kai_dwconv_uker_dst_stride_args* stride) {
     KAI_UNUSED(config);
 
-    return index->oh * stride->oh + index->ow * stride->ow + index->c * stride->oc;
+    return index->h * stride->h + index->w * stride->w + index->c * stride->c;
 }
 
 static size_t get_dst_size(
@@ -138,16 +138,16 @@ static size_t get_dst_size(
     const struct kai_dwconv_uker_dst_stride_args* stride) {
     KAI_UNUSED(config);
 
-    if (shape->oh == 0 || shape->ow == 0 || shape->c == 0) {
+    if (shape->h == 0 || shape->w == 0 || shape->c == 0) {
         return 0;
     }
 
-    return (shape->oh - 1) * stride->oh + (shape->ow - 1) * stride->ow + (shape->c - 1) * stride->oc + DST_ELEM_BYTES;
+    return (shape->h - 1) * stride->h + (shape->w - 1) * stride->w + (shape->c - 1) * stride->c + DST_ELEM_BYTES;
 }
 
 static void run(const struct kai_dwconv_uker_config* config, const struct kai_dwconv_uker_args* run_args) {
-    const size_t padded_height = run_args->shape.lhs.ih + config->padding.top + config->padding.bottom;
-    const size_t padded_width = run_args->shape.lhs.iw + config->padding.left + config->padding.right;
+    const size_t padded_height = run_args->shape.lhs.h + config->padding.top + config->padding.bottom;
+    const size_t padded_width = run_args->shape.lhs.w + config->padding.left + config->padding.right;
     const size_t dst_height = padded_height >= FILTER_HEIGHT ? padded_height - FILTER_HEIGHT + 1 : 0;
     const size_t dst_width = padded_width >= FILTER_WIDTH ? padded_width - FILTER_WIDTH + 1 : 0;
     const size_t channels = run_args->shape.lhs.c;
@@ -159,12 +159,12 @@ static void run(const struct kai_dwconv_uker_config* config, const struct kai_dw
     const uint64_t unsupported_flags = run_args->flags & ~((uint64_t)SUPPORTED_FLAGS);
     KAI_ASSUME_MSG(unsupported_flags == 0, "Only supported flags are accepted!");
 
-    KAI_ASSUME(run_args->shape.lhs.iw != 0);
-    KAI_ASSUME(config->padding.left != 0 || run_args->shape.lhs.iw >= FILTER_WIDTH - 1);
-    KAI_ASSUME(run_args->operand.lhs.stride.ih > 0);
-    KAI_ASSUME(run_args->operand.lhs.stride.iw > 0);
-    KAI_ASSUME(run_args->operand.lhs.stride.ic == LHS_ELEM_BYTES);
-    KAI_ASSUME(run_args->operand.dst.stride.oc == DST_ELEM_BYTES);
+    KAI_ASSUME(run_args->shape.lhs.w != 0);
+    KAI_ASSUME(config->padding.left != 0 || run_args->shape.lhs.w >= FILTER_WIDTH - 1);
+    KAI_ASSUME(run_args->operand.lhs.stride.h > 0);
+    KAI_ASSUME(run_args->operand.lhs.stride.w > 0);
+    KAI_ASSUME(run_args->operand.lhs.stride.c == LHS_ELEM_BYTES);
+    KAI_ASSUME(run_args->operand.dst.stride.c == DST_ELEM_BYTES);
 
     KAI_ASSUME(run_args->operand.lhs.ptr != NULL);
     KAI_ASSUME(run_args->operand.rhs.ptr != NULL);
@@ -201,10 +201,10 @@ static void run(const struct kai_dwconv_uker_config* config, const struct kai_dw
     }
     uint8_t dummy[CHANNEL_STEP_MAX * DST_ELEM_BYTES] = {0};
 
-    const size_t input_height = run_args->shape.lhs.ih;
+    const size_t input_height = run_args->shape.lhs.h;
     const size_t padding_top = config->padding.top;
     uint8_t* dst = run_args->operand.dst.ptr;
-    const size_t dst_stride_row = run_args->operand.dst.stride.oh;
+    const size_t dst_stride_row = run_args->operand.dst.stride.h;
 
     kai_commit_za();
 
@@ -214,7 +214,7 @@ static void run(const struct kai_dwconv_uker_config* config, const struct kai_dw
         const size_t lhs_height = input_height - src_row;
         const uint8_t* src = run_args->operand.lhs.ptr;
         if (lhs_height != 0) {
-            src += src_row * run_args->operand.lhs.stride.ih;
+            src += src_row * run_args->operand.lhs.stride.h;
         }
 
         void* outptrs[M_STEP];
@@ -223,7 +223,7 @@ static void run(const struct kai_dwconv_uker_config* config, const struct kai_dw
         for (size_t index = 0; index < M_STEP; ++index) {
             const int valid = index < dst_height - row;
             outptrs[index] = valid ? dst + (row + index) * dst_stride_row : dummy;
-            out_col_strides[index] = valid ? run_args->operand.dst.stride.ow : 0;
+            out_col_strides[index] = valid ? run_args->operand.dst.stride.w : 0;
             out_vl_strides[index] = valid ? channel_step * DST_ELEM_BYTES : 0;
         }
 
@@ -236,7 +236,7 @@ static void run(const struct kai_dwconv_uker_config* config, const struct kai_dw
             config->padding.left,
             run_args->operand.rhs.ptr,
             run_args->operand.bias.acc_bias.c.ptr,
-            run_args->shape.lhs.iw,
+            run_args->shape.lhs.w,
             dst_width,
             outptrs,
             out_col_strides,
@@ -251,7 +251,7 @@ static void run(const struct kai_dwconv_uker_config* config, const struct kai_dw
         };
 
         kai_kernel_dwconv_clamp_qai8_qai8_qai8cxp4vsx1_i32_i32_i32_i32_f32_3x3_s1_4xc_sme2_dot(
-            &args, run_args->operand.lhs.stride.ih, run_args->operand.lhs.stride.iw);
+            &args, run_args->operand.lhs.stride.h, run_args->operand.lhs.stride.w);
     }
 }
 
